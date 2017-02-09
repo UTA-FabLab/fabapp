@@ -8,6 +8,11 @@ Desktop.ini
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
 
+# Prevent environment specific from update
+/connections/db_connect8.php
+/connections/ldap.php
+/connections/tp_conect.php
+
 # Windows Installer files
 *.cab
 *.msi
