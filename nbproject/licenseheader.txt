@@ -1,0 +1,9 @@
+<#if licenseFirst??>
+${licenseFirst}
+</#if>
+${licensePrefix}License - FabApp V 0.9
+${licensePrefix}2016-2017 CC BY-NC-AS UTA FabLab
+<#if licenseLast??>
+${licenseLast}
+</#if>
+
