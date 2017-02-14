@@ -1,5 +1,4 @@
 <?php
-
 /*
  * License - FabApp V 0.9
  * 2016-2017 CC BY-NC-AS UTA FabLab
@@ -22,12 +21,13 @@ class Status {
             $this->msg = "Invalid Status ID";
         
         if ($result = $mysqli->query("
-            SELECT msg
+            SELECT *
             FROM status
             WHERE status_id = $status_id;
         ")){
             $row = $result->fetch_assoc();
             $this->setMsg($row['msg']);
+            $this->setStatus_id($row['status_id']);
         }
     }
     

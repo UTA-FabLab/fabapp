@@ -9,7 +9,7 @@
  *
  * @author Jon Le
  */
-include_once ('transactions.php');
+
 
 class Devices {
     private $d_id;
@@ -43,7 +43,8 @@ class Devices {
             $this->setUrl($row['url']);
             $this->setDevice_key($row['device_key']);
             $result->close();
-        }
+        } else
+            throw new Exception("Invalid Device ID");
     }
     
     public static function is_open($d_id){
@@ -62,19 +63,45 @@ class Devices {
     }
 
     public static function regexDID($d_id){
+		global $mysqli;
         if (preg_match("/^\d+$/", $d_id) == 0){
-            echo "Invalid D ID. ";
+            echo "Invalid D ID.";
             return false;
         }
-        return true;
+        
+        //Check to see if device exists
+        if ($result = $mysqli->query("
+            SELECT *
+            FROM devices
+            WHERE d_id = $d_id
+            LIMIT 1;
+        ")){
+            if ($result->num_rows == 1)
+                return true;
+            return false;
+        } else {
+            return false;
+        }
     }
     
-    public static function regexDeviceID($d_id){
+    public static function regexDeviceID($device_id){
         if (preg_match("/^\d{4}$/", $d_id) == 0){
             echo "Invalid Device ID. ";
             return false;
+            
+        }//Check to see if device exists
+        if ($result = $mysqli->query("
+            SELECT *
+            FROM devices
+            WHERE device_id = $device_id
+            LIMIT 1;
+        ")){
+            if ($result->num_rows == 1)
+                return true;
+            return false;
+        } else {
+            return false;
         }
-        return true;
     }
     
     public function getD_id() {
@@ -143,7 +170,7 @@ class Devices {
         return $this->device_desc;
     }
 
-        public function setD_id($d_id) {
+    public function setD_id($d_id) {
         if (preg_match("/^\d+$/",$device_id) == 0)
             return false;
         $this->d_id = $d_id;

@@ -1,5 +1,4 @@
 <?php
-
 /*
  * License - FabApp V 0.9
  * 2016-2017 CC BY-NC-AS UTA FabLab
@@ -10,7 +9,7 @@
  *
  * @author Jon Le
  */
-include_once 'Materials.php';
+include_once ($_SERVER['DOCUMENT_ROOT']."/class/Materials.php");
 
 class Mats_Used {
     private $mu_id;
@@ -18,13 +17,13 @@ class Mats_Used {
     private $m_id;
     private $unit_used;
     private $mu_date;
-    private $status_id;
-    private $staff_id;
+    private $status;
+    private $staff;
     private $filename;
     private $mu_notes;
     private $material;
     
-    public function __construct($mu_id) {
+    public function __construct($mu_id){
         global $mysqli;
         
         if (!preg_match("/^\d+$/", $mu_id))
@@ -42,10 +41,25 @@ class Mats_Used {
             $this->setMaterial($row['m_id']);
             $this->setUnit_used($row['unit_used']);
             $this->setMu_date($row['mu_date']);
-            $this->setStatus_id($row['status_id']);
-            $this->setStaff_id($row['staff_id']);
+            $this->setStatus($row['status_id']);
+            $this->setStaff($row['staff_id']);
             $this->setMu_notesDB($row['mu_notes']);
+        }}
+    
+    public static function byTrans($trans_id){
+        global $mysqli;
+        
+        $muArray = array();
+        if ($result = $mysqli->query("
+            SELECT *
+            FROM mats_used
+            WHERE trans_id = $trans_id;
+        ")){
+            while($row = $result->fetch_assoc()){
+                array_push( $muArray, new self($row['mu_id']) );
+            }
         }
+        return $muArray;
     }
     
     public static function insert_Mats_used($trans_id, $m_id, $unit_used, $status_id, $staff_id, $mu_notes){
@@ -124,7 +138,7 @@ class Mats_Used {
                 `status_id`= ?, `staff_id`=?, `mu_notes` = ?
             WHERE mu_id = ?;
         ")){
-            $bind_param = $stmt->bind_param("sidissi", $this->trans_id, $this->m_id, $this->unit_used, $this->status_id, $this->staff_id, $notes, $this->mu_id);
+            $bind_param = $stmt->bind_param("sidissi", $this->trans_id, $this->m_id, $this->unit_used, $this->status->getStatus_id(), $this->staff->getOperator(), $notes, $this->mu_id);
             if ($stmt->execute() === true ){
                 $row = $stmt->affected_rows;
                 $stmt->close();
@@ -155,7 +169,7 @@ class Mats_Used {
         return $this->m_id;
     }
 
-    public function &getMaterial() {
+    public function getMaterial() {
         return $this->material;
     }
 
@@ -167,12 +181,12 @@ class Mats_Used {
         return $this->mu_date;
     }
 
-    public function getStatus_id() {
-        return $this->status_id;
+    public function getStatus() {
+        return $this->status;
     }
 
-    public function getStaff_id() {
-        return $this->staff_id;
+    public function getStaff() {
+        return $this->staff;
     }
 
     public function getMu_notes() {
@@ -207,12 +221,12 @@ class Mats_Used {
         $this->mu_date = $mu_date;
     }
 
-    public function setStatus_id($status_id) {
-        $this->status_id = $status_id;
+    public function setStatus($status_id) {
+        $this->status = new Status($status_id);
     }
 
-    public function setStaff_id($staff_id) {
-        $this->staff_id = $staff_id;
+    public function setStaff($staff_id) {
+        $this->staff = Users::withID($staff_id);
     }
 
     public function setMu_notes($mu_notes) {

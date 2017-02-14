@@ -1,5 +1,4 @@
 <?php
-
 /*
  * License - FabApp V 0.9
  * 2016-2017 CC BY-NC-AS UTA FabLab
@@ -17,16 +16,17 @@ class ObjBox {
     private $address;
     private $operator;
     private $trans_id;
-    private $staff_id;
+    private $staff;
+    public $staff_id;
     
-    public function __construct($o_id) {
+    public function __construct($o_id){
         global $mysqli;
         
         if (!preg_match("/^\d+$/", $o_id)){
             throw new Exception('Invalid Object ID');
         }
         
-        if($result = $mysqli("
+        if($result = $mysqli->query("
             SELECT *
             FROM ObjBox
             WHERE o_id = $o_id
@@ -39,11 +39,31 @@ class ObjBox {
             $this->setAddress($row['address']);
             $this->setOperator($row['operator']);
             $this->setTrans_id($row['trans_id']);
-            $this->setStaff_id($row['staff_id']);
+            $this->setStaff($row['staff_id']);
+            $this->staff_id = $row['staff_id'];
         } else 
             throw new Exception('Invalid Object Call');
     }
     
+    public static function byTrans($trans_id){
+        global $mysqli;
+        
+        if ($result = $mysqli->query("
+            SELECT *
+            FROM `objbox`
+            WHERE trans_id = $trans_id
+            LIMIT 1;
+        ")){
+            $row = $result->fetch_assoc();
+            try{
+                $instance = new self($row['o_id']);
+                return $instance;
+            } catch (Exception $e){
+                return false;
+            }
+        }
+    }
+
     public static function insert_Obj($trans_id, $staff_id){
         global $mysqli;
         
@@ -133,16 +153,72 @@ class ObjBox {
 	}
     }
     
+    public static function findObj($operator){
+	global $mysqli;
+        $instance = array();
+        
+        if (!Users::regexUser($operator)) return "Invalid ID #";
+        
+        //find objects that belong to uta_id
+	if ($result = $mysqli->query("
+            Select o_id
+            FROM objbox JOIN transactions
+            ON transactions.trans_id=objbox.trans_id
+            WHERE transactions.operator = '$operator' AND objbox.operator IS NULL;
+	")){
+            //if result is zero Look at Auth Recipients Table
+            $numRows = $result->num_rows;
+            if(($numRows) == 0){
+                $result->close();//close old result
+                if ($result = $mysqli->query("
+                    SELECT o_id
+                    FROM objbox JOIN authrecipients
+                    ON objbox.trans_id = authrecipients.trans_id
+                    WHERE authrecipients.operator = '$operator' AND objbox.operator is NULL
+                    LIMIT 1;
+                ")){
+                    if(($result->num_rows) == 0){
+                        return "No unclaimed objects found.";
+                    }
+                } else {
+                    return"AuthRecip Error - ar4734";
+                }
+            }
+            while($row = $result->fetch_assoc()){
+                array_push($instance, new self($row['o_id']));
+            }
+            return $instance;
+        }
+        return "ObjBox Query Error - o4734";
+    }
+    
+    public function pickedUpBy($operator){
+        global $mysqli;
+        
+        //update ObjBox Table
+        if ($mysqli->query("
+            UPDATE `objbox`
+            SET `pickupid` = '$operator', `o_end` = CURRENT_TIMESTAMP
+            WHERE `trans_id` = $trans_id;
+        ")){
+            return true;
+        } else {
+            return "Update Object Manager Error";
+        }
+    }
+    
     public function getO_id() {
         return $this->o_id;
     }
 
     public function getO_start() {
-        return $this->o_start;
+        return date('M d, Y g:i a',strtotime($this->o_start));
     }
 
     public function getO_end() {
-        return $this->o_end;
+        if ($this->o_end == "")
+            return "";
+        return date('M d, Y g:i a',strtotime($this->o_end));
     }
 
     public function getAddress() {
@@ -157,8 +233,8 @@ class ObjBox {
         return $this->trans_id;
     }
 
-    public function getStaff_id() {
-        return $this->staff_id;
+    public function getStaff() {
+        return $this->staff;
     }
 
     public function setO_id($o_id) {
@@ -185,7 +261,7 @@ class ObjBox {
         $this->trans_id = $trans_id;
     }
 
-    public function setStaff_id($staff_id) {
-        $this->staff_id = $staff_id;
+    public function setStaff($staff_id) {
+        $this->staff = Users::withID($staff_id);
     }
 }

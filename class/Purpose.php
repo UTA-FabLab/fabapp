@@ -1,5 +1,4 @@
 <?php
-
 /*
  * License - FabApp V 0.9
  * 2016-2017 CC BY-NC-AS UTA FabLab
@@ -21,12 +20,13 @@ class Purpose {
             $this->msg = "Invalid Purpose Code";
         
         if ($result = $mysqli->query("
-            SELECT p_title
+            SELECT *
             FROM purpose
             WHERE p_id = $p_id;
         ")){
             $row = $result->fetch_assoc();
-            $this->setP_title($row['p_id']);
+            $this->setP_id($row['p_id']);
+            $this->setP_title($row['p_title']);
         }
     }
     
