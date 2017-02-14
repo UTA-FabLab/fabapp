@@ -368,8 +368,8 @@ function validateForm() {
 
 <?php if (strcmp($dg_name,"uprint") == 0){ ?>
 function uPrint () { <?php
-    $s = "var total = ( conv_rate*(";
     echo ("\n\tvar conv_rate = $sv[uprint_conv];\n\t");
+    $s = "var total = ( conv_rate*(";
     foreach($device_mats as $dm){
         echo ("var rate$dm[m_id] = $dm[price];\n\t");
         echo("var m_$dm[m_id] = document.getElementById('m_$dm[m_id]').value;\n\t");

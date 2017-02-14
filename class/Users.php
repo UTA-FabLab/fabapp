@@ -8,7 +8,7 @@
  * Pull all attributes relevant to a User
  * @author Jon Le
  */
- include_once 'role.php';
+ include_once ($_SERVER['DOCUMENT_ROOT']."/class/Role.php");
  
  class Users {
     private $u_id;
@@ -17,6 +17,7 @@
     private $roleID;
     private $rfid_no;
     private $icon;
+    private $accounts;
 
     public function __construct() {}
 
@@ -47,11 +48,15 @@
             Limit 1;
         ")){
             $row = $result->fetch_assoc();
-            $this->operator = $row['operator'];
+            if (strcmp($row['operator'], "") != 0)
+                $this->operator = $row['operator'];
+            else 
+                $this->operator = $operator;
             $this->exp_date = $row['exp_date'];
             $this->roleID = $row['r_id'];
             $this->rfid_no = $row['rfid_no'];
             $this->icon = $row['icon'];
+            $this->setAccounts($operator);
         } else {
             return false;
         }
@@ -92,6 +97,29 @@
             return true;
         }
     }
+    
+    public function setAccounts($operator){
+        global $mysqli;
+        $accounts = array();
+        
+        if($result = $mysqli->query("
+            SELECT `a_id`
+            FROM `auth_accts`
+            WHERE `auth_accts`.`operator` = '$operator';
+        ")){
+            while($row = $result->fetch_assoc()){
+                array_push($accounts, new Accounts($row['a_id']));
+            }
+            $this->accounts = $accounts;
+        } else {
+            echo $mysqli->error;
+            return false;
+        }
+    }
+    
+    public function getAccounts(){
+        return $this->accounts;
+    }
 	
     public function getOperator(){
         return $this->operator;
@@ -111,7 +139,6 @@
         return "Function not Prepared yet";
     }
 	
-    //$exp_date
     public function getExp_date(){
         return $this->exp_date;
     }
@@ -120,7 +147,6 @@
         return "Function not Prepared Yet";
     }
 	
-    //$rfid_no
     public function getRfid_no(){
         return $this->rfid_no;
     }
@@ -129,7 +155,6 @@
         return "Function not Prepared Yet";
     }
 	
-    //$icon
     public function getIcon(){
         return $this->icon;
     }

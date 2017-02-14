@@ -42,6 +42,7 @@ if( isset($_SESSION['staff']) ){
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if( isset($_POST['signBtn']) ){
         if ( count($_POST) && !empty($_POST["netID"]) && !empty($_POST["pass"]) ){
+            //Remove 3rd argument, define attribute in ldap.php
             $operator = AuthenticateUser($_POST["netID"],$_POST["pass"],"utaEmplID");
             $_SESSION['netID'] = $_POST["netID"];
             if ($operator) {
@@ -68,9 +69,33 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             echo "NOPE";
         }
     } elseif( isset($_POST['searchBtn']) ){
-        echo "Someone needs to program the search function.";
-    } elseif( isset($_POST['pickBtn']) ){
-        echo "Someone needs to program the Pick-Up function.";
+        if(isset($_POST['searchField'])){
+            $searchField = $_POST['searchField'];
+            if(isset($_POST['searchType'])){
+                if(strcmp($_POST['searchType'], "trans") == 0){
+                    $trans_id = $_POST['searchField'];
+                    header("location:/pages/lookup.php?trans_id=$trans_id");
+                } elseif (strcmp($_POST['searchType'], "operator") == 0){
+                    $operator = $_POST['searchField'];
+                    header("location:/pages/lookup.php?operator=$operator");
+                } else {
+                    echo "<script>alert('Illegal Search Condition');</script>";
+                }
+            } else {
+                echo "<script>alert('Invalid Search Condition');</script>";
+            }
+        }
+        
+    } elseif( filter_input(INPUT_POST, 'pickBtn') !== null ){
+        print_r($_POST['pickBtn']);
+        if( filter_input(INPUT_POST, 'pickField') !== null){
+            if(!Users::regexUser(filter_input(INPUT_POST, 'pickField'))){
+                echo "<script>alert('Invalid ID #');</script>";
+            } else {
+                $operator = filter_input(INPUT_POST, 'pickField');
+                header("location:/pages/pickup.php?operator=$operator");
+            }
+        }
     }
 }
 ?>
@@ -104,7 +129,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             <label for="email" class="col-sm-3 control-label">
                                 NetID</label>
                             <div class="col-sm-9">
-                                <input type="text" class="form-control" name="netID" placeholder="UTA NetID" value="<?php if(isset($_SESSION['netID'])) echo $_SESSION['netID'];?>"/>
+                                <input type="text" class="form-control" name="netID" placeholder="NetID" value="<?php if(isset($_SESSION['netID'])) echo $_SESSION['netID'];?>"/>
                             </div>
                         </div>
                         <div class="form-group">
@@ -178,12 +203,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             <ul class="nav nav-second-level">
                             <form name="searchForm" method="POST" action="" autocomplete="off"  onsubmit="return validateNum('searchForm')"> 
                                 <li class="sidebar-radio">
-                                    <input type="radio" name="searchType" value="trans" id="trans" checked><label for="trans">Ticket</label>
-                                    <input type="radio" name="searchType" value="uta_id" id="uta"><label for="uta">UTA ID</label>
+                                    <input type="radio" name="searchType" value="trans" id="trans" checked onchange="searchF()" onclick="searchF()"><label for="trans">Ticket</label>
+                                    <input type="radio" name="searchType" value="operator" id="operator" onchange="searchF()" onclick="searchF()"><label for="operator">ID #</label>
                                 </li>
                                 <li class="sidebar-search">
                                     <div class="input-group custom-search-form">
-                                        <input type="number" name="searchField" class="form-control" placeholder="Search..." name="searchField">
+                                        <input type="number" name="searchField" class="form-control" placeholder="Search..." name="searchField" onclick="searchF()">
                                         <span class="input-group-btn">
                                         <button class="btn btn-default" type="submit" name="searchBtn">
                                             <i class="fa fa-search"></i>
@@ -194,11 +219,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             </form>
                             </ul>
                         </li>
-<?php } ?>
-                        <li>
-                            <a href="#"><i class="fa fa-linode fa-fw"></i> Inventory</a>
-                        </li>
-<?php if ($staff) if($staff->getRoleID() > 6) { ?>
+<?php } 
+if ($staff) if($staff->getRoleID() > 6) { ?>
                         <li>
                             <a href="#"><i class="fa fa-wrench fa-fw"></i> Service Request<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">

@@ -9,16 +9,19 @@
  * A ticket is generated every time an operator uses a piece of equipment.
  * @author Jon Le
  */
-include_once ("Users.php");
+
+include_once ($_SERVER['DOCUMENT_ROOT']."/class/Purpose.php");
+include_once ($_SERVER['DOCUMENT_ROOT']."/class/Status.php");
+include_once ($_SERVER['DOCUMENT_ROOT']."/class/Users.php");
  
 class Transactions {
-    private $d_id;
+    public $device;
     private $duration;
     private $est_time;
-    private $p_id;
-    private $operator;
-    private $staff_id;
-    private $status_id;
+    private $purpose;
+    private $user;
+    private $staff;
+    private $status;
     private $t_start;
     private $t_end;
     private $trans_id;
@@ -35,13 +38,13 @@ class Transactions {
             LIMIT 1;
         ")){
             $row = $result->fetch_assoc();
-            $this->setD_id($row['d_id']);
+            $this->setDevice($row['d_id']);
             $this->setDuration($row['duration']);
             $this->setEst_time($row['est_time']);
-            $this->setOperator($row['operator']);
-            $this->setP_id($row['p_id']);
-            $this->setStaff_id($row['staff_id']);
-            $this->setStatus_id($row['status_id']);
+            $this->setUser($row['operator']);
+            $this->setPurpose($row['p_id']);
+            $this->setStaff($row['staff_id']);
+            $this->setStatus($row['status_id']);
             $this->setT_end($row['t_end']);
             $this->setT_start($row['t_start']);
             $this->setTrans_id($row['trans_id']);
@@ -104,48 +107,26 @@ class Transactions {
     public function end($status_id, $staff_id){
         global $mysqli;
         if(!Status::regexID($status_id)) return false;
-        $this->setStatus_id($status_id);
+        $this->setStatus($status_id);
+        
         if(!Staff::regexUser($staff_id)) return false;
-        $this->setStaff_id($staff_id);
+        $this->setStaff($staff_id);
         $trans_id = $this->getTrans_id();
         
-        //check if transaction has a related material
-        if ($result = $mysqli->query("
-            SELECT *
-            FROM mats_used
-            WHERE trans_id = $trans_id;
-        ")){
-            $num_rows = $result->num_rows;
-
-            //if rows then...
-            if($num_rows > 0){
-                // Ticket has materials, log ending time & update status
-                // in transactions and mats_used
-                if ($this->duration == ""){
-                    //Transaction lacks ending time
-                    //So...let's give it one
-                    $query = "  UPDATE `transactions`, `mats_used`
-                                SET `t_end` = CURRENT_TIMESTAMP,
-                                    transactions.status_id = '$status_id',  transactions.staff_id = '$staff_id',
-                                    mats_used.status_id = '$status_id', mats_used.staff_id = '$staff_id',
-                                    duration = SEC_TO_TIME (TIMESTAMPDIFF (SECOND, t_start, CURRENT_TIMESTAMP))
-                                WHERE transactions.trans_id = $trans_id AND transactions.trans_id = mats_used.trans_id; ";
-                } else {
-                    $query = "  UPDATE `transactions`, `mats_used`
-                                SET transactions.status_id = '$status_id',  transactions.staff_id = '$staff_id',
-                                    mats_used.status_id = '$status_id', mats_used.staff_id = '$staff_id',
-                                WHERE transactions.trans_id = $trans_id AND transactions.trans_id = mats_used.trans_id; ";
-                }
-            } else {
-                //Ticket has no materials, so only log ending time
-                $query = "  UPDATE `transactions`
-                            SET `t_end` = CURRENT_TIMESTAMP, 
-                                transactions.status_id = $status_id, staff_id = $staff_id,
-                                duration = SEC_TO_TIME (TIMESTAMPDIFF (SECOND, t_start, CURRENT_TIMESTAMP))
-                            WHERE transactions.trans_id = $trans_id;";
-            }
+        // Ticket has materials, log ending time & update status
+        // in transactions and mats_used
+        if ($this->duration == ""){
+            //Transaction lacks ending time
+            //So...let's give it one
+            $query = "  UPDATE `transactions`
+                        SET `t_end` = CURRENT_TIMESTAMP,
+                            transactions.status_id = '$status_id',  transactions.staff_id = '$staff_id',
+                            duration = SEC_TO_TIME (TIMESTAMPDIFF (SECOND, t_start, CURRENT_TIMESTAMP))
+                        WHERE transactions.trans_id = $trans_id";
         } else {
-            return $mysqli->error;
+            $query = "  UPDATE `transactions`
+                        SET transactions.status_id = '$status_id',  transactions.staff_id = '$staff_id'
+                        WHERE transactions.trans_id = $trans_id";
         }
         
         if($result = $mysqli->query($query)){
@@ -158,9 +139,9 @@ class Transactions {
                 $this->setDuration($row["duration"]);
                 return true;
             } else
-                return false;
+                return $mysqli->error;
         } else
-            return false;
+            return $mysqli->error;
     }
     
     public function writeAttr(){
@@ -183,9 +164,9 @@ class Transactions {
         
         if($mysqli->query("
             UPDATE `transactions`
-            SET `d_id` = '$this->d_id', `operator` = '$this->operator', `est_time` = $est_time,
+            SET `d_id` = '".$this->device->getD_id()."', `operator` = '".$this->user->getOperator()."', `est_time` = $est_time,
                 `t_start` = '$this->t_start', `t_end` = $t_end, `duration` = $duration,
-                `status_id` = '$this->status_id', `p_id` = $this->p_id, `staff_id` = $this->staff_id
+                `status_id` = '".$this->status->getStatus_id()."', `p_id` = '".$this->purpose->getP_id()."', `staff_id` = ".$this->staff->getOperator()."
             WHERE `trans_id` = '$this->trans_id'
             LIMIT 1;
         ")){
@@ -194,49 +175,56 @@ class Transactions {
         //return $mysqli->error;
         return $mysqli->error." ~ ".$query;
     }
-    
-    public function getD_id() {
-        return $this->d_id;
+
+    public function getDevice() {
+        return $this->device;
     }
 
     public function getDuration() {
-        return $this->duration;
+        if (strcmp($this->duration,"") == 0)
+                return "";
+        $sArray = explode(":", $this->duration);
+        $time = "$sArray[0]h $sArray[1]m $sArray[2]s";
+        return $time;
     }
 
     public function getEst_time() {
         return $this->est_time;
     }
 
-    public function getP_id() {
-        return $this->p_id;
+    public function getPurpose() {
+        return $this->purpose;
     }
 
-    public function getOperator() {
-        return $this->operator;
+    public function getUser() {
+        return $this->user;
     }
 
-    public function getStaff_id() {
-        return $this->staff_id;
+    public function getStaff() {
+        return $this->staff;
     }
 
-    public function getStatus_id() {
-        return $this->status_id;
+    public function getStatus() {
+        return $this->status;
     }
 
     public function getT_start() {
-        return $this->t_start;
+        return date('M d, Y g:i a',strtotime($this->t_start));
     }
 
     public function getT_end() {
-        return $this->t_end;
+        if (strcmp($this->duration,"") == 0)
+                return ""; 
+        return date('M d, Y g:i a',strtotime($this->t_end));
     }
 
     public function getTrans_id() {
         return $this->trans_id;
     }
 
-    public function setD_id($d_id) {
+    public function setDevice($d_id) {
         $this->d_id = $d_id;
+        $this->device = new Devices($d_id);
     }
 
     public function setDuration($duration) {
@@ -247,31 +235,31 @@ class Transactions {
         $this->est_time = $est_time;
     }
 
-    public function setP_id($p_id) {
-        $this->p_id = $p_id;
+    public function setPurpose($p_id) {
+        $this->purpose = new Purpose($p_id);
     }
 
-    public function setOperator($operator) {
-        $this->operator = $operator;
+    public function setUser($operator) {
+        $this->user = Users::withID($operator);
     }
 
-    public function setStaff_id($staff_id) {
-        $this->staff_id = $staff_id;
+    public function setStaff($staff_id) {
+        $this->staff = Users::withID($staff_id);
     }
 
-    public function setStatus_id($status_id) {
-        $this->status_id = $status_id;
+    public function setStatus($status_id) {
+        $this->status = new Status($status_id);
     }
 
-    public function setT_start($t_start) {
+    private function setT_start($t_start) {
         $this->t_start = $t_start;
     }
 
-    public function setT_end($t_end) {
+    private function setT_end($t_end) {
         $this->t_end = $t_end;
     }
 
-    public function setTrans_id($trans_id) {
+    private function setTrans_id($trans_id) {
         $this->trans_id = $trans_id;
     }
 }

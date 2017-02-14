@@ -1,11 +1,13 @@
 <?php
-/*   
+/*
  *   License FabApp v 0.9
  *   2015-2016 CC BY-NC-AS UTA FabLab
  * 
  * Generic call for all classes
  */
 
+include_once ($_SERVER['DOCUMENT_ROOT']."/class/Accounts.php");
+include_once ($_SERVER['DOCUMENT_ROOT']."/class/Auth_Accts.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/Devices.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/Materials.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/Mats_Used.php");

@@ -1,18 +1,18 @@
 <?php
-
 /*
  * License - FabApp V 0.9
  * 2015-2016 CC BY-NC-AS UTA FabLab
  */
 
-/**
+/*
  * Description of Staff an extension of class Users
  * Intended for use when a users logs into FabApp
  * Not-exclusive to employees
  * @author Jon Le
  */
-include_once("Users.php");
-include_once ("site_variables.php");
+
+include_once ($_SERVER['DOCUMENT_ROOT']."/class/Users.php");
+include_once ($_SERVER['DOCUMENT_ROOT']."/class/site_variables.php");
 
 class Staff extends Users{
     //current url location
