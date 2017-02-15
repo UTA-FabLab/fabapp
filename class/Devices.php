@@ -30,7 +30,7 @@ class Devices {
         if ($result = $mysqli->query("
              SELECT *
              FROM `Devices`
-             WHERE `d_id` = $d_id
+             WHERE `d_id` = '$d_id';
         ")){
             $row = $result->fetch_assoc();
             
@@ -53,7 +53,7 @@ class Devices {
         if($result = $mysqli->query("
             SELECT * 
             FROM `transactions`
-            WHERE d_id = $d_id AND status_id < 12
+            WHERE d_id = '$d_id' AND `status_id` < 12
         ")){
             if ($result->num_rows > 0)
                 return true;
@@ -72,8 +72,8 @@ class Devices {
         //Check to see if device exists
         if ($result = $mysqli->query("
             SELECT *
-            FROM devices
-            WHERE d_id = $d_id
+            FROM `devices`
+            WHERE `d_id` = '$d_id'
             LIMIT 1;
         ")){
             if ($result->num_rows == 1)
@@ -92,8 +92,8 @@ class Devices {
         }//Check to see if device exists
         if ($result = $mysqli->query("
             SELECT *
-            FROM devices
-            WHERE device_id = $device_id
+            FROM `devices`
+            WHERE `device_id` = '$device_id'
             LIMIT 1;
         ")){
             if ($result->num_rows == 1)
@@ -132,9 +132,9 @@ class Devices {
         global $mysqli;
         
         if($result = $mysqli->query("
-            SELECT dg_name
-            FROM device_group
-            WHERE dg_id = $this->dg_id
+            SELECT `dg_name`
+            FROM `device_group`
+            WHERE `dg_id` = '".$this->dg_id."'
             LIMIT 1;
         ")){
             $row = $result->fetch_assoc();
@@ -147,9 +147,9 @@ class Devices {
         global $mysqli;
         
         if($result = $mysqli->query("
-            SELECT dg_parent
-            FROM device_group
-            WHERE dg_id = $this->dg_id
+            SELECT `dg_parent`
+            FROM `device_group`
+            WHERE `dg_id` = '".$this->dg_id."'
             LIMIT 1;
         ")){
             $row = $result->fetch_assoc();

@@ -207,6 +207,32 @@ class ObjBox {
         }
     }
     
+    public static function inStorage(){
+        global $mysqli;
+        
+        if($result = $mysqli->query("
+            SELECT COUNT(*) as count
+            FROM objbox
+            WHERE o_end IS NULL;
+        ")){
+            $i = $result->fetch_assoc();
+            return $i['count'];
+        }
+    }
+    
+    public static function lifetimeObj(){
+        global $mysqli;
+        
+        if($result = $mysqli->query("
+            SELECT COUNT(*) as count
+            FROM objbox
+            WHERE 1;
+        ")){
+            $i = $result->fetch_assoc();
+            return $i['count'];
+        }
+    }
+    
     public function getO_id() {
         return $this->o_id;
     }

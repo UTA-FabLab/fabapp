@@ -132,7 +132,7 @@ function genericForm($operator, $d_id, $est_time, $p_id, $status_id, $staff_id, 
     }
 }
 ?>
-<title>FabLab Create Ticket</title>
+<title><?php echo $sv['site_name'];?> Create Ticket</title>
 <div id="page-wrapper">
 <?php //if logged in and have role id of 8 or greater
 if ($staff) {

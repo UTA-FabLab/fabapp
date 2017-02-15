@@ -7,7 +7,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 $device_array = array();
 $_SESSION['type'] = "home";
 ?>
-<title>FapApp Dashboard</title>
+<title><?php echo $sv['site_name'];?> Dashboard</title>
 <div id="page-wrapper">
     <div class="row">
         <div class="col-lg-12">
@@ -110,15 +110,13 @@ $_SESSION['type'] = "home";
                         <tbody>
                         <?php //Display Inventory Based on device group
                         if($result = $mysqli->query("
-                            SELECT m_name, SUM(unit_used) as sum, color_hex, unit
-                            FROM materials
-                            LEFT JOIN device_materials
-                            ON device_materials.m_id = materials.m_id
-                            LEFT JOIN mats_used
-                            ON mats_used.m_id = materials.m_id
-                            WHERE dg_id = 2
-                            GROUP BY m_name
-                            ORDER BY m_name ASC;
+                            SELECT `m_name`, SUM(unit_used) as `sum`, `color_hex`, `unit`
+                            FROM `materials`
+                            LEFT JOIN `mats_used`
+                            ON mats_used.m_id = `materials`.`m_id`
+                            WHERE `m_parent` = 1
+                            GROUP BY `m_name`, `color_hex`, `unit`
+                            ORDER BY `m_name` ASC;
                         ")){
                             while ($row = $result->fetch_assoc()){ ?>
                             <tr>

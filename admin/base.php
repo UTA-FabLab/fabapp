@@ -5,7 +5,7 @@
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 ?>
-<title>FabLab Admin Base</title>
+<title><?php echo $sv['site_name'];?> Admin Base</title>
 <?php if ($staff) if($staff->getRoleID() < 7){
     //Not Authorized to see this Page
     header('Location: /index.php');

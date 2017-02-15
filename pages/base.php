@@ -5,7 +5,7 @@
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 ?>
-<title>FabLab Base</title>
+<title><?php echo $sv['site_name'];?> Base</title>
 <div id="page-wrapper">
     <div class="row">
         <div class="col-lg-12">
