@@ -138,14 +138,14 @@ function move($status_id, $ticket, $mats_used, $staff_id){
         $_SESSION['type'] = "end";
         header('Location:/pages/lookup.php?trans_id='.$ticket->getTrans_id());
         
-    //
+    //send page to the payment
     } elseif ($status_id == 20) {
         $_SESSION['type'] = "end";
         header('Location:/pages/pay.php?trans_id='.$ticket->getTrans_id());
     }
 }
 ?>
-<title>FabLab - End Ticket</title>
+<title><?php echo $sv['site_name'];?> End Ticket</title>
 <div id="page-wrapper">
     <div class="row">
         <div class="col-lg-12">
@@ -221,17 +221,18 @@ function move($status_id, $ticket, $mats_used, $staff_id){
                                                 <tr>
                                                     <td>Print Status</td>
                                                     <td><select name="status_<?php echo $mu_id;?>" id="status_<?php echo $mu_id;?>" onchange="calc()">
-                                                            <option value="" selected hidden="true">Select</option>
+														<option value="" selected hidden="true">Select</option>
                                                         <option value="14">Move to Storage</option>
                                                         <option value="20">Pickup Now</option>
                                                         <option value="12">Failed</option>
+														<option value="15"><i class="fa fa-pencil-square-o fa-fw"></i>Cancel</option>
                                                     </select></td>
                                                 </tr>
                                                 <?php
-                                                if (strcmp($mu->getFileName(), "") != 0){ ?>
+                                                if (strcmp($mu->getHeader(), "") != 0){ ?>
                                                     <tr>
                                                         <td>File Name</td>
-                                                        <td><?php echo $mu->getFileName(); ?></td>
+                                                        <td><?php echo $mu->getHeader(); ?></td>
                                                     </tr>
                                                 <?php } ?>
                                                 <tr>
@@ -292,10 +293,10 @@ function move($status_id, $ticket, $mats_used, $staff_id){
                                     <td>Material Status</td>
                                     <td><?php echo $mu->getStatus()->getMsg()?></td>
                                 </tr>
-                                <?php if (strcmp($mu->getFileName(), "") != 0){ ?>
+                                <?php if (strcmp($mu->getHeader(), "") != 0){ ?>
                                     <tr>
                                         <td>File Name</td>
-                                        <td><?php echo $mu->getFileName(); ?></td>
+                                        <td><?php echo $mu->getHeader(); ?></td>
                                     </tr>
                                 <?php }
                                 if ($staff) {

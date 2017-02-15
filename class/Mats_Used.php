@@ -19,7 +19,7 @@ class Mats_Used {
     private $mu_date;
     private $status;
     private $staff;
-    private $filename;
+    private $header;
     private $mu_notes;
     private $material;
     
@@ -125,11 +125,11 @@ class Mats_Used {
     public function writeAttr(){
         global $mysqli;
     
-        //Combine $filename & $mu_notes
-        if ($this->filename == "")
+        //Combine $header & $mu_notes
+        if ($this->header == "")
             $notes = $this->mu_notes;
         else
-            $notes = "|".$this->filename."|".$this->mu_notes;
+            $notes = "|".$this->header."|".$this->mu_notes;
         
         //Update Mat_used
         if ($stmt = $mysqli->prepare("
@@ -193,8 +193,8 @@ class Mats_Used {
         return $this->mu_notes;
     }
 
-    public function getFilename() {
-        return $this->filename;
+    public function getHeader() {
+        return $this->header;
     }
     
     private function setMu_id($mu_id) {
@@ -235,14 +235,14 @@ class Mats_Used {
 
     private function setMu_notesDB($mu_notes) {
         
-        //Break filename apart from Notes
+        //Break header apart from Notes
         $sArray = explode("|", $mu_notes);
         
         if (count($sArray) == 3){
             if($sArray[0] == ""){
-                $this->filename = $sArray[1];
+                $this->header = $sArray[1];
             } else {
-                $this->filename = "";
+                $this->header = "";
             }
             $this->mu_notes = $sArray[2];
         } else 

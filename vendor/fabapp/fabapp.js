@@ -39,10 +39,10 @@ function IDCheck(operator){
 }
 
 function endTicket(trans_id, device_desc) {
-    var message = "Are you sure you want to end \n\n\t Ticket # ";
-    message = message.concat(trans_id);
-    message = message.concat(" on ");
+    var message = "Are you sure you want to end ";
     message = message.concat(device_desc);
+    message = message.concat("\n\n\Ticket # ");
+    message = message.concat(trans_id);
     var answer = confirm(message);
 	if (answer){
             var dest = "/pages/end.php?trans_id=";

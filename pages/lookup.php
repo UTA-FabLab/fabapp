@@ -50,7 +50,7 @@ if ($errorMsg != ""){
     echo "<script> alert('$errorMsg'); window.location.href='/index.php';</script>";
 }
 ?>
-<title>FabLab Ticket Detail</title>
+<title><?php echo $sv['site_name'];?> Ticket Detail</title>
 <div id="page-wrapper">
     <div class="row">
         <div class="col-lg-12">
@@ -83,6 +83,14 @@ if ($errorMsg != ""){
                             <td>Duration</td>
                             <td><?php echo $ticket->getDuration(); ?></td>
                         </tr>
+						<?php if ($staff) {
+							if ($staff->getRoleID() > 6){ ?>
+								<tr>
+									<td>Operator</td>
+									<td><i class="fa fa-<?php if ( $ticket->getUser()->getIcon() ) echo $ticket->getUser()->getIcon(); else echo "user";?> fa-fw"></i><?php echo $ticket->getUser()->getOperator();?></td>
+								</tr>
+							<?php }
+						}?>
                         <tr>
                             <td>Status</td>
                             <td><?php echo $ticket->getStatus()->getMsg(); ?></td>
@@ -129,10 +137,10 @@ if ($errorMsg != ""){
                                 <td>Material Status</td>
                                 <td><?php echo $mu->getStatus()->getMsg()?></td>
                             </tr>
-                            <?php if (strcmp($mu->getFileName(), "") != 0){ ?>
+                            <?php if (strcmp($mu->getHeader(), "") != 0){ ?>
                                 <tr>
                                     <td>File Name</td>
-                                    <td><?php echo $mu->getFileName(); ?></td>
+                                    <td><?php echo $mu->getHeader(); ?></td>
                                 </tr>
                             <?php }
                             if ($staff) {
@@ -172,7 +180,7 @@ if ($errorMsg != ""){
                                 if ($staff->getRoleID() > 6){ ?>
                                     <tr>
                                         <td>Address</td>
-                                        <td><?php echo $objbox->getAddress(); ?></td>
+                                        <td><input type="submit" value="<?php echo $objbox->getAddress(); ?>"></td>
                                     </tr>
                                     <tr>
                                         <td>Staff ID</td>

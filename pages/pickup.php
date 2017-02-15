@@ -22,10 +22,42 @@ if($staff){
 
 if ($errorMsg != ""){
     echo $errorMsg;
-    //echo "<script> alert('$errorMsg'); window.location.href='/index.php';</script>";
+    echo "<script> alert('$errorMsg'); window.location.href='/index.php';</script>";
+}
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    foreach($objbox as $ob){
+        if (isset($_POST['pickBtn_'.$ob->getO_id()])){
+            foreach($mats_used as $mu){
+                $mu_id = $mu->getMu_id();
+                $status_id = $_POST["status_".$mu->getMu_id()];
+                $status_array = explode("@", $status_id);
+                
+                $mu->setStaff($staff->getOperator());
+                $mu->setUnit_used($_POST["uu_".$mu->getMu_id()]);
+				
+                //Print has been marked as failed
+                if ($status_array[0] == 12){
+                    //we must check if mu notes has text
+                    $mu->getStatus()->setStatus_id();
+                    
+                //Print has been marked to be paid to account
+                } elseif ($status_array[0] == 20){
+                    //set $_SESSION['type'] = "pay";
+                    //set $_SESSION['account'] = $status_array[2]
+                }
+                if ($status_id < $mu->getStatus()->getStatus_id())
+                    $status_id = $mu->getStatus()->getStatus_id();
+                
+                $mu->setMu_notes();
+                $mu->writeAttr();
+                "uu_".$mu->getMu_id();
+                "mu_notes_".$mu->getMu_id();
+            }
+        }
+    }
 }
 ?>
-<title>FabLab Pick Up</title>
+<title><?php echo $sv['site_name'];?> Pick Up</title>
 <div id="page-wrapper">
     <div class="row">
         <div class="col-lg-12">
@@ -44,7 +76,8 @@ if ($errorMsg != ""){
                         <i class="fa fa-ticket fa-fw"></i> Ticket # <?php echo $ticket->getTrans_id()."<br>"; ?>
                     </div>
                     <div class="panel-body">
-                        <table class ="table table-bordered table-striped"><form>
+                        <table class ="table table-bordered table-striped">
+                        <form action="" method="post" autocomplete="off" onsubmit="return validateForm_<?php echo $ob->getO_id();?>()">
                             <tr>
                                 <td>Device</td>
                                 <td><?php echo $ticket->device->getDevice_desc(); ?></td>
@@ -64,12 +97,15 @@ if ($errorMsg != ""){
                             <?php 
                             foreach ($mats_used as $mu){ ?>
                                 <tr>
-                                    <td><?php echo $mu->getMaterial()->getM_name()?><div class="color-box" style="background-color: #<?php echo $mu->getMaterial()->getColor_hex();?>; float:right;"></div>
+                                    <td><?php echo $mu->getMaterial()->getM_name()
+                                            ?><div class="color-box" style="background-color: #<?php echo $mu->getMaterial()->getColor_hex();
+                                            ?>; float:right;"></div>
                                     </td>
                                     <td>$<?php echo $mu->getMaterial()->getPrice(); ?> at <input type="number" name="uu_<?php 
-											echo $mu->getMu_id();?>" id="uu_<?php echo $mu->getMu_id();?>" min="0" max="10000" 
-											step="1" style="text-align: right" onchange="calc_<?php echo $ob->getO_id() ?>()" 
-											onkeyup="calc_<?php echo $ob->getO_id() ?>()" value="<?php echo $mu->getUnit_used();?>"> grams
+                                        echo $mu->getMu_id();?>" id="uu_<?php echo $mu->getMu_id();?>" min="0" max="10000" 
+                                        step="1" style="text-align: right" onchange="calc_<?php echo $ob->getO_id() ?>()" 
+                                        onkeyup="calc_<?php echo $ob->getO_id() ?>()" value="<?php echo $mu->getUnit_used();?>"> grams
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td>Print Status</td>
@@ -77,7 +113,7 @@ if ($errorMsg != ""){
                                         <select name="status_<?php echo $mu->getMu_id();?>" id="status_<?php echo $mu->getMu_id();?>"
                                                 onchange="calc_<?php echo $ob->getO_id() ?>()" onkeyup="calc_<?php echo $ob->getO_id() ?>()">
                                             <option value="" selected disabled hidden>Select</option>
-                                            <option value="20" >Pay</option>
+                                            <option value="20@2" >Pay</option>
                                             <?php $accounts = $ticket->getUser()->getAccounts();
                                             foreach ($accounts as $accts){
                                                 echo ("<option value='20@".$accts->getA_id()."'>".$accts->getName()."</option>");
@@ -85,6 +121,17 @@ if ($errorMsg != ""){
                                             <option value="12">Failed</option>
                                         </select>
                                     </td>
+                                </tr>
+                                <?php
+                                if (strcmp($mu->getHeader(), "") != 0){ ?>
+                                    <tr>
+                                        <td>File Name</td>
+                                        <td><?php echo $mu->getHeader(); ?></td>
+                                    </tr>
+                                <?php } ?>
+                                <tr>
+                                    <td><i class="fa fa-pencil-square-o fa-fw"></i>Notes</td>
+                                    <td><textarea name="mu_notes_<?php echo $mu->getMu_id();?>" id="mu_notes_<?php echo $mu->getMu_id();?>" class="form-control"><?php echo $mu->getMu_notes();?></textarea></td>
                                 </tr>
                             <?php } ?>
                             <tr>
@@ -96,9 +143,10 @@ if ($errorMsg != ""){
                                 <td><b><?php echo $ob->getAddress();?></b></td>
                             </tr>
                             <tfoot>
-                                <td align="center" colspan="2"><input type="submit" name="submit" value="Pick Up" id="submitBtn"></td>
+                                <td align="center" colspan="2"><input type="submit" name="pickBtn_<?php echo $ob->getO_id(); ?>" value="Pick Up" id="submitBtn"></td>
                             </tfoot>
-			</form></table>
+			</form>
+                        </table>
                     </div>
                 </div>
             <?php } ?>
@@ -116,6 +164,39 @@ if ($errorMsg != ""){
                 <!-- /.panel-body -->
             </div>
             <!-- /.panel -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fa fa-exclamation-triangle fa-fw"></i> Inspect your print
+                </div>
+                <div class="panel-body">
+                    <?php echo $sv['inspectPrint'];?>
+                </div>
+                <!-- /.panel-body -->
+            </div>
+            <!-- /.panel -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fa fa-area-chart fa-fw"></i> Stats
+                </div>
+                <div class="panel-body">
+                    <table class="table table-bordered table-hover">
+                        <tr>
+                            <td>Capacity</td>
+                            <td><?php echo $sv['box_number'] * $sv['letter'];?></td>
+                        </tr>
+                        <tr>
+                            <td>In Storage</td>
+                            <td><?php echo ObjBox::inStorage();?></td>
+                        </tr>
+                        <tr>
+                            <td>Total Objects Managed</td>
+                            <td><?php echo ObjBox::lifetimeObj();?></td>
+                        </tr>
+                    </table>
+                </div>
+                <!-- /.panel-body -->
+            </div>
+            <!-- /.panel -->
         </div>
         <!-- /.col-lg-4 -->
     </div>
@@ -124,18 +205,63 @@ if ($errorMsg != ""){
 <!-- /#page-wrapper -->
 <script type="text/javascript">
 <?php //make a function for each object in storage
-foreach ($objbox as $ob) { 
-    $mats_used = Mats_Used::byTrans($ob->getTrans_id())?>
-    function calc_<?php echo $ob->getO_id() ?>(){ <?php //Declare values
-        echo ("\n\t\tvar total = 0\n\t\t");
-        foreach($mats_used as $mu){
-            echo ("var status_".$mu->getMu_id()." = document.getElementById('status_".$mu->getMu_id()."').value;\n\t\t");
-            echo ("var rate_".$mu->getMu_id()." = ".$mu->getMaterial()->getPrice().";\n\t\t");
-            echo ("var uu_".$mu->getMu_id()." = document.getElementById('uu_".$mu->getMu_id()."').value;\n\t\t");
-            echo ("if (status_".$mu->getMu_id()." != 12)\n\t\t\t");
-            echo ("total += rate_".$mu->getMu_id()." * uu_".$mu->getMu_id().";\n\t\t");
-        } ?>
-        document.getElementById("total_<?php echo $ob->getO_id();?>").innerHTML = "$ " + total.toFixed(2);
+foreach ($objbox as $ob) {
+    $mats_used = Mats_Used::byTrans($ob->getTrans_id());
+    echo "function calc_".$ob->getO_id()."(){\n\t"; //Declare values
+    echo ("var total = 0\n\t");
+    foreach($mats_used as $mu){
+        echo ("var status_".$mu->getMu_id()." = document.getElementById('status_".$mu->getMu_id()."').value;\n\t");
+        echo ("var rate_".$mu->getMu_id()." = ".$mu->getMaterial()->getPrice().";\n\t");
+        echo ("var uu_".$mu->getMu_id()." = document.getElementById('uu_".$mu->getMu_id()."').value;\n\t");
+        echo ("if (status_".$mu->getMu_id()." != 12)\n\t\t\t");
+        echo ("total += rate_".$mu->getMu_id()." * uu_".$mu->getMu_id().";\n");
+    } ?>
+    document.getElementById("total_<?php echo $ob->getO_id();?>").innerHTML = "$ " + total.toFixed(2);
+}
+function validateForm_<?php echo $ob->getO_id() ?>(){
+    var storage = false;//14
+    var pickup = false;//20
+    <?php foreach($mats_used as $mu) {
+        $mu_id = $mu->getMu_id();
+        echo ("//Make sure material has been weighed\n");
+        echo ("\tvar x = document.getElementById('uu_$mu_id').value;\n");
+        echo ("\tif (x == null || x == ''){\n");
+        echo ("\t\talert('Please Weigh Object');\n");
+        echo ("\t\tdocument.getElementById('uu_$mu_id').focus();\n");
+        echo ("\t\treturn false;\n");
+        echo ("\t}\n");
+        
+        //Check Status dropdown
+        echo ("\n\t//Status Select Check\n");
+        echo ("\tvar x = document.getElementById('status_$mu_id').value;\n");
+        echo ("\tif (x == null || x == ''){\n");
+        echo ("\t\talert('Please Select Status');\n");
+        echo ("\t\tdocument.getElementById('status_$mu_id').focus();\n");
+        echo ("\t\treturn false;\n\t}\n");
+        echo ("\tif (x == 14){\n");
+        echo ("\t\tstorage = true;\n\t} else if(x == 20) {\n");
+        echo ("\t\tpickup = true;\n\t}");
+        
+        //check Notes Field
+        echo ("\n\tif (x == 12){\n");
+        echo ("\t\t//Notes Field Required for Failed Prints \n");
+        echo ("\t\tvar notes = document.getElementById('mu_notes_$mu_id').value;\n");
+        echo ("\t\tvar msg = '';\n");
+        echo ("\t\tif (notes.length < 10){\n");
+        echo ("\t\t\tmsg='Please Explain More......'\n");
+        echo ("\t\t\tif (notes.length == 0){\n");
+        echo ("\t\t\t\tmsg='Please state why this might have failed'\n");
+        echo ("\t\t\t}\n");
+        echo ("\t\t\talert(msg);\n");
+        echo ("\t\t\tdocument.getElementById('mu_notes_$mu_id').focus();\n");
+        echo ("\t\t\treturn false;\n\t\t}\n\t");
+    }?>
+    
+    if (pickup && storage){
+        alert("You must decide either to Pickup or Move to Storage");
+        return false;
+    }
+}
     }
 <?php } ?>
 </script>

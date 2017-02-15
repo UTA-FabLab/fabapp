@@ -15,11 +15,12 @@ $RECYCLE.BIN/
 /test.php
 /api/php-printer
 /api/flud.php
-/api/ReadMatch.php
+/api/ldap.php
 /api/materials.php
 /api/powertails.php
 /api/purpose.php
-/api/timeclock.php
+/api/ReadMatch.php
+/api/time_clock.php
 
 # Windows Installer files
 *.cab
