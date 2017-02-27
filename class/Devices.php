@@ -28,9 +28,10 @@ class Devices {
         
         
         if ($result = $mysqli->query("
-             SELECT *
-             FROM `Devices`
-             WHERE `d_id` = '$d_id';
+			SELECT *
+			FROM `devices`
+			WHERE `d_id` = '$d_id'
+			LIMIT 1;
         ")){
             $row = $result->fetch_assoc();
             

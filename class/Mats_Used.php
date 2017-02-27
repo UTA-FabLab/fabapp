@@ -126,19 +126,22 @@ class Mats_Used {
         global $mysqli;
     
         //Combine $header & $mu_notes
-        if ($this->header == "")
+        if ($this->header == "" || $this->status->getStatus_id() == 12 || $this->status->getStatus_id() == 20) {
             $notes = $this->mu_notes;
-        else
+        } else {
             $notes = "|".$this->header."|".$this->mu_notes;
+        }
+        $status_id = $this->status->getStatus_id();
+        $operator = $this->staff->getOperator();
         
         //Update Mat_used
         if ($stmt = $mysqli->prepare("
             UPDATE mats_used
-            SET `trans_id`= ?, `m_id`= ?, `unit_used`= ?, `mu_date` = CURRENT_TIMESTAMP,
+            SET `unit_used`= ?, `mu_date` = CURRENT_TIMESTAMP,
                 `status_id`= ?, `staff_id`=?, `mu_notes` = ?
             WHERE mu_id = ?;
         ")){
-            $bind_param = $stmt->bind_param("sidissi", $this->trans_id, $this->m_id, $this->unit_used, $this->status->getStatus_id(), $this->staff->getOperator(), $notes, $this->mu_id);
+            $stmt->bind_param("dissi", $this->unit_used, $status_id, $operator, $notes, $this->mu_id);
             if ($stmt->execute() === true ){
                 $row = $stmt->affected_rows;
                 $stmt->close();
@@ -230,7 +233,7 @@ class Mats_Used {
     }
 
     public function setMu_notes($mu_notes) {
-        $this->mu_notes = $mu_notes;
+        $this->mu_notes = str_replace("|", "l", $mu_notes);
     }
 
     private function setMu_notesDB($mu_notes) {

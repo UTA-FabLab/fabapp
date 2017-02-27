@@ -37,14 +37,14 @@
         global $mysqli;
 
         if (!$this->regexUser($operator)){
-                return;
+            return;
         }
         if ($result = $mysqli->query("
             SELECT users.operator, users.r_id, exp_date, icon, rfid_no
             FROM `users`
             LEFT JOIN rfid
             ON users.operator = rfid.operator
-            WHERE users.operator = $operator
+            WHERE users.operator = '$operator'
             Limit 1;
         ")){
             $row = $result->fetch_assoc();
@@ -52,6 +52,7 @@
                 $this->operator = $row['operator'];
             else 
                 $this->operator = $operator;
+            
             $this->exp_date = $row['exp_date'];
             $this->roleID = $row['r_id'];
             $this->rfid_no = $row['rfid_no'];
@@ -91,7 +92,7 @@
     public static function regexUser($operator) {
         //10 digit format check
         if (preg_match("/^\d{10}$/",$operator) == 0) {
-            echo "Invalid ID";
+            echo "Invalid Operator ID";
             return false;
         } else {
             return true;
@@ -105,7 +106,7 @@
         if($result = $mysqli->query("
             SELECT `a_id`
             FROM `auth_accts`
-            WHERE `auth_accts`.`operator` = '$operator';
+            WHERE `auth_accts`.`operator` = '$operator' AND `valid` = 'Y';
         ")){
             while($row = $result->fetch_assoc()){
                 array_push($accounts, new Accounts($row['a_id']));

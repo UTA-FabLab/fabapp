@@ -46,6 +46,7 @@ function gatekeeper ($operator, $device_id) {
     //if membership < date()
 	
     // Check to see if device has training modules
+	$training = array();
     if ($results = $mysqli->query("
         SELECT *
         FROM trainingmodule
@@ -62,7 +63,7 @@ function gatekeeper ($operator, $device_id) {
         while( $row = $results->fetch_assoc() ) {
             $training[] = $row["tm_id"];
         }
-	$results->close();
+		$results->close();
     } else {
         return array ("status_id" => 0, "ERROR" => $mysqli->error);
     }

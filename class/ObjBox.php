@@ -14,10 +14,10 @@ class ObjBox {
     private $o_start;
     private $o_end;
     private $address;
-    private $operator;
+    private $user;
     private $trans_id;
     private $staff;
-    public $staff_id;
+    //public $staff_id;
     
     public function __construct($o_id){
         global $mysqli;
@@ -37,7 +37,7 @@ class ObjBox {
             $this->setO_start($row['o_start']);
             $this->setO_end($row['o_end']);
             $this->setAddress($row['address']);
-            $this->setOperator($row['operator']);
+            $this->setUser($row['operator']);
             $this->setTrans_id($row['trans_id']);
             $this->setStaff($row['staff_id']);
             $this->staff_id = $row['staff_id'];
@@ -83,10 +83,13 @@ class ObjBox {
             $row = $result->fetch_assoc();
             if ( isset($row["address"]) ){
                 $address = $row["address"];
-                return "Ticket - $trans_id already has an storage address, $address";
+                return "Ticket - $trans_id already been given an storage address, $address";
             } else 
                 $t_end = $row["t_end"];
-        } else { return "ObjBox DB Error".$mysqli->error;}
+        } else { 
+            return "ObjBox DB Error".$mysqli->error;
+            
+        }
         
         //Generate Address
         $address = self::suggestAddress();
@@ -163,8 +166,8 @@ class ObjBox {
 	if ($result = $mysqli->query("
             Select o_id
             FROM objbox JOIN transactions
-            ON transactions.trans_id=objbox.trans_id
-            WHERE transactions.operator = '$operator' AND objbox.operator IS NULL;
+            ON transactions.trans_id = objbox.trans_id
+            WHERE transactions.operator = '$operator' AND objbox.o_end IS NULL;
 	")){
             //if result is zero Look at Auth Recipients Table
             $numRows = $result->num_rows;
@@ -178,7 +181,7 @@ class ObjBox {
                     LIMIT 1;
                 ")){
                     if(($result->num_rows) == 0){
-                        return "No unclaimed objects found.";
+                        return "No unclaimed objects found. \\nPlease look up their last Ticket By ID";
                     }
                 } else {
                     return"AuthRecip Error - ar4734";
@@ -192,14 +195,20 @@ class ObjBox {
         return "ObjBox Query Error - o4734";
     }
     
-    public function pickedUpBy($operator){
+    public function pickedUpBy($operator, $staff_id){
         global $mysqli;
         
+        if (!Users::regexUser($operator)){
+            return "Invalid Operator ID";
+        }
+        if (!Users::regexUser($staff_id)){
+            return "Invalid Staff ID";
+        }
         //update ObjBox Table
         if ($mysqli->query("
             UPDATE `objbox`
-            SET `pickupid` = '$operator', `o_end` = CURRENT_TIMESTAMP
-            WHERE `trans_id` = $trans_id;
+            SET `operator` = '$operator', `o_end` = CURRENT_TIMESTAMP, `staff_id` = $staff_id
+            WHERE `trans_id` = $this->trans_id;
         ")){
             return true;
         } else {
@@ -233,6 +242,30 @@ class ObjBox {
         }
     }
     
+    public function writeAttr(){
+        global $mysqli;
+        
+        if (strcmp($this->o_end, "") == 0)
+            $o_end = "NULL";
+        else 
+            $o_end = "'$this->o_end'";
+        
+        if (strcmp($this->user->getOperator(), "") == 0)
+            $user = "NULL";
+        else 
+            $user = "'".$this->user->getOperator()."'";
+        
+        if($mysqli->query("
+            UPDATE `objbox`
+            SET `o_id` = $o_end, `operator` = $user, `staff_id` = '". $this->staff->getOperator()."'
+            WHERE `o_id` = $this->o_id
+            LIMIT 1;
+        ")){
+            return true;
+        }
+        return $mysqli->error;
+    }
+    
     public function getO_id() {
         return $this->o_id;
     }
@@ -251,8 +284,8 @@ class ObjBox {
         return $this->address;
     }
 
-    public function getOperator() {
-        return $this->operator;
+    public function getUser() {
+        return $this->user;
     }
 
     public function getTrans_id() {
@@ -263,11 +296,11 @@ class ObjBox {
         return $this->staff;
     }
 
-    public function setO_id($o_id) {
+    private function setO_id($o_id) {
         $this->o_id = $o_id;
     }
 
-    public function setO_start($o_start) {
+    private function setO_start($o_start) {
         $this->o_start = $o_start;
     }
 
@@ -275,12 +308,12 @@ class ObjBox {
         $this->o_end = $o_end;
     }
 
-    public function setAddress($address) {
+    private function setAddress($address) {
         $this->address = $address;
     }
 
-    public function setOperator($operator) {
-        $this->operator = $operator;
+    public function setUser($operator) {
+        $this->user = Users::withID($operator);
     }
 
     public function setTrans_id($trans_id) {
