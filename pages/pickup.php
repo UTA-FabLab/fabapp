@@ -19,16 +19,25 @@ if($staff){
 } else {
     $errorMsg = "You Must Be Logged In to Pick Up a Print";
 }
-
+//We have an error, display the Issue
 if ($errorMsg != ""){
-    echo $errorMsg;
+    //echo $errorMsg;
     echo "<script> alert('$errorMsg'); window.location.href='/index.php';</script>";
 }
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $loc = "";
     foreach($objbox as $ob){
         if (isset($_POST['pickBtn_'.$ob->getO_id()])){
+            $status_id = 0;
+            $ticket = new Transactions($ob->getTrans_id());
+            $mats_used = Mats_Used::byTrans($ob->getTrans_id());
+            //create backups
+            $_SESSION['ticket'] = serialize($ticket);
+            $_SESSION['mats_used'] = serialize($mats_used);
+            $_SESSION['objbox'] = serialize($ob);
+            
             foreach($mats_used as $mu){
-                $mu_id = $mu->getMu_id();
                 $status_id = $_POST["status_".$mu->getMu_id()];
                 $status_array = explode("@", $status_id);
                 
@@ -37,25 +46,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 				
                 //Print has been marked as failed
                 if ($status_array[0] == 12){
-                    //we must check if mu notes has text
-                    $mu->getStatus()->setStatus_id();
+                    $_SESSION['type'] = "failed";
+                    $mu->getStatus()->setStatus_id($status_array[0]);
+                    $mu->setMu_notes($_POST['mu_notes_'.$mu->getMu_id()]);
+                    $errorMsg = $mu->writeAttr();
+                    $ob->pickedUpBy($operator, $staff->getOperator());
+                    
+                    //Display the newly updated Ticket
+                    $loc = "/pages/lookup.php?trans_id=".$ob->getTrans_id();
+                    
                     
                 //Print has been marked to be paid to account
                 } elseif ($status_array[0] == 20){
-                    //set $_SESSION['type'] = "pay";
-                    //set $_SESSION['account'] = $status_array[2]
+                    $mu->getStatus()->setStatus_id($status_array[0]);
+                    $_SESSION['type'] = "pay";
+                    $_SESSION['account'] = $status_array[1];
+                    $errorMsg = $mu->writeAttr();
+                    $loc = "/pay.php?trans_id=".$ob->getTrans_id();
                 }
-                if ($status_id < $mu->getStatus()->getStatus_id())
+                if ($status_id < $mu->getStatus()->getStatus_id()){
                     $status_id = $mu->getStatus()->getStatus_id();
-                
-                $mu->setMu_notes();
-                $mu->writeAttr();
-                "uu_".$mu->getMu_id();
-                "mu_notes_".$mu->getMu_id();
+                }
+            }
+            $ticket->getStatus()->setStatus_id($status_id);
+            $ticket->writeAttr();
+            
+            if (!is_string($errorMsg)){
+               header("Location:".$loc);
+            } else {
+                echo "<script> alert('$errorMsg');</script>";
             }
         }
     }
 }
+if ($staff) {
 ?>
 <title><?php echo $sv['site_name'];?> Pick Up</title>
 <div id="page-wrapper">
@@ -70,7 +94,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="col-lg-8">
             <?php foreach($objbox as $ob){
                 $ticket = new Transactions($ob->getTrans_id());
-                $mats_used = Mats_Used::byTrans($ob->getTrans_id())?>
+                $mats_used = Mats_Used::byTrans($ob->getTrans_id());
+                ?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <i class="fa fa-ticket fa-fw"></i> Ticket # <?php echo $ticket->getTrans_id()."<br>"; ?>
@@ -113,7 +138,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <select name="status_<?php echo $mu->getMu_id();?>" id="status_<?php echo $mu->getMu_id();?>"
                                                 onchange="calc_<?php echo $ob->getO_id() ?>()" onkeyup="calc_<?php echo $ob->getO_id() ?>()">
                                             <option value="" selected disabled hidden>Select</option>
-                                            <option value="20@2" >Pay</option>
+                                            <option value="20@2" ><?php echo $sv['paySite_name'];?></option>
+                                            <option value="20@4" ><?php echo $sv['interdepartmental'];?></option>
                                             <?php $accounts = $ticket->getUser()->getAccounts();
                                             foreach ($accounts as $accts){
                                                 echo ("<option value='20@".$accts->getA_id()."'>".$accts->getName()."</option>");
@@ -166,16 +192,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <!-- /.panel -->
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fa fa-exclamation-triangle fa-fw"></i> Inspect your print
-                </div>
-                <div class="panel-body">
-                    <?php echo $sv['inspectPrint'];?>
-                </div>
-                <!-- /.panel-body -->
-            </div>
-            <!-- /.panel -->
-            <div class="panel panel-default">
-                <div class="panel-heading">
                     <i class="fa fa-area-chart fa-fw"></i> Stats
                 </div>
                 <div class="panel-body">
@@ -208,7 +224,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 foreach ($objbox as $ob) {
     $mats_used = Mats_Used::byTrans($ob->getTrans_id());
     echo "function calc_".$ob->getO_id()."(){\n\t"; //Declare values
-    echo ("var total = 0\n\t");
+     echo ("var total = 0;\n\t");
     foreach($mats_used as $mu){
         echo ("var status_".$mu->getMu_id()." = document.getElementById('status_".$mu->getMu_id()."').value;\n\t");
         echo ("var rate_".$mu->getMu_id()." = ".$mu->getMaterial()->getPrice().";\n\t");
@@ -254,7 +270,7 @@ function validateForm_<?php echo $ob->getO_id() ?>(){
         echo ("\t\t\t}\n");
         echo ("\t\t\talert(msg);\n");
         echo ("\t\t\tdocument.getElementById('mu_notes_$mu_id').focus();\n");
-        echo ("\t\t\treturn false;\n\t\t}\n\t");
+        echo ("\t\t\treturn false;\n\t\t}\n\t}\n");
     }?>
     
     if (pickup && storage){
@@ -262,10 +278,11 @@ function validateForm_<?php echo $ob->getO_id() ?>(){
         return false;
     }
 }
-    }
+
 <?php } ?>
 </script>
 <?php
+}
     //Standard call for dependencies
     include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 ?>

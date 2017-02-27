@@ -13,10 +13,10 @@ if (empty($_GET["trans_id"])){
     $trans_id = $_GET["trans_id"];
     $ticket = new Transactions($trans_id);
     if ( $_SESSION['type'] == "home" )
-        $_SESSION['backup'] = new Transactions($trans_id);
+        $_SESSION['backup'] = serialize(new Transactions($trans_id));
     
     //Special Device Groups
-    $special_devices = array("vinyl", "embroidery", "sew", "uprint", "screen");
+    $special_devices = array("vinyl", "embroidery", "uprint", "screen");
     $found = false;
     
     //check device type to determine closing procedure
@@ -64,11 +64,10 @@ if ($errorMsg != ""){
 //When the user hits Submit
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
-    
     //Undo Button was Pressed
     if (isset($_POST['undoBtn'])) {
         if ($_SESSION['type'] == "end")
-            $backup = $_SESSION['backup'];
+            $backup = unserialize($_SESSION['backup']);
         echo( "Lets undo this ticket ".$backup->getTrans_id() );
         if ($backup->writeAttr()){
             $_SESSION['backup'] = null;
@@ -137,11 +136,12 @@ function move($status_id, $ticket, $mats_used, $staff_id){
     if ($status_id == 14){
         $_SESSION['type'] = "end";
         header('Location:/pages/lookup.php?trans_id='.$ticket->getTrans_id());
-        
+		
     //send page to the payment
     } elseif ($status_id == 20) {
         $_SESSION['type'] = "end";
-        header('Location:/pages/pay.php?trans_id='.$ticket->getTrans_id());
+        //header('Location:/pages/pay.php?trans_id='.$ticket->getTrans_id());
+        header('Location:/index.php');
     }
 }
 ?>
@@ -183,9 +183,9 @@ function move($status_id, $ticket, $mats_used, $staff_id){
                                     <td>Device</td>
                                     <td><?php echo $ticket->getDevice()->getDevice_desc();?></td>
                                 </tr>
-                                <tr >
-                                    <td>ID #</td>
-                                    <td><?php echo $ticket->getUser()->getOperator();?></td>
+                                <tr>
+                                    <td>Operator</td>
+                                    <td><i class="fa fa-<?php if ( $ticket->getUser()->getIcon() ) echo $ticket->getUser()->getIcon(); else echo "user";?> fa-fw"></i><?php echo $ticket->getUser()->getOperator();?></td>
                                 </tr>
                                 <tr>
                                     <td>Ticket</td>
@@ -221,11 +221,11 @@ function move($status_id, $ticket, $mats_used, $staff_id){
                                                 <tr>
                                                     <td>Print Status</td>
                                                     <td><select name="status_<?php echo $mu_id;?>" id="status_<?php echo $mu_id;?>" onchange="calc()">
-														<option value="" selected hidden="true">Select</option>
+							<option value="" selected hidden="true">Select</option>
                                                         <option value="14">Move to Storage</option>
                                                         <option value="20">Pickup Now</option>
                                                         <option value="12">Failed</option>
-														<option value="15"><i class="fa fa-pencil-square-o fa-fw"></i>Cancel</option>
+							<option value="15">Canceled</option>
                                                     </select></td>
                                                 </tr>
                                                 <?php

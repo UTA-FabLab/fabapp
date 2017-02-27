@@ -113,8 +113,8 @@ class Transactions {
         $this->setStaff($staff_id);
         $trans_id = $this->getTrans_id();
         
-        // Ticket has materials, log ending time & update status
-        // in transactions and mats_used
+        // Log ending time & update status
+        // of Ticket
         if ($this->duration == ""){
             //Transaction lacks ending time
             //So...let's give it one
@@ -173,7 +173,7 @@ class Transactions {
             return true;
         }
         //return $mysqli->error;
-        return $mysqli->error." ~ ".$query;
+        return $mysqli->error;
     }
 
     public function getDevice() {
@@ -215,7 +215,7 @@ class Transactions {
     public function getT_end() {
         if (strcmp($this->duration,"") == 0)
                 return ""; 
-        return date('M d, Y g:i a',strtotime($this->t_end));
+        return date('M d g:i a',strtotime($this->t_end));
     }
 
     public function getTrans_id() {

@@ -16,7 +16,7 @@ if (isset($_GET["trans_id"])){
         $errorMsg = "Invalid Ticket Number";
     }
 } elseif (isset($_GET["operator"])){
-    $errorMsg = "Operator is set";
+    
     if (Users::regexUSER ($_GET['operator'])){
         $operator = $_GET['operator'];
         //Get Last Ticket of that ID
@@ -49,15 +49,33 @@ if (isset($_GET["trans_id"])){
 if ($errorMsg != ""){
     echo "<script> alert('$errorMsg'); window.location.href='/index.php';</script>";
 }
+    
+
+
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['unfail'])) {
+    $ob_backup = unserialize($_SESSION['objbox']);
+    $t_backup = unserialize($_SESSION['ticket']);
+    $mats_used_backup = unserialize($_SESSION['mats_used']);
+
+    $ob_backup->writeAttr();
+    $t_backup->writeAttr();
+    foreach( $mats_used_backup as $mub){
+        $mub->writeAttr();
+    }
+    $_SESSION['type'] = "undo";
+    header("Location:/pages/lookup.php?trans_id=".$t_backup->getTrans_id());
+}
 ?>
 <title><?php echo $sv['site_name'];?> Ticket Detail</title>
 <div id="page-wrapper">
     <div class="row">
         <div class="col-lg-12">
             <?php if (isset($operator)) { ?>
-                <h1 class="page-header">Details of most recent ticket<?php echo $operator; ?></h1>
-            <?php } else { ?>
-                <h1 class="page-header">Details<?php //echo $trans_id; ?></h1>
+                <h1 class="page-header">Details of Most Recent Ticket</h1>
+            <?php } elseif (strcmp($_SESSION['type'], 'failed') == 0) { ?>
+                <h1 class="page-header">Details</h1><form name="undoForm" method="post" action=""><input type="submit" value="Unmark as Failed" name="unfail"></form>
+            <?php }  else { ?>
+                <h1 class="page-header">Details</h1>
             <?php } ?>
         </div>
         <!-- /.col-lg-12 -->
@@ -83,14 +101,14 @@ if ($errorMsg != ""){
                             <td>Duration</td>
                             <td><?php echo $ticket->getDuration(); ?></td>
                         </tr>
-						<?php if ($staff) {
-							if ($staff->getRoleID() > 6){ ?>
-								<tr>
-									<td>Operator</td>
-									<td><i class="fa fa-<?php if ( $ticket->getUser()->getIcon() ) echo $ticket->getUser()->getIcon(); else echo "user";?> fa-fw"></i><?php echo $ticket->getUser()->getOperator();?></td>
-								</tr>
-							<?php }
-						}?>
+                        <?php if ($staff) {
+                            if ($staff->getRoleID() > 6){ ?>
+                                <tr>
+                                    <td>Operator</td>
+                                    <td><i class="fa fa-<?php if ( $ticket->getUser()->getIcon() ) echo $ticket->getUser()->getIcon(); else echo "user";?> fa-fw"></i><?php echo $ticket->getUser()->getOperator();?></td>
+                                </tr>
+                            <?php }
+                        }?>
                         <tr>
                             <td>Status</td>
                             <td><?php echo $ticket->getStatus()->getMsg(); ?></td>
@@ -173,11 +191,19 @@ if ($errorMsg != ""){
                                 <td><?php echo $objbox->getO_start(); ?></td>
                             </tr>
                             <tr>
-                                <td>Removed</td>
+                                <td>Removed On</td>
                                 <td><?php echo $objbox->getO_end(); ?></td>
                             </tr>
                             <?php if ($staff) {
                                 if ($staff->getRoleID() > 6){ ?>
+                                    <tr>
+                                        <td>Picked Up By</td>
+                                        <td><?php 
+                                        if ( $objbox->getUser()->getIcon() ) {
+                                            echo "<i class='fa fa-".$objbox->getUser()->getIcon()." fa-fw'></i>"; 
+                                        } 
+                                        echo " ".$objbox->getUser()->getOperator();?></td>
+                                    </tr>
                                     <tr>
                                         <td>Address</td>
                                         <td><input type="submit" value="<?php echo $objbox->getAddress(); ?>"></td>
@@ -195,7 +221,12 @@ if ($errorMsg != ""){
                                 <?php } else { ?>
                                     <tr>
                                         <td>Picked Up By</td>
-                                        <td><?php echo $objbox->getOperator(); ?></td>
+                                        <td><i class="fa fa-<?php 
+                                        if ( $objbox->getUser()->getIcon() ) {
+                                            echo $objbox->getUser()->getIcon(); 
+                                        } else {
+                                            echo "user"; 
+                                        } ?> fa-fw"></i></td>
                                     </tr>
                                 <?php } 
                             } ?>
