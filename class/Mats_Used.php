@@ -27,7 +27,7 @@ class Mats_Used {
         global $mysqli;
         
         if (!preg_match("/^\d+$/", $mu_id))
-            throw new Exception('Invalid Ticket Number');
+            {throw new Exception('Invalid Ticket Number');}
         if ($result = $mysqli->query("
             SELECT *
             FROM `mats_used`
@@ -121,7 +121,7 @@ class Mats_Used {
         
     }
     
-    //Use this method for writing updates to the DB for the object
+    //Use this method for writing attributes to the DB for the object
     public function writeAttr(){
         global $mysqli;
     
@@ -134,29 +134,68 @@ class Mats_Used {
         $status_id = $this->status->getStatus_id();
         $operator = $this->staff->getOperator();
         
+        if (strcmp($this->mu_date, "") == 0)
+            $mu_date = "NULL";
+        else 
+            $mu_date = "$this->mu_date";
+        
         //Update Mat_used
         if ($stmt = $mysqli->prepare("
             UPDATE mats_used
-            SET `unit_used`= ?, `mu_date` = CURRENT_TIMESTAMP,
+            SET `unit_used`= ?, `mu_date` = ?,
                 `status_id`= ?, `staff_id`=?, `mu_notes` = ?
             WHERE mu_id = ?;
         ")){
-            $stmt->bind_param("dissi", $this->unit_used, $status_id, $operator, $notes, $this->mu_id);
+            $stmt->bind_param("dsissi", $this->unit_used, $mu_date, $status_id, $operator, $notes, $this->mu_id);
             if ($stmt->execute() === true ){
                 $row = $stmt->affected_rows;
                 $stmt->close();
                 return $row;
             } else
-                return "mats_used Update Error";
+                echo "<br>mats_used WriteAttr Error - ".$stmt->error;
         } else {
-            return "Error in preparing mats_used statement";
+            echo "Error in preparing mats_used: WriteAttr statement";
+        }
+    }
+    
+    //Use this method for writing updates to the DB for the object
+    public function updateUsed($staff_id){
+        global $mysqli;
+    
+        //Combine $header & $mu_notes
+        if ($this->header == "" || $this->status->getStatus_id() == 12 || $this->status->getStatus_id() == 20) {
+            $notes = $this->mu_notes;
+        } else {
+            $notes = "|".$this->header."|".$this->mu_notes;
+        }
+        $status_id = $this->status->getStatus_id();
+        
+        //invert value
+        $uu = -$this->unit_used;
+        
+        //Update Mat_used
+        if ($stmt = $mysqli->prepare("
+            UPDATE `mats_used`
+            SET `unit_used`= ?, `mu_date` = CURRENT_TIMESTAMP,
+                `status_id`= ?, `staff_id` = ?, `mu_notes` = ?
+            WHERE `mu_id` = ?;
+        ")){
+            $stmt->bind_param("dissi", $uu, $status_id, $staff_id, $notes, $this->mu_id);
+            if ($stmt->execute() === true ){
+                $row = $stmt->affected_rows;
+                $stmt->close();
+                return $row;
+            } else
+                return "mats_used: updateUsed Error";
+        } else {
+            return "Error in preparing mats_used: updateUsed statement";
         }
     }
     
     public static function regexUnit_Used($unit_used){
         if (preg_match("/^\d{0,4}\.{0,1}\d{0,2}$/", $unit_used) && $unit_used > 0)
             return true;
-        echo "Invalid Amount Used - $unit_used";
+        //echo "Invalid Amount Used - $unit_used";
         return false;
     }
     
@@ -200,12 +239,11 @@ class Mats_Used {
         return $this->header;
     }
     
+    public function setHeader($header){
+        $this->header = str_replace("|", "l", $header);
+    }
     private function setMu_id($mu_id) {
         $this->mu_id = $mu_id;
-    }
-
-    public function setTrans_id($trans_id) {
-        $this->trans_id = $trans_id;
     }
 
     public function setM_id($m_id) {
@@ -216,20 +254,8 @@ class Mats_Used {
         $this->material = new Materials($m_id);
     }
 
-    public function setUnit_used($unit_used) {
-        $this->unit_used = -$unit_used;
-    }
-
     public function setMu_date($mu_date) {
         $this->mu_date = $mu_date;
-    }
-
-    public function setStatus($status_id) {
-        $this->status = new Status($status_id);
-    }
-
-    public function setStaff($staff_id) {
-        $this->staff = Users::withID($staff_id);
     }
 
     public function setMu_notes($mu_notes) {
@@ -250,5 +276,25 @@ class Mats_Used {
             $this->mu_notes = $sArray[2];
         } else 
             $this->mu_notes = $mu_notes;
+    }
+
+    public function setStatus($status_id) {
+        $this->status = new Status($status_id);
+    }
+
+    public function setStaff($staff_id) {
+        $this->staff = Users::withID($staff_id);
+    }
+
+    public function setUnit_used($unit_used) {
+        $unit_used = abs($unit_used);
+        if (!self::regexUnit_Used($unit_used)) 
+            return "Invalid Amount Used - $unit_used";
+        $this->unit_used = $unit_used;
+        return true;
+    }
+
+    public function setTrans_id($trans_id) {
+        $this->trans_id = $trans_id;
     }
 }

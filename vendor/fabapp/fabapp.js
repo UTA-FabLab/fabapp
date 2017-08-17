@@ -2,27 +2,18 @@
  *   CC BY-NC-AS UTA FabLab 2016-2017
  *   FabApp V 0.9
  */
-//check forms for proper types
-function validateNum(caller) {
-	if ( caller.localeCompare("pickForm") == 0 ){
-		var x = document.forms[caller]["pickField"].value;
-		return IDCheck(x);
-	} else if ( caller.localeCompare("searchForm") == 0 ){
-		var x = document.forms[caller]["searchField"].value;
-		if (sForm.searchType[0].checked) {
-			var reg = /^\d{1,}$/;
-			//Mav ID Check
-			if (x == null || x == "" || !reg.test(x)) {
-				if (!reg.test(x)) {
-					alert("Invalid Ticket #");
-				}
-				return false;
-			}
-		}
-		if (sForm.searchType[1].checked) {
-			return IDCheck(x);
-		}
-	}
+
+function endTicket(trans_id, device_desc) {
+    var message = "Are you sure you want to end ";
+    message = message.concat(device_desc);
+    message = message.concat("\n\n\Ticket # ");
+    message = message.concat(trans_id);
+    var answer = confirm(message);
+    if (answer){
+        var dest = "/pages/end.php?trans_id=";
+        dest = dest.concat(trans_id);
+        window.location.href = dest;
+    }
 }
 
 function IDCheck(operator){
@@ -36,19 +27,6 @@ function IDCheck(operator){
 		}
         return false;
     }
-}
-
-function endTicket(trans_id, device_desc) {
-    var message = "Are you sure you want to end ";
-    message = message.concat(device_desc);
-    message = message.concat("\n\n\Ticket # ");
-    message = message.concat(trans_id);
-    var answer = confirm(message);
-	if (answer){
-            var dest = "/pages/end.php?trans_id=";
-            dest = dest.concat(trans_id);
-            window.location.href = dest;
-	}
 }
 
 function startTimer(duration, display, dg_parent) {
@@ -82,4 +60,27 @@ function startTimer(duration, display, dg_parent) {
             window.location.reload(1);
         }	
     }, 1000);
+}
+
+//check forms for proper types
+function validateNum(caller) {
+    if ( caller.localeCompare("pickForm") == 0 ){
+        var x = document.forms[caller]["pickField"].value;
+        return IDCheck(x);
+    } else if ( caller.localeCompare("searchForm") == 0 ){
+        var x = document.forms[caller]["searchField"].value;
+        if (sForm.searchType[0].checked) {
+            var reg = /^\d{1,}$/;
+            //Mav ID Check
+            if (x == null || x == "" || !reg.test(x)) {
+                if (!reg.test(x)) {
+                        alert("Invalid Ticket #");
+                }
+                return false;
+            }
+        }
+        if (sForm.searchType[1].checked) {
+            return IDCheck(x);
+        }
+    }
 }

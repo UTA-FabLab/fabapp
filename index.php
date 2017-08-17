@@ -12,62 +12,65 @@ $_SESSION['type'] = "home";
     <div class="row">
         <div class="col-lg-12">
             <h1 class="page-header">Dashboard</h1>
-            <?php echo "IP address - ".getenv('REMOTE_ADDR'); ?>
         </div>
         <!-- /.col-lg-12 -->
     </div>
     <!-- /.row -->
     <div class="row">
-        <div class="col-lg-8">
+        <div class="col-md-8">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <i class="fa fa-ticket fa-fw"></i> Device Status
                 </div>
                 <div class="panel-body">
-<table class="table table-striped table-bordered table-hover">
-    <tr class="tablerow">
-            <td align="right">Ticket</td>
-            <td>Device</td>
-            <td>Start Time</td>
-            <td>Est Remaining Time</td>
-            <?php if ($staff) { ?> <td>Action</td><?php } ?>
-    </tr>
-    <?php if ($result = $mysqli->query("
-                    SELECT trans_id, device_desc, t_start, est_time, devices.dg_id, dg_parent, devices.d_id, url
-                    FROM devices
-                    JOIN device_group
-                    ON devices.dg_id = device_group.dg_id
-                    LEFT JOIN (SELECT trans_id, t_start, t_end, est_time, d_id FROM transactions WHERE status_id < 12 ORDER BY trans_id DESC) as t 
-                    ON devices.d_id = t.d_id
-                    WHERE public_view = 'Y'
-                    ORDER BY dg_parent DESC, dg_id, `device_desc`
-            ")){
-                    while ( $row = $result->fetch_assoc() ){ ?>
-                    <tr class="tablerow">
-                            <?php if($row["t_start"]) { ?>
+                    <table class="table table-striped table-bordered table-hover">
+                        <tr class="tablerow">
+                            <td align="right">Ticket</td>
+                            <td>Device</td>
+                            <td>Start Time</td>
+                            <td>Est Remaining Time</td>
+                            <?php if ($staff) { ?> <td>Action</td><?php } ?>
+                        </tr>
+                        <?php if ($result = $mysqli->query("
+                            SELECT trans_id, device_desc, t_start, est_time, devices.dg_id, dg_parent, devices.d_id, url, operator, status_id
+                            FROM devices
+                            JOIN device_group
+                            ON devices.dg_id = device_group.dg_id
+                            LEFT JOIN (SELECT trans_id, t_start, t_end, est_time, d_id, operator, status_id FROM transactions WHERE status_id < 12 ORDER BY trans_id DESC) as t 
+                            ON devices.d_id = t.d_id
+                            WHERE public_view = 'Y'
+                            ORDER BY dg_parent DESC, dg_id, `device_desc`
+                        ")){
+                            while ( $row = $result->fetch_assoc() ){ ?>
+                            <tr class="tablerow">
+                                <?php if($row["t_start"]) { ?>
                                     <td align="right"><?php echo $row["trans_id"]; ?></td>
                                     <?php if($row['url'] && (preg_match($sv['ip_range_1'],getenv('REMOTE_ADDR')) || preg_match($sv['ip_range_2'],getenv('REMOTE_ADDR'))) ){ ?>
                                             <td><?php echo ("<a href=\"http://".$row["url"]."\">".$row["device_desc"]."</a>"); ?></td>
                                     <?php }else{ ?>
                                             <td><?php echo $row["device_desc"]; ?></td><?php }
                                     echo("<td>".date( 'M d g:i a',strtotime($row["t_start"]) )."</td>" );
-                                    if( isset($row["est_time"]) ){
-                                            echo("<td align=\"center\"><div id=\"est".$row["trans_id"]."\">".$row["est_time"]." </div></td>" ); 
+                                    if( $row["status_id"] == 11) {
+                                        $status = new Status($row["status_id"]);
+                                        echo("<td align='center'>".$status->getMsg()."</td>");
+                                    } elseif (isset($row["est_time"])) {
+                                        echo("<td align='center'><div id=\"est".$row["trans_id"]."\">".$row["est_time"]." </div></td>" );
+                                        $str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $row["est_time"]);
+                                        sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
+                                        $time_seconds = $hours * 3600 + $minutes * 60 + $seconds;
+                                        $time_seconds = $time_seconds - (time() - strtotime($row["t_start"]) ) + $sv["grace_period"];
+                                        array_push($device_array, array($row["trans_id"], $time_seconds, $row["dg_parent"]));
                                     } else 
-                                            echo("<td align=\"center\">-</td>"); 
-                                    if ($staff) {?>
-                                    <td align="center">
-                                            <button onclick="endTicket(<?php echo $row["trans_id"].",'".$row["device_desc"]."'"; ?>)">End Ticket</button>
-                                    </td>
-                                    <?php } if ( isset($row["est_time"])) {
-                                            $str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $row["est_time"]);
-                                            sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
-                                            $time_seconds = $hours * 3600 + $minutes * 60 + $seconds;
-
-                                            $time_seconds = $time_seconds - (time() - strtotime($row["t_start"]) ) + $sv["grace_period"];
-                                            array_push($device_array, array($row["trans_id"], $time_seconds, $row["dg_parent"]));
-                                    } 
-                            } else { ?>
+                                        echo("<td align=\"center\">-</td>"); 
+                                    if ($staff) {
+                                        if ($staff->getRoleID() > 6 || $staff->getOperator() == $row["operator"]) { ?>
+                                            <td align="center">
+                                                <button onclick="endTicket(<?php echo $row["trans_id"].",'".$row["device_desc"]."'"; ?>)">End Ticket</button>
+                                            </td>
+                                        <?php } else
+                                            echo("<td align='center'>-</td>");
+                                    }
+                                } else { ?>
                                     <td align="right"></td>
                                     <?php if($row['url'] && (preg_match($sv['ip_range_1'],getenv('REMOTE_ADDR')) || preg_match($sv['ip_range_2'],getenv('REMOTE_ADDR'))) ){ ?>
                                             <td><?php echo ("<a href=\"http://".$row["url"]."\">".$row["device_desc"]."</a>"); ?></td>
@@ -75,25 +78,27 @@ $_SESSION['type'] = "home";
                                             <td><?php echo $row["device_desc"]; ?></td><?php }?>
                                     <td align="center"> - </td>
                                     <td align="center"> - </td>
-                                    <?php if($row["url"] && $staff){ ?>
+                                    <?php if($row["url"] && $staff){
+                                        if ($staff->getRoleID() > 6){?>
                                             <td  align="center"><?php echo ("<a href=\"http://".$row["url"]."\">New Ticket</a>"); ?></td>
-                                    <?php }elseif($staff) { ?>
+                                        <?php } else
+                                            echo("<td align=\"center\">-</td>");
+                                    } elseif($staff) {
+                                        if ($staff->getRoleID() > 6){?>
                                             <td align="center"><div id="est"><a href="\pages\create.php?<?php echo("d_id=".$row["d_id"])?>">New Ticket</a></div></td>
-                                    <?php }?>
-
-                            <?php } ?>
-                    </tr>
-                            <?php
-                    }
-
-            } 
-    ?>
-</table>
+                                        <?php } else
+                                            echo("<td align=\"center\">-</td>");
+                                    }
+                                } ?>
+                            </tr>
+                            <?php }
+                        } ?>
+                    </table>
                 </div>
             </div>
         </div>
-        <!-- /.col-lg-8 -->
-        <div class="col-lg-4">
+        <!-- /.col-md-8 -->
+        <div class="col-md-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <i class="fa fa-linode fa-fw"></i> Inventory
@@ -135,7 +140,7 @@ $_SESSION['type'] = "home";
             </div>
             <!-- /.panel -->
         </div>
-        <!-- /.col-lg-4 -->
+        <!-- /.col-md-4 -->
     </div>
     <!-- /.row -->
 </div>

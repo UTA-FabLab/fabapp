@@ -9,6 +9,8 @@
  *
  * @author Jon Le
  */
+include_once ('AuthRecipients.php');
+
 class ObjBox {
     private $o_id;
     private $o_start;
@@ -88,7 +90,6 @@ class ObjBox {
                 $t_end = $row["t_end"];
         } else { 
             return "ObjBox DB Error".$mysqli->error;
-            
         }
         
         //Generate Address
@@ -100,8 +101,10 @@ class ObjBox {
         
         //Log moving item into ObjManager
         if ($mysqli->query("
-            INSERT INTO objbox (`trans_id`,`o_start`,`address`,`staff_id`) 
-            VALUES ('$trans_id',CURRENT_TIMESTAMP,'$address','$staff_id')
+            INSERT INTO objbox 
+                (`trans_id`,`o_start`,`address`,`staff_id`) 
+            VALUES
+                ('$trans_id',CURRENT_TIMESTAMP,'$address','$staff_id')
         ")){
             return $mysqli->insert_id;
         } else {
@@ -177,8 +180,7 @@ class ObjBox {
                     SELECT o_id
                     FROM objbox JOIN authrecipients
                     ON objbox.trans_id = authrecipients.trans_id
-                    WHERE authrecipients.operator = '$operator' AND objbox.operator is NULL
-                    LIMIT 1;
+                    WHERE authrecipients.operator = '$operator' AND objbox.o_end is NULL;
                 ")){
                     if(($result->num_rows) == 0){
                         return "No unclaimed objects found. \\nPlease look up their last Ticket By ID";
@@ -198,12 +200,15 @@ class ObjBox {
     public function pickedUpBy($operator, $staff_id){
         global $mysqli;
         
-        if (!Users::regexUser($operator)){
-            return "Invalid Operator ID";
+        if (!Users::regexUser($operator)) { return "Invalid Operator ID"; }
+        if (!Users::regexUser($staff_id)) { return "Invalid Staff ID"; }
+        
+        //Check if Operator is Allowed to pickup Print
+        $msg = AuthRecipients::validatePickUp($this->trans_id, $operator);
+        if (is_string($msg)) {
+            return $msg;
         }
-        if (!Users::regexUser($staff_id)){
-            return "Invalid Staff ID";
-        }
+        
         //update ObjBox Table
         if ($mysqli->query("
             UPDATE `objbox`
@@ -313,7 +318,10 @@ class ObjBox {
     }
 
     public function setUser($operator) {
-        $this->user = Users::withID($operator);
+        if (Users::regexUser($operator))
+            $this->user = Users::withID($operator);
+        else 
+            $this->user = null;
     }
 
     public function setTrans_id($trans_id) {

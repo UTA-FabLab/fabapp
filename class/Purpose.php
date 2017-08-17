@@ -16,17 +16,18 @@ class Purpose {
     public function __construct($p_id) {
         global $mysqli;
         
-        if (!preg_match("/^\d+$/", $p_id))
-            $this->msg = "Invalid Purpose Code";
-        
-        if ($result = $mysqli->query("
-            SELECT *
-            FROM purpose
-            WHERE p_id = $p_id;
-        ")){
-            $row = $result->fetch_assoc();
-            $this->setP_id($row['p_id']);
-            $this->setP_title($row['p_title']);
+        if (!preg_match("/^\d+$/", $p_id)){
+            $this->p_title = "Invalid Purpose Code";
+        } else {
+            if ($result = $mysqli->query("
+                SELECT *
+                FROM purpose
+                WHERE p_id = $p_id;
+            ")){
+                $row = $result->fetch_assoc();
+                $this->setP_id($row['p_id']);
+                $this->setP_title($row['p_title']);
+            }
         }
     }
     

@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 4.5.2
--- http://www.phpmyadmin.net
+-- version 4.6.4
+-- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 15, 2017 at 05:31 PM
--- Server version: 5.7.9
--- PHP Version: 5.6.16
+-- Generation Time: Apr 24, 2017 at 03:58 AM
+-- Server version: 5.7.14
+-- PHP Version: 5.6.25
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
@@ -27,14 +27,13 @@ SET time_zone = "+00:00";
 --
 
 DROP TABLE IF EXISTS `accounts`;
-CREATE TABLE IF NOT EXISTS `accounts` (
-  `a_id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `accounts` (
+  `a_id` int(11) NOT NULL,
   `name` varchar(50) NOT NULL,
   `acct` varchar(50) NOT NULL,
   `balance` decimal(6,2) NOT NULL,
-  `operator` varchar(10) NOT NULL,
-  PRIMARY KEY (`a_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
+  `operator` varchar(10) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `accounts`
@@ -43,7 +42,7 @@ CREATE TABLE IF NOT EXISTS `accounts` (
 INSERT INTO `accounts` (`a_id`, `name`, `acct`, `balance`, `operator`) VALUES
 (1, 'Outstanding', 'Outstanding charge, Payment required', '0.00', '1000129288'),
 (2, 'CSGold', 'CSGold Account', '0.00', '1000129288'),
-(3, 'FabLab', 'FabLab''s in-House Charge Account', '0.00', '1000129288'),
+(3, 'FabLab', 'FabLab\'s in-House Charge Account', '0.00', '1000129288'),
 (4, 'Library UES', '1000ABC', '0.00', '1000129288');
 
 -- --------------------------------------------------------
@@ -53,18 +52,17 @@ INSERT INTO `accounts` (`a_id`, `name`, `acct`, `balance`, `operator`) VALUES
 --
 
 DROP TABLE IF EXISTS `acct_charge`;
-CREATE TABLE IF NOT EXISTS `acct_charge` (
-  `ac_id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `acct_charge` (
+  `ac_id` int(11) NOT NULL,
   `a_id` int(11) NOT NULL,
   `trans_id` int(11) NOT NULL,
   `ac_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `operator` varchar(10) CHARACTER SET utf8 NOT NULL,
-  `staff_id` varchar(10) CHARACTER SET utf8 NOT NULL,
+  `operator` varchar(10) NOT NULL,
+  `staff_id` varchar(10) NOT NULL,
   `amount` decimal(7,2) NOT NULL,
   `recon_date` datetime DEFAULT NULL,
-  `recon_id` varchar(10) CHARACTER SET utf8 DEFAULT NULL,
-  `ac_notes` text CHARACTER SET utf8,
-  PRIMARY KEY (`ac_id`)
+  `recon_id` varchar(10) DEFAULT NULL,
+  `ac_notes` text
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -74,20 +72,19 @@ CREATE TABLE IF NOT EXISTS `acct_charge` (
 --
 
 DROP TABLE IF EXISTS `authrecipients`;
-CREATE TABLE IF NOT EXISTS `authrecipients` (
-  `ar_id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `authrecipients` (
+  `ar_id` int(11) NOT NULL,
   `trans_id` int(11) NOT NULL,
-  `operator` varchar(10) NOT NULL,
-  PRIMARY KEY (`ar_id`),
-  KEY `trans_id` (`trans_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+  `operator` varchar(10) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `authrecipients`
 --
 
 INSERT INTO `authrecipients` (`ar_id`, `trans_id`, `operator`) VALUES
-(1, 80, '1000000210');
+(1, 80, '1000000210'),
+(2, 86, '1000129288');
 
 -- --------------------------------------------------------
 
@@ -96,23 +93,21 @@ INSERT INTO `authrecipients` (`ar_id`, `trans_id`, `operator`) VALUES
 --
 
 DROP TABLE IF EXISTS `auth_accts`;
-CREATE TABLE IF NOT EXISTS `auth_accts` (
-  `aa_id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `auth_accts` (
+  `aa_id` int(11) NOT NULL,
   `a_id` int(11) NOT NULL,
   `operator` varchar(10) NOT NULL,
-  `valid` enum('Y','N') DEFAULT 'Y',
+  `valid` enum('Y','N') NOT NULL DEFAULT 'Y',
   `aa_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `staff_id` varchar(10) NOT NULL,
-  PRIMARY KEY (`aa_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+  `staff_id` varchar(10) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `auth_accts`
 --
 
 INSERT INTO `auth_accts` (`aa_id`, `a_id`, `operator`, `valid`, `aa_date`, `staff_id`) VALUES
-(1, 3, '1000129288', 'Y', '2017-02-13 18:03:49', '1000129288'),
-(2, 4, '1000000021', 'Y', '2017-02-13 18:04:27', '1000129288');
+(1, 3, '1000129288', 'Y', '2017-02-13 18:03:49', '1000129288');
 
 -- --------------------------------------------------------
 
@@ -121,12 +116,11 @@ INSERT INTO `auth_accts` (`aa_id`, `a_id`, `operator`, `valid`, `aa_date`, `staf
 --
 
 DROP TABLE IF EXISTS `carrier`;
-CREATE TABLE IF NOT EXISTS `carrier` (
-  `ca_id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `carrier` (
+  `ca_id` int(11) NOT NULL,
   `provider` varchar(50) NOT NULL,
-  `email` varchar(110) NOT NULL,
-  PRIMARY KEY (`ca_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
+  `email` varchar(110) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `carrier`
@@ -146,13 +140,12 @@ INSERT INTO `carrier` (`ca_id`, `provider`, `email`) VALUES
 --
 
 DROP TABLE IF EXISTS `citation`;
-CREATE TABLE IF NOT EXISTS `citation` (
-  `c_id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `citation` (
+  `c_id` int(11) NOT NULL,
   `staff_id` varchar(10) NOT NULL,
   `operator` varchar(10) NOT NULL,
   `trans_id` int(11) DEFAULT NULL,
-  `c_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`c_id`)
+  `c_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -162,8 +155,8 @@ CREATE TABLE IF NOT EXISTS `citation` (
 --
 
 DROP TABLE IF EXISTS `devices`;
-CREATE TABLE IF NOT EXISTS `devices` (
-  `d_id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `devices` (
+  `d_id` int(11) NOT NULL,
   `device_id` varchar(4) NOT NULL,
   `public_view` enum('Y','N') NOT NULL DEFAULT 'N',
   `device_desc` varchar(255) NOT NULL,
@@ -171,10 +164,8 @@ CREATE TABLE IF NOT EXISTS `devices` (
   `base_price` decimal(7,5) NOT NULL,
   `dg_id` int(11) DEFAULT NULL,
   `url` varchar(50) DEFAULT NULL,
-  `device_key` varchar(128) NOT NULL,
-  PRIMARY KEY (`d_id`),
-  KEY `devices_index_device_id` (`device_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=47 DEFAULT CHARSET=utf8;
+  `device_key` varchar(128) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `devices`
@@ -194,26 +185,26 @@ INSERT INTO `devices` (`d_id`, `device_id`, `public_view`, `device_desc`, `d_dur
 (11, '0011', 'Y', 'Janome Sewing #1', '00:00:00', '1.00000', 10, NULL, ''),
 (12, '0012', 'Y', 'Janome Sewing #2', '00:00:00', '1.00000', 10, NULL, ''),
 (13, '0013', 'N', 'Airbrush station', '00:00:00', '0.00000', 14, NULL, ''),
-(14, '0014', 'N', 'Machinist''s drill press', '00:00:00', '0.00000', 3, NULL, ''),
+(14, '0014', 'N', 'Machinist\'s drill press', '00:00:00', '0.00000', 3, NULL, ''),
 (15, '0015', 'N', 'Scroll saw', '00:00:00', '0.00000', 3, NULL, ''),
 (16, '0016', 'N', 'Sherline Desktop CNC Mill', '00:00:00', '0.00000', 3, NULL, ''),
 (17, '0017', 'N', 'Sherline Desktop CNC Lathe', '00:00:00', '0.00000', 3, NULL, ''),
 (18, '0018', 'N', 'Shopbot Handi-bot', '00:00:00', '0.00000', 3, NULL, ''),
 (19, '0019', 'N', 'Shopbot PRS-Alpha ', '00:00:00', '0.00000', 3, NULL, ''),
 (20, '0020', 'N', 'Sawstop Table Saw', '00:00:00', '0.00000', 3, NULL, ''),
-(21, '0021', 'Y', 'Polyprinter #1', '00:00:00', '0.00000', 2, NULL, ''),
-(22, '0022', 'Y', 'Polyprinter #2', '00:00:00', '0.00000', 2, NULL, ''),
-(23, '0023', 'Y', 'Polyprinter #3', '00:00:00', '0.00000', 2, NULL, ''),
-(24, '0024', 'Y', 'Polyprinter #4', '00:00:00', '0.00000', 2, NULL, ''),
-(25, '0025', 'Y', 'Polyprinter #5', '00:00:00', '0.00000', 2, NULL, ''),
-(26, '0026', 'Y', 'Polyprinter #6', '00:00:00', '0.00000', 2, NULL, ''),
-(27, '0027', 'Y', 'Polyprinter #7', '00:00:00', '0.00000', 2, NULL, ''),
-(28, '0028', 'Y', 'Polyprinter #8', '00:00:00', '0.00000', 2, NULL, ''),
-(29, '0029', 'Y', 'Polyprinter #9', '00:00:00', '0.00000', 2, NULL, ''),
-(30, '0030', 'Y', 'Polyprinter #10', '00:00:00', '0.00000', 15, NULL, ''),
-(31, '0031', 'Y', 'Orion Delta', '00:00:00', '0.00000', 8, NULL, ''),
-(32, '0032', 'Y', 'Rostock MAX', '00:00:00', '0.00000', 8, NULL, ''),
-(33, '0033', 'Y', 'Kossel Pro ', '00:00:00', '0.00000', 8, NULL, ''),
+(21, '0021', 'Y', 'Polyprinter #1', '00:00:00', '0.00000', 2, 'polyprinter-1.uta.edu', ''),
+(22, '0022', 'Y', 'Polyprinter #2', '00:00:00', '0.00000', 2, 'polyprinter-2.uta.edu', ''),
+(23, '0023', 'Y', 'Polyprinter #3', '00:00:00', '0.00000', 2, 'polyprinter-3.uta.edu', ''),
+(24, '0024', 'Y', 'Polyprinter #4', '00:00:00', '0.00000', 2, 'polyprinter-4.uta.edu', ''),
+(25, '0025', 'Y', 'Polyprinter #5', '00:00:00', '0.00000', 2, 'polyprinter-5.uta.edu', ''),
+(26, '0026', 'Y', 'Polyprinter #6', '00:00:00', '0.00000', 2, 'polyprinter-6.uta.edu', ''),
+(27, '0027', 'Y', 'Polyprinter #7', '00:00:00', '0.00000', 2, 'polyprinter-7.uta.edu', ''),
+(28, '0028', 'Y', 'Polyprinter #8', '00:00:00', '0.00000', 2, 'polyprinter-8.uta.edu', ''),
+(29, '0029', 'Y', 'Polyprinter #9', '00:00:00', '0.00000', 2, 'polyprinter-9.uta.edu', ''),
+(30, '0030', 'Y', 'Polyprinter #10', '00:00:00', '0.00000', 15, 'polyprinter-10.uta.edu', ''),
+(31, '0031', 'Y', 'Orion Delta', '00:00:00', '0.00000', 8, 'lib-od3d.uta.edu', ''),
+(32, '0032', 'Y', 'Rostock MAX', '00:00:00', '0.00000', 8, 'rostockmax.uta.edu', ''),
+(33, '0033', 'Y', 'Kossel Pro ', '00:00:00', '0.00000', 8, 'kossel.uta.edu', ''),
 (34, '0034', 'Y', 'Epilog Laser', '01:00:00', '0.00000', 4, NULL, ''),
 (35, '0035', 'Y', 'Boss Laser', '01:00:00', '0.00000', 4, NULL, ''),
 (36, '0036', 'Y', 'CNC Mini Mill', '00:00:00', '0.00000', 12, NULL, ''),
@@ -235,14 +226,12 @@ INSERT INTO `devices` (`d_id`, `device_id`, `public_view`, `device_desc`, `d_dur
 --
 
 DROP TABLE IF EXISTS `device_group`;
-CREATE TABLE IF NOT EXISTS `device_group` (
-  `dg_id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `device_group` (
+  `dg_id` int(11) NOT NULL,
   `dg_name` varchar(10) NOT NULL,
   `dg_parent` int(11) DEFAULT NULL,
-  `dg_desc` varchar(50) NOT NULL,
-  PRIMARY KEY (`dg_id`),
-  UNIQUE KEY `dg_name` (`dg_name`)
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8;
+  `dg_desc` varchar(50) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `device_group`
@@ -274,12 +263,11 @@ INSERT INTO `device_group` (`dg_id`, `dg_name`, `dg_parent`, `dg_desc`) VALUES
 --
 
 DROP TABLE IF EXISTS `device_materials`;
-CREATE TABLE IF NOT EXISTS `device_materials` (
-  `dm_id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `device_materials` (
+  `dm_id` int(11) NOT NULL,
   `dg_id` int(11) NOT NULL,
-  `m_id` int(11) NOT NULL,
-  PRIMARY KEY (`dm_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=71 DEFAULT CHARSET=utf8;
+  `m_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `device_materials`
@@ -349,7 +337,8 @@ INSERT INTO `device_materials` (`dm_id`, `dg_id`, `m_id`) VALUES
 (67, 2, 64),
 (68, 5, 65),
 (69, 5, 66),
-(70, 5, 67);
+(70, 5, 67),
+(71, 17, 68);
 
 -- --------------------------------------------------------
 
@@ -358,15 +347,14 @@ INSERT INTO `device_materials` (`dm_id`, `dg_id`, `m_id`) VALUES
 --
 
 DROP TABLE IF EXISTS `materials`;
-CREATE TABLE IF NOT EXISTS `materials` (
-  `m_id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `materials` (
+  `m_id` int(11) NOT NULL,
   `m_name` varchar(50) DEFAULT NULL,
   `m_parent` int(11) DEFAULT NULL,
   `price` decimal(6,2) DEFAULT NULL,
   `unit` varchar(10) NOT NULL,
-  `color_hex` varchar(6) DEFAULT NULL,
-  PRIMARY KEY (`m_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=68 DEFAULT CHARSET=utf8;
+  `color_hex` varchar(6) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `materials`
@@ -437,7 +425,8 @@ INSERT INTO `materials` (`m_id`, `m_name`, `m_parent`, `price`, `unit`, `color_h
 (64, 'ABS Trans Yellow', 1, '0.05', 'gram(s)', 'ECD898'),
 (65, 'Vinyl Mint', 7, '0.25', 'inch(es)', NULL),
 (66, 'Vinyl Lime Green', 7, '0.25', 'inch(es)', NULL),
-(67, 'Vinyl Gold', 7, '0.25', 'inch(es)', NULL);
+(67, 'Vinyl Gold', 7, '0.25', 'inch(es)', NULL),
+(68, 'Screen Ink(Generic)', NULL, '0.05', 'gram(s)', NULL);
 
 -- --------------------------------------------------------
 
@@ -446,17 +435,16 @@ INSERT INTO `materials` (`m_id`, `m_name`, `m_parent`, `price`, `unit`, `color_h
 --
 
 DROP TABLE IF EXISTS `mats_used`;
-CREATE TABLE IF NOT EXISTS `mats_used` (
-  `mu_id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `mats_used` (
+  `mu_id` int(11) NOT NULL,
   `trans_id` int(11) DEFAULT NULL,
   `m_id` int(11) NOT NULL,
   `unit_used` decimal(7,2) DEFAULT NULL,
   `mu_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `status_id` int(4) NOT NULL,
   `staff_id` varchar(10) DEFAULT NULL,
-  `mu_notes` text,
-  PRIMARY KEY (`mu_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8;
+  `mu_notes` text
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `mats_used`
@@ -469,7 +457,7 @@ INSERT INTO `mats_used` (`mu_id`, `trans_id`, `m_id`, `unit_used`, `mu_date`, `s
 (24, 51, 1, NULL, '2017-02-06 08:43:16', 10, '1000000009', NULL),
 (25, 52, 1, NULL, '2017-02-06 08:45:03', 10, '1000000009', NULL),
 (26, 54, 13, NULL, '2017-02-06 09:33:40', 10, '1000000009', NULL),
-(27, 55, 13, '5.00', '2017-02-09 06:34:49', 14, '1000000009', '|file.stl|body'),
+(27, 55, 13, '-5.00', '2017-02-09 06:34:49', 14, '1000000009', '|file.stl|body'),
 (28, 56, 9, NULL, '2017-02-06 09:37:57', 14, '1000000009', NULL),
 (29, 59, 52, NULL, '2017-02-06 10:44:45', 10, '1000000009', NULL),
 (30, 60, 5, NULL, '2017-02-06 19:22:04', 14, '1000000009', NULL),
@@ -485,14 +473,43 @@ INSERT INTO `mats_used` (`mu_id`, `trans_id`, `m_id`, `unit_used`, `mu_date`, `s
 (40, 71, 9, NULL, '2017-02-07 00:06:34', 14, '1000000009', NULL),
 (41, 72, 9, NULL, '2017-02-07 13:05:23', 14, '1000000009', NULL),
 (42, 73, 12, NULL, '2017-02-07 13:18:15', 13, '1000000008', NULL),
-(44, 55, 13, '5.00', '2017-02-09 06:34:49', 12, '1000000009', '|file2.stl|sdfasdfasdfasdfasdf'),
+(44, 55, 13, '-5.00', '2017-02-09 06:34:49', 12, '1000000009', '|file2.stl|sdfasdfasdfasdfasdf'),
 (45, 74, 62, '-50.00', '2017-02-09 07:01:22', 20, '1000000009', ''),
-(46, 75, 14, '-25.00', '2017-02-09 09:23:48', 20, '1000000009', '|Test.stl|Test Github recovery'),
+(46, 75, 14, '-25.00', '2017-02-09 09:23:48', 14, '1000000009', '|Test.stl|Test Github recovery'),
 (47, 76, 37, '-5.00', '2017-02-09 20:53:38', 14, '1000000009', '|file_name.stl|Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'),
 (48, 77, 9, NULL, '2017-02-10 16:15:15', 14, '1000000009', NULL),
 (49, 78, 59, '-5.00', '2017-02-10 16:22:33', 14, '1000000009', ''),
 (50, 79, 9, NULL, '2017-02-12 10:13:26', 10, '1000000009', NULL),
-(51, 80, 42, '-5.00', '2017-02-13 18:20:56', 14, '1000000008', '');
+(51, 80, 42, '-5.00', '2017-02-13 18:20:56', 14, '1000000008', ''),
+(54, NULL, 14, '850.00', '2017-02-18 21:40:50', 8, '1000129288', NULL),
+(55, NULL, 15, '1278.00', '2017-02-18 21:40:50', 8, '1000129288', NULL),
+(56, NULL, 16, '750.00', '2017-02-18 21:40:50', 8, '1000129288', NULL),
+(57, NULL, 17, '153.00', '2017-02-18 21:40:50', 8, '1000129288', NULL),
+(58, NULL, 18, '458.00', '2017-02-18 21:40:50', 8, '1000129288', NULL),
+(59, NULL, 19, '1164.00', '2017-02-18 21:40:50', 8, '1000129288', NULL),
+(60, NULL, 30, '1843.00', '2017-02-18 21:40:50', 8, '1000129288', NULL),
+(61, NULL, 35, '1115.00', '2017-02-18 21:40:50', 8, '1000129288', NULL),
+(62, NULL, 36, '402.00', '2017-02-18 22:28:23', 8, '1000129288', NULL),
+(63, NULL, 37, '883.00', '2017-02-18 22:38:42', 8, '1000129288', NULL),
+(64, NULL, 38, '1142.00', '2017-02-18 22:38:42', 8, '1000129288', NULL),
+(65, NULL, 39, '883.00', '2017-02-18 22:47:26', 8, '1000129288', NULL),
+(66, NULL, 40, '1142.00', '2017-02-18 22:47:26', 8, '1000129288', NULL),
+(67, NULL, 41, '214.00', '2017-02-18 22:47:26', 8, '1000129288', NULL),
+(68, NULL, 42, '354.00', '2017-02-18 22:47:26', 8, '1000129288', NULL),
+(69, NULL, 59, '830.00', '2017-02-18 22:47:26', 8, '1000129288', NULL),
+(70, NULL, 60, '1128.00', '2017-02-18 22:47:26', 8, '1000129288', NULL),
+(71, NULL, 61, '940.00', '2017-02-18 22:47:26', 8, '1000129288', NULL),
+(72, NULL, 62, '1373.00', '2017-02-18 22:47:26', 8, '1000129288', NULL),
+(73, NULL, 63, '670.00', '2017-02-18 22:47:26', 8, '1000129288', NULL),
+(74, NULL, 64, '1431.00', '2017-02-18 22:47:26', 8, '1000129288', NULL),
+(75, NULL, 29, '1845.00', '2017-02-20 18:55:59', 8, '1000129288', NULL),
+(76, NULL, 33, '460.00', '2017-02-20 18:55:59', 8, '1000129288', NULL),
+(77, 81, 42, '-5.00', '2017-04-03 16:54:44', 14, '1000000010', ''),
+(78, 83, 68, NULL, '2017-04-03 07:32:36', 10, '1000000010', NULL),
+(79, 85, 27, '-0.49', '2017-04-03 08:01:38', 20, '1000000010', ''),
+(80, 85, 32, '-0.66', '2017-04-03 08:01:38', 20, '1000000010', ''),
+(81, 86, 14, '-5.00', '2017-04-07 18:55:13', 14, '1000000010', 'This is a test3.'),
+(82, 87, 59, '-99.00', '2017-04-10 07:04:19', 12, '1000000010', 'Kill this test print.');
 
 -- --------------------------------------------------------
 
@@ -501,17 +518,15 @@ INSERT INTO `mats_used` (`mu_id`, `trans_id`, `m_id`, `unit_used`, `mu_date`, `s
 --
 
 DROP TABLE IF EXISTS `objbox`;
-CREATE TABLE IF NOT EXISTS `objbox` (
-  `o_id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `objbox` (
+  `o_id` int(11) NOT NULL,
   `o_start` datetime NOT NULL,
   `o_end` datetime DEFAULT NULL,
   `address` varchar(10) NOT NULL,
   `operator` varchar(10) DEFAULT NULL,
   `trans_id` int(11) DEFAULT NULL,
-  `staff_id` varchar(10) NOT NULL,
-  PRIMARY KEY (`o_id`),
-  KEY `trans_id` (`trans_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
+  `staff_id` varchar(10) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `objbox`
@@ -523,7 +538,8 @@ INSERT INTO `objbox` (`o_id`, `o_start`, `o_end`, `address`, `operator`, `trans_
 (3, '2017-02-09 03:23:48', NULL, '3A', NULL, 75, '1000000009'),
 (4, '2017-02-09 14:53:38', NULL, '3F', NULL, 76, '1000000006'),
 (5, '2017-02-10 10:22:33', NULL, '4D', NULL, 78, '1000000009'),
-(6, '2017-02-13 12:20:56', '2017-02-14 14:22:22', '2B', '1000000000', 80, '1000000010');
+(6, '2017-02-13 12:20:56', NULL, '2B', NULL, 80, '1000000010'),
+(8, '2017-04-03 11:54:44', NULL, '5D', NULL, 81, '1000000010');
 
 -- --------------------------------------------------------
 
@@ -532,11 +548,10 @@ INSERT INTO `objbox` (`o_id`, `o_start`, `o_end`, `address`, `operator`, `trans_
 --
 
 DROP TABLE IF EXISTS `purpose`;
-CREATE TABLE IF NOT EXISTS `purpose` (
-  `p_id` int(11) NOT NULL AUTO_INCREMENT,
-  `p_title` varchar(100) NOT NULL,
-  PRIMARY KEY (`p_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
+CREATE TABLE `purpose` (
+  `p_id` int(11) NOT NULL,
+  `p_title` varchar(100) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `purpose`
@@ -555,8 +570,8 @@ INSERT INTO `purpose` (`p_id`, `p_title`) VALUES
 --
 
 DROP TABLE IF EXISTS `queue`;
-CREATE TABLE IF NOT EXISTS `queue` (
-  `q_id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `queue` (
+  `q_id` int(11) NOT NULL,
   `d_id` varchar(4) NOT NULL,
   `operator` varchar(10) NOT NULL,
   `CODE` varchar(10) NOT NULL,
@@ -565,10 +580,7 @@ CREATE TABLE IF NOT EXISTS `queue` (
   `duration` time NOT NULL,
   `email` varchar(255) DEFAULT NULL,
   `phone` varchar(10) DEFAULT NULL,
-  `ca_id` int(11) DEFAULT NULL,
-  PRIMARY KEY (`q_id`),
-  KEY `que_index_device_id` (`d_id`),
-  KEY `que_index_operator` (`operator`)
+  `ca_id` int(11) DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -578,13 +590,12 @@ CREATE TABLE IF NOT EXISTS `queue` (
 --
 
 DROP TABLE IF EXISTS `reply`;
-CREATE TABLE IF NOT EXISTS `reply` (
-  `sr_id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `reply` (
+  `sr_id` int(11) NOT NULL,
   `sc_id` int(11) NOT NULL,
   `staff_id` varchar(10) NOT NULL,
   `sr_notes` text NOT NULL,
-  `sr_time` datetime NOT NULL,
-  PRIMARY KEY (`sr_id`)
+  `sr_time` datetime NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -594,21 +605,21 @@ CREATE TABLE IF NOT EXISTS `reply` (
 --
 
 DROP TABLE IF EXISTS `rfid`;
-CREATE TABLE IF NOT EXISTS `rfid` (
-  `rf_id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `rfid` (
+  `rf_id` int(11) NOT NULL,
   `rfid_no` varchar(64) NOT NULL,
-  `operator` varchar(10) NOT NULL,
-  PRIMARY KEY (`rf_id`),
-  UNIQUE KEY `rfid_no` (`rfid_no`),
-  KEY `rfid_index_operator` (`operator`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+  `operator` varchar(10) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `rfid`
 --
 
 INSERT INTO `rfid` (`rf_id`, `rfid_no`, `operator`) VALUES
-(2, '1000556', '1000129288');
+(3, '1000556', '1000129288'),
+(4, '68177218252', '1001142661'),
+(5, '1507918569', '1001142662'),
+(6, '1817518569', '1001142663');
 
 -- --------------------------------------------------------
 
@@ -617,12 +628,11 @@ INSERT INTO `rfid` (`rf_id`, `rfid_no`, `operator`) VALUES
 --
 
 DROP TABLE IF EXISTS `role`;
-CREATE TABLE IF NOT EXISTS `role` (
+CREATE TABLE `role` (
   `r_id` int(11) NOT NULL,
   `title` varchar(100) NOT NULL,
   `lvl_desc` varchar(255) NOT NULL,
-  `r_rate` decimal(9,2) DEFAULT NULL,
-  PRIMARY KEY (`r_id`)
+  `r_rate` decimal(9,2) DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
@@ -632,7 +642,7 @@ CREATE TABLE IF NOT EXISTS `role` (
 INSERT INTO `role` (`r_id`, `title`, `lvl_desc`, `r_rate`) VALUES
 (1, 'Visitor', 'Non-member lvl', '0.00'),
 (2, 'Learner', 'Student Level Membership', '0.00'),
-(3, 'Learner-RFID', 'Learner''s with RFID access', '2.00'),
+(3, 'Learner-RFID', 'Learner\'s with RFID access', '2.00'),
 (4, 'Community Member', 'Non-Student, 4 Month Membership', '10.00'),
 (7, 'Service', 'Service technicians that need to work on FabLab Equipment', '0.00'),
 (8, 'FabLabian', 'Student Worker', '0.00'),
@@ -646,15 +656,14 @@ INSERT INTO `role` (`r_id`, `title`, `lvl_desc`, `r_rate`) VALUES
 --
 
 DROP TABLE IF EXISTS `service_call`;
-CREATE TABLE IF NOT EXISTS `service_call` (
-  `sc_id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `service_call` (
+  `sc_id` int(11) NOT NULL,
   `staff_id` varchar(10) NOT NULL,
   `d_id` int(11) NOT NULL,
   `sl_id` int(11) NOT NULL,
   `solved` enum('Y','N') NOT NULL DEFAULT 'N',
   `sc_notes` text NOT NULL,
-  `sc_time` datetime NOT NULL,
-  PRIMARY KEY (`sc_id`)
+  `sc_time` datetime NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -664,11 +673,10 @@ CREATE TABLE IF NOT EXISTS `service_call` (
 --
 
 DROP TABLE IF EXISTS `service_lvl`;
-CREATE TABLE IF NOT EXISTS `service_lvl` (
-  `sl_id` int(11) NOT NULL AUTO_INCREMENT,
-  `msg` varchar(50) NOT NULL,
-  PRIMARY KEY (`sl_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=utf8;
+CREATE TABLE `service_lvl` (
+  `sl_id` int(11) NOT NULL,
+  `msg` varchar(50) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `service_lvl`
@@ -687,14 +695,12 @@ INSERT INTO `service_lvl` (`sl_id`, `msg`) VALUES
 --
 
 DROP TABLE IF EXISTS `site_variables`;
-CREATE TABLE IF NOT EXISTS `site_variables` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `site_variables` (
+  `id` int(11) NOT NULL,
   `name` varchar(20) NOT NULL,
   `value` varchar(100) NOT NULL,
-  `notes` varchar(250) NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8;
+  `notes` varchar(250) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `site_variables`
@@ -708,16 +714,19 @@ INSERT INTO `site_variables` (`id`, `name`, `value`, `notes`) VALUES
 (5, 'letter', '8', 'Number of Rows in each Box. Letters A-Z (max value 26)'),
 (6, 'grace_period', '300', 'Grace period allotted to each Ticket(sec)'),
 (7, 'limit', '300', '(seconds) 5 minutes before auto-logout'),
-(8, 'limit_long', '600', '(seconds) 10 minutes before auto-logout'),
+(8, 'limit_long', '6000', '(seconds) 10 minutes before auto-logout'),
 (9, 'maxHold', '336:00:00', '2 Week Holding Period for 3D prints'),
-(10, 'serving', '0', 'Now serving number such and such'),
-(11, 'forgotten', 'webapps.uta.edu/oit/selfservice/', 'UTA''s Password Reset'),
+(10, 'serving', '10', 'Now serving number such and such'),
+(11, 'forgotten', 'webapps.uta.edu/oit/selfservice/', 'UTA\'s Password Reset'),
 (12, 'check_expire', 'N', 'Do we deny users if they have an expired membership. Expected Values (Y,N)'),
 (13, 'ip_range_1', '/^127\\.0\\.0\\..*/', 'Block certain abilities based upon IP. Follow Regex format.'),
 (14, 'ip_range_2', '/^127\\.0\\.0\\..*/', 'Block certain abilities based upon IP. Follow Regex format.'),
 (15, 'inspectPrint', 'Once a print has been picked up & paid for we can not issue a refund.', 'Disclosure for picking up a 3D Print'),
 (16, 'site_name', 'FabApp', 'Name of site owner'),
-(17, 'paySite', 'https://csgoldweb.uta.edu/admin/quicktran/main.php', '3rd party Pay System. (CsGold)');
+(17, 'paySite', 'https://csgoldweb.uta.edu/admin/quicktran/main.php', '3rd party Pay System. (CsGold)'),
+(18, 'paySite_name', 'CsGold', '3rd party pay site'),
+(19, 'interdepartmental', 'Library Interdepartmental', ''),
+(20, 'currency', 'dollar', 'Icon as Defined by Font Awesome');
 
 -- --------------------------------------------------------
 
@@ -726,11 +735,10 @@ INSERT INTO `site_variables` (`id`, `name`, `value`, `notes`) VALUES
 --
 
 DROP TABLE IF EXISTS `status`;
-CREATE TABLE IF NOT EXISTS `status` (
-  `status_id` int(11) NOT NULL AUTO_INCREMENT,
-  `msg` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`status_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=23 DEFAULT CHARSET=utf8;
+CREATE TABLE `status` (
+  `status_id` int(11) NOT NULL,
+  `msg` varchar(255) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `status`
@@ -742,7 +750,7 @@ INSERT INTO `status` (`status_id`, `msg`) VALUES
 (3, 'Membership Expired'),
 (8, 'Mats Received '),
 (9, 'Mats Removed'),
-(10, 'Powered On'),
+(10, 'In Use'),
 (11, 'Moveable'),
 (12, 'Failed'),
 (13, 'Missprocessed'),
@@ -750,7 +758,7 @@ INSERT INTO `status` (`status_id`, `msg`) VALUES
 (20, 'Charge to Accounts'),
 (21, 'FabLab Account'),
 (22, 'Library Account'),
-(15, 'Cancel');
+(15, 'Cancelled');
 
 -- --------------------------------------------------------
 
@@ -759,14 +767,20 @@ INSERT INTO `status` (`status_id`, `msg`) VALUES
 --
 
 DROP TABLE IF EXISTS `time_clock`;
-CREATE TABLE IF NOT EXISTS `time_clock` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `time_clock` (
+  `id` int(11) NOT NULL,
   `staff_id` varchar(10) NOT NULL,
   `start_time` datetime NOT NULL,
   `end_time` datetime DEFAULT NULL,
-  `duration` time DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  `duration` time DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `time_clock`
+--
+
+INSERT INTO `time_clock` (`id`, `staff_id`, `start_time`, `end_time`, `duration`) VALUES
+(1, '1000129288', '2017-02-16 10:46:12', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -775,13 +789,11 @@ CREATE TABLE IF NOT EXISTS `time_clock` (
 --
 
 DROP TABLE IF EXISTS `tm_enroll`;
-CREATE TABLE IF NOT EXISTS `tm_enroll` (
+CREATE TABLE `tm_enroll` (
   `tm_id` int(11) NOT NULL,
   `operator` varchar(10) NOT NULL,
   `completed` datetime NOT NULL,
-  `staff_id` varchar(10) NOT NULL,
-  PRIMARY KEY (`tm_id`,`operator`),
-  KEY `tm_enroll_index_operator` (`operator`)
+  `staff_id` varchar(10) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
@@ -799,17 +811,15 @@ INSERT INTO `tm_enroll` (`tm_id`, `operator`, `completed`, `staff_id`) VALUES
 --
 
 DROP TABLE IF EXISTS `trainingmodule`;
-CREATE TABLE IF NOT EXISTS `trainingmodule` (
-  `tm_id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `trainingmodule` (
+  `tm_id` int(11) NOT NULL,
   `title` varchar(100) NOT NULL,
   `tm_desc` text,
   `duration` time NOT NULL,
   `d_id` int(11) DEFAULT NULL,
   `dg_id` int(11) DEFAULT NULL,
-  `tm_required` enum('Y','N') NOT NULL DEFAULT 'N',
-  PRIMARY KEY (`tm_id`),
-  KEY `device_id` (`d_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
+  `tm_required` enum('Y','N') NOT NULL DEFAULT 'N'
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `trainingmodule`
@@ -820,7 +830,8 @@ INSERT INTO `trainingmodule` (`tm_id`, `title`, `tm_desc`, `duration`, `d_id`, `
 (2, 'Bandsaw Training', 'Required Training for use of the Bandsaw. Covers safety, basic mechanics, and basic methods.', '01:00:00', 1, NULL, 'N'),
 (3, 'Bench Grinder', 'Required Training for the Bench Top Grinder. Covers basic safety standards, approved materials, maintenance requirements, ', '01:00:00', 2, NULL, 'N'),
 (4, 'CNC Plasma Cutter Training', 'Learn the how to use the power of plasma to cut through the toughest of materials', '02:00:00', 4, NULL, 'Y'),
-(5, 'Sliding Compound Miter Saw Training', 'Learn safe operating procedures, how to setup miter saw for various cutting operations, and to recognize dangerous situations and their potential ramifications.', '01:30:00', 6, NULL, 'N');
+(5, 'Sliding Compound Miter Saw Training', 'Learn safe operating procedures, how to setup miter saw for various cutting operations, and to recognize dangerous situations and their potential ramifications.', '01:30:00', 6, NULL, 'N'),
+(6, 'Test Device Training', NULL, '00:00:00', 22, NULL, 'Y');
 
 -- --------------------------------------------------------
 
@@ -829,8 +840,8 @@ INSERT INTO `trainingmodule` (`tm_id`, `title`, `tm_desc`, `duration`, `d_id`, `
 --
 
 DROP TABLE IF EXISTS `transactions`;
-CREATE TABLE IF NOT EXISTS `transactions` (
-  `trans_id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `transactions` (
+  `trans_id` int(11) NOT NULL,
   `d_id` int(11) NOT NULL,
   `operator` varchar(10) NOT NULL,
   `est_time` time DEFAULT NULL,
@@ -839,11 +850,8 @@ CREATE TABLE IF NOT EXISTS `transactions` (
   `duration` time DEFAULT NULL,
   `status_id` int(11) DEFAULT NULL,
   `p_id` int(11) DEFAULT NULL,
-  `staff_id` varchar(10) DEFAULT NULL,
-  PRIMARY KEY (`trans_id`),
-  KEY `device_id` (`d_id`),
-  KEY `transactions_index_operator` (`operator`)
-) ENGINE=MyISAM AUTO_INCREMENT=81 DEFAULT CHARSET=utf8;
+  `staff_id` varchar(10) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `transactions`
@@ -869,8 +877,8 @@ INSERT INTO `transactions` (`trans_id`, `d_id`, `operator`, `est_time`, `t_start
 (61, 4, '1000000004', '01:00:00', '2017-02-06 16:48:31', '2017-02-06 16:57:54', '00:09:23', 14, 1, '1000000009'),
 (60, 34, '1000000000', '01:00:00', '2017-02-06 13:22:04', '2017-02-06 16:40:23', '03:18:19', 14, 1, '1000000009'),
 (59, 11, '1000000000', '01:00:00', '2017-02-06 04:44:45', '2017-02-06 11:11:45', '06:27:00', 14, 3, '1000000009'),
-(58, 43, '1000000000', '01:00:00', '2017-02-06 04:43:06', NULL, NULL, 10, 1, '1000000009'),
-(57, 41, '1000000041', '01:00:00', '2017-02-06 04:31:34', NULL, NULL, 10, 1, '1000000009'),
+(58, 43, '1000000000', '01:00:00', '2017-02-06 04:43:06', '2017-04-03 00:00:00', '00:00:02', 14, 1, '1000000009'),
+(57, 41, '1000000001', '01:00:00', '2017-04-02 04:31:34', '2017-04-03 02:21:53', '21:50:19', 14, 1, '1000000009'),
 (44, 41, '1000000000', '01:00:00', '2017-02-06 01:33:13', '2017-02-06 01:37:57', '00:04:44', 14, 1, '1000000009'),
 (45, 41, '1000000000', '01:00:00', '2017-02-06 01:40:09', '2017-02-06 01:40:29', '00:00:20', 14, 1, '1000000009'),
 (46, 36, '1000000000', '01:00:00', '2017-02-06 02:27:01', '2017-02-06 02:27:34', '00:00:33', 14, 1, '1000000009'),
@@ -882,11 +890,17 @@ INSERT INTO `transactions` (`trans_id`, `d_id`, `operator`, `est_time`, `t_start
 (52, 36, '1000000000', '01:00:00', '2017-02-06 02:45:03', '2017-02-06 02:49:54', '00:04:51', 14, 1, '1000000009'),
 (53, 44, '1000000000', '01:00:00', '2017-02-06 02:52:38', '2017-02-06 02:52:48', '00:00:10', 14, 3, '1000000009'),
 (54, 21, '1000000000', '01:00:00', '2017-02-06 03:33:40', '2017-02-06 03:34:07', '00:00:27', 14, 1, '1000000009'),
-(55, 21, '1000000000', '01:00:00', '2017-02-06 03:34:59', '2017-02-09 00:33:09', '68:58:10', 14, 1, '1000000009'),
+(55, 21, '1000000000', '01:00:00', '2017-02-06 03:34:59', '2017-02-09 00:33:09', '23:58:10', 14, 1, '1000000009'),
 (56, 35, '1000000035', '01:00:00', '2017-02-06 03:37:57', '2017-02-06 11:34:42', '07:56:45', 14, 1, '1000000009'),
 (78, 21, '1000000000', '01:00:00', '2017-02-10 10:17:44', '2017-02-10 10:22:33', '00:04:49', 14, 1, '1000000009'),
 (79, 34, '1000000001', '01:00:00', '2017-02-12 04:13:26', '2017-02-13 11:54:47', '31:41:21', 14, 3, '1000000001'),
-(80, 21, '1000000021', '01:05:00', '2017-02-13 11:26:31', '2017-02-13 12:19:37', '00:53:06', 14, 1, '1000000010');
+(80, 21, '1000000021', '01:05:00', '2017-02-13 11:26:31', '2017-02-13 12:19:37', '00:53:06', 14, 1, '1000000010'),
+(81, 21, '1000000021', '01:00:00', '2017-04-03 03:46:57', '2017-04-03 11:43:49', '07:56:52', 14, 2, '1000000010'),
+(82, 37, '1000000037', '03:00:00', '2017-04-03 02:15:21', '2017-04-10 02:23:52', '168:08:31', 14, 1, '1000000010'),
+(83, 46, '1000000046', '03:00:00', '2017-04-03 02:32:36', NULL, NULL, 10, 2, '1000000010'),
+(85, 43, '1000000043', '01:00:00', '2017-04-03 03:01:37', NULL, NULL, 10, 3, '1000000010'),
+(86, 21, '1000000021', '03:00:00', '2017-04-03 11:55:32', '2017-04-03 12:43:43', '00:48:11', 11, 1, '1000000010'),
+(87, 22, '1000000022', '02:00:00', '2017-04-10 01:57:32', '2017-04-10 02:04:19', '00:06:47', 12, 1, '1000000010');
 
 -- --------------------------------------------------------
 
@@ -895,15 +909,13 @@ INSERT INTO `transactions` (`trans_id`, `d_id`, `operator`, `est_time`, `t_start
 --
 
 DROP TABLE IF EXISTS `users`;
-CREATE TABLE IF NOT EXISTS `users` (
-  `u_id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `users` (
+  `u_id` int(11) NOT NULL,
   `operator` varchar(10) NOT NULL,
   `r_id` int(11) NOT NULL,
   `exp_date` datetime DEFAULT NULL,
-  `icon` varchar(20) DEFAULT NULL,
-  PRIMARY KEY (`u_id`),
-  UNIQUE KEY `operator` (`operator`)
-) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=utf8;
+  `icon` varchar(20) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `users`
@@ -916,8 +928,310 @@ INSERT INTO `users` (`u_id`, `operator`, `r_id`, `exp_date`, `icon`) VALUES
 (4, '1000000007', 7, NULL, 'wrench'),
 (5, '1000000008', 8, NULL, NULL),
 (6, '1000000010', 10, NULL, 'institution'),
-(7, '1000000001', 1, NULL, NULL);
+(7, '1000000001', 1, NULL, NULL),
+(8, '1000129288', 9, '2017-05-31 23:59:59', 'bicycle'),
+(9, '1001142661', 8, NULL, NULL),
+(10, '1001142662', 8, NULL, NULL),
+(11, '1001142663', 8, NULL, NULL);
 
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indexes for table `accounts`
+--
+ALTER TABLE `accounts`
+  ADD PRIMARY KEY (`a_id`);
+
+--
+-- Indexes for table `acct_charge`
+--
+ALTER TABLE `acct_charge`
+  ADD PRIMARY KEY (`ac_id`);
+
+--
+-- Indexes for table `authrecipients`
+--
+ALTER TABLE `authrecipients`
+  ADD PRIMARY KEY (`ar_id`),
+  ADD KEY `trans_id` (`trans_id`);
+
+--
+-- Indexes for table `auth_accts`
+--
+ALTER TABLE `auth_accts`
+  ADD PRIMARY KEY (`aa_id`);
+
+--
+-- Indexes for table `carrier`
+--
+ALTER TABLE `carrier`
+  ADD PRIMARY KEY (`ca_id`);
+
+--
+-- Indexes for table `citation`
+--
+ALTER TABLE `citation`
+  ADD PRIMARY KEY (`c_id`);
+
+--
+-- Indexes for table `devices`
+--
+ALTER TABLE `devices`
+  ADD PRIMARY KEY (`d_id`),
+  ADD KEY `devices_index_device_id` (`device_id`);
+
+--
+-- Indexes for table `device_group`
+--
+ALTER TABLE `device_group`
+  ADD PRIMARY KEY (`dg_id`),
+  ADD UNIQUE KEY `dg_name` (`dg_name`);
+
+--
+-- Indexes for table `device_materials`
+--
+ALTER TABLE `device_materials`
+  ADD PRIMARY KEY (`dm_id`);
+
+--
+-- Indexes for table `materials`
+--
+ALTER TABLE `materials`
+  ADD PRIMARY KEY (`m_id`);
+
+--
+-- Indexes for table `mats_used`
+--
+ALTER TABLE `mats_used`
+  ADD PRIMARY KEY (`mu_id`);
+
+--
+-- Indexes for table `objbox`
+--
+ALTER TABLE `objbox`
+  ADD PRIMARY KEY (`o_id`),
+  ADD KEY `trans_id` (`trans_id`);
+
+--
+-- Indexes for table `purpose`
+--
+ALTER TABLE `purpose`
+  ADD PRIMARY KEY (`p_id`);
+
+--
+-- Indexes for table `queue`
+--
+ALTER TABLE `queue`
+  ADD PRIMARY KEY (`q_id`),
+  ADD KEY `que_index_device_id` (`d_id`),
+  ADD KEY `que_index_operator` (`operator`);
+
+--
+-- Indexes for table `reply`
+--
+ALTER TABLE `reply`
+  ADD PRIMARY KEY (`sr_id`);
+
+--
+-- Indexes for table `rfid`
+--
+ALTER TABLE `rfid`
+  ADD PRIMARY KEY (`rf_id`),
+  ADD UNIQUE KEY `rfid_no` (`rfid_no`),
+  ADD KEY `rfid_index_operator` (`operator`);
+
+--
+-- Indexes for table `role`
+--
+ALTER TABLE `role`
+  ADD PRIMARY KEY (`r_id`);
+
+--
+-- Indexes for table `service_call`
+--
+ALTER TABLE `service_call`
+  ADD PRIMARY KEY (`sc_id`);
+
+--
+-- Indexes for table `service_lvl`
+--
+ALTER TABLE `service_lvl`
+  ADD PRIMARY KEY (`sl_id`);
+
+--
+-- Indexes for table `site_variables`
+--
+ALTER TABLE `site_variables`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `name` (`name`);
+
+--
+-- Indexes for table `status`
+--
+ALTER TABLE `status`
+  ADD PRIMARY KEY (`status_id`);
+
+--
+-- Indexes for table `time_clock`
+--
+ALTER TABLE `time_clock`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `tm_enroll`
+--
+ALTER TABLE `tm_enroll`
+  ADD PRIMARY KEY (`tm_id`,`operator`),
+  ADD KEY `tm_enroll_index_operator` (`operator`);
+
+--
+-- Indexes for table `trainingmodule`
+--
+ALTER TABLE `trainingmodule`
+  ADD PRIMARY KEY (`tm_id`),
+  ADD KEY `device_id` (`d_id`);
+
+--
+-- Indexes for table `transactions`
+--
+ALTER TABLE `transactions`
+  ADD PRIMARY KEY (`trans_id`),
+  ADD KEY `device_id` (`d_id`),
+  ADD KEY `transactions_index_operator` (`operator`);
+
+--
+-- Indexes for table `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`u_id`),
+  ADD UNIQUE KEY `operator` (`operator`);
+
+--
+-- AUTO_INCREMENT for dumped tables
+--
+
+--
+-- AUTO_INCREMENT for table `accounts`
+--
+ALTER TABLE `accounts`
+  MODIFY `a_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+--
+-- AUTO_INCREMENT for table `acct_charge`
+--
+ALTER TABLE `acct_charge`
+  MODIFY `ac_id` int(11) NOT NULL AUTO_INCREMENT;
+--
+-- AUTO_INCREMENT for table `authrecipients`
+--
+ALTER TABLE `authrecipients`
+  MODIFY `ar_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+--
+-- AUTO_INCREMENT for table `auth_accts`
+--
+ALTER TABLE `auth_accts`
+  MODIFY `aa_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+--
+-- AUTO_INCREMENT for table `carrier`
+--
+ALTER TABLE `carrier`
+  MODIFY `ca_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+--
+-- AUTO_INCREMENT for table `citation`
+--
+ALTER TABLE `citation`
+  MODIFY `c_id` int(11) NOT NULL AUTO_INCREMENT;
+--
+-- AUTO_INCREMENT for table `devices`
+--
+ALTER TABLE `devices`
+  MODIFY `d_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
+--
+-- AUTO_INCREMENT for table `device_group`
+--
+ALTER TABLE `device_group`
+  MODIFY `dg_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+--
+-- AUTO_INCREMENT for table `device_materials`
+--
+ALTER TABLE `device_materials`
+  MODIFY `dm_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=72;
+--
+-- AUTO_INCREMENT for table `materials`
+--
+ALTER TABLE `materials`
+  MODIFY `m_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=69;
+--
+-- AUTO_INCREMENT for table `mats_used`
+--
+ALTER TABLE `mats_used`
+  MODIFY `mu_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=83;
+--
+-- AUTO_INCREMENT for table `objbox`
+--
+ALTER TABLE `objbox`
+  MODIFY `o_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+--
+-- AUTO_INCREMENT for table `purpose`
+--
+ALTER TABLE `purpose`
+  MODIFY `p_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+--
+-- AUTO_INCREMENT for table `queue`
+--
+ALTER TABLE `queue`
+  MODIFY `q_id` int(11) NOT NULL AUTO_INCREMENT;
+--
+-- AUTO_INCREMENT for table `reply`
+--
+ALTER TABLE `reply`
+  MODIFY `sr_id` int(11) NOT NULL AUTO_INCREMENT;
+--
+-- AUTO_INCREMENT for table `rfid`
+--
+ALTER TABLE `rfid`
+  MODIFY `rf_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+--
+-- AUTO_INCREMENT for table `service_call`
+--
+ALTER TABLE `service_call`
+  MODIFY `sc_id` int(11) NOT NULL AUTO_INCREMENT;
+--
+-- AUTO_INCREMENT for table `service_lvl`
+--
+ALTER TABLE `service_lvl`
+  MODIFY `sl_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+--
+-- AUTO_INCREMENT for table `site_variables`
+--
+ALTER TABLE `site_variables`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+--
+-- AUTO_INCREMENT for table `status`
+--
+ALTER TABLE `status`
+  MODIFY `status_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+--
+-- AUTO_INCREMENT for table `time_clock`
+--
+ALTER TABLE `time_clock`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+--
+-- AUTO_INCREMENT for table `trainingmodule`
+--
+ALTER TABLE `trainingmodule`
+  MODIFY `tm_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+--
+-- AUTO_INCREMENT for table `transactions`
+--
+ALTER TABLE `transactions`
+  MODIFY `trans_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=88;
+--
+-- AUTO_INCREMENT for table `users`
+--
+ALTER TABLE `users`
+  MODIFY `u_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

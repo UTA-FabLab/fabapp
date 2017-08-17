@@ -454,5 +454,5 @@ include ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
 <?php
 //Standard call for dependencies
-include ($_SERVER['DOCUMENT_ROOT'].'/footer.php');
+include ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 ?>

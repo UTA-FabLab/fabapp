@@ -85,7 +85,7 @@ class Materials {
     }
 
     public function getPrice() {
-        return $this->price;
+        return sprintf("%.2f", $this->price);
     }
 
     public function getUnit() {
