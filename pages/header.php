@@ -12,7 +12,7 @@
     <link href="/vendor/fabapp/fabapp.css?=v3" rel="stylesheet">
     <link href="/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="/vendor/metisMenu/metisMenu.min.css" rel="stylesheet">
-    <link href="/vendor/blackrock-digital/css/sb-admin-2.css?=v8" rel="stylesheet">
+    <link href="/vendor/blackrock-digital/css/sb-admin-2.css?=v9" rel="stylesheet">
     <link href="/vendor/morrisjs/morris.css" rel="stylesheet">
     <link href="/vendor/font-awesome/css/font-awesome.min.css?=v1" rel="stylesheet" type="text/css">
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -140,7 +140,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-sm-12">
+                            <div class="col-sm-12 col-sm-offset-1">
                                 <button type="submit" class="btn btn-primary btn-sm" name="signBtn">
                                     Sign In</button>
                                 <a href="http://<?php echo $sv["forgotten"];?>">Forgot your password?</a>
@@ -149,7 +149,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         </form>
                     </ul>
                     <!-- /.dropdown-login -->
-                </li>                
+                </li>
 <!--php class Staff if logged in-->
 <?php } else {?>
                 <li class="dropdown">
@@ -160,8 +160,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         <li><a href="#"><i class="fa fa-gear fa-fw"></i> Settings</a></li>
                         <li><a href="#"><i class="fa fa-bar-chart-o fa-fw"></i> Stats</a></li>
                         <li class="divider"></li>
-                        <li><a href="/logout.php?n=n"><i class="fa fa-sign-out fa-fw"></i> Logout</a>
-                        </li>
+                        <li><a href="/logout.php?n=n"><i class="fa fa-sign-out fa-fw"></i> Logout</a></li>
                     </ul>
                     <!-- /.dropdown-user -->
                 </li>
@@ -276,6 +275,17 @@ if ($staff) if($staff->getRoleID() > 6) { ?>
                                         </li>
                                         <li>
                                             <a href="#"><i class="fa fa-life-buoy fa-fw"></i> Manage Materials</a>
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    <a herf="#"><i class="fa fa-book fa-fw"></i> Training<span class="fa arrow"></span></a>
+                                    <ul class="nav nav-third-level">
+                                        <li>
+                                            <a href="/admin/training_certificate.php"><i class="fa fa-check-circle-o fa-fw"></i> Issue Certificate</a>
+                                        </li>
+                                        <li>
+                                            <a href="/admin/manage_trainings.php"><i class="fa fa-edit fa-fw"></i> Manage Trainings</a>
                                         </li>
                                     </ul>
                                 </li>

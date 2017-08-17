@@ -9,6 +9,7 @@
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/Accounts.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/Auth_Accts.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/Devices.php");
+include_once ($_SERVER['DOCUMENT_ROOT']."/class/DeviceGroup.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/Materials.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/Mats_Used.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/ObjBox.php");
@@ -17,6 +18,7 @@ include_once ($_SERVER['DOCUMENT_ROOT']."/class/Role.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/site_variables.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/Staff.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/Status.php");
+include_once ($_SERVER['DOCUMENT_ROOT']."/class/TrainingModule.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/Transactions.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/Users.php");
 

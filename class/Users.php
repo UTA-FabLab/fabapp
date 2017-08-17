@@ -59,6 +59,7 @@
             $this->icon = $row['icon'];
             $this->setAccounts($operator);
         } else {
+			echo $mysqli->error;
             return false;
         }
     }
@@ -92,7 +93,7 @@
     public static function regexUser($operator) {
         //10 digit format check
         if (preg_match("/^\d{10}$/",$operator) == 0) {
-            echo "Invalid Operator ID";
+            //echo "Invalid Operator ID:".$operator;
             return false;
         } else {
             return true;

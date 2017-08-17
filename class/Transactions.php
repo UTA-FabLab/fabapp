@@ -106,6 +106,7 @@ class Transactions {
     
     public function end($status_id, $staff_id){
         global $mysqli;
+        
         if(!Status::regexID($status_id)) return false;
         $this->setStatus($status_id);
         
@@ -172,7 +173,6 @@ class Transactions {
         ")){
             return true;
         }
-        //return $mysqli->error;
         return $mysqli->error;
     }
 

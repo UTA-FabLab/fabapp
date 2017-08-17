@@ -22,7 +22,7 @@ if (empty($_GET["d_id"])){
         FROM devices
         JOIN device_group 
         ON devices.dg_id = device_group.dg_id
-        WHERE device_id = $d_id
+        WHERE d_id = $d_id
         LIMIT 1;
     ")){
         if ($result->num_rows == 0){
@@ -61,7 +61,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['ticketBtn'])) {
     if ($gk_msg["authorized"] == "N"){
         $errorMsg = "Status Code:".$gk_msg["status_id"]." - ".$gk_msg["ERROR"];
         $error = true;
-    }    
+    }
     
     // Check if time has been selected
     if ( $limit > 0 ) { 
@@ -73,19 +73,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['ticketBtn'])) {
         $errorMsg = "Invalid Time - ".$_POST["hours"].":".$_POST["minutes"];
         $error = true;
     } else {
-        $hh = $_POST["hours"];
-        $mm = $_POST["minutes"];
         $time = $_POST["hours"].":".$_POST["minutes"].":00";
     }
     
     if ($error){
-        echo "<script> alert('$errorMsg')</script>";
+        echo "<script> alert(\"$errorMsg \")</script>";
     } elseif ($loadError) {
         echo "Error Loading Page";
     } elseif (strcmp($dg_name,"uprint") == 0){//process form for uPrint
         uPrintForm($_POST["operator"], $d_id, $time, $_POST["p_id"], $status_id, $device_mats, $staff->getOperator());
     } elseif (strcmp($dg_name,"screen") == 0) {//process form for screen printing
-        echo "Screen Form";
+        echo "<script> alert('Needs Screen Specific Form')</script>";
+        genericForm($_POST["operator"], $d_id, $time, $_POST["p_id"], $status_id, $staff->getOperator(), $_POST['m_id']);
     } else {//Generic Transaction Form
         genericForm($_POST["operator"], $d_id, $time, $_POST["p_id"], $status_id, $staff->getOperator(), $_POST['m_id']);
     }
@@ -107,8 +106,8 @@ function uPrintForm($operator, $d_id, $est_time, $p_id, $status_id, $device_mats
     $trans_id = Transactions::insertTrans($operator, $d_id, $est_time, $p_id, $status_id, $staff_id);
     if (is_int($trans_id)) {
         foreach($device_mats as $dm){
-            if(Mats_Used::insert_Mats_used($insID, $dm["m_id"], $dm["volume"], $status_id, $staff_id, "") === false)
-                echo "<script> alert('Can Not Add Materials Used\\nfor ticket - $insID')</script>";
+            if(Mats_Used::insert_Mats_used($trans_id, $dm["m_id"], $sv[uprint_conv]*$dm["volume"], $status_id, $staff_id, "") === false)
+                echo "<script> alert('Can Not Add Materials Used\\nfor ticket - $trans_id')</script>";
         }
         $_SESSION['type'] = "uprint";
         header("Location:/pay.php?trans_id=".$trans_id);
@@ -140,7 +139,7 @@ if ($staff) {
 ?>
     <div class="row">
         <div class="col-lg-12">
-            <h1 class="page-header">Create new Ticket for the <?php echo $device_desc; ?></h1>
+            <h1 class="page-header">Create Ticket for the <?php echo $device_desc; ?></h1>
         </div>
         <!-- /.col-lg-12 -->
     </div>
@@ -249,8 +248,8 @@ if ($staff) {
                             } ?>
                         </tr>
                         <tr class="tablerow">
-                                <td align="center"><input type="button" onclick="resetForm()" value="Reset form"></td>
-                                <td align="right"><input type="submit" name="ticketBtn" value="Submit" tabindex="9"></td>
+                            <td align="center"><input type="button" onclick="resetForm()" value="Reset form"></td>
+                            <td align="right"><input type="submit" name="ticketBtn" value="Submit" tabindex="9"></td>
                         </tr>
                         </form>
                     </table>
@@ -275,15 +274,15 @@ if ($staff) {
                         <tbody>
                         <?php //Display Inventory Based on device group
                         if($result = $mysqli->query("
-                            SELECT m_name, SUM(unit_used) as sum, color_hex, unit
-                            FROM materials
+                            SELECT `m_name`, SUM(unit_used) as `sum`, `color_hex`, `unit`
+                            FROM `materials`
+                            LEFT JOIN `mats_used`
+                            ON mats_used.m_id = `materials`.`m_id`
                             LEFT JOIN device_materials
                             ON device_materials.m_id = materials.m_id
-                            LEFT JOIN mats_used
-                            ON mats_used.m_id = materials.m_id
-                            WHERE dg_id = $dg_id
-                            GROUP BY m_name
-                            ORDER BY m_name ASC;
+                            WHERE dg_id = 2
+                            GROUP BY `m_name`, `color_hex`, `unit`
+                            ORDER BY `m_name` ASC;
                         ")){
                             while ($row = $result->fetch_assoc()){ ?>
                             <tr>
@@ -322,9 +321,9 @@ function validateForm() {
 	//Mav ID Check
     if (x == null || x == "" || !reg.test(x)) {
         if (!reg.test(x)) {
-			alert("Invalid ID #");
-		}
-		document.forms["cform"]["operator"].focus();
+                alert("Invalid ID #");
+            }
+            document.forms["cform"]["operator"].focus();
         return false;
     }
     //Material Check Uprint

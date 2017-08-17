@@ -28,10 +28,10 @@ class Devices {
         
         
         if ($result = $mysqli->query("
-			SELECT *
-			FROM `devices`
-			WHERE `d_id` = '$d_id'
-			LIMIT 1;
+            SELECT *
+            FROM `devices`
+            WHERE `d_id` = '$d_id'
+            LIMIT 1;
         ")){
             $row = $result->fetch_assoc();
             
@@ -122,7 +122,10 @@ class Devices {
     }
 
     public function getBase_price() {
-        return $this->base_price;
+        if (strlen($this->base_price) < 3 )
+            return sprintf("%.2f", $this->base_price);
+        else
+            return sprintf("%.5f", $this->base_price);
     }
 
     public function getDg_id() {

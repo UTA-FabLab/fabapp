@@ -45,23 +45,27 @@ if (isset($_GET["trans_id"])){
     $errorMsg = "Search Parameter is Missing";
 }
 
-
 if ($errorMsg != ""){
     echo "<script> alert('$errorMsg'); window.location.href='/index.php';</script>";
 }
-    
 
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['unfail'])) {
-    $ob_backup = unserialize($_SESSION['objbox']);
-    $t_backup = unserialize($_SESSION['ticket']);
-    $mats_used_backup = unserialize($_SESSION['mats_used']);
-
-    $ob_backup->writeAttr();
-    $t_backup->writeAttr();
-    foreach( $mats_used_backup as $mub){
-        $mub->writeAttr();
+    if (array_key_exists('objbox', $_SESSION)){
+        $ob_backup = unserialize($_SESSION['objbox']);
+        $ob_backup->writeAttr();
+        $_SESSION['objbox'] = null;
     }
+    
+    $t_backup = unserialize($_SESSION['ticket']);
+    $t_backup->writeAttr();
+    $_SESSION['ticket'] = null;
+
+    $mats_used_backup = unserialize($_SESSION['mats_used']);
+    foreach( $mats_used_backup as $mub){
+        $msg = $mub->writeAttr();
+    }
+    $_SESSION['mats_used'] = null;
     $_SESSION['type'] = "undo";
     header("Location:/pages/lookup.php?trans_id=".$t_backup->getTrans_id());
 }
@@ -74,7 +78,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['unfail'])) {
                 <h1 class="page-header">Details of Most Recent Ticket</h1>
             <?php } elseif (strcmp($_SESSION['type'], 'failed') == 0) { ?>
                 <h1 class="page-header">Details</h1><form name="undoForm" method="post" action=""><input type="submit" value="Unmark as Failed" name="unfail"></form>
-            <?php }  else { ?>
+            <?php }  elseif (strcmp($_SESSION['type'], 'end') == 0) { ?>
+                <h1 class="page-header">Details: Address - <?php if ($objbox = ObjBox::byTrans($ticket->getTrans_id())) {echo $objbox->getAddress();} $_SESSION['type'] = "lookup"; ?></h1>
+            <?php } else {?>
                 <h1 class="page-header">Details</h1>
             <?php } ?>
         </div>
@@ -85,7 +91,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['unfail'])) {
         <div class="col-lg-7">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fa fa-ticket fa-fw"></i> Ticket # <?php echo $ticket->getTrans_id(); ?>
+                    <i class="fa fa-ticket fa-fw"></i> Ticket # <b><?php echo $ticket->getTrans_id(); ?></b>
                 </div>
                 <div class="panel-body">
                     <table class ="table table-bordered table-striped">
@@ -195,14 +201,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['unfail'])) {
                                 <td><?php echo $objbox->getO_end(); ?></td>
                             </tr>
                             <?php if ($staff) {
-                                if ($staff->getRoleID() > 6){ ?>
+                                if ($staff->getRoleID() > 6){?>
                                     <tr>
                                         <td>Picked Up By</td>
                                         <td><?php 
-                                        if ( $objbox->getUser()->getIcon() ) {
-                                            echo "<i class='fa fa-".$objbox->getUser()->getIcon()." fa-fw'></i>"; 
-                                        } 
-                                        echo " ".$objbox->getUser()->getOperator();?></td>
+                                        if ( $objbox->getUser() !== NULL ) {
+                                            if ( $ticket->getUser()->getIcon() ) 
+                                                echo "<i class='fa fa-".$objbox->getUser()->getIcon()." fa-fw'></i>";
+                                            else 
+                                                echo "<i class='fa fa-user fa-fw'></i>";
+                                            echo " ".$objbox->getUser()->getOperator();
+                                        }?></td>
                                     </tr>
                                     <tr>
                                         <td>Address</td>
@@ -236,6 +245,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['unfail'])) {
                 </div>
                 <!-- /.panel -->
             <?php } ?>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fa fa-credit-card-alt fa-fw"></i> Paid By
+                </div>
+                <div class="panel-body">
+                    <table>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </table>
+                </div>
+                <!-- /.panel-body -->
+            </div>
+            <!-- /.panel -->
         </div>
         <!-- /.col-lg-5 -->
     </div>

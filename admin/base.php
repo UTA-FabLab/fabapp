@@ -4,12 +4,12 @@
  *   FabApp V 0.9
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
-?>
-<title><?php echo $sv['site_name'];?> Admin Base</title>
-<?php if ($staff) if($staff->getRoleID() < 7){
+if ($staff) if($staff->getRoleID() < 7){
     //Not Authorized to see this Page
     header('Location: /index.php');
-}?>
+}
+?>
+<title><?php echo $sv['site_name'];?> Admin Base</title>
 <div id="page-wrapper">
     <div class="row">
         <div class="col-lg-12">
@@ -19,7 +19,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
     </div>
     <!-- /.row -->
     <div class="row">
-        <div class="col-lg-8">
+        <div class="col-md-8">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <i class="fa fa-ticket fa-fw"></i> Title
@@ -29,8 +29,8 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
                 </div>
             </div>
         </div>
-        <!-- /.col-lg-8 -->
-        <div class="col-lg-4">
+        <!-- /.col-md-8 -->
+        <div class="col-md-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <i class="fa fa-calculator fa-fw"></i> Col 4
@@ -42,7 +42,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
             </div>
             <!-- /.panel -->
         </div>
-        <!-- /.col-lg-4 -->
+        <!-- /.col-md-4 -->
     </div>
     <!-- /.row -->
 </div>
