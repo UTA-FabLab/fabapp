@@ -8,14 +8,14 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 <title><?php echo $sv['site_name'];?> Base</title>
 <div id="page-wrapper">
     <div class="row">
-        <div class="col-lg-12">
+        <div class="col-md-12">
             <h1 class="page-header">Page Name</h1>
         </div>
-        <!-- /.col-lg-12 -->
+        <!-- /.col-md-12 -->
     </div>
     <!-- /.row -->
     <div class="row">
-        <div class="col-lg-8">
+        <div class="col-md-8">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <i class="fa fa-ticket fa-fw"></i> Title
@@ -25,7 +25,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
                 </div>
             </div>
         </div>
-        <!-- /.col-lg-8 -->
+        <!-- /.col-md-8 -->
         <div class="col-lg-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
@@ -38,7 +38,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
             </div>
             <!-- /.panel -->
         </div>
-        <!-- /.col-lg-4 -->
+        <!-- /.col-md-4 -->
     </div>
     <!-- /.row -->
 </div>

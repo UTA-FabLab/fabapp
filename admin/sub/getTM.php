@@ -6,7 +6,7 @@
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/connections/db_connect8.php');
 
-if (!empty($_GET["d_id"])) { 
+if (!empty($_GET["d_id"])) {
     $query = "SELECT * FROM `trainingmodule` WHERE d_id = '".$_GET['d_id']."' ORDER BY `title`";
 } elseif (!empty($_GET["dg_id"])) {
     $query = "SELECT * FROM `trainingmodule` WHERE dg_id = '".$_GET['dg_id']."' ORDER BY `title`";

@@ -81,7 +81,7 @@ if ( !empty($_GET['add']) && $staff){
         $file_name = $row['file_name'];
         $class_size = $row['class_size'];
         $tm_stamp = $row['tm_stamp'];
-                
+        
         //dg or d description
         if ($row['device_desc']){
             $device = $row['device_desc'];
@@ -112,7 +112,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $d_id = $input[1];
         }
 
-        $result = TrainingModule::insertTM($title, $tm_desc, $duration, $d_id, $dg_id, $tm_required, $class_size);
+        $result = TrainingModule::insertTM($title, $tm_desc, $duration, $d_id, $dg_id, $tm_required, $class_size, $staff);
         if (is_int($result)){
             echo "<script> alert('insert id is $result')</script>";
             header("Location:manage_trainings.php?edit=$result");
@@ -129,7 +129,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $tm_required = $_POST['tm_required'];
         $class_size = $_POST['class_size'];
         
-        $result = TrainingModule::editTM($tm_id, $title, $tm_desc, $duration, $d_id, $dg_id, $tm_required, $class_size);
+        $result = TrainingModule::editTM($tm_id, $title, $tm_desc, $duration, $d_id, $dg_id, $tm_required, $class_size, $staff);
         if (is_int($result)){
             if ($result == 1){
                 echo "<script> alert('insert id is $result')</script>";
@@ -168,10 +168,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <div class="panel-heading">
                             <i class="fa fa-search fa-fw"></i>
                             <?php if( preg_match('(input_add)', $_SESSION['type']) ){
-                                    echo "Add Training Module to $device";
+								echo "Add Training Module to $device";
                             } else {
-                                    echo "Edit Training Module for $device";
+								echo "Edit Training Module for $device";
                             }?>
+							<div class="pull-right"> <a href='/admin/manage_trainings.php'><i class="fa fa-mail-reply fa-fw"></i>Go Back</a> </div>
                         </div>
                         <div class="panel-body">
                             <table class="table table-striped table-bordered"><form method="post" action="" autocomplete='off' id="tmForm">
@@ -242,7 +243,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 </tbody>
                                 <tfoot>
                                     <tr>
-                                        <td colspan=2 align='right'>Updated On <?php echo date( 'M d, Y g:i a',strtotime($tm_stamp) ); ?>&ensp;<button type="button" class="btn btn-basic btn-md" onclick="editTM()" tabindex="8" id="editBtn">Edit</button></td>
+                                        <td colspan=2 align='right'>
+                                            <?php if( preg_match('(input_edit)', $_SESSION['type']) ){
+                                                    echo "Updated On ".date( 'M d, Y g:i a',strtotime($tm_stamp) )."&ensp;";
+                                            } 
+                                            if($staff->getRoleID() >= $sv['minRoleTrainer']){ ?>
+                                                    <button type="button" class="btn btn-basic btn-md" onclick="editTM()" tabindex="8" id="editBtn">Edit</button>
+                                            <?php } else { ?>
+                                                    <button type="button" class="btn btn-basic btn-md" tabindex="8" disabled>Edit</button>
+                                            <?php } ?>
+                                        </td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -330,7 +340,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <div class="panel-heading">
                             <i class="fa fa-edit fa-fw"></i> Training Modules
                             <div class="pull-right">
-                                <button type="button" id="addBtn" onclick="addTM()">Add</button>
+                                <?php if($staff->getRoleID() >= $sv['minRoleTrainer']){ ?>
+                                    <button type="button" id="addBtn" onclick="addTM()">Add</button>
+                                <?php } else { ?>
+                                    Add
+                                <?php } ?>
                             </div>
                         </div>
                         <div class="panel-body">
@@ -362,10 +376,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <?php } else { ?>
                                     <tr>
                                         <td><i class="fa fa-file-o fa-fw"></i> Training Modules</td><td>-</td></tr>
-                                <?php } ?>
-                                    <?php if($result = $mysqli->query("
+                                <?php } 
+                                if($result = $mysqli->query("
                                         SELECT count(*) as count
                                         FROM `tm_enroll`
+                                        WHERE `current` = 'Y'
                                 ")){
                                     $row = $result->fetch_assoc()?>
                                     <tr>

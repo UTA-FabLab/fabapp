@@ -13,8 +13,8 @@ class Role{
     public static function getTitle($r_id){
         global $mysqli;
 
-        if (preg_match("/^\d$/",$r_id) == 0) {
-            echo "Invalid RoleID";
+        if (preg_match("/^\d+$/",$r_id) == 0) {
+            echo "Invalid RoleID - $r_id";
             return false;
         }
 

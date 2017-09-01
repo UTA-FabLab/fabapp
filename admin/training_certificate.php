@@ -25,7 +25,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn']) && !empty
     }
 }
 
-if ($_SESSION['type'] == 'tc_success' && $_SERVER["REQUEST_METHOD"] != "POST"){
+//
+// Reset Forum and prevent null submission
+//
+if ($_SESSION['type'] && $_SESSION['type'] == 'tc_success' && $_SERVER["REQUEST_METHOD"] != "POST"){
     echo "<script type='text/javascript'> window.onload = function(){goModal('Success','Certificate Issued!', true)}</script>";
     
     //display current training module && description
@@ -63,7 +66,7 @@ function submitTM($tm_id, $operator, $staff){
     <!-- /.row -->
     <div class="row">
         <div class="col-md-9">
-            <?php if ($staff) {?>
+            <?php if ($staff && $staff->getRoleID() >= $sv['minRoleTrainer']) {?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <i class="fa fa-check-circle-o fa-fw"></i> Certify Completion of Training
@@ -81,7 +84,7 @@ function submitTM($tm_id, $operator, $staff){
                                 <td>
                                     <select name="d_id" id="d_id" onchange="selectDevice(this)" tabindex="1">
                                         <option disabled hidden selected value="">Device</option>
-                                        <?php if($result = $mysqli->query("
+											<?php if($result = $mysqli->query("
                                             SELECT d_id, device_desc
                                             FROM devices
                                             ORDER BY device_desc
@@ -111,28 +114,28 @@ function submitTM($tm_id, $operator, $staff){
                             <tr id="tr_tm">
                                 <td><a href="#" data-toogle="tooltop" data-placement="top" title="Please select the relevant training that was conducted">Training</a></td>
                                 <td>
-<?php if (isset($tm)){ ?>
-                                    <select name="tm_id" id="tm_id" onchange="getDesc(this)">
-                                        <option value="<?php echo $tm->getTm_id()?>" ><?php echo $tm->getTitle()?></option>
-                                    </select>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><a href="#" data-toogle="tooltop" data-placement="top" title="A brief description of what this training covers"></a>Description</td>
-                                <td id="tm_desc"><?php echo $tm->getTm_desc()?></td>
-                            </tr>
-<?php } else { ?>
-                                    <select name="tm_id" id="tm_id" onchange="getDesc(this)">
-                                        <option value="" hidden>Select</option>
-                                        <option value="" disabled="">Please Select a Device First</option>
-                                    </select>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><a href="#" data-toogle="tooltop" data-placement="top" title="A brief description of what this training covers"></a>Description</td>
-                                <td id="tm_desc"></td>
-                            </tr>
-<?php } ?>
+                            <?php if (isset($tm)){ ?>
+                                        <select name="tm_id" id="tm_id" onchange="getDesc(this)">
+                                            <option value="<?php echo $tm->getTm_id()?>" ><?php echo $tm->getTitle()?></option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><a href="#" data-toogle="tooltop" data-placement="top" title="A brief description of what this training covers"></a>Description</td>
+                                    <td id="tm_desc"><?php echo $tm->getTm_desc()?></td>
+                                </tr>
+                                <?php } else { ?>
+                                        <select name="tm_id" id="tm_id" onchange="getDesc(this)">
+                                            <option value="" hidden>Select</option>
+                                            <option value="" disabled="">Please Select a Device First</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><a href="#" data-toogle="tooltop" data-placement="top" title="A brief description of what this training covers"></a>Description</td>
+                                    <td id="tm_desc"></td>
+                                </tr>
+                            <?php } ?>
                             <tr>
                                 <td><a href="#" data-toggle="tooltip" data-placement="top" title="The person that you will issue a certificate to">Learner</a></td>
                                 <td><input type="text" name="operator" id="operator" class="form-control" placeholder="1000000000" maxlength="10" size="10"/></td>
@@ -147,7 +150,20 @@ function submitTM($tm_id, $operator, $staff){
                     <!-- /.panel-body -->
                 </div>
                 <!-- /.panel -->
-            <?php } else {?>
+            <?php } elseif($staff) { ?>
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="fa fa-sign-in fa-fw"></i>  Certify Completion of Training
+                    </div>
+                    <div class="panel-body">
+                        <?php
+                            echo ("To issue a certificate, you must be logged in as ".ROLE::getTitle($sv['minRoleTrainer'])." or higher.");
+                        ?>
+                    </div>
+                    <!-- /.panel-body -->
+                </div>
+                <!-- /.panel -->
+            <?php } else { ?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <i class="fa fa-sign-in fa-fw"></i> Please Log In
@@ -174,7 +190,7 @@ function submitTM($tm_id, $operator, $staff){
                         ")){
                             $row = $result->fetch_assoc()?>
                             <tr>
-                                <td>Training Modules</td>
+                                <td><i class="fa fa-file-o fa-fw"></i> Training Modules</td>
                                 <td><?php echo $row['count'];?></td>
                             </tr>
                         <?php } else { ?>
@@ -184,10 +200,11 @@ function submitTM($tm_id, $operator, $staff){
                             <?php if($result = $mysqli->query("
                                 SELECT count(*) as count
                                 FROM `tm_enroll`
+                                WHERE `current` = 'Y'
                         ")){
                             $row = $result->fetch_assoc()?>
                             <tr>
-                                <td>Training Enrollments</td>
+                                <td><i class="fa fa-check-circle-o fa-fw"></i> Certificates Issued</td>
                                 <td><?php echo $row['count'];?></td>
                             </tr>
                         <?php } else { ?>
@@ -256,15 +273,5 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         };
         xmlhttp.open("GET","sub/descTM.php?tm_id=" + element.value,true);
         xmlhttp.send();
-    }
-	
-    //fire off modal & optional dismissal timer
-    function goModal(title, body, auto){
-        document.getElementById("modal-title").innerHTML = title;
-        document.getElementById("modal-body").innerHTML = body;
-        $('#popModal').modal('show');
-        if (auto) {
-            setTimeout(function(){$('#popModal').modal('hide')}, 3000);
-        }
     }
 </script>

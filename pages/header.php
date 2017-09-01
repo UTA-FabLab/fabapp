@@ -41,15 +41,15 @@ if( isset($_SESSION['staff']) ){
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if( isset($_POST['signBtn']) ){
-        if ( count($_POST) && !empty($_POST["netID"]) && !empty($_POST["pass"]) ){
+        if ( !empty($_POST["netID"]) && !empty($_POST["pass"]) ){
             //Remove 3rd argument, define attribute in ldap.php
-            $operator = AuthenticateUser($_POST["netID"],$_POST["pass"],"utaEmplID");
+            $operator = AuthenticateUser($_POST["netID"],$_POST["pass"]);
             $_SESSION['netID'] = $_POST["netID"];
-            if ($operator) {
+            if (Users::regexUser($operator)) {
                 $staff = Staff::withID($operator);
                 $_SESSION["staff"] = $staff;
                 //staff get either limit or limit_long as their auto logout timer
-                if ($staff->getRoleID() > 8)
+                if ($staff->getRoleID() > $sv["LvlOfStaff"])
                     $staff->setTimeLimit( $sv["limit_long"] );
                 else
                     $staff->setTimeLimit( $sv["limit"] );
@@ -63,10 +63,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     echo "<script>window.location.href='/index.php';</script>";
                 }
                 exit();
-            }
-            
+            } else {
+				echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','Invalid user name and/or password!', false)}</script>";
+			}
         } else {
-            echo "NOPE";
+            	echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','No Password!', false)}</script>";
         }
     } elseif( isset($_POST['searchBtn']) ){
         if(isset($_POST['searchField'])){
@@ -181,7 +182,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <?php if ($staff) if($staff->getRoleID() > 6) { ?>
                         <li>
                             <a href="#"><i class="fa fa-gift fa-fw"></i> Pick Up 3D Print<span class="fa arrow"></span></a>
-							<ul class="nav nav-second-level">
+                            <ul class="nav nav-second-level">
                             <form name="pickForm" method="POST" action="" autocomplete="off" onsubmit="return validateNum('pickForm')">
                                 <li class="sidebar-search">
                                     <div class="input-group custom-search-form">
@@ -224,11 +225,15 @@ if ($staff) if($staff->getRoleID() > 6) { ?>
                             <a href="#"><i class="fa fa-wrench fa-fw"></i> Service Request<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
                                 <li>
-                                    <a href="#"><i class="fa fa-fire fa-fw"></i> Report Issue</a>
+                                    <a href="/service/newTicket.php"><i class="fa fa-fire fa-fw"></i> Report Issue</a>
                                 </li>
                                 <li>
-                                    <a href="#"><i class="fa fa-history fa-fw"></i> History</a>
+                                    <a href="/service/sortableHistory.php"><i class="fa fa-history fa-fw"></i> History</a>
                                 </li>
+                                <?php
+                                    if($staff->getRoleID() != 8 && $staff->getRoleID() != 9)
+                                        echo"<li><a href='/service/technicians.php'><i class='fa fa-comment-o fa-fw'></i> Open Tickets</a></li>";
+                                ?>
                             </ul>
                             <!-- /.nav-second-level -->
                         </li>

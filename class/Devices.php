@@ -64,7 +64,8 @@ class Devices {
     }
 
     public static function regexDID($d_id){
-		global $mysqli;
+        global $mysqli;
+        
         if (preg_match("/^\d+$/", $d_id) == 0){
             echo "Invalid D ID.";
             return false;
@@ -225,4 +226,36 @@ class Devices {
         $this->device_key = $device_key;
     }
     
+    public static function printDot($staff, $d_id){
+    	global $mysqli;
+        
+    	//look up current device status
+    	$dot = 0;
+    	$color = "white";
+    	$symbol = "circle";
+    	$lookup = "SELECT * FROM `service_call` WHERE `d_id` = '$d_id' AND solved = 'N' ORDER BY sc_time DESC";
+    	if($status = $mysqli->query($lookup)){
+            while ($ticket = $status->fetch_assoc()){
+                if($ticket['sl_id'] > $dot)
+                    $dot = $ticket['sl_id'];
+            }
+            if($status == NULL || $dot <= 1) {
+                $color = "green";
+            } elseif($dot < 7) {
+                $color = "yellow";
+            } else {
+                $color = "red";
+                $symbol = "times";
+            }
+    	}
+        
+    	if($staff){
+            if($staff->getRoleID() > 7)
+                echo "<a href = '/service/sortableHistory.php?d_id=".$d_id."'><i class='fa fa-$symbol fa-fw' style='color:$color'></i></a>&nbsp;";
+            else
+                echo "<i class='fa fa-".$symbol." fa-fw' style='color:".$color."'></i>&nbsp;";
+    	} else {
+            echo "<i class='fa fa-".$symbol." fa-fw' style='color:".$color."'></i>&nbsp;";
+    	}
+    }
 }
