@@ -51,7 +51,7 @@ if (empty($_GET["d_id"])){
 //When the user hits Submit
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['ticketBtn'])) {
     //set status id to "Powered On"
-    $status_id = 10;
+    $status_id = 0;
     
     //Call Gatekeeper to regex UTAID and validate if User is authorized
     foreach (gatekeeper($_POST["operator"], $device_id) as $key => $value){
@@ -62,6 +62,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['ticketBtn'])) {
         $errorMsg = "Status Code:".$gk_msg["status_id"]." - ".$gk_msg["ERROR"];
         $error = true;
     }
+	$status_id = $gk_msg['status_id'];
     
     // Check if time has been selected
     if ( $limit > 0 ) { 
@@ -80,13 +81,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['ticketBtn'])) {
         echo "<script> alert(\"$errorMsg \")</script>";
     } elseif ($loadError) {
         echo "Error Loading Page";
-    } elseif (strcmp($dg_name,"uprint") == 0){//process form for uPrint
+
+    //process form for uPrint
+    } elseif (strcmp($dg_name,"uprint") == 0){
         uPrintForm($_POST["operator"], $d_id, $time, $_POST["p_id"], $status_id, $device_mats, $staff->getOperator());
-    } elseif (strcmp($dg_name,"screen") == 0) {//process form for screen printing
+	
+	//process form for Device with consumable materials
+    } elseif (strcmp($dg_name,"screen") == 0) {
         echo "<script> alert('Needs Screen Specific Form')</script>";
-        genericForm($_POST["operator"], $d_id, $time, $_POST["p_id"], $status_id, $staff->getOperator(), $_POST['m_id']);
-    } else {//Generic Transaction Form
-        genericForm($_POST["operator"], $d_id, $time, $_POST["p_id"], $status_id, $staff->getOperator(), $_POST['m_id']);
+		
+	//Generic Transaction Form
+    } elseif (isset($_POST['m_id'])) {
+        genericForm($_POST["operator"], $d_id, $time, $_POST["p_id"], $status_id, $staff->getOperator());
     }
 }
 
@@ -117,7 +123,18 @@ function uPrintForm($operator, $d_id, $est_time, $p_id, $status_id, $device_mats
     }
 }
 
-function genericForm($operator, $d_id, $est_time, $p_id, $status_id, $staff_id, $m_id){
+function genericForm($operator, $d_id, $est_time, $p_id, $status_id, $staff_id){
+    //Attempt to create new Ticket
+    $trans_id = Transactions::insertTrans($operator, $d_id, $est_time, $p_id, $status_id, $staff_id);
+    if (is_int($trans_id)) {
+        header("Location:/lookup.php?trans_id=".$trans_id);
+    } else {
+        //$insID is not an integer, it must be an error Message
+        echo "<script> alert('Can Not Create a new Ticket - $trans_id')</script>";
+    }
+}
+
+function withMatsForm($operator, $d_id, $est_time, $p_id, $status_id, $staff_id, $m_id){
     //Attempt to create new Ticket
     $trans_id = Transactions::insertTrans($operator, $d_id, $est_time, $p_id, $status_id, $staff_id);
     if (is_int($trans_id)) {
@@ -145,7 +162,7 @@ if ($staff) {
     </div>
     <!-- /.row -->
     <div class="row">
-        <div class="col-lg-8">
+        <div class="col-md-8">
             <div class="panel panel-default">
                 <div class="panel-body">
                     <table class="table table-striped table-bordered table-hover">
@@ -256,8 +273,8 @@ if ($staff) {
                 </div>
             </div>
         </div>
-        <!-- /.col-lg-8 -->
-        <div class="col-lg-4">
+        <!-- /.col-md-8 -->
+        <div class="col-md-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <i class="fa fa-linode fa-fw"></i> Inventory
@@ -301,7 +318,7 @@ if ($staff) {
             </div>
             <!-- /.panel -->
         </div>
-        <!-- /.col-lg-4 -->
+        <!-- /.col-md-4 -->
     </div>
     <!-- /.row -->
 </div>

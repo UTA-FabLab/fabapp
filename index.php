@@ -6,6 +6,36 @@
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 $device_array = array();
 $_SESSION['type'] = "home";
+
+
+//temp solution to merge old DB w/ new
+if ($mysqli->query("
+	UPDATE `transactions`
+	SET `d_id` = `device_id`, `operator` = `uta_id`, `p_id` = `purp_id`
+	WHERE `device_id` IS NOT NULL;
+")){
+	echo "t:".$mysqli->affected_rows.", ";
+} else {
+	echo ("T-Error, ");
+}
+if ($mysqli->query("
+	UPDATE `mats_used`
+	SET `mu_date` = `date`, `mu_notes` = `notes`
+	WHERE `date` IS NOT NULL;
+")){
+	echo "mu:".$mysqli->affected_rows.", ";
+} else {
+	echo ("MU-Error, ");
+}
+if ($mysqli->query("
+	UPDATE `objbox`
+	SET `operator` = `pickupid`
+	WHERE `pickupid` IS NOT NULL;
+")){
+	echo "OB:".$mysqli->affected_rows;
+} else {
+	echo ("OB-Error");
+}
 ?>
 <title><?php echo $sv['site_name'];?> Dashboard</title>
 <div id="page-wrapper">
@@ -44,12 +74,18 @@ $_SESSION['type'] = "home";
                             while ( $row = $result->fetch_assoc() ){ ?>
                             <tr class="tablerow">
                                 <?php if($row["t_start"]) { ?>
-                                    <td align="right"><?php echo $row["trans_id"]; ?></td>
-                                    <?php if($row['url'] && (preg_match($sv['ip_range_1'],getenv('REMOTE_ADDR')) || preg_match($sv['ip_range_2'],getenv('REMOTE_ADDR'))) ){ ?>
-                                            <td><?php echo ("<a href=\"http://".$row["url"]."\">".$row["device_desc"]."</a>"); ?></td>
-                                    <?php }else{ ?>
-                                            <td><?php echo $row["device_desc"]; ?></td><?php }
-                                    echo("<td>".date( 'M d g:i a',strtotime($row["t_start"]) )."</td>" );
+                                    <td align="right"><?php echo ("<a href=\"pages/lookup.php?trans_id=$row[trans_id]\">$row[trans_id]</a>"); ?></td>
+                                    <td>
+                                        <?php if($row['url'] && (preg_match($sv['ip_range_1'],getenv('REMOTE_ADDR')) || preg_match($sv['ip_range_2'],getenv('REMOTE_ADDR'))) ){
+                                                Devices::printDot($staff, $row['d_id'], $row["device_desc"]);
+                                                echo ("<a href=\"http://".$row["url"]."\">".$row["device_desc"]."</a>");
+                                            ?>
+                                        <?php } else {
+                                            Devices::printDot($staff, $row['d_id']);
+                                            echo $row['device_desc'];
+                                        } ?>
+                                    </td>
+                                    <?php echo("<td>".date( 'M d g:i a',strtotime($row["t_start"]) )."</td>" );
                                     if( $row["status_id"] == 11) {
                                         $status = new Status($row["status_id"]);
                                         echo("<td align='center'>".$status->getMsg()."</td>");
@@ -63,7 +99,7 @@ $_SESSION['type'] = "home";
                                     } else 
                                         echo("<td align=\"center\">-</td>"); 
                                     if ($staff) {
-                                        if ($staff->getRoleID() > 6 || $staff->getOperator() == $row["operator"]) { ?>
+                                        if ($staff->getRoleID() >= $sv['LvlOfStaff'] || $staff->getOperator() == $row["operator"]) { ?>
                                             <td align="center">
                                                 <button onclick="endTicket(<?php echo $row["trans_id"].",'".$row["device_desc"]."'"; ?>)">End Ticket</button>
                                             </td>
@@ -72,10 +108,15 @@ $_SESSION['type'] = "home";
                                     }
                                 } else { ?>
                                     <td align="right"></td>
-                                    <?php if($row['url'] && (preg_match($sv['ip_range_1'],getenv('REMOTE_ADDR')) || preg_match($sv['ip_range_2'],getenv('REMOTE_ADDR'))) ){ ?>
-                                            <td><?php echo ("<a href=\"http://".$row["url"]."\">".$row["device_desc"]."</a>"); ?></td>
-                                    <?php }else{ ?>
-                                            <td><?php echo $row["device_desc"]; ?></td><?php }?>
+                                    <td>
+                                        <?php if($row['url'] && (preg_match($sv['ip_range_1'],getenv('REMOTE_ADDR')) || preg_match($sv['ip_range_2'],getenv('REMOTE_ADDR'))) ){ 
+                                            Devices::printDot($staff, $row['d_id']);
+                                            echo ("<a href=\"http://".$row["url"]."\">".$row["device_desc"]."</a>");
+                                        } else {
+                                            Devices::printDot($staff, $row['d_id']);
+                                            echo $row['device_desc'];
+                                        } ?>
+                                    </td>
                                     <td align="center"> - </td>
                                     <td align="center"> - </td>
                                     <?php if($row["url"] && $staff){
@@ -109,7 +150,9 @@ $_SESSION['type'] = "home";
                             <tr>
                                 <th>Material</th>
                                 <th><i class="fa fa-paint-brush fa-fw"></i></th>
-                                <th>Qty on Hand</th>
+                                <?php if ($staff && $staff->getRoleID() >= $sv['LvlOfStaff']){?>
+                                        <th>Qty on Hand</th>
+                                <?php } ?>
                             </tr>
                         </thead>
                         <tbody>
@@ -123,13 +166,20 @@ $_SESSION['type'] = "home";
                             GROUP BY `m_name`, `color_hex`, `unit`
                             ORDER BY `m_name` ASC;
                         ")){
-                            while ($row = $result->fetch_assoc()){ ?>
-                            <tr>
-                                <td><?php echo $row['m_name']; ?></td>
-                                <td><div class="color-box" style="background-color: #<?php echo $row['color_hex'];?>;"/></td>
-                                <td><?php echo number_format($row['sum'])." ".$row['unit']; ?></td>
-                            </tr>
-                            <?php }
+                            while ($row = $result->fetch_assoc()){
+                                if ($staff && $staff->getRoleID() >= $sv['LvlOfStaff']){ ?>
+                                    <tr>
+                                        <td><?php echo $row['m_name']; ?></td>
+                                        <td><div class="color-box" style="background-color: #<?php echo $row['color_hex'];?>;"/></td>
+                                        <td><?php echo number_format($row['sum'])." ".$row['unit']; ?></td>
+                                    </tr>
+                                <?php } else {?>
+                                    <tr>
+                                        <td><?php echo $row['m_name']; ?></td>
+                                        <td><div class="color-box" style="background-color: #<?php echo $row['color_hex'];?>;"/></td>
+                                    </tr>
+                                <?php }
+                            }
                         } else { ?>
                             <tr><td colspan="3">None</td></tr>
                         <?php } ?>
@@ -150,13 +200,11 @@ $_SESSION['type'] = "home";
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 ?>
 <script>
-window.onload = function () {
-    <?php foreach ($device_array as $da) { ?>
-            var time = <?php echo $da[1];?>;
-            var display = document.getElementById('est<?php echo $da[0];?>');
-            var dg_parent = <?php if ($da[2]) echo $da[2]; else echo "0";?>;
-            startTimer(time, display, dg_parent);
-
-    <?php } ?>
-};
+<?php foreach ($device_array as $da) { ?>
+	var time = <?php echo $da[1];?>;
+	var display = document.getElementById('est<?php echo $da[0];?>');
+	var dg_parent = <?php if ($da[2]) echo $da[2]; else echo "0";?>;
+	startTimer(time, display, dg_parent);
+	
+<?php } ?>
 </script>

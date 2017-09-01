@@ -24,7 +24,7 @@ Check if operator already has entry in the user's table, if (!TRUE) SQL("Insert.
 */
 $type = $input_data['type'];
 $rfid = $input_data['rfid'];
-$operator =  $input_data['uta_id'];
+$operator =  $input_data['operator_id'];
 
 if( $type == "create" ){
 
@@ -36,5 +36,21 @@ if( $type == "create" ){
 	
 	echo "done";
 
+}if( $type == "check" ){
+	
+	
+	$sql = "SELECT operator FROM rfid WHERE rfid_no = $rfid AND operator = $operator";
+	$result = $mysqli->query($sql);
+	
+	$row = mysqli_fetch_row( $result );
+	
+	if( count($row) == 0 ){
+		echo "No";
+	}else{
+		echo "Yes";
+	}
+	
 }
+
+
 ?>

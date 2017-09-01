@@ -3,6 +3,8 @@
 /*
  * License - FabApp V 0.9
  * 2016-2017 CC BY-NC-AS UTA FabLab
+ *
+ * Ajax called by training_certificate.php
  */
 include_once (filter_input(INPUT_SERVER,'DOCUMENT_ROOT').'/connections/db_connect8.php');
 include_once (filter_input(INPUT_SERVER,'DOCUMENT_ROOT').'/class/all_classes.php');

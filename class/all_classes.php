@@ -15,6 +15,8 @@ include_once ($_SERVER['DOCUMENT_ROOT']."/class/Mats_Used.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/ObjBox.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/Purpose.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/Role.php");
+include_once ($_SERVER['DOCUMENT_ROOT']."/class/Service_call.php");
+include_once ($_SERVER['DOCUMENT_ROOT']."/class/Service_reply.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/site_variables.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/Staff.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/Status.php");

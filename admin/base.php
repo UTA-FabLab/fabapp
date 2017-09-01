@@ -4,7 +4,7 @@
  *   FabApp V 0.9
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
-if ($staff) if($staff->getRoleID() < 7){
+if ($staff && if($staff->getRoleID() < 7){
     //Not Authorized to see this Page
     header('Location: /index.php');
 }

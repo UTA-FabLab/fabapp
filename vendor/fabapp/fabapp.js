@@ -16,6 +16,16 @@ function endTicket(trans_id, device_desc) {
     }
 }
 
+//fire off modal & optional dismissal timer
+function goModal(title, body, auto){
+	document.getElementById("modal-title").innerHTML = title;
+	document.getElementById("modal-body").innerHTML = body;
+	$('#popModal').modal('show');
+	if (auto) {
+		setTimeout(function(){$('#popModal').modal('hide')}, 3000);
+	}
+}
+	
 function IDCheck(operator){
 	var reg = /^\d{10}$/;
 	//Mav ID Check
