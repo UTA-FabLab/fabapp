@@ -6,6 +6,11 @@
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 $d_id = $dg_id = $operator = "";
 
+if (!$staff || $staff->getRoleID() < 7){
+    //Not Authorized to see this Page
+    header('Location: index.php');
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn']) && ($_POST['submitBtn'] == 'Submit') && !empty($_POST['tm_id']) && $_SESSION['type'] != 'tc_success') {
     $tm_id = filter_input(INPUT_POST,'tm_id');
     $operator = filter_input(INPUT_POST, 'operator');
@@ -81,13 +86,24 @@ function submitTM($tm_id, $operator, $staff){
                                 <td>
                                     <select name="d_id" id="d_id" onchange="selectDevice(this)" tabindex="1">
                                         <option disabled hidden selected value="">Device</option>
-											<?php if($result = $mysqli->query("
+                                        <?php if($result = $mysqli->query("
                                             SELECT d_id, device_desc
                                             FROM devices
                                             ORDER BY device_desc
                                         ")){
                                             while($row = $result->fetch_assoc()){
-                                                echo("<option value='$row[d_id]'>$row[device_desc]</option>");
+                                                if($innerResult = $mysqli->query("
+                                                    SELECT count(`tm_id`) as 'count'
+                                                    FROM `trainingmodule`
+                                                    WHERE `d_id` = $row[d_id];
+                                                ")){
+                                                    $innerRow = $innerResult->fetch_assoc();
+                                                    if ($innerRow['count'] > 0){
+                                                        echo("<option value='$row[d_id]'>$row[device_desc]</option>");
+                                                    }
+                                                } else {
+                                                    echo ("Device list Error - internal SQL ERROR"); 
+                                                }
                                             }
                                         } else {
                                             echo ("Device list Error - SQL ERROR");
@@ -100,7 +116,18 @@ function submitTM($tm_id, $operator, $staff){
                                             ORDER BY dg_desc
                                         ")){
                                             while($row = $result->fetch_assoc()){
-                                                echo("<option value='$row[dg_id]'>$row[dg_desc]</option>");
+                                                if($innerResult = $mysqli->query("
+                                                    SELECT count(`tm_id`) as 'count'
+                                                    FROM `trainingmodule`
+                                                    WHERE `dg_id` = $row[dg_id];
+                                                ")){
+                                                    $innerRow = $innerResult->fetch_assoc();
+                                                    if ($innerRow['count'] > 0){
+                                                        echo("<option value='$row[dg_id]'>$row[dg_desc]</option>");
+                                                    }
+                                                } else {
+                                                    echo ("Device list Error - internal SQL ERROR"); 
+                                                }
                                             }
                                         } else {
                                             echo ("Device list Error - SQL ERROR");
