@@ -9,33 +9,38 @@ $_SESSION['type'] = "home";
 
 
 //temp solution to merge old DB w/ new
+//otherwise disable
+/*
+echo "<div class='pull-right'>";
 if ($mysqli->query("
 	UPDATE `transactions`
 	SET `d_id` = `device_id`, `operator` = `uta_id`, `p_id` = `purp_id`
 	WHERE `device_id` IS NOT NULL;
 ")){
-	echo "t:".$mysqli->affected_rows.", ";
+    echo "T:".$mysqli->affected_rows.", ";
 } else {
-	echo ("T-Error, ");
+    echo ("T-Error, ");
 }
 if ($mysqli->query("
 	UPDATE `mats_used`
 	SET `mu_date` = `date`, `mu_notes` = `notes`
 	WHERE `date` IS NOT NULL;
 ")){
-	echo "mu:".$mysqli->affected_rows.", ";
+    echo "MU:".$mysqli->affected_rows.", ";
 } else {
-	echo ("MU-Error, ");
+    echo ("MU-Error, ");
 }
 if ($mysqli->query("
-	UPDATE `objbox`
-	SET `operator` = `pickupid`
-	WHERE `pickupid` IS NOT NULL;
+    UPDATE `objbox`
+    SET `operator` = `pickupid`
+    WHERE `pickupid` IS NOT NULL;
 ")){
-	echo "OB:".$mysqli->affected_rows;
+    echo "OB:".$mysqli->affected_rows;
 } else {
-	echo ("OB-Error");
+    echo ("OB-Error");
 }
+echo "</div>";
+ */
 ?>
 <title><?php echo $sv['site_name'];?> Dashboard</title>
 <div id="page-wrapper">

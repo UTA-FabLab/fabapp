@@ -87,23 +87,14 @@ function submitTM($tm_id, $operator, $staff){
                                     <select name="d_id" id="d_id" onchange="selectDevice(this)" tabindex="1">
                                         <option disabled hidden selected value="">Device</option>
                                         <?php if($result = $mysqli->query("
-                                            SELECT d_id, device_desc
-                                            FROM devices
-                                            ORDER BY device_desc
+                                            SELECT DISTINCT `devices`.`d_id`, `devices`.`device_desc`
+                                            FROM `devices`
+                                            INNER JOIN `trainingmodule`
+                                            ON `devices`.`d_id` = `trainingmodule`.`d_id`
+                                            ORDER BY `device_desc`
                                         ")){
                                             while($row = $result->fetch_assoc()){
-                                                if($innerResult = $mysqli->query("
-                                                    SELECT count(`tm_id`) as 'count'
-                                                    FROM `trainingmodule`
-                                                    WHERE `d_id` = $row[d_id];
-                                                ")){
-                                                    $innerRow = $innerResult->fetch_assoc();
-                                                    if ($innerRow['count'] > 0){
-                                                        echo("<option value='$row[d_id]'>$row[device_desc]</option>");
-                                                    }
-                                                } else {
-                                                    echo ("Device list Error - internal SQL ERROR"); 
-                                                }
+                                                echo("<option value='$row[d_id]'>$row[device_desc]</option>");
                                             }
                                         } else {
                                             echo ("Device list Error - SQL ERROR");
@@ -111,23 +102,14 @@ function submitTM($tm_id, $operator, $staff){
                                     </select> or <select name="dg_id" id="dg_id" onchange="selectDevice(this)" tabindex="2">
                                         <option disabled hidden selected value="">Device Group</option>
                                         <?php if($result = $mysqli->query("
-                                            SELECT dg_id, dg_desc
-                                            FROM device_group
-                                            ORDER BY dg_desc
+                                            SELECT DISTINCT `device_group`.`dg_id`, `device_group`.`dg_desc`
+                                            FROM `device_group`
+                                            INNER JOIN `trainingmodule`
+                                            ON `device_group`.`dg_id` = `trainingmodule`.`dg_id`
+                                            ORDER BY `dg_desc`
                                         ")){
                                             while($row = $result->fetch_assoc()){
-                                                if($innerResult = $mysqli->query("
-                                                    SELECT count(`tm_id`) as 'count'
-                                                    FROM `trainingmodule`
-                                                    WHERE `dg_id` = $row[dg_id];
-                                                ")){
-                                                    $innerRow = $innerResult->fetch_assoc();
-                                                    if ($innerRow['count'] > 0){
-                                                        echo("<option value='$row[dg_id]'>$row[dg_desc]</option>");
-                                                    }
-                                                } else {
-                                                    echo ("Device list Error - internal SQL ERROR"); 
-                                                }
+                                                echo("<option value='$row[dg_id]'>$row[dg_desc]</option>");
                                             }
                                         } else {
                                             echo ("Device list Error - SQL ERROR");
