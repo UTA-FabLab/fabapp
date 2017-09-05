@@ -4,7 +4,8 @@
  *   FabApp V 0.9
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
-if ($staff) if($staff->getRoleID() < 7){
+
+if ($staff && $staff->getRoleID() < 7){
     //Not Authorized to see this Page
     header('Location: /index.php');
 }
@@ -18,7 +19,6 @@ if($_SESSION['type'] == 'success'){
 if ( !empty($_GET['add']) && $staff){
     //declare empty fields
     $title = $tm_desc = $duration = $tm_required = $file_name = $class_size = $device = $tm_stamp = "";
-    
     $input = explode("=", $_GET['add']);
     if( preg_match('(dg_id)', $input[0]) ){
         if($result = $mysqli->query("
@@ -49,7 +49,7 @@ if ( !empty($_GET['add']) && $staff){
     } else {
         $_SESSION['type'] = 'ERROR';
     }
-	
+
 } elseif ( !empty($_GET['edit']) && $staff ){
     $_SESSION['type'] = 'input_edit';
 	
@@ -111,7 +111,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         } elseif( preg_match('(d_id)', $input[0]) ) {
             $d_id = $input[1];
         }
-
+        
         $result = TrainingModule::insertTM($title, $tm_desc, $duration, $d_id, $dg_id, $tm_required, $class_size, $staff);
         if (is_int($result)){
             echo "<script> alert('insert id is $result')</script>";
@@ -119,7 +119,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['type'] = 'success';
         } else {
             //error detected
-           echo "<script> alert('Invalid Input - $result')</script>";
+           echo "<script> alert(\"Invalid Input - $result\")</script>";
         }
         
     } elseif ($_SESSION['type'] == 'input_edit' && !empty($_GET['edit'])){
@@ -168,11 +168,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <div class="panel-heading">
                             <i class="fa fa-search fa-fw"></i>
                             <?php if( preg_match('(input_add)', $_SESSION['type']) ){
-								echo "Add Training Module to $device";
+                                echo "Add Training Module to $device";
                             } else {
-								echo "Edit Training Module for $device";
+                                echo "Edit Training Module for $device";
                             }?>
-							<div class="pull-right"> <a href='/admin/manage_trainings.php'><i class="fa fa-mail-reply fa-fw"></i>Go Back</a> </div>
+                                <div class="pull-right"> <a href='/admin/manage_trainings.php'><i class="fa fa-mail-reply fa-fw"></i>Go Back</a> </div>
                         </div>
                         <div class="panel-body">
                             <table class="table table-striped table-bordered"><form method="post" action="" autocomplete='off' id="tmForm">
@@ -181,7 +181,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <td><a href="#" data-toggle="tooltip" data-placement="top" title="Name of the training for the <?php echo $device;?>">Title</a></td>
                                         <td>
                                             <input value="<?php echo $title;?>" tabindex="1" name="title" id="title" name="title" disabled class="form-control"/>
-                                            
                                         </td>
                                     </tr>
                                     <tr>
@@ -245,12 +244,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     <tr>
                                         <td colspan=2 align='right'>
                                             <?php if( preg_match('(input_edit)', $_SESSION['type']) ){
-                                                    echo "Updated On ".date( 'M d, Y g:i a',strtotime($tm_stamp) )."&ensp;";
+                                                echo "Updated On ".date( 'M d, Y g:i a',strtotime($tm_stamp) )."&ensp;";
                                             } 
                                             if($staff->getRoleID() >= $sv['minRoleTrainer']){ ?>
-                                                    <button type="button" class="btn btn-basic btn-md" onclick="editTM()" tabindex="8" id="editBtn">Edit</button>
+                                                <button type="button" class="btn btn-basic btn-md" onclick="editTM()" tabindex="8" id="editBtn">Edit</button>
                                             <?php } else { ?>
-                                                    <button type="button" class="btn btn-basic btn-md" tabindex="8" disabled>Edit</button>
+                                                <button type="button" class="btn btn-basic btn-md" tabindex="8" disabled>Edit</button>
                                             <?php } ?>
                                         </td>
                                     </tr>
@@ -262,7 +261,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <!-- /.panel -->
                 </div>
                 <!-- /.col-md-9 -->
-				<div class="col-md-3">
+                <div class="col-md-3">
                     <div class="panel panel-default">
                         <div class="panel-heading">
                             <i class="fa fa-table fa-fw"></i> Stats for this class
@@ -270,10 +269,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <div class="panel-body">
                             <table class="table table-condensed">
                                 <tbody>
-                                    <?php if($result = $mysqli->query("
+                                    <?php if(isset($tm_id) && $result = $mysqli->query("
                                         SELECT count(*) as count
                                         FROM `tm_enroll`
-                                        WHERE `tm_id` = 2;
+                                        WHERE `tm_id` = $tm_id;
                                     ")){
                                         $row = $result->fetch_assoc()?>
                                         <tr>

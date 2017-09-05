@@ -103,7 +103,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 </head>
 <body>
     <div id="wrapper">
-
         <!-- Navigation -->
         <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0" id='navbar'>
             <div class="navbar-header">
@@ -166,7 +165,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     <!-- /.dropdown-user -->
                 </li>
                 <!-- /.dropdown -->
-<?php }?>
+<?php }?>    
             </ul>
             <!-- /.navbar-top-links -->
             <div class="navbar-default sidebar" role="navigation">
@@ -179,7 +178,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             <a href="#"><i class="fa fa-calculator fa-fw"></i> Tools</a>
                         </li>
 <!-- if role > 6 {show} -->
-<?php if ($staff) if($staff->getRoleID() > 6) { ?>
+<?php if ($staff && $staff->getRoleID() > 6) { ?>
                         <li>
                             <a href="#"><i class="fa fa-gift fa-fw"></i> Pick Up 3D Print<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
@@ -219,8 +218,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             </form>
                             </ul>
                         </li>
-<?php } 
-if ($staff) if($staff->getRoleID() > 6) { ?>
+<?php } if ($staff && $staff->getRoleID() > 6) { ?>
                         <li>
                             <a href="#"><i class="fa fa-wrench fa-fw"></i> Service Request<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
