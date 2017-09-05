@@ -52,13 +52,13 @@ class TrainingModule {
     
     public function cert($operator, $staff){
         global $mysqli;
-		global $sv;
+        global $sv;
         
         if (!Users::regexUser($operator)) return "Invalid Operator ID";
-			
-		if ($sv['minRoleTrainier'] > $staff->getRoleID()){
-			return ("Staff Member Lacks Authority to Issue Certificate");
-		}
+
+        if ($sv['minRoleTrainer'] > $staff->getRoleID()){
+            return ("Staff Member Lacks Authority to Issue Certificate");
+        }
     
         //verify if trainer has been trained or is admin
         if ($results = $mysqli->query("
@@ -93,14 +93,14 @@ class TrainingModule {
     //Edit an exisiting Training Module
     public static function editTM($tm_id, $title, $tm_desc, $duration, $d_id, $dg_id, $tm_required, $class_size, $staff) {
         global $mysqli;
-		global $sv;
+        global $sv;
 
         if (!self::regexTMId($tm_id)) return "Invalid Training Module ID: $tm_id";
-		if ( (Devices::regexDID($d_id) || DeviceGroup::regexDgID($dg_id)) && Devices::regexDID($d_id) != DeviceGroup::regexDgID($dg_id)){} else {return "Bad Device or Group: d-$d_id dg-$dg_id";}
+        if ( (Devices::regexDID($d_id) || DeviceGroup::regexDgID($dg_id)) && Devices::regexDID($d_id) != DeviceGroup::regexDgID($dg_id)){} else {return "Bad Device or Group: d-$d_id dg-$dg_id";}
         if (!self::regexSize($class_size)) return "Invalid Class Size";
         if (!self::regexTime($duration)) {return "Bad Time - $duration";}
         if (!self::regexTmReq($tm_required)) {return "Select Requirement";}
-		if ($staff->getRoleID() < $sv['minRoleTrainier']) {return "Staff Member Is Unable To Edit Training Modules";}
+		if ($staff->getRoleID() < $sv['minRoleTrainer']) {return "Staff Member Is Unable To Edit Training Modules";}
 
         if($d_id){
             $mysqli->autocommit(FALSE);
@@ -150,20 +150,20 @@ class TrainingModule {
     //Returns Int if properly inserted
     public static function insertTM($title, $tm_desc, $duration, $d_id, $dg_id, $tm_required, $class_size, $staff) {
         global $mysqli;
-		global $sv;
+        global $sv;
 
-		if ( (Devices::regexDID($d_id) || DeviceGroup::regexDgID($dg_id)) && Devices::regexDID($d_id) != DeviceGroup::regexDgID($dg_id)){} else {return "Bad Device or Group: d-$d_id dg-$dg_id";}
+        if ( (Devices::regexDID($d_id) || DeviceGroup::regexDgID($dg_id)) && Devices::regexDID($d_id) != DeviceGroup::regexDgID($dg_id)){} else {return "Bad Device or Group: d-$d_id dg-$dg_id";}
         if (!self::regexSize($class_size)) return "Invalid Class Size";
         if (!self::regexTime($duration)) {return "Bad Time - $duration";}
         if (!self::regexTmReq($tm_required)) {return "Select Requirement";}
-		if ($staff->getRoleID() < $sv['minRoleTrainier']) {return "Staff Member Is Unable To Add Training Modules";}
+        if ($staff->getRoleID() < $sv['minRoleTrainer']) {return "Staff Member Is Unable To Add Training Modules";}
 
         if($d_id){
             if ($mysqli->query("
                 INSERT INTO trainingmodule 
-                    (`title`, `tm_desc`, `duration`, `d_id`, `tm_required`, `class_size`)
+                    (`title`, `tm_desc`, `duration`, `d_id`, `tm_required`, `class_size`, `tm_stamp`)
                 VALUES
-                    ('$title', '$tm_desc', '$duration', '$d_id', '$tm_required', '$class_size');
+                    ('$title', '$tm_desc', '$duration', '$d_id', '$tm_required', '$class_size', CURRENT_TIMESTAMP);
             ")){
                 return $mysqli->insert_id;
             } else {
@@ -172,9 +172,9 @@ class TrainingModule {
         } elseif ($dg_id){
             if ($mysqli->query("
                 INSERT INTO trainingmodule 
-                    (`title`, `tm_desc`, `duration`, `dg_id`, `tm_required`, `class_size`)
+                    (`title`, `tm_desc`, `duration`, `dg_id`, `tm_required`, `class_size`, `tm_stamp`)
                 VALUES
-                    ('$title', '$tm_desc', '$duration', '$dg_id', '$tm_required', '$class_size');
+                    ('$title', '$tm_desc', '$duration', '$dg_id', '$tm_required', '$class_size', CURRENT_TIMESTAMP);
             ")){
                 return $mysqli->insert_id;
             } else {

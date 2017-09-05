@@ -4,17 +4,14 @@
  *   FabApp V 0.9
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
-include_once ($_SERVER['DOCUMENT_ROOT'].'/api/gatekeeper.php');
 $d_id = $dg_id = $operator = "";
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn']) && !empty($_POST['tm_id']) && $_SESSION['type'] != 'tc_success') {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn']) && ($_POST['submitBtn'] == 'Submit') && !empty($_POST['tm_id']) && $_SESSION['type'] != 'tc_success') {
     $tm_id = filter_input(INPUT_POST,'tm_id');
     $operator = filter_input(INPUT_POST, 'operator');
     $msg = false;
     
-    if ($_POST['submitBtn'] == 'Submit'){
-        $msg = submitTM($tm_id, $operator, $staff);
-    }
+    $msg = submitTM($tm_id, $operator, $staff);
     
     if ($msg === true){
         $_SESSION['type'] = 'tc_success';
@@ -236,6 +233,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         } else if (element.id == 'dg_id') {
             document.getElementById("d_id").selectedIndex = 0;
         }
+        document.getElementById("tm_id").selectedIndex = 0;
 
         if (window.XMLHttpRequest) {
             // code for IE7+, Firefox, Chrome, Opera, Safari
