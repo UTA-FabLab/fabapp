@@ -6,6 +6,7 @@
  * Generic call for all classes
  */
 
+/*
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/Accounts.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/Auth_Accts.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/Devices.php");
@@ -23,5 +24,11 @@ include_once ($_SERVER['DOCUMENT_ROOT']."/class/Status.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/TrainingModule.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/Transactions.php");
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/Users.php");
+ */
 
+//replaces above to dynamically call all classes into memory
+$files = scandir($_SERVER['DOCUMENT_ROOT']."/class");
+for ($i = 3; $i < count($files); $i++) {
+    include_once ($_SERVER['DOCUMENT_ROOT']."/class/$files[$i]");
+}
 ?>
