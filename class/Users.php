@@ -1,6 +1,6 @@
 <?php
 /*
- *   CC BY-NC-AS UTA FabLab 2015-2016 
+ *   CC BY-NC-AS UTA FabLab 2015-2017
  */
 
 /**
@@ -54,8 +54,8 @@
                 $this->operator = $operator;
             
             $this->exp_date = $row['exp_date'];
-            $this->roleID = $row['r_id'];
-            $this->rfid_no = $row['rfid_no'];
+            $this->setRoleID($row['r_id']);
+            $this->setRfid_no($row['rfid_no']);
             $this->icon = $row['icon'];
             $this->setAccounts($operator);
         } else {
@@ -82,8 +82,8 @@
             $row = $result->fetch_assoc();
             $this->operator = $row['operator'];
             $this->exp_date = $row['exp_date'];
-            $this->roleID = $row['r_id'];
-            $this->rfid_no = $row['rfid_no'];
+            $this->setRoleID($row['r_id']);
+            $this->setRfid_no($row['rfid_no']);
             $this->icon = $row['icon'];
         } else {
             return false;
@@ -135,10 +135,48 @@
         }
     }
 	
-    public function setRoleID($staff_id, $role){
-        if (!$this->regexUser($staff_id))
-            return; //bad Staff ID
-        return "Function not Prepared yet";
+    private function setRoleID($r_id){
+        $current_date = new DateTime();
+        if (($current_date->format('Y-m-d H:i:s') < $this->getExp_date()) || is_null($this->getExp_date())){
+            $this->roleID = $r_id;
+        } else {
+            //User's Role LvL has expired, default to 1
+            $this->roleID = 1;
+            return "User's role has expired.";
+        }
+    }
+    
+    public function modifyRoleID($r_id, $staff, $notes){
+        global $mysqli;
+
+        if ($this->operator == $staff->getOperator()){
+                return "Staff can not modify their own Role ID";
+        }
+
+        //concat staff ID onto notes for record keeping
+        $notes = "|".$staff->getOperator()."| ".$notes;
+		
+        if ($staff->getRoleID() >= $r_id){
+            //Staff must have high enough role
+            if ($stmt = $mysqli->prepare("
+                UPDATE `users`
+                SET `r_id` = ?, `adj_date` = CURRENT_TIMESTAMP, `notes`= ?
+                WHERE `operator` = ?;
+            ")){
+                $stmt->bind_param("iss", $r_id, $notes, $this->operator);
+                if ($stmt->execute() === true ){
+                    $row = $stmt->affected_rows;
+                    $stmt->close();
+                    $this->roleID = $r_id;
+                    return $row;
+                } else
+                    return "Users: updateRoleID Error";
+            } else {
+                return "Error in preparing Users: modifyRoleID statement";
+            }
+        } else {
+            echo "Insufficient Role";
+        }
     }
 	
     public function getExp_date(){
@@ -153,7 +191,8 @@
         return $this->rfid_no;
     }
 
-    public function setRfid_no(){
+    public function setRfid_no($rfid_no){
+        $this->rfid_no = $rfid_no;
         return "Function not Prepared Yet";
     }
 	

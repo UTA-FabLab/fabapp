@@ -41,6 +41,9 @@ if ($mysqli->query("
 }
 echo "</div>";
  */
+
+//print details of $staff
+//print_r($staff);
 ?>
 <title><?php echo $sv['site_name'];?> Dashboard</title>
 <div id="page-wrapper">
