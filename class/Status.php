@@ -18,7 +18,7 @@ class Status {
         global $mysqli;
         
         if (!preg_match("/^\d+$/", $status_id))
-            $this->msg = "Invalid Status ID";
+            throw new Exception("Unable to set status");
         
         if ($result = $mysqli->query("
             SELECT *
@@ -28,6 +28,8 @@ class Status {
             $row = $result->fetch_assoc();
             $this->setMsg($row['msg']);
             $this->setStatus_id($row['status_id']);
+        } else {
+            throw new Exception("Unable to set status");
         }
     }
     

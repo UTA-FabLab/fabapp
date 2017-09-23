@@ -64,6 +64,8 @@ class Purpose {
         ")){
             if ($result->num_rows == 1)
                 return true;
+            else
+                return false;
         } else 
             return false;
     }

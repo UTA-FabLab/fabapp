@@ -20,7 +20,7 @@ class Accounts {
         global $mysqli;
         
         if (!preg_match("/^\d+$/", $a_id))
-                throw new Exception("Invalid Account ID");
+            throw new Exception("Invalid Account ID");
         
         if($result = $mysqli->query("
             SELECT *
@@ -35,7 +35,7 @@ class Accounts {
             $this->setbalance($row['balance']);
             $this->setOperator($row['operator']);
         } else 
-            throw new Exception("Invalid Account ID");
+            throw new Exception("Invalid Account Constructor");
     }
     
     public function getA_id() {

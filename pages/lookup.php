@@ -88,10 +88,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['unfail'])) {
     </div>
     <!-- /.row -->
     <div class="row">
-        <div class="col-lg-7">
+        <div class="col-md-6">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fa fa-ticket fa-fw"></i> Ticket # <b><?php echo $ticket->getTrans_id(); ?></b>
+                    <i class="fa fa-ticket fa-lg"></i> Ticket # <b><?php echo $ticket->getTrans_id(); ?></b>
+                    <?php if ($staff && $staff->getRoleID() >= $sv['editTrans']){ ?>
+                    <div class="pull-right"><form name="undoForm" method="post" action="">
+                            <input type="submit" name="editBtn" value="Edit" disabled title="Not Ready Yet :("/>
+                    </form></div>
+                    <?php } ?>
                 </div>
                 <div class="panel-body">
                     <table class ="table table-bordered table-striped">
@@ -107,54 +112,54 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['unfail'])) {
                             <td>Duration</td>
                             <td><?php echo $ticket->getDuration(); ?></td>
                         </tr>
-                        <?php if ($staff) {
-                            if ($staff->getRoleID() > 6){ ?>
-                                <tr>
-                                    <td>Operator</td>
-                                    <td><i class="fa fa-<?php if ( $ticket->getUser()->getIcon() ) echo $ticket->getUser()->getIcon(); else echo "user";?> fa-fw"></i><?php echo $ticket->getUser()->getOperator();?></td>
-                                </tr>
-                            <?php }
-                        }?>
+                        <?php if ( $staff && ($ticket->getUser()->getOperator() == $staff->getOperator() || $staff->getRoleID() >= $sv['LvlOfStaff']) ){ ?>
+                            <tr>
+                                <td>Operator</td>
+                                <td><i class="fa fa-<?php echo $ticket->getUser()->getIcon();?> fa-lg" title="<?php echo $ticket->getUser()->getOperator();?>"></i></td>
+                            </tr>
+                        <?php } else { ?>
+                            <tr>
+                                <td>Operator</td>
+                                <td><i class="fa fa-<?php echo $ticket->getUser()->getIcon();?> fa-lg"></i></td>
+                            </tr>
+                        <?php } ?>
                         <tr>
                             <td>Status</td>
                             <td><?php echo $ticket->getStatus()->getMsg(); ?></td>
                         </tr>
-                        <?php if ($staff) {
-                            if ($staff->getRoleID() > 6){ ?>
+                        <?php if ($staff && $staff->getRoleID() >= $sv['LvlOfStaff']){ ?>
                             <tr>
-                                <td>Staff ID</td>
-                                <td><i class="fa fa-<?php
-                                if ( $ticket->getStaff()->getIcon() ) 
-                                    echo $ticket->getStaff()->getIcon(); 
-                                else 
-                                    echo "user"; ?> fa-fw"></i><?php 
-                                echo " ".$ticket->getStaff()->getOperator();?></td>
+                                <td>Staff</td>
+                                <td><?php if ( $ticket->getStaff() ) 
+                                    echo "<i class='fa fa-".$ticket->getStaff()->getIcon()." fa-lg' title='".$ticket->getStaff()->getOperator()."'></i>";?>
+                                </td>
                             </tr>
-                            <?php }
-                        } ?>
+                        <?php }?>
                     </table>
                 </div>
-                
                 <!-- /.panel-body -->
             </div>
             <!-- /.panel -->
             <?php foreach ($mats_used as $mu) {?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-life-bouy fa-fw"></i> Material
+                        <i class="fa fa-life-bouy fa-lg"></i> Material
                     </div>
                     <div class="panel-body">
                         <table class="table table-bordered table-striped">
                             <tr class="tablerow">
                                 <?php if ($mu->getMaterial()->getPrice() > 0){ ?>
-                                    <td class="col-md-3"><?php echo $mu->getMaterial()->getM_name();?></td>
-                                    <td class="col-md-9">
-                                        <?php printf("$%.2f x ", $mu->getMaterial()->getPrice());
-                                        echo $mu->getUnit_Used()." ".$mu->getMaterial()->getUnit(); ?>
+                                    <td class="col-md-5">
+                                        <?php echo $mu->getMaterial()->getM_name();
+                                        if ($mu->getMaterial()->getColor_hex()){ echo "<div class=\"color-box\" style=\"background-color: #".$mu->getMaterial()->getColor_hex()."\"/>\n"; }?>
+                                    </td>
+                                    <td class="col-md-7">
+                                        <?php printf("<i class='fa fa-%s fa-fw'></i>%.2f x " ,$sv['currency'], $mu->getMaterial()->getPrice());
+                                        echo $mu->getUnit_Used()." ".$mu->getMaterial()->getUnit()."\n"; ?>
                                     </td>
                                 <?php } else {?>
-                                    <td class="col-md-3"><?php echo $mu->getMaterial()->getM_name();?></td>
-                                    <td class="col-md-9"></td>
+                                    <td class="col-md-5"><?php echo $mu->getMaterial()->getM_name();?></td>
+                                    <td class="col-md-7"></td>
                                 <?php } ?>
                             </tr>
                             <tr class="tablerow">
@@ -166,29 +171,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['unfail'])) {
                                     <td>File Name</td>
                                     <td><?php echo $mu->getHeader(); ?></td>
                                 </tr>
-                            <?php }
-                            if ($staff) {
-                                if ($staff->getRoleID() > 6 && strcmp($mu->getMu_notes(), "") != 0){ ?>
-                                    <tr>
-                                        <td><i class="fa fa-pencil-square-o fa-fw"></i>Notes</td>
-                                        <td><?php echo $mu->getMu_notes();?></td>
-                                    </tr>
-                                <?php }
-                            }?>
+                            <?php } ?>
+                            <tr>
+                                <td>Staff ID</td>
+                                <td><?php if ($staff && $staff->getRoleID() >= $sv['LvlOfStaff'] && $mu->getStaff()){
+                                    echo "<i class='fa fa-".$mu->getStaff()->getIcon()." fa-lg' title='".$mu->getStaff()->getOperator()."'></i>\n";
+                                } elseif ($mu->getStaff()) { 
+                                    echo "<i class='fa fa-".$mu->getStaff()->getIcon()." fa-lg'></i>\n";
+                                }?></td>
+                            </tr>
+                            <?php if ($staff && $staff->getRoleID() >= $sv['LvlOfStaff'] && strcmp($mu->getMu_notes(), "") != 0){ ?>
+                                <tr>
+                                    <td><i class="fa fa-pencil-square-o fa-lg"></i>Notes</td>
+                                    <td><?php echo $mu->getMu_notes();?></td>
+                                </tr>
+                            <?php } ?>
                         </table>
                     </div>
                     <!-- /.panel-body -->
                 </div>
                 <!-- /.panel -->
-            <?php } ?>
-            
+            <?php } ?> 
         </div>
-        <!-- /.col-lg-7 -->
-        <div class="col-lg-5">
+        <!-- /.col-md-6 -->
+        <div class="col-md-6">
             <?php if ($objbox = ObjBox::byTrans($ticket->getTrans_id())) { ?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-Cube fa-fw"></i> Storage
+                        <i class="fa fa-Cube fa-lg"></i> Storage
                     </div>
                     <div class="panel-body">
                         <table class="table table-bordered table-striped">
@@ -200,44 +210,83 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['unfail'])) {
                                 <td>Removed On</td>
                                 <td><?php echo $objbox->getO_end(); ?></td>
                             </tr>
-                            <?php if ($staff) {
-                                if ($staff->getRoleID() > 6){?>
-                                    <tr>
-                                        <td>Picked Up By</td>
-                                        <td><?php 
-                                        if ( $objbox->getUser() !== NULL ) {
-                                            if ( $ticket->getUser()->getIcon() ) 
-                                                echo "<i class='fa fa-".$objbox->getUser()->getIcon()." fa-fw'></i>";
-                                            else 
-                                                echo "<i class='fa fa-user fa-fw'></i>";
-                                            echo " ".$objbox->getUser()->getOperator();
-                                        }?></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Address</td>
-                                        <td><input type="submit" value="<?php echo $objbox->getAddress(); ?>"></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Staff ID</td>
-                                        <td><i class="fa fa-<?php 
-                                        if ( $objbox->getStaff()->getIcon() ) {
-                                            echo $objbox->getStaff()->getIcon(); 
+                            <?php if ($staff && $staff->getRoleID() >= $sv['LvlOfStaff']){?>
+                                <tr>
+                                    <td>Picked Up By</td>
+                                    <td><?php 
+                                    if ( $objbox->getUser() !== NULL ) {
+                                        echo "<i class='fa fa-".$objbox->getUser()->getIcon()." fa-lg'></i> ".$objbox->getUser()->getOperator();
+                                    }?></td>
+                                </tr>
+                                <tr>
+                                    <td>Address</td>
+                                    <td><input type="submit" value="<?php echo $objbox->getAddress(); ?>"></td>
+                                </tr>
+                                <tr>
+                                    <td>Staff ID</td>
+                                    <td><?php echo "<i class='fa fa-".$objbox->getStaff()->getIcon()." fa-lg' title='".$objbox->getStaff()->getOperator()."'></i>";?></td>
+                                </tr>
+                            <?php } else { ?>
+                                <tr>
+                                    <td>Picked Up By</td>
+                                    <td><?php
+                                    if ( $objbox->getUser() !== NULL ) {
+                                        echo "<i class='fa fa-".$objbox->getUser()->getIcon()." fa-lg'></i>";
+                                    }?></td>
+                                </tr>
+                                <tr>
+                                    <td>Staff ID</td>
+                                    <td><?php echo "<i class=\"fa fa-".$objbox->getStaff()->getIcon()." fa-lg\"></i> ";?></td>
+                                </tr>
+                            <?php } ?>
+                        </table>
+                    </div>
+                    <!-- /.panel-body -->
+                </div>
+                <!-- /.panel -->
+            <?php }
+            //Look for associated charges
+            if($staff && $ticket->getAc() && (($ticket->getUser()->getOperator() == $staff->getOperator()) || $staff->getRoleID() >= $sv['LvlOfStaff']) ){?>
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="fa fa-credit-card-alt fa-lg"></i> Related Charges
+                    </div>
+                    <div class="panel-body">
+                        <table class="table table-bordered">
+                            <tr>
+                                <td class="col-sm-1">By</td>
+                                <td class="col-sm-2">Amount</td>
+                                <td class="col-sm-7">Date</td>
+                                <td class="col-sm-2">Staff</td>
+                            </tr>
+                            <?php foreach ($ticket->getAc() as $ac){
+                                echo"\n\t\t<tr>";
+                                    if ( $ac->getUser() ) {
+                                        if (($ac->getUser()->getOperator() == $staff->getOperator()) || $staff->getRoleID() >= $sv['LvlOfStaff'] ){
+                                            echo "<td><i class='fa fa-".$ac->getUser()->getIcon()." fa-lg' title='".$ac->getUser()->getOperator()."'></i></td>";
                                         } else {
-                                            echo "user"; 
-                                        } ?> fa-fw"></i><?php 
-                                        echo " ".$objbox->getStaff()->getOperator();?></td>
-                                    </tr>
-                                <?php } else { ?>
-                                    <tr>
-                                        <td>Picked Up By</td>
-                                        <td><i class="fa fa-<?php 
-                                        if ( $objbox->getUser()->getIcon() ) {
-                                            echo $objbox->getUser()->getIcon(); 
-                                        } else {
-                                            echo "user"; 
-                                        } ?> fa-fw"></i></td>
-                                    </tr>
-                                <?php } 
+                                            echo "<td><i class='fa fa-".$ac->getUser()->getIcon()." fa-lg'></i></td>";
+                                        }
+                                    } else {
+                                        echo "<td>-</td>";
+                                    }
+                                    if ( ($ticket->getUser()->getOperator() == $staff->getOperator()) || $staff->getRoleID() >= $sv['LvlOfStaff'] ){
+                                        echo "<td><i class='fa fa-".$sv['currency']." fa-fw'></i>".sprintf("%.2f", $ac->getAmount())."</td>";
+                                    }
+                                    echo "<td>".$ac->getAc_date()."</td>";
+                                    echo "<td><i class='fa fa-".$ac->getStaff()->getIcon()." fa-lg' title='".$ac->getStaff()->getOperator()."'></i>";
+                                    if ($ac->getAc_notes()){ ?>
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
+                                                <span class="fa fa-music" title="Notes"></span>
+                                            </button>
+                                            <ul class="dropdown-menu pull-right" role="menu">
+                                                <li style="padding-left: 5px;"><?php echo $ac->getAc_notes();?></li>
+                                            </ul>
+                                        </div>
+                                    <?php }
+                                    echo "</td>";
+                                echo"</tr>\n";
                             } ?>
                         </table>
                     </div>
@@ -245,23 +294,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['unfail'])) {
                 </div>
                 <!-- /.panel -->
             <?php } ?>
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <i class="fa fa-credit-card-alt fa-fw"></i> Paid By
-                </div>
-                <div class="panel-body">
-                    <table>
-                        <tr>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                    </table>
-                </div>
-                <!-- /.panel-body -->
-            </div>
-            <!-- /.panel -->
         </div>
-        <!-- /.col-lg-5 -->
+        <!-- /.col-md-6 -->
     </div>
     <!-- /.row -->
 </div>

@@ -16,6 +16,7 @@ class Materials {
     private $unit;
     private $m_parent;
     private $color_hex;
+    private $measurable;
     
     public function __construct($m_id) {
         global $mysqli;
@@ -35,12 +36,15 @@ class Materials {
             $this->setUnit($row['unit']);
             $this->setM_parent($row['m_parent']);
             $this->setColor_hex($row['color_hex']);
+            $this->setMeasurable($row['measurable']);
         }
     }
     
     public static function getDeviceMats($dg_id){
         global $mysqli;
         $device_mats = array();
+        
+        if(!DeviceGroup::regexDgID($dg_id)) return "Invalid Device Group Value";
         
         if ($result = $mysqli->query("
             SELECT device_materials.m_id, price, m_name, unit
@@ -51,7 +55,8 @@ class Materials {
             ORDER BY m_name ASC;
         ")){
             while( $row = $result->fetch_assoc() ) {
-                array_push ($device_mats, array("m_id" => $row["m_id"], "price" => $row["price"], "m_name" => $row["m_name"], "unit" => $row["unit"]));
+                //array_push ($device_mats, array("m_id" => $row["m_id"], "price" => $row["price"], "m_name" => $row["m_name"], "unit" => $row["unit"]));
+                array_push($device_mats, new self($row['m_id']));
             }
             return $device_mats;
         } else {
@@ -79,13 +84,17 @@ class Materials {
     public function getM_id() {
         return $this->m_id;
     }
+    
+    public function getMeasurable(){
+        return $this->measurable;
+    }
 
     public function getM_name() {
         return $this->m_name;
     }
 
     public function getPrice() {
-        return sprintf("%.2f", $this->price);
+        return $this->price;
     }
 
     public function getUnit() {
@@ -102,6 +111,15 @@ class Materials {
 
     public function setM_id($m_id) {
         $this->m_id = $m_id;
+    }
+    
+    public function setMeasurable($m){
+        //Only Y or N, default to N otherwise
+        if(preg_match("/[YN]{1}/", $m)){
+            $this->measurable = $m;
+        } else {
+            $this->measurable = "N";
+        }
     }
 
     public function setM_name($m_name) {
@@ -121,6 +139,10 @@ class Materials {
     }
     
     public function setColor_hex($color_hex){
-        $this->color_hex = $color_hex;
+        if ($color_hex){
+            $this->color_hex = $color_hex;
+        } else {
+            $this->color_hex = NULL;
+        }
     }
 }
