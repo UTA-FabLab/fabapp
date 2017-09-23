@@ -53,7 +53,7 @@
     <script src="/vendor/jquery/jquery.min.js"></script>
     <script src="/vendor/blackrock-digital/js/sb-admin-2.js"></script>
     <script src="/vendor/datatables/js/dataTables.min.js"></script>
-    <script src="/vendor/fabapp/fabapp.js?=v14"></script>
+    <script src="/vendor/fabapp/fabapp.js?=v15"></script>
     <script src="/vendor/metisMenu/metisMenu.min.js"></script>
     <script src="/vendor/morrisjs/morris.min.js"></script>
     <script src="/vendor/raphael/raphael.min.js"></script>

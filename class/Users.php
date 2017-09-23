@@ -23,12 +23,18 @@
 
     public static function withID($operator){
         $instance = new self();
+        if (!self::regexUser($operator)){
+            return NULL;
+        }
         $instance->createWithID($operator);
         return $instance;
     }
 
     public static function withRF($rfid_no){
         $instance = new self();
+        if (!$this->regexUser($rfid_no)){
+            return "No ID Found";
+        }
         $instance->createWithRF($rfid_no);
         return $instance;
     }
@@ -36,9 +42,6 @@
     public function createWithID($operator){
         global $mysqli;
 
-        if (!$this->regexUser($operator)){
-            return;
-        }
         if ($result = $mysqli->query("
             SELECT users.operator, users.r_id, exp_date, icon, rfid_no
             FROM `users`
@@ -48,13 +51,15 @@
             Limit 1;
         ")){
             $row = $result->fetch_assoc();
-            if (strcmp($row['operator'], "") != 0)
+            if (strcmp($row['operator'], "") != 0){
                 $this->operator = $row['operator'];
-            else 
+                $this->setRoleID($row['r_id']);
+            } else {
                 $this->operator = $operator;
+                $this->setRoleID(2);
+            }
             
             $this->exp_date = $row['exp_date'];
-            $this->setRoleID($row['r_id']);
             $this->setRfid_no($row['rfid_no']);
             $this->icon = $row['icon'];
             $this->setAccounts($operator);
@@ -66,11 +71,7 @@
 	
     public function createWithRF($rfid_no){
         global $mysqli;
-
-        if (preg_match("/^\d+$/",$rfid_no) == 0){
-            echo "Bad RFID Number";
-            return;
-        }
+        
         if ($result = $mysqli->query("
             SELECT users.operator, users.r_id, exp_date, icon, rfid_no
             FROM `rfid`
@@ -102,8 +103,10 @@
     
     public function setAccounts($operator){
         global $mysqli;
+        global $sv;
         $accounts = array();
         
+        //Authorized Accounts that the user is authorized to use
         if($result = $mysqli->query("
             SELECT `a_id`
             FROM `auth_accts`
@@ -112,11 +115,21 @@
             while($row = $result->fetch_assoc()){
                 array_push($accounts, new Accounts($row['a_id']));
             }
-            $this->accounts = $accounts;
         } else {
             echo $mysqli->error;
             return false;
         }
+        
+        //See if operator can use any default accounts
+        //Based on $sv attributes for acct3 & acct4
+        if ($sv['acct3'] <= $this->roleID){
+            array_push($accounts, new Accounts(3));
+        }
+        if ($sv['acct4'] <= $this->roleID){
+            array_push($accounts, new Accounts(4));
+        }
+        
+        $this->accounts = $accounts;
     }
     
     public function getAccounts(){
@@ -197,6 +210,9 @@
     }
 	
     public function getIcon(){
+        if ($this->icon == ""){
+            return "user";
+        }
         return $this->icon;
     }
 

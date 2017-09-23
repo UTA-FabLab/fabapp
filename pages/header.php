@@ -9,7 +9,7 @@
     <meta name="author" content="UTA FabLab">
     <link rel="shortcut icon" href="/images/fa-icon.png" type="image/png">
     
-    <link href="/vendor/fabapp/fabapp.css?=v3" rel="stylesheet">
+    <link href="/vendor/fabapp/fabapp.css?=v5" rel="stylesheet">
     <link href="/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="/vendor/metisMenu/metisMenu.min.css" rel="stylesheet">
     <link href="/vendor/blackrock-digital/css/sb-admin-2.css?=v9" rel="stylesheet">
@@ -23,10 +23,10 @@
 <?php
 $staff = null;
 ob_start();
-date_default_timezone_set('America/Chicago');
 include_once ($_SERVER['DOCUMENT_ROOT'].'/connections/db_connect8.php');
 include_once ($_SERVER['DOCUMENT_ROOT'].'/connections/ldap.php');
 include_once ($_SERVER['DOCUMENT_ROOT'].'/class/all_classes.php');
+date_default_timezone_set($sv['timezone']);
 session_start();
 if( isset($_SESSION['staff']) ){
     $staff = $_SESSION['staff'];
@@ -154,7 +154,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <?php } else {?>
                 <li class="dropdown">
                     <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                        <i class="fa fa-<?php if ( $staff->getIcon() ) echo $staff->getIcon(); else echo "user";?> fa-2x"></i> <i class="fa fa-caret-down"></i>
+                        <i class="fa fa-<?php echo $staff->getIcon();?> fa-2x"></i> <i class="fa fa-caret-down"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-user">
                         <li><a href="#"><i class="fa fa-gear fa-fw"></i> Settings</a></li>

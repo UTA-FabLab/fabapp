@@ -15,10 +15,14 @@
 class AuthRecipients {
     
     //Check if ID can pickup object
-    public static function validatePickUp($trans_id, $operator){
+    public static function validatePickUp($ticket, $user){
 	global $mysqli;
+        $trans_id = $ticket->getTrans_id();
+        $operator = $user->getOperator();
         
-        if (!Users::regexUser($operator)) return "Invalid ID #";
+        if ($ticket->getUser()->getOperator() == $operator) {
+            return true;
+        }
         
         if ($result = $mysqli->query("
             SELECT *

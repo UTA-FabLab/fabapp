@@ -15,6 +15,9 @@ if ($_SESSION['type'] == "end"){
     foreach ($mats_used as $mu) {
         $total += $mu->getMaterial()->getPrice() * $mu->getUnit_used();
     }
+//} elseif ($_SESSION['type'] == "payNow") {
+} else {
+    $ticket = new Transactions(filter_input(INPUT_GET, 'trans_id', FILTER_VALIDATE_INT));
 }
 ?>
 <title><?php echo $sv['site_name'];?> Checkout</title>
@@ -47,39 +50,28 @@ if ($_SESSION['type'] == "end"){
                             <td>Duration</td>
                             <td><?php echo $ticket->getDuration(); ?></td>
                         </tr>
-                        <?php if ($staff) {
-                            if ($staff->getRoleID() > 6){ ?>
-                                <tr>
-                                    <td>Operator</td>
-                                    <td><i class="fa fa-<?php if ( $ticket->getUser()->getIcon() ) echo $ticket->getUser()->getIcon(); else echo "user";?> fa-fw"></i>
-                                        <?php if ($ticket->getUser()->getOperator() == $user->getOperator()) {
-                                            echo $ticket->getUser()->getOperator();
-                                        } else {
-                                            echo "*******".substr($ticket->getUser()->getOperator(),7);
-                                        } ?></td>
-                                </tr>
-                            <?php }
-                        }?>
+                        <?php if ($ticket->getUser()->getOperator() == $staff->getOperator() || $staff->getRoleID() >= $sv['LvlOfStaff']){ ?>
+                            <tr>
+                                <td>Operator</td>
+                                <td><i class="fa fa-<?php echo $ticket->getUser()->getIcon();?> fa-lg" title="<?php echo $ticket->getUser()->getOperator();?>"></i></td>
+                            </tr>
+                        <?php }?>
                         <tr>
                             <td>Status</td>
                             <td><?php echo $ticket->getStatus()->getMsg(); ?></td>
                         </tr>
-                        <?php if ($staff) {
-                            if ($staff->getRoleID() > 6){ ?>
+                        <?php if ($staff && $staff->getRoleID() >= $sv['LvlOfStaff']){ ?>
                             <tr>
                                 <td>Staff</td>
-                                <td><i class="fa fa-<?php
-                                if ( $ticket->getStaff()->getIcon() ) 
-                                    echo $ticket->getStaff()->getIcon(); 
-                                else 
-                                    echo "user"; ?> fa-fw"></i></td>
+                                <td><?php if ( $ticket->getStaff() ) 
+                                    echo "<i class='fa fa-".$ticket->getStaff()->getIcon()." fa-lg' title='".$ticket->getStaff()->getOperator()."'></i>";?>
+                                </td>
                             </tr>
-                            <?php }
-                        } ?>
+                        <?php }?>
                     </table>
                 </div>
             </div>
-            <?php foreach ($mats_used as $mu) { ?>
+            <?php foreach ($ticket->getMats_used() as $mu) { ?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <i class="fa fa-life-bouy fa-fw"></i> Material
@@ -138,7 +130,7 @@ if ($_SESSION['type'] == "end"){
                                     <option value="" selected disabled hidden>Select</option>
                                     <option value="20@2" ><?php echo $sv['paySite_name'];?></option>
                                     <option value="20@4" ><?php echo $sv['interdepartmental'];?></option>
-                                    <?php $accounts = $user->getAccounts();
+                                    <?php $accounts = $ticket->getUser()->getAccounts();
                                     if ($accounts){
                                         foreach ($accounts as $accts){
                                             echo ("<option value='20@".$accts->getA_id()."'>".$accts->getName()."</option>\n");
@@ -147,18 +139,15 @@ if ($_SESSION['type'] == "end"){
                                     <option value="12">Failed</option>
                             </select></td>
                         </tr>
-                        <tr class="success">
-                            <td>Operator</td>
-                            <td><b><i class="fa fa-<?php if ( $user->getIcon() ) echo $user->getIcon(); else echo "user";?> fa-fw"></i>
-                                        <?php echo $user->getOperator();?></b></td>
-                        </tr>
+                        <?php if ($ticket->getUser()->getOperator() == $staff->getOperator() || $staff->getRoleID() >= $sv['LvlOfStaff']){ ?>
+                            <tr>
+                                <td>Operator</td>
+                                <td><i class="fa fa-<?php echo $ticket->getUser()->getIcon();?> fa-lg" title="<?php echo $ticket->getUser()->getOperator();?>"></i></td>
+                            </tr>
+                        <?php }?>
                         <tr class="success">
                             <td>Total</td>
                             <td><b><i class="fa fa-dollar fa-fw"></i><?php echo $total;?></b></td>
-                        </tr>
-                        <tr class="success">
-                            <td><i class="fa fa-ticket fa-fw"></i> Ticket </td>
-                            <td><b><?php echo $ticket->getTrans_id();?></b></td>
                         </tr>
                         <tr>
                             <td>Notes</td>

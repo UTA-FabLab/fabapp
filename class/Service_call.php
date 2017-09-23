@@ -174,37 +174,4 @@ class Service_call {
     public function setDevice_key($device_key) {
         $this->device_key = $device_key;
     }
-    
-    public static function printDot($staff,$d_id,$device_desc){
-    	global $mysqli;
-    	//look up current device status
-    	$dot = 0;
-    	$color = "white";
-    	$symbol = "circle";
-    	$lookup = "SELECT * FROM `service_call` WHERE d_id = " . $d_id . " AND solved = 'N' ORDER BY sc_time DESC";
-    	if($status = $mysqli->query($lookup)){
-    		while ($ticket = $status->fetch_assoc()){
-    			if($ticket['sl_id'] > $dot)
-    				$dot = $ticket['sl_id'];
-    		}
-    		if($status == NULL || $dot <= 1) {
-                $color = "green";
-            } elseif($dot < 7) {
-                $color = "yellow";
-            } else {
-                $color = "red";
-                $symbol = "times";
-            }
-    	}
-    	if($staff){
-    		if($staff->getRoleID() > 7)
-    			echo "<td><a href = '/service/ticketHistory.php?device_id=".$d_id."'><i class='fa fa-$symbol fa-fw' style='color:".$color."'></i>&nbsp; " . $device_desc . "</a></td>";
-    		else
-    			echo "<td><i class='fa fa-circle fa-fw' style='color:".$color."'></i>&nbsp; " . $device_desc . "</td>";
-    	}
-    	else{
-    		echo "<td><i class='fa fa-circle fa-fw' style='color:".$color."'></i>&nbsp; " . $device_desc . "</td>";
-    	}
-    }
-    
 }

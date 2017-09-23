@@ -19,7 +19,6 @@ class ObjBox {
     private $user;
     private $trans_id;
     private $staff;
-    //public $staff_id;
     
     public function __construct($o_id){
         global $mysqli;
@@ -42,7 +41,6 @@ class ObjBox {
             $this->setUser($row['operator']);
             $this->setTrans_id($row['trans_id']);
             $this->setStaff($row['staff_id']);
-            $this->staff_id = $row['staff_id'];
         } else 
             throw new Exception('Invalid Object Call');
     }

@@ -21,10 +21,10 @@ switch($_POST['service_level']){
     //case for completed ticket
     case 100:
         $solvedSt = "Y";
-    break;
+        break;
     default:
         $solvedSt = "N";
-    break;
+        break;
 }
 
 if($_POST['dev'] == 0){

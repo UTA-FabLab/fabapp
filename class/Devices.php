@@ -18,14 +18,15 @@ class Devices {
     private $device_desc;
     private $d_duration;
     private $base_price;
-    private $dg_id;
+    private $dg;
     private $url;
     private $device_key;
+    private $salt_key;
+    private $exp_key;
     
     public function __construct($d_id) {
         global $mysqli;
         $this->d_id = $d_id;
-        
         
         if ($result = $mysqli->query("
             SELECT *
@@ -34,15 +35,17 @@ class Devices {
             LIMIT 1;
         ")){
             $row = $result->fetch_assoc();
-            
+
             $this->setDevice_id($row['device_id']);
             $this->setDevice_desc($row['device_desc']);
             $this->setPublic_view($row['public_view']);
             $this->setD_duration($row['d_duration']);
             $this->setBase_price($row['base_price']);
-            $this->setDg_id($row['dg_id']);
+            $this->setDg($row['dg_id']);
             $this->setUrl($row['url']);
             $this->setDevice_key($row['device_key']);
+            $this->setSalt_key($row['salt_key']);
+            $this->setExp_key($row['exp_key']);
             $result->close();
         } else
             throw new Exception("Invalid Device ID");
@@ -129,38 +132,8 @@ class Devices {
             return sprintf("%.5f", $this->base_price);
     }
 
-    public function getDg_id() {
-        return $this->dg_id;
-    }
-    
-    public function getDg_Name(){
-        global $mysqli;
-        
-        if($result = $mysqli->query("
-            SELECT `dg_name`
-            FROM `device_group`
-            WHERE `dg_id` = '".$this->dg_id."'
-            LIMIT 1;
-        ")){
-            $row = $result->fetch_assoc();
-            return $row['dg_name'];
-        }
-        return "Not Found";
-    }
-    
-    public function getDg_Parent(){
-        global $mysqli;
-        
-        if($result = $mysqli->query("
-            SELECT `dg_parent`
-            FROM `device_group`
-            WHERE `dg_id` = '".$this->dg_id."'
-            LIMIT 1;
-        ")){
-            $row = $result->fetch_assoc();
-            return $row['dg_parent'];
-        }
-        return false;
+    public function getDg() {
+        return $this->dg;
     }
 
     public function getUrl() {
@@ -173,6 +146,14 @@ class Devices {
     
     public function getDevice_desc() {
         return $this->device_desc;
+    }
+    
+    public function getSalt_key() {
+        return $this->salt_key;
+    }
+    
+    public function getExp_key() {
+        return $this->exp_key;
     }
 
     public function setD_id($d_id) {
@@ -214,8 +195,8 @@ class Devices {
         $this->base_price = $base_price;
     }
 
-    public function setDg_id($dg_id) {
-        $this->dg_id = $dg_id;
+    public function setDg($dg) {
+        $this->dg = new DeviceGroup($dg);
     }
 
     public function setUrl($url) {
@@ -224,6 +205,26 @@ class Devices {
 
     public function setDevice_key($device_key) {
         $this->device_key = $device_key;
+    }
+
+    private function setSalt_key($salt_key) {
+        $this->salt_key = $salt_key;
+    }
+
+    private function setExp_key($exp_key) {
+        $this->exp_key = $exp_key;
+    }
+    
+    public function genSalt(){
+        global $sv;
+        
+        //generate 64 characters
+        $this->setSalt_key($salt_key);
+        
+        //set expiration CURRENT_TIME + $sv['salt_duration'];
+        $this->setExp_key($exp_key);
+        
+        //Update DB
     }
     
     public static function printDot($staff, $d_id){

@@ -55,7 +55,7 @@ echo "</div>";
     </div>
     <!-- /.row -->
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-lg-8">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <i class="fa fa-ticket fa-fw"></i> Device Status
@@ -146,8 +146,8 @@ echo "</div>";
                 </div>
             </div>
         </div>
-        <!-- /.col-md-8 -->
-        <div class="col-md-4">
+        <!-- /.col-lg-8 -->
+        <div class="col-lg-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <i class="fa fa-linode fa-fw"></i> Inventory
@@ -198,7 +198,7 @@ echo "</div>";
             </div>
             <!-- /.panel -->
         </div>
-        <!-- /.col-md-4 -->
+        <!-- /.col-lg-4 -->
     </div>
     <!-- /.row -->
 </div>

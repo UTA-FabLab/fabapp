@@ -13,16 +13,20 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/class/Users.php');
 
 function gatekeeper ($operator, $d_id) {
     global $mysqli;
+    global $sv;
+    $user = Users::withID($operator);
 	
 
     // Check to see if ID is a 10-digit number
-    if (!Users::regexUser($operator)) {
+    if (!$user) {
         return array ("status_id" => 1, "ERROR" => "Bad ID", "authorized" => "N");
     }
     
     // Check to see if device ID is a valid any-digit number
-    if (preg_match("/^\d+$/",$d_id) == 0) {
+    if (!Devices::regexDID($d_id)) {
         return array ("status_id" => 1, "ERROR" => "Invalid or missing device id value - $d_id", "authorized" => "N");
+    } else {
+        $device = new Devices($d_id);
     }
     
     //Prevent new Ticket if previous ticket has not been closed
@@ -35,36 +39,48 @@ function gatekeeper ($operator, $d_id) {
         LIMIT 1;
     ")){
         if( $result->num_rows > 0){
-            return array ("status_id" => 1, "ERROR" => "Can not start new print on this printer until previous ticket has been closed.", "authorized" => "N");
+            return array ("status_id" => 1, "ERROR" => "Can not start new ticket on this device until previous ticket has been closed.", "authorized" => "N");
         }
     } else {
-        return array ("status_id" => 0, "ERROR" => $mysqli->error, "authorized" => "N");
+        return array ("status_id" => 0, "ERROR" => "gk".$mysqli->error, "authorized" => "N");
     }
     
     //Deny Print if they have prints to pickup
     if ($result = $mysqli->query("
-            Select transactions.trans_id, address, mats_used.unit_used, mats_used.m_id, d_id
-            FROM objbox JOIN transactions
-            ON transactions.trans_id=objbox.trans_id
-            LEFT JOIN mats_used
-            ON transactions.trans_id = mats_used.trans_id
-            WHERE transactions.operator = '$operator' AND o_end IS NULL
-            ORDER BY t_start DESC
+        Select `objbox`.`trans_id`, `objbox`.`o_start`, `device_group`.`dg_parent`
+        FROM `objbox`
+        JOIN `transactions` ON `transactions`.`trans_id` = `objbox`.`trans_id`
+        JOIN `devices` ON `transactions`.`d_id` = `devices`.`d_id`
+        JOIN `device_group` ON `device_group`.`dg_id` = `devices`.`dg_id`
+        WHERE `transactions`.`operator` = '$operator' AND `o_end` IS NULL
     ")){
-        //if result is NULL Look at Auth Recipients Table
-        $numRows = $result->num_rows;
-        if($numRows > 0){
-            $row = $result->fetch_array();
-            return array ("status_id" => 1, "ERROR" => "Please Pay for Your Previous 3D Print. See Ticket: ".$row['trans_id'],  "authorized" => "N");
+        if($result->num_rows > 0){
+            //Current Time
+            $now = new DateTime();
+            while($row = $result->fetch_array()){
+                //if 3D Printer, you must pay
+                $o_start = new DateTime($row['o_start']);
+                $o_start->add(new DateInterval("P".$sv['maxHold']."D"));
+                
+                if(($device->getDg()->getDg_parent() == $row['dg_parent']) || ($now > $o_start)){
+                    return array ("status_id" => 1, "ERROR" => "Please Pay for Your Previous 3D Print. See Ticket: ".$row['trans_id'],  "authorized" => "N");
+                }
+            }
         }
     } else {
-            return array ("status_id" => 0, "ERROR" => $mysqli->error, "authorized" => "N");
+        return array ("status_id" => 0, "ERROR" => "gk".$mysqli->error, "authorized" => "N");
     }
     
     //if membership < date()
-	
+    
+    //User has an outstanding charge
+    $msg = Acct_charge::checkOutstanding($user->getOperator());
+    if (is_string($msg)){
+        return array ("status_id" => 1, "ERROR" => $msg,  "authorized" => "N");
+    }
+    
     // Check to see if device has training modules
-	$training = array();
+    $training = array();
     if ($results = $mysqli->query("
         SELECT *
         FROM trainingmodule
@@ -86,7 +102,6 @@ function gatekeeper ($operator, $d_id) {
         return array ("status_id" => 0, "ERROR" => $mysqli->error, "authorized" => "N");
     }
 
-   
     if ( count($training) == 0) {
         // If device has no training modules, no need to check further
         // so exit the function.
@@ -113,7 +128,7 @@ function gatekeeper ($operator, $d_id) {
     if ($count != count($training)){
         //echo "Device: ".$device_id." requires training"."<br />";
         //echo "Enroll - ". $count ." Class - ". count($training) ."<br />";
-        return array ("status_id" => 2, "ERROR" => "Device: $d_id Requires Training", "authorized" => "N");
+        return array ("status_id" => 2, "ERROR" => $device->getDevice_desc()." Requires Training", "authorized" => "N");
     } else {
         //echo "authorized";
         return array ("status_id" => 10, "authorized" => "Y");

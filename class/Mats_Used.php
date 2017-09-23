@@ -48,8 +48,8 @@ class Mats_Used {
     
     public static function byTrans($trans_id){
         global $mysqli;
-        
         $muArray = array();
+        
         if ($result = $mysqli->query("
             SELECT *
             FROM mats_used
@@ -62,8 +62,40 @@ class Mats_Used {
         return $muArray;
     }
     
-    public static function insert_Mats_used($trans_id, $m_id, $unit_used, $status_id, $staff_id, $mu_notes){
+    public function end($status_id, $staff){
         global $mysqli;
+        
+        /* //Deny if there is a cost associated with the materials
+        if($this->getMaterial()->getPrice() > 0.0){
+            return "This material has a cost associated with it.";
+        }
+        */
+        
+        if ($mysqli->query("
+            UPDATE `mats_used`
+            SET `status_id` = '$status_id', `staff_id` = '".$staff->getOperator()."'
+            WHERE `mu_id` = '".$this->getMu_id()."'
+        ")){
+            if ($mysqli->affected_rows == 1){
+                $this->setStatus($status_id);
+                return TRUE;
+            } else {
+                return "MU error line 85";
+            }
+        } else {
+            return $mysqli->error;
+        }
+    }
+    
+    //This method indicates how much of a material was used
+    public static function insert_Mats_used($trans_id, $m_id, $unit_used, $status_id, $staff, $mu_notes){
+        global $mysqli;
+        global $sv;
+        
+        //Deny if user is not staff
+        if($staff->getRoleID() < $sv['LvlOfStaff']){
+            return "Must be staff in order to update";
+        }
         
         //Validate input variables
         if (!Transactions::regexTrans($trans_id)) return false;
@@ -71,7 +103,9 @@ class Mats_Used {
         if (!self::regexUnit_Used($unit_used)) return false;
         //invert amount to show consumption
         $unit_used = -$unit_used;
-        if (!Users::regexUser($staff_id)) return false;
+        
+        //scrub $mu_notes
+        
         
         if ($stmt = $mysqli->prepare("
             INSERT INTO mats_used
@@ -79,32 +113,37 @@ class Mats_Used {
             VALUES
                 (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP);
         ")){
-            $bind_param = $stmt->bind_param("iidiss", $trans_id, $m_id, $unit_used, $status_id, $staff_id, $mu_notes);
+            $bind_param = $stmt->bind_param("iidiss", $trans_id, $m_id, $unit_used, $status_id, $staff->getOperator(), $mu_notes);
             $stmt->execute();
             $insID = $stmt->insert_id;
             $stmt->close();
             return $insID;
         } else {
-            echo "Error in stating Materials Used.";
-            return false;
+            //return "Error in stating Materials Used.";
+            return $mysqli->error;
         }
     }
     
-    public static function insert_Mats($trans_id, $m_id, $status_id, $staff_id){
+    public static function insert_Mats($trans_id, $m_id, $status_id, $staff){
         global $mysqli;
+        global $sv;
+        
+        //Deny if user is not staff
+        if($staff->getRoleID() < $sv['LvlOfStaff']){
+            return "Must be staff in order to update";
+        }
         
         //Validate input variables
         if (!Transactions::regexTrans($trans_id)) return false;
         if (!Materials::regexID($m_id)) return false;
         if (!Status::regexID($status_id)) return false;
-        if (!Users::regexUser($staff_id)) return false;
         
         //If all is good in the hood lets make an entry
         if($result = $mysqli->query("
             INSERT INTO mats_used
                 (`trans_id`,`m_id`,`status_id`, `staff_id`, `mu_date`) 
             VALUES
-                ($trans_id, $m_id, $status_id, $staff_id, CURRENT_TIMESTAMP);
+                ('$trans_id', '$m_id', '$status_id', '".$staff->getOperator()."', CURRENT_TIMESTAMP);
         ")){
             return $mysqli->insert_id;
         } else {
@@ -118,7 +157,53 @@ class Mats_Used {
     public static function insert_Inventory($m_id, $inv_rec, $status_id, $staff_id){
         global $mysqli;
         
+    }
+    
+    public static function regexUnit_Used($unit_used){
+        if (preg_match("/^\d{0,5}\.{0,1}\d{0,2}$/", $unit_used) && $unit_used >= 0)
+            return true;
+        //echo "Invalid Amount Used - $unit_used";
+        return false;
+    }
+    
+    //Use this method for writing updates to the DB for the object
+    public function updateUsed($staff){
+        global $mysqli;
+        global $sv;
         
+        //Deny if user is not staff
+        if($staff->getRoleID() < $sv['LvlOfStaff']){
+            return "Must be staff in order to update";
+        }
+    
+        //Combine $header & $mu_notes
+        if ($this->header == "" || $this->status->getStatus_id() == 12 || $this->status->getStatus_id() == 20) {
+            $notes = $this->mu_notes;
+        } else {
+            $notes = "|".$this->header."|".$this->mu_notes;
+        }
+        $status_id = $this->status->getStatus_id();
+        
+        //invert value
+        $uu = -$this->unit_used;
+        
+        //Update Mat_used
+        if ($stmt = $mysqli->prepare("
+            UPDATE `mats_used`
+            SET `unit_used`= ?, `mu_date` = CURRENT_TIMESTAMP,
+                `status_id`= ?, `staff_id` = ?, `mu_notes` = ?
+            WHERE `mu_id` = ?;
+        ")){
+            $stmt->bind_param("dissi", $uu, $status_id, $staff, $notes, $this->mu_id);
+            if ($stmt->execute() === true ){
+                $row = $stmt->affected_rows;
+                $stmt->close();
+                return $row;
+            } else
+                return "mats_used: updateUsed Error";
+        } else {
+            return "Error in preparing mats_used: updateUsed statement";
+        }
     }
     
     //Use this method for writing attributes to the DB for the object
@@ -151,52 +236,12 @@ class Mats_Used {
                 $row = $stmt->affected_rows;
                 $stmt->close();
                 return $row;
-            } else
-                echo "<br>mats_used WriteAttr Error - ".$stmt->error;
+            } else {
+                return "mats_used WriteAttr Error - ".$stmt->error;
+            }
         } else {
-            echo "Error in preparing mats_used: WriteAttr statement";
+            return "Error in preparing mats_used: WriteAttr statement";
         }
-    }
-    
-    //Use this method for writing updates to the DB for the object
-    public function updateUsed($staff_id){
-        global $mysqli;
-    
-        //Combine $header & $mu_notes
-        if ($this->header == "" || $this->status->getStatus_id() == 12 || $this->status->getStatus_id() == 20) {
-            $notes = $this->mu_notes;
-        } else {
-            $notes = "|".$this->header."|".$this->mu_notes;
-        }
-        $status_id = $this->status->getStatus_id();
-        
-        //invert value
-        $uu = -$this->unit_used;
-        
-        //Update Mat_used
-        if ($stmt = $mysqli->prepare("
-            UPDATE `mats_used`
-            SET `unit_used`= ?, `mu_date` = CURRENT_TIMESTAMP,
-                `status_id`= ?, `staff_id` = ?, `mu_notes` = ?
-            WHERE `mu_id` = ?;
-        ")){
-            $stmt->bind_param("dissi", $uu, $status_id, $staff_id, $notes, $this->mu_id);
-            if ($stmt->execute() === true ){
-                $row = $stmt->affected_rows;
-                $stmt->close();
-                return $row;
-            } else
-                return "mats_used: updateUsed Error";
-        } else {
-            return "Error in preparing mats_used: updateUsed statement";
-        }
-    }
-    
-    public static function regexUnit_Used($unit_used){
-        if (preg_match("/^\d{0,4}\.{0,1}\d{0,2}$/", $unit_used) && $unit_used > 0)
-            return true;
-        //echo "Invalid Amount Used - $unit_used";
-        return false;
     }
     
     public function getMu_id() {
@@ -220,7 +265,9 @@ class Mats_Used {
     }
 
     public function getMu_date() {
-        return $this->mu_date;
+        global $sv; //$sv['dateFormat']
+        
+        return date($sv['dateFormat'],strtotime($this->mu_date));
     }
 
     public function getStatus() {
@@ -279,7 +326,11 @@ class Mats_Used {
     }
 
     public function setStatus($status_id) {
-        $this->status = new Status($status_id);
+        try {
+            $this->status = new Status($status_id);
+        } catch (Exception $e) {
+            return $e->getMessage();
+        }
     }
 
     public function setStaff($staff_id) {
