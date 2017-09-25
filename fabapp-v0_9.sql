@@ -77,13 +77,6 @@ CREATE TABLE `authrecipients` (
   `operator` varchar(10) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
---
--- Dumping data for table `authrecipients`
---
-
-INSERT INTO `authrecipients` (`ar_id`, `trans_id`, `operator`) VALUES
-(1, 80, '1000000210'),
-(2, 86, '1000129288');
 
 -- --------------------------------------------------------
 
@@ -154,59 +147,61 @@ CREATE TABLE `devices` (
   `base_price` decimal(7,5) NOT NULL,
   `dg_id` int(11) DEFAULT NULL,
   `url` varchar(50) DEFAULT NULL,
-  `device_key` varchar(128) NOT NULL
+  `device_key` varchar(128) NOT NULL,
+  `salt_key` varchar(64) NOT NULL,
+  `exp_key` datetime DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `devices`
 --
 
-INSERT INTO `devices` (`d_id`, `device_id`, `public_view`, `device_desc`, `d_duration`, `base_price`, `dg_id`, `url`, `device_key`) VALUES
-(1, '0001', 'N', 'Bandsaw', '00:00:00', '0.00000', 3, NULL, ''),
-(2, '0002', 'N', 'Bench Grinder', '00:00:00', '0.00000', 3, NULL, ''),
-(3, '0003', 'Y', 'Brother Embroider', '00:00:00', '0.00000', 16, NULL, ''),
-(4, '0004', 'Y', 'CNC Plasma Cutter', '00:00:00', '0.00000', 3, NULL, ''),
-(5, '0005', 'N', 'Commercial Blender', '00:00:00', '0.00000', 3, NULL, ''),
-(6, '0006', 'N', 'Compound Miter Saw', '00:00:00', '0.00000', 3, NULL, ''),
-(7, '0007', 'N', 'Disc Sander', '00:00:00', '0.00000', 3, NULL, ''),
-(8, '0008', 'N', 'EDM Machine', '00:00:00', '0.00000', 3, NULL, ''),
-(9, '0009', 'Y', 'Janome Serger #1', '00:00:00', '1.00000', 10, NULL, ''),
-(10, '0010', 'Y', 'Janome Serger #2', '00:00:00', '1.00000', 10, NULL, ''),
-(11, '0011', 'Y', 'Janome Sewing #1', '00:00:00', '1.00000', 10, NULL, ''),
-(12, '0012', 'Y', 'Janome Sewing #2', '00:00:00', '1.00000', 10, NULL, ''),
-(13, '0013', 'N', 'Airbrush station', '00:00:00', '0.00000', 14, NULL, ''),
-(14, '0014', 'N', 'Machinist\'s Drill Press', '00:00:00', '0.00000', 3, NULL, ''),
-(15, '0015', 'N', 'Scroll saw', '00:00:00', '0.00000', 3, NULL, ''),
-(16, '0016', 'N', 'Sherline CNC Mill', '00:00:00', '0.00000', 3, NULL, ''),
-(17, '0017', 'N', 'Sherline CNC Lathe', '00:00:00', '0.00000', 3, NULL, ''),
-(18, '0018', 'N', 'Shopbot Handi-bot', '00:00:00', '0.00000', 3, NULL, ''),
-(19, '0019', 'N', 'Shopbot PRS-Alpha ', '00:00:00', '0.00000', 3, NULL, ''),
-(20, '0020', 'N', 'Sawstop Table Saw', '00:00:00', '0.00000', 3, NULL, ''),
-(21, '0021', 'Y', 'Polyprinter #1', '00:00:00', '0.00000', 2, 'polyprinter-1.uta.edu', ''),
-(22, '0022', 'Y', 'Polyprinter #2', '00:00:00', '0.00000', 2, 'polyprinter-2.uta.edu', ''),
-(23, '0023', 'Y', 'Polyprinter #3', '00:00:00', '0.00000', 2, 'polyprinter-3.uta.edu', ''),
-(24, '0024', 'Y', 'Polyprinter #4', '00:00:00', '0.00000', 2, 'polyprinter-4.uta.edu', ''),
-(25, '0025', 'Y', 'Polyprinter #5', '00:00:00', '0.00000', 2, 'polyprinter-5.uta.edu', ''),
-(26, '0026', 'Y', 'Polyprinter #6', '00:00:00', '0.00000', 2, 'polyprinter-6.uta.edu', ''),
-(27, '0027', 'Y', 'Polyprinter #7', '00:00:00', '0.00000', 2, 'polyprinter-7.uta.edu', ''),
-(28, '0028', 'Y', 'Polyprinter #8', '00:00:00', '0.00000', 2, 'polyprinter-8.uta.edu', ''),
-(29, '0029', 'Y', 'Polyprinter #9', '00:00:00', '0.00000', 2, 'polyprinter-9.uta.edu', ''),
-(30, '0030', 'Y', 'Polyprinter #10', '00:00:00', '0.00000', 15, 'polyprinter-10.uta.edu', ''),
-(31, '0031', 'Y', 'Orion Delta', '00:00:00', '0.00000', 8, 'lib-od3d.uta.edu', ''),
-(32, '0032', 'Y', 'Rostock MAX', '00:00:00', '0.00000', 8, 'rostockmax.uta.edu', ''),
-(33, '0033', 'Y', 'Kossel Pro ', '00:00:00', '0.00000', 8, 'kossel.uta.edu', ''),
-(34, '0034', 'Y', 'Epilog Laser', '01:00:00', '0.00000', 4, NULL, ''),
-(35, '0035', 'Y', 'Boss Laser', '01:00:00', '0.00000', 4, NULL, ''),
-(36, '0036', 'Y', 'CNC Mini Mill', '00:00:00', '0.00000', 12, NULL, ''),
-(37, '0037', 'Y', '3D Scanner Station', '00:00:00', '0.00000', 9, NULL, ''),
-(38, '0038', 'N', 'Glass Kiln', '00:00:00', '0.00000', 11, NULL, ''),
-(39, '0039', 'N', 'Ceramics Kiln', '00:00:00', '0.00000', 11, NULL, ''),
-(40, '0040', 'N', 'Mcor paper 3d printer', '00:00:00', '0.00000', NULL, NULL, ''),
-(41, '0041', 'Y', 'Roland Vinyl Cutter', '00:00:00', '0.00000', 5, NULL, ''),
-(42, '0042', 'Y', 'Electronics Station', '00:00:00', '0.00000', 6, NULL, ''),
-(43, '0043', 'Y', 'uPrint SEplus', '00:00:00', '0.00000', 7, NULL, ''),
-(44, '0044', 'Y', 'Oculus Rift', '00:00:00', '0.00000', 13, NULL, ''),
-(45, '0045', 'Y', 'Screeny McScreen Press', '00:00:00', '0.00000', 17, NULL, '');
+INSERT INTO `devices` (`d_id`, `device_id`, `public_view`, `device_desc`, `d_duration`, `base_price`, `dg_id`, `url`, `device_key`, `salt_key`, `exp_key`) VALUES
+(1, '0001', 'N', 'Bandsaw', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
+(2, '0002', 'N', 'Bench Grinder', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
+(3, '0003', 'Y', 'Brother Embroider', '00:00:00', '0.00000', 11, NULL, '', '', NULL),
+(4, '0004', 'Y', 'CNC Plasma Cutter', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
+(5, '0005', 'N', 'Commercial Blender', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
+(6, '0006', 'N', 'Compound Miter Saw', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
+(7, '0007', 'N', 'Disc Sander', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
+(8, '0008', 'N', 'EDM Machine', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
+(9, '0009', 'Y', 'Janome Serger #1', '00:00:00', '1.00000', 10, NULL, '', '', NULL),
+(10, '0010', 'Y', 'Janome Serger #2', '00:00:00', '1.00000', 10, NULL, '', '', NULL),
+(11, '0011', 'Y', 'Janome Sewing #1', '00:00:00', '1.00000', 10, NULL, '', '', NULL),
+(12, '0012', 'Y', 'Janome Sewing #2', '00:00:00', '1.00000', 10, NULL, '', '', NULL),
+(13, '0013', 'N', 'Airbrush station', '00:00:00', '0.00000', 14, NULL, '', '', NULL),
+(14, '0014', 'N', 'Machinist\'s Drill Press', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
+(15, '0015', 'N', 'Scroll saw', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
+(16, '0016', 'N', 'Sherline CNC Mill', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
+(17, '0017', 'N', 'Sherline CNC Lathe', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
+(18, '0018', 'N', 'Shopbot Handi-bot', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
+(19, '0019', 'N', 'Shopbot PRS-Alpha ', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
+(20, '0020', 'N', 'Sawstop Table Saw', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
+(21, '0021', 'Y', 'Polyprinter #1', '00:00:00', '0.00000', 2, 'polyprinter-1.uta.edu', '', '', NULL),
+(22, '0022', 'Y', 'Polyprinter #2', '00:00:00', '0.00000', 2, 'polyprinter-2.uta.edu', '', '', NULL),
+(23, '0023', 'Y', 'Polyprinter #3', '00:00:00', '0.00000', 2, 'polyprinter-3.uta.edu', '', '', NULL),
+(24, '0024', 'Y', 'Polyprinter #4', '00:00:00', '0.00000', 2, 'polyprinter-4.uta.edu', '', '', NULL),
+(25, '0025', 'Y', 'Polyprinter #5', '00:00:00', '0.00000', 2, 'polyprinter-5.uta.edu', '', '', NULL),
+(26, '0026', 'Y', 'Polyprinter #6', '00:00:00', '0.00000', 2, 'polyprinter-6.uta.edu', '', '', NULL),
+(27, '0027', 'Y', 'Polyprinter #7', '00:00:00', '0.00000', 2, 'polyprinter-7.uta.edu', '', '', NULL),
+(28, '0028', 'Y', 'Polyprinter #8', '00:00:00', '0.00000', 2, 'polyprinter-8.uta.edu', '', '', NULL),
+(29, '0029', 'Y', 'Polyprinter #9', '00:00:00', '0.00000', 2, 'polyprinter-9.uta.edu', '', '', NULL),
+(30, '0030', 'Y', 'Polyprinter #10', '00:00:00', '0.00000', 15, 'polyprinter-10.uta.edu', '', '', NULL),
+(31, '0031', 'Y', 'Orion Delta', '00:00:00', '0.00000', 8, 'lib-od3d.uta.edu', '', '', NULL),
+(32, '0032', 'Y', 'Rostock MAX', '00:00:00', '0.00000', 8, 'rostockmax.uta.edu', '', '', NULL),
+(33, '0033', 'Y', 'Kossel Pro ', '00:00:00', '0.00000', 8, 'kossel.uta.edu', '', '', NULL),
+(34, '0034', 'Y', 'Epilog Laser', '01:00:00', '0.00000', 4, NULL, '', '', NULL),
+(35, '0035', 'Y', 'Boss Laser', '01:00:00', '0.00000', 4, NULL, '', '', NULL),
+(36, '0036', 'Y', 'Roland CNC Mill', '00:00:00', '0.00000', 12, NULL, '', '', NULL),
+(37, '0037', 'Y', '3D Scanner Station', '00:00:00', '0.00000', 9, NULL, '', '', NULL),
+(38, '0038', 'N', 'Glass Kiln', '00:00:00', '0.00000', 16, NULL, '', '', NULL),
+(39, '0039', 'N', 'Ceramics Kiln', '00:00:00', '0.00000', 16, NULL, '', '', NULL),
+(40, '0040', 'N', 'Mcor paper 3d printer', '00:00:00', '0.00000', NULL, NULL, '', '', NULL),
+(41, '0041', 'Y', 'Roland Vinyl Cutter', '00:00:00', '0.00000', 5, NULL, '', '', NULL),
+(42, '0042', 'Y', 'Electronics Station', '00:00:00', '0.00000', 6, NULL, '', '', NULL),
+(43, '0043', 'Y', 'uPrint SEplus', '00:00:00', '0.00000', 7, NULL, '', '', NULL),
+(44, '0044', 'Y', 'Oculus Rift', '00:00:00', '0.00000', 13, NULL, '', '', NULL),
+(45, '0045', 'Y', 'Screeny McScreen Press', '00:00:00', '0.00000', 17, NULL, '', '', NULL);
 
 -- --------------------------------------------------------
 
@@ -220,31 +215,32 @@ CREATE TABLE `device_group` (
   `dg_parent` int(11) DEFAULT NULL,
   `dg_desc` varchar(50) NOT NULL,
   `payFirst` enum('Y','N') NOT NULL DEFAULT 'N',
-  `selectMatsFirst` enum('Y','N') NOT NULL DEFAULT 'N'
+  `selectMatsFirst` enum('Y','N') NOT NULL DEFAULT 'N',
+  `storable` enum('Y','N') NOT NULL DEFAULT 'N'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `device_group`
 --
 
-INSERT INTO `device_group` (`dg_id`, `dg_name`, `dg_parent`, `dg_desc`, `payFirst`, `selectMatsFirst`) VALUES
-(1, '3d', NULL, '(Generic 3D Printer)', 'N', 'Y'),
-(2, 'poly', 1, 'PolyPrinter', 'N', 'Y'),
-(3, 'shop', NULL, 'Shop Room', 'N', 'N'),
-(4, 'laser', NULL, 'Laser Cutter', 'N', 'N'),
-(5, 'vinyl', NULL, 'Vinyl Cutter', 'N', 'N'),
-(6, 'e_station', NULL, 'Electronics Station', 'N', 'N'),
-(7, 'uprint', 1, 'Stratus uPrint', 'Y', 'Y'),
-(8, 'delta', 1, 'Delta 3D Printer', 'N', 'Y'),
-(9, 'scan', NULL, '3D Scan', 'N', 'N'),
-(10, 'sew', NULL, 'Sewing Station', 'N', 'N'),
-(11, 'kiln', NULL, 'Electric Kilns', 'N', 'N'),
-(12, 'mill', NULL, 'CNC Mill', 'N', 'N'),
-(13, 'vr', NULL, 'VR Equipment', 'N', 'N'),
-(14, 'air_brush', NULL, 'Air Brush Station', 'N', 'N'),
-(15, 'NFPrinter', 1, 'Ninja Flex 3D Printer', 'N', 'Y'),
-(16, 'embroidery', NULL, 'Embroidery Machines', 'N', 'N'),
-(17, 'screen', NULL, 'Silk Screen', 'N', 'N');
+INSERT INTO `device_group` (`dg_id`, `dg_name`, `dg_parent`, `dg_desc`, `payFirst`, `selectMatsFirst`, `storable`) VALUES
+(1, '3d', NULL, '(Generic 3D Printer)', 'N', 'Y', 'Y'),
+(2, 'poly', 1, 'PolyPrinter', 'N', 'Y', 'Y'),
+(3, 'shop', NULL, 'Shop Room', 'N', 'N', 'N'),
+(4, 'laser', NULL, 'Laser Cutter', 'N', 'Y', 'N'),
+(5, 'vinyl', NULL, 'Vinyl Cutter', 'N', 'N', 'N'),
+(6, 'e_station', NULL, 'Electronics Station', 'N', 'N', 'N'),
+(7, 'uprint', 1, 'Stratus uPrint', 'Y', 'Y', 'Y'),
+(8, 'delta', 1, 'Delta 3D Printer', 'N', 'Y', 'Y'),
+(9, 'scan', NULL, '3D Scan', 'N', 'N', 'N'),
+(10, 'sew', NULL, 'Sewing Station', 'N', 'N', 'N'),
+(11, 'embroidery', NULL, 'Embroidery Machines', 'N', 'N', 'N'),
+(12, 'mill', NULL, 'CNC Mill', 'N', 'Y', 'N'),
+(13, 'vr', NULL, 'VR Equipment', 'N', 'N', 'N'),
+(14, 'air_brush', NULL, 'Air Brush Station', 'N', 'N', 'N'),
+(15, 'NFPrinter', 1, 'Ninja Flex 3D Printer', 'N', 'Y', 'Y'),
+(16, 'kiln', NULL, 'Electric Kilns', 'N', 'N', 'N'),
+(17, 'screen', NULL, 'Silk Screen', 'N', 'N', 'N');
 
 -- --------------------------------------------------------
 
@@ -288,49 +284,53 @@ INSERT INTO `device_materials` (`dm_id`, `dg_id`, `m_id`) VALUES
 (24, 5, 26),
 (25, 2, 29),
 (26, 8, 28),
-(27, 10, 52),
-(28, 11, 4),
+(27, 11, 52),
+(28, 16, 4),
 (29, 7, 27),
 (30, 7, 32),
-(34, 12, 1),
-(35, 12, 2),
-(36, 12, 11),
-(39, 2, 33),
-(40, 2, 34),
-(41, 2, 35),
-(42, 2, 36),
-(43, 2, 37),
-(44, 2, 38),
-(45, 2, 39),
-(46, 2, 40),
-(47, 2, 41),
-(48, 2, 42),
-(49, 5, 43),
-(50, 5, 44),
-(51, 5, 45),
-(52, 5, 46),
-(53, 5, 48),
-(54, 5, 30),
-(55, 5, 31),
-(56, 4, 53),
-(57, 15, 54),
-(58, 15, 55),
-(59, 15, 56),
-(60, 5, 57),
-(61, 5, 58),
-(62, 2, 59),
-(63, 2, 60),
-(64, 2, 61),
-(65, 2, 62),
-(66, 2, 63),
-(67, 2, 64),
-(68, 5, 65),
-(69, 5, 66),
-(70, 5, 67),
-(71, 5, 68),
-(72, 15, 69),
-(73, 15, 70),
-(74, 15, 71);
+(31, 12, 1),
+(32, 12, 2),
+(33, 12, 11),
+(34, 2, 33),
+(35, 2, 34),
+(36, 2, 35),
+(37, 2, 36),
+(38, 2, 37),
+(39, 2, 38),
+(40, 2, 39),
+(41, 2, 40),
+(42, 2, 41),
+(43, 2, 42),
+(44, 5, 43),
+(45, 5, 44),
+(46, 5, 45),
+(47, 5, 46),
+(48, 5, 48),
+(49, 5, 30),
+(50, 5, 31),
+(51, 4, 53),
+(52, 15, 54),
+(53, 15, 55),
+(54, 15, 56),
+(55, 5, 57),
+(56, 5, 58),
+(57, 2, 59),
+(58, 2, 60),
+(59, 2, 61),
+(60, 2, 62),
+(61, 2, 63),
+(62, 2, 64),
+(63, 5, 65),
+(64, 5, 66),
+(65, 5, 67),
+(66, 15, 69),
+(67, 15, 70),
+(68, 15, 71),
+(69, 17, 72),
+(70, 17, 73),
+(71, 17, 74),
+(72, 17, 75),
+(73, 17, 76);
 
 -- --------------------------------------------------------
 
@@ -344,83 +344,89 @@ CREATE TABLE `materials` (
   `m_parent` int(11) DEFAULT NULL,
   `price` decimal(6,2) DEFAULT NULL,
   `unit` varchar(10) NOT NULL,
-  `color_hex` varchar(6) DEFAULT NULL
+  `color_hex` varchar(6) DEFAULT NULL,
+  `measurable` enum('Y','N') NOT NULL DEFAULT 'N'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `materials`
 --
 
-INSERT INTO `materials` (`m_id`, `m_name`, `m_parent`, `price`, `unit`, `color_hex`) VALUES
-(1, 'ABS (Generic)', NULL, '0.05', 'gram(s)', NULL),
-(2, 'Acrylic', NULL, '0.00', '', NULL),
-(3, 'Cotton', NULL, '0.00', '', NULL),
-(4, 'Glass', NULL, '0.00', '', NULL),
-(5, 'Leather', NULL, '0.00', '', NULL),
-(6, 'PLA', NULL, '0.05', 'gram(s)', NULL),
-(7, 'Vinyl (Generic)', NULL, '0.25', 'inch(es)', NULL),
-(8, 'Wood', NULL, '0.00', '', NULL),
-(9, 'Basswood', NULL, '0.00', '', NULL),
-(10, 'Plywood', NULL, '0.00', '', NULL),
-(11, 'MDF', NULL, '0.00', '', NULL),
-(12, 'Other', NULL, NULL, '', NULL),
-(13, 'ABS Black', 1, '0.05', 'gram(s)', '000000'),
-(14, 'ABS Blue', 1, '0.05', 'gram(s)', '0047BB'),
-(15, 'ABS Green', 1, '0.05', 'gram(s)', '00BF6F'),
-(16, 'ABS Orange', 1, '0.05', 'gram(s)', 'fe5000'),
-(17, 'ABS Red', 1, '0.05', 'gram(s)', 'D22630'),
-(18, 'ABS Purple', 1, '0.05', 'gram(s)', '440099'),
-(19, 'ABS Yellow', 1, '0.05', 'gram(s)', 'FFE900'),
-(20, 'Vinyl Black', 7, '0.25', 'inch(es)', '000000'),
-(21, 'Vinyl Blue Royal', 7, '0.25', 'inch(es)', NULL),
-(22, 'Vinyl Green', 7, '0.25', 'inch(es)', NULL),
-(23, 'Vinyl Orange', 7, '0.25', 'inch(es)', NULL),
-(24, 'Vinyl Flat Red', 7, '0.25', 'inch(es)', NULL),
-(25, 'Vinyl Violet', 7, '0.25', 'inch(es)', NULL),
-(26, 'Vinyl Yellow', 7, '0.25', 'inch(es)', NULL),
-(27, 'uPrint Material', NULL, '0.50', 'gram(s)', NULL),
-(28, 'Learner Supplied Filament', NULL, '0.00', '', NULL),
-(29, 'ABS White', 1, '0.05', 'gram(s)', 'ffffff'),
-(30, 'Vinyl White', 7, '0.25', 'inch(es)', 'ffffff'),
-(31, 'Transfer Tape', NULL, '0.10', 'inch(es)', NULL),
-(32, 'uPrint Support', NULL, '0.50', 'gram(s)', NULL),
-(33, 'ABS Bronze', 1, '0.05', 'gram(s)', 'A09200'),
-(35, 'ABS Pink', 1, '0.05', 'gram(s)', 'FF3EB5'),
-(36, 'ABS Mint', 1, '0.05', 'gram(s)', '88DBDF'),
-(37, 'ABS Glow in the dark', 1, '0.05', 'gram(s)', 'D0DEBB'),
-(38, 'ABS Trans Orange', 1, '0.05', 'gram(s)', 'FCC89B'),
-(39, 'ABS Trans Red', 1, '0.05', 'gram(s)', 'DF4661'),
-(40, 'ABS Trans White', 1, '0.05', 'gram(s)', 'D9D9D6'),
-(41, 'ABS Trans Green', 1, '0.05', 'gram(s)', 'A0DAB3'),
-(42, 'ABS Gold', 1, '0.05', 'gram(s)', 'CFB500'),
-(43, 'Vinyl Blue Ocean', 7, '0.25', 'inch(es)', NULL),
-(44, 'Vinyl Glossy Red', 7, '0.25', 'inch(es)', NULL),
-(45, 'Vinyl Pink', 7, '0.25', 'inch(es)', NULL),
-(46, 'Vinyl Turquoise', 7, '0.25', 'inch(es)', NULL),
-(48, 'Vinyl Silver', 7, '0.25', 'inch(es)', NULL),
-(49, 'uPrint Bed New', NULL, '0.00', '', NULL),
-(50, 'uPrint Bed Partly_Used', NULL, '0.00', '', NULL),
-(51, 'Delrin Sheet', NULL, '0.00', '', NULL),
-(52, 'Thread', NULL, '1.00', '1000', NULL),
-(53, 'Paper-stock (chipboard)', NULL, NULL, '', NULL),
-(54, 'NinjaFlex (Generic)', NULL, '0.15', 'gram(s)', NULL),
-(55, 'NinjaFlex Black', 54, '0.15', 'gram(s)', '000000'),
-(56, 'NinjaFlex White', 54, '0.15', 'gram(s)', 'ffffff'),
-(57, 'Vinyl Coral', 7, '0.25', 'inch(es)', NULL),
-(58, 'Vinyl *Scraps', 7, '0.00', 'inch(es)', NULL),
-(59, 'ABS Lime', 1, '0.05', 'gram(s)', 'c2e189'),
-(60, 'ABS Copper', 1, '0.05', 'gram(s)', '7C4D3A'),
-(61, 'ABS Silver', 1, '0.05', 'gram(s)', '9EA2A2'),
-(62, 'ABS Trans Black', 1, '0.05', 'gram(s)', '919D9D'),
-(63, 'ABS Trans Blue', 1, '0.05', 'gram(s)', 'C8D8EB'),
-(64, 'ABS Trans Yellow', 1, '0.05', 'gram(s)', 'ECD898'),
-(65, 'Vinyl Mint', 7, '0.25', 'inch(es)', NULL),
-(66, 'Vinyl Lime Green', 7, '0.25', 'inch(es)', NULL),
-(67, 'Vinyl Gold', 7, '0.25', 'inch(es)', NULL),
-(68, 'Screen Ink', NULL, '0.05', 'gram(s)', NULL),
-(69, 'NinjaFlex Water', 54, '0.15', 'gram(s)', NULL),
-(70, 'NinjaFlex Lava', 54, '0.15', 'gram(s)', NULL),
-(71, 'NinjaFlex Sapphire', 54, '0.15', 'gram(s)', NULL);
+INSERT INTO `materials` (`m_id`, `m_name`, `m_parent`, `price`, `unit`, `color_hex`, `measurable`) VALUES
+(1, 'ABS (Generic)', NULL, '0.0000', 'gram(s)', NULL, 'N'),
+(2, 'Acrylic', NULL, '0.0000', '', NULL, 'N'),
+(3, 'Cotton', NULL, '0.0000', '', NULL, 'N'),
+(4, 'Glass', NULL, '0.0000', '', NULL, 'N'),
+(5, 'Leather', NULL, '0.0000', '', NULL, 'N'),
+(6, 'PLA', NULL, '0.0500', 'gram(s)', NULL, 'N'),
+(7, 'Vinyl (Generic)', NULL, '0.2500', 'inch(es)', NULL, 'N'),
+(8, 'Wood', NULL, '0.0000', '', NULL, 'N'),
+(9, 'Basswood', NULL, '0.0000', '', NULL, 'N'),
+(10, 'Plywood', NULL, '0.0000', '', NULL, 'N'),
+(11, 'MDF', NULL, '0.0000', '', NULL, 'N'),
+(12, 'Other', NULL, NULL, '', NULL, 'N'),
+(13, 'ABS Black', 1, '0.0500', 'gram(s)', '000000', 'Y'),
+(14, 'ABS Blue', 1, '0.0500', 'gram(s)', '0047BB', 'Y'),
+(15, 'ABS Green', 1, '0.0500', 'gram(s)', '00BF6F', 'Y'),
+(16, 'ABS Orange', 1, '0.0500', 'gram(s)', 'fe5000', 'Y'),
+(17, 'ABS Red', 1, '0.0500', 'gram(s)', 'D22630', 'Y'),
+(18, 'ABS Purple', 1, '0.0500', 'gram(s)', '440099', 'Y'),
+(19, 'ABS Yellow', 1, '0.0500', 'gram(s)', 'FFE900', 'Y'),
+(20, 'Vinyl Black', 7, '0.2500', 'inch(es)', '000000', 'Y'),
+(21, 'Vinyl Blue Royal', 7, '0.2500', 'inch(es)', NULL, 'Y'),
+(22, 'Vinyl Green', 7, '0.2500', 'inch(es)', NULL, 'Y'),
+(23, 'Vinyl Orange', 7, '0.2500', 'inch(es)', NULL, 'Y'),
+(24, 'Vinyl Flat Red', 7, '0.2500', 'inch(es)', NULL, 'Y'),
+(25, 'Vinyl Violet', 7, '0.2500', 'inch(es)', NULL, 'Y'),
+(26, 'Vinyl Yellow', 7, '0.2500', 'inch(es)', NULL, 'Y'),
+(27, 'uPrint Material', NULL, '8.1935', 'inch<sup>3</sup>', 'fdffe2', 'Y'),
+(28, 'Learner Supplied Filament', NULL, '0.0000', '', NULL, 'Y'),
+(29, 'ABS White', 1, '0.0500', 'gram(s)', 'ffffff', 'Y'),
+(30, 'Vinyl White', 7, '0.2500', 'inch(es)', 'ffffff', 'Y'),
+(31, 'Transfer Tape', NULL, '0.1000', 'inch(es)', NULL, 'Y'),
+(32, 'uPrint Support', NULL, '8.1935', 'inch<sup>3</sup>', NULL, 'Y'),
+(33, 'ABS Bronze', 1, '0.0500', 'gram(s)', 'A09200', 'Y'),
+(35, 'ABS Pink', 1, '0.0500', 'gram(s)', 'FF3EB5', 'Y'),
+(36, 'ABS Mint', 1, '0.0500', 'gram(s)', '88DBDF', 'Y'),
+(37, 'ABS Glow in the dark', 1, '0.0500', 'gram(s)', 'D0DEBB', 'Y'),
+(38, 'ABS Trans Orange', 1, '0.0500', 'gram(s)', 'FCC89B', 'Y'),
+(39, 'ABS Trans Red', 1, '0.0500', 'gram(s)', 'DF4661', 'Y'),
+(40, 'ABS Trans White', 1, '0.0500', 'gram(s)', 'D9D9D6', 'Y'),
+(41, 'ABS Trans Green', 1, '0.0500', 'gram(s)', 'A0DAB3', 'Y'),
+(42, 'ABS Gold', 1, '0.0500', 'gram(s)', 'CFB500', 'Y'),
+(43, 'Vinyl Blue Ocean', 7, '0.2500', 'inch(es)', NULL, 'Y'),
+(44, 'Vinyl Glossy Red', 7, '0.2500', 'inch(es)', NULL, 'Y'),
+(45, 'Vinyl Pink', 7, '0.2500', 'inch(es)', NULL, 'Y'),
+(46, 'Vinyl Turquoise', 7, '0.2500', 'inch(es)', NULL, 'Y'),
+(48, 'Vinyl Silver', 7, '0.2500', 'inch(es)', NULL, 'Y'),
+(49, 'uPrint Bed New', NULL, '0.0000', '', NULL, 'N'),
+(50, 'uPrint Bed Partly_Used', NULL, '0.0000', '', NULL, 'N'),
+(51, 'Delrin Sheet', NULL, '0.0000', '', NULL, 'N'),
+(52, 'Thread', NULL, '0.2347', 'stitch', NULL, 'Y'),
+(53, 'Paper-stock (chipboard)', NULL, NULL, '', NULL, 'N'),
+(54, 'NinjaFlex (Generic)', NULL, '0.1500', 'gram(s)', NULL, 'N'),
+(55, 'NinjaFlex Black', 54, '0.1500', 'gram(s)', '000000', 'Y'),
+(56, 'NinjaFlex White', 54, '0.1500', 'gram(s)', 'ffffff', 'Y'),
+(57, 'Vinyl Coral', 7, '0.2500', 'inch(es)', NULL, 'Y'),
+(58, 'Vinyl *Scraps', 7, '0.0000', 'inch(es)', NULL, 'Y'),
+(59, 'ABS Lime', 1, '0.0500', 'gram(s)', 'c2e189', 'Y'),
+(60, 'ABS Copper', 1, '0.0500', 'gram(s)', '7C4D3A', 'Y'),
+(61, 'ABS Silver', 1, '0.0500', 'gram(s)', '9EA2A2', 'Y'),
+(62, 'ABS Trans Black', 1, '0.0500', 'gram(s)', '919D9D', 'Y'),
+(63, 'ABS Trans Blue', 1, '0.0500', 'gram(s)', 'C8D8EB', 'Y'),
+(64, 'ABS Trans Yellow', 1, '0.0500', 'gram(s)', 'ECD898', 'Y'),
+(65, 'Vinyl Mint', 7, '0.2500', 'inch(es)', NULL, 'Y'),
+(66, 'Vinyl Lime Green', 7, '0.2500', 'inch(es)', NULL, 'Y'),
+(67, 'Vinyl Gold', 7, '0.2500', 'inch(es)', NULL, 'Y'),
+(68, 'Screen Ink(Generic)', NULL, '0.0500', 'gram(s)', NULL, 'Y'),
+(69, 'NinjaFlex Water', 54, '0.1500', 'gram(s)', NULL, 'Y'),
+(70, 'NinjaFlex Lava', 54, '0.1500', 'gram(s)', NULL, 'Y'),
+(71, 'NinjaFlex Sapphire', 54, '0.1500', 'gram(s)', NULL, 'Y'),
+(72, 'Comet White', 68, '0.0500', 'gram(s)', 'ffffff', 'Y'),
+(73, 'Pitch Black', 68, '0.0500', 'gram(s)', '000000', 'Y'),
+(74, 'Neptune Blue', 68, '0.0500', 'gram(s)', '0011ff', 'Y'),
+(75, 'Mars Red', 68, '0.0500', 'gram(s)', 'ff0000', 'Y'),
+(76, 'Starburst Yellow', 68, '0.0500', 'gram(s)', 'faff00', 'Y');
 
 -- --------------------------------------------------------
 
@@ -617,7 +623,7 @@ INSERT INTO `role` (`r_id`, `title`, `lvl_desc`, `r_rate`) VALUES
 (4, 'Community Member', 'Non-Student, 4 Month Membership', '10.00'),
 (7, 'Service', 'Service technicians that need to work on FabLab Equipment', '0.00'),
 (8, 'FabLabian', 'Student Worker', '0.00'),
-(9, 'SuperFabLabian', 'Student Worker Supervisor ', '0.00'),
+(9, 'LeadFabLabian', 'Student Lead', '0.00'),
 (10, 'Admin', 'Administration', '0.00');
 
 -- --------------------------------------------------------
@@ -683,7 +689,7 @@ INSERT INTO `site_variables` (`id`, `name`, `value`, `notes`) VALUES
 (6, 'grace_period', '300', 'Grace period allotted to each Ticket(sec)'),
 (7, 'limit', '300', '(seconds) 5 minutes before auto-logout'),
 (8, 'limit_long', '6000', '(seconds) 100 minutes before auto-logout'),
-(9, 'maxHold', '336:00:00', '2 Week Holding Period for 3D prints'),
+(9, 'maxHold', '14', '# of Days for Holding Period for 3D prints'),
 (10, 'serving', '0', 'Now serving number such and such'),
 (11, 'Lserving', '0', 'Now serving number such and such'),
 (12, 'sNext', '0', 'Last Number Issued for 3D Printing'),
@@ -700,7 +706,13 @@ INSERT INTO `site_variables` (`id`, `name`, `value`, `notes`) VALUES
 (23, 'currency', 'dollar', 'Icon as Defined by Font Awesome'),
 (24, 'LvlOfStaff', '8', 'First role level ID of staff.'),
 (25, 'minRoleTrainer', '10', 'Minimum Role Level of Trainer, below this value you can not issue a training.'),
-(26, 'editTrans', '9', ' Role level required to edit a Transaction');
+(26, 'editTrans', '9', ' Role level required to edit a Transaction'),
+(27, 'api_key', 'opensaysame', 'Temp fix to secure FLUD script'),
+(28, 'acct3', '8', 'At what level can a user use the house account.'),
+(29, 'acct4', '8', 'At what level can a user use the generic department account.'),
+(30, 'dateFormat', 'M d, Y g:i a', 'format the date using Php\'s date() function.'),
+(31, 'timezone', 'America/Chicago', 'Set Local Time Zone'),
+(32, 'timeInterval', '.25', 'Minimum time unit of an hour.');
 
 -- --------------------------------------------------------
 
@@ -728,10 +740,10 @@ INSERT INTO `status` (`status_id`, `msg`) VALUES
 (12, 'Failed'),
 (13, 'Missprocessed'),
 (14, 'Completed'),
+(15, 'Cancelled'),
 (20, 'Charge to Accounts'),
 (21, 'FabLab Account'),
-(22, 'Library Account'),
-(15, 'Cancelled');
+(22, 'Library Account');
 
 -- --------------------------------------------------------
 
@@ -1139,12 +1151,12 @@ ALTER TABLE `device_group`
 -- AUTO_INCREMENT for table `device_materials`
 --
 ALTER TABLE `device_materials`
-  MODIFY `dm_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
+  MODIFY `dm_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=74;
 --
 -- AUTO_INCREMENT for table `materials`
 --
 ALTER TABLE `materials`
-  MODIFY `m_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=72;
+  MODIFY `m_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=76;
 --
 -- AUTO_INCREMENT for table `mats_used`
 --
@@ -1189,7 +1201,7 @@ ALTER TABLE `service_lvl`
 -- AUTO_INCREMENT for table `site_variables`
 --
 ALTER TABLE `site_variables`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 --
 -- AUTO_INCREMENT for table `status`
 --
