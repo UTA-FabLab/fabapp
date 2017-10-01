@@ -223,24 +223,24 @@ CREATE TABLE `device_group` (
 -- Dumping data for table `device_group`
 --
 
-INSERT INTO `device_group` (`dg_id`, `dg_name`, `dg_parent`, `dg_desc`, `payFirst`, `selectMatsFirst`, `storable`) VALUES
-(1, '3d', NULL, '(Generic 3D Printer)', 'N', 'Y', 'Y'),
-(2, 'poly', 1, 'PolyPrinter', 'N', 'Y', 'Y'),
-(3, 'shop', NULL, 'Shop Room', 'N', 'N', 'N'),
-(4, 'laser', NULL, 'Laser Cutter', 'N', 'Y', 'N'),
-(5, 'vinyl', NULL, 'Vinyl Cutter', 'N', 'N', 'N'),
-(6, 'e_station', NULL, 'Electronics Station', 'N', 'N', 'N'),
-(7, 'uprint', 1, 'Stratus uPrint', 'Y', 'Y', 'Y'),
-(8, 'delta', 1, 'Delta 3D Printer', 'N', 'Y', 'Y'),
-(9, 'scan', NULL, '3D Scan', 'N', 'N', 'N'),
-(10, 'sew', NULL, 'Sewing Station', 'N', 'N', 'N'),
-(11, 'embroidery', NULL, 'Embroidery Machines', 'N', 'N', 'N'),
-(12, 'mill', NULL, 'CNC Mill', 'N', 'Y', 'N'),
-(13, 'vr', NULL, 'VR Equipment', 'N', 'N', 'N'),
-(14, 'air_brush', NULL, 'Air Brush Station', 'N', 'N', 'N'),
-(15, 'NFPrinter', 1, 'Ninja Flex 3D Printer', 'N', 'Y', 'Y'),
-(16, 'kiln', NULL, 'Electric Kilns', 'N', 'N', 'N'),
-(17, 'screen', NULL, 'Silk Screen', 'N', 'N', 'N');
+INSERT INTO `device_group` (`dg_id`, `dg_name`, `dg_parent`, `dg_desc`, `payFirst`, `selectMatsFirst`, `storable`, `measureDuration`) VALUES
+(1, '3d', NULL, '(Generic 3D Printer)', 'N', 'Y', 'Y', 'Y'),
+(2, 'poly', 1, 'PolyPrinter', 'N', 'Y', 'Y', 'Y'),
+(3, 'shop', NULL, 'Shop Room', 'N', 'N', 'N', 'N'),
+(4, 'laser', NULL, 'Laser Cutter', 'N', 'Y', 'N', 'Y'),
+(5, 'vinyl', NULL, 'Vinyl Cutter', 'N', 'N', 'N', 'Y'),
+(6, 'e_station', NULL, 'Electronics Station', 'N', 'N', 'N', 'Y'),
+(7, 'uprint', 1, 'Stratus uPrint', 'Y', 'Y', 'Y', 'Y'),
+(8, 'delta', 1, 'Delta 3D Printer', 'N', 'Y', 'Y', 'Y'),
+(9, 'scan', NULL, '3D Scan', 'N', 'N', 'N', 'Y'),
+(10, 'sew', NULL, 'Sewing Station', 'N', 'N', 'N', 'Y'),
+(11, 'embroidery', NULL, 'Embroidery Machines', 'N', 'N', 'N', 'Y'),
+(12, 'mill', NULL, 'CNC Mill', 'N', 'Y', 'N', 'Y'),
+(13, 'vr', NULL, 'VR Equipment', 'N', 'N', 'N', 'Y'),
+(14, 'air_brush', NULL, 'Air Brush Station', 'N', 'N', 'N', 'Y'),
+(15, 'NFPrinter', 1, 'Ninja Flex 3D Printer', 'N', 'Y', 'Y', 'Y'),
+(16, 'kiln', NULL, 'Electric Kilns', 'N', 'N', 'N', 'Y'),
+(17, 'screen', NULL, 'Silk Screen', 'N', 'N', 'N', 'Y');
 
 -- --------------------------------------------------------
 

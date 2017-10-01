@@ -14,11 +14,8 @@ $RECYCLE.BIN/
 /connections/tp_connect.php
 /test.php
 /api/php-printer
-/api/flud.php
 /api/ldap.php
-/api/materials.php
 /api/powertails.php
-/api/purpose.php
 /api/ReadMatch.php
 /api/time_clock.php
 
