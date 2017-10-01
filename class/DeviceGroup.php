@@ -15,6 +15,7 @@ class DeviceGroup {
     private $dg_name;
     private $dg_parent;
     private $dg_desc;
+    private $measureDuration;
     private $payFirst;
     private $selectMatsFirst;
     private $storable;
@@ -33,6 +34,7 @@ class DeviceGroup {
                 $this->setDg_name($row['dg_name']);
                 $this->setDg_parent($row['dg_parent']);
                 $this->setDg_desc($row['dg_desc']);
+                $this->setMeasureDuration($row['measureDuration']);
                 $this->setPayFirst($row['payFirst']);
                 $this->setSelectMatsFirst($row['selectMatsFirst']);
                 $this->setStorable($row['storable']);
@@ -81,6 +83,10 @@ class DeviceGroup {
         return $this->dg_desc;
     }
 
+    public function getMeasureDuration(){
+        return $this->measureDuration;
+    }
+
     public function getPayFirst() {
         return $this->payFirst;
     }
@@ -109,6 +115,15 @@ class DeviceGroup {
         $this->dg_desc = $dg_desc;
     }
 
+    public function setMeasureDuration($measureDuration){
+        //Only Y or N, default to N otherwise
+        if(preg_match("/[YN]{1}/", $measureDuration)){
+            $this->measureDuration = $measureDuration;
+        } else {
+            $this->measureDuration = "N";
+        }
+    }
+    
     public function setPayFirst($payFirst) {
         //Only Y or N, default to N otherwise
         if(preg_match("/[YN]{1}/", $payFirst)){
