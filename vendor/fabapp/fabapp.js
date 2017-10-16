@@ -18,24 +18,29 @@ function endTicket(trans_id, device_desc) {
 
 //fire off modal & optional dismissal timer
 function goModal(title, body, auto){
-	document.getElementById("modal-title").innerHTML = title;
-	document.getElementById("modal-body").innerHTML = body;
-	$('#popModal').modal('show');
-	if (auto) {
-		setTimeout(function(){$('#popModal').modal('hide')}, 3000);
-	}
+    document.getElementById("modal-title").innerHTML = title;
+    document.getElementById("modal-body").innerHTML = body;
+    $('#popModal').modal('show');
+    if (auto) {
+        setTimeout(function(){$('#popModal').modal('hide')}, 6000);
+    }
 }
-	
-function IDCheck(operator){
-	var reg = /^\d{10}$/;
-	//Mav ID Check
-    if (operator == null || operator == "" || !reg.test(operator)) {
-        if (!reg.test(operator)) {
-			alert("Invalid ID #");
-		} else {
-			alert("Please enter ID #");
-		}
-        return false;
+
+
+function searchF(){
+    var sForm = document.forms['searchForm'];
+    if (sForm.searchType[0].checked == true) {
+        sForm.searchField.type="number";
+        sForm.searchField.placeholder="Search...";
+        sForm.searchField.min = "1";
+        sForm.searchField.autofocus=true;
+    }
+    if (sForm.searchType[1].checked == true) {
+        sForm.searchField.type="text";
+        sForm.searchField.placeholder="Enter ID #";
+        sForm.searchField.maxLength = 10;
+        sForm.searchField.size="10";
+        sForm.searchField.autofocus=true;
     }
 }
 
@@ -72,25 +77,40 @@ function startTimer(duration, display, dg_parent) {
     }, 1000);
 }
 
+//Standard regEx call for any input field
+function stdRegEx(elementId, reg, msg){
+    var x = document.getElementById(elementId).value;
+    if (x === null || x === "" || !reg.test(x)) {
+        alert(msg);
+        document.getElementById(elementId).focus();
+        return false;
+    }
+}
+
 //check forms for proper types
 function validateNum(caller) {
     if ( caller.localeCompare("pickForm") == 0 ){
         var x = document.forms[caller]["pickField"].value;
-        return IDCheck(x);
+        //return IDCheck(x);
+        return stdRegEx("pickField", /^\d{10}$/, "Please enter ID #");
     } else if ( caller.localeCompare("searchForm") == 0 ){
         var x = document.forms[caller]["searchField"].value;
+        var sForm = document.forms['searchForm'];
         if (sForm.searchType[0].checked) {
             var reg = /^\d{1,}$/;
             //Mav ID Check
             if (x == null || x == "" || !reg.test(x)) {
                 if (!reg.test(x)) {
-                        alert("Invalid Ticket #");
+                    msg = "Invalid Ticket #";
+                    //msg = msg.concat(x);
+                    alert(msg);
                 }
                 return false;
             }
         }
         if (sForm.searchType[1].checked) {
-            return IDCheck(x);
+            //return IDCheck(x);
+            return stdRegEx("searchField", /^\d{10}$/, "Please enter ID #");
         }
     }
 }

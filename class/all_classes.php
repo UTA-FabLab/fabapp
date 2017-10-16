@@ -32,4 +32,11 @@ for ($i = 3; $i < count($files); $i++) {
     include_once ($_SERVER['DOCUMENT_ROOT']."/class/$files[$i]");
 }
 date_default_timezone_set($sv['timezone']);
+function debug( $data ) {
+    $output = $data;
+    if ( is_array( $output ) )
+        $output = implode( ',', $output);
+
+    echo "<script>console.log( 'Debug Objects: " . $output . "' );</script>";
+}
 ?>

@@ -12,19 +12,21 @@
  
  class Users {
     private $u_id;
-    private $operator;
-    private $exp_date;
-    private $roleID;
-    private $rfid_no;
-    private $icon;
     private $accounts;
+    private $adj_date;
+    private $exp_date;
+    private $icon;
+    private $operator;
+    private $rfid_no;
+    private $roleID;
+    private $notes;
 
     public function __construct() {}
 
     public static function withID($operator){
         $instance = new self();
         if (!self::regexUser($operator)){
-            return NULL;
+            return "Invalid ID Number";
         }
         $instance->createWithID($operator);
         return $instance;
@@ -32,8 +34,8 @@
 
     public static function withRF($rfid_no){
         $instance = new self();
-        if (!$this->regexUser($rfid_no)){
-            return "No ID Found";
+        if (!$this->regexRFID($rfid_no)){
+            return "Invalid RFID Number";
         }
         $instance->createWithRF($rfid_no);
         return $instance;
@@ -43,7 +45,7 @@
         global $mysqli;
 
         if ($result = $mysqli->query("
-            SELECT users.operator, users.r_id, exp_date, icon, rfid_no
+            SELECT users.operator, users.r_id, exp_date, icon, rfid_no, adj_date, notes
             FROM `users`
             LEFT JOIN rfid
             ON users.operator = rfid.operator
@@ -52,17 +54,19 @@
         ")){
             $row = $result->fetch_assoc();
             if (strcmp($row['operator'], "") != 0){
-                $this->operator = $row['operator'];
+                $this->setOperator($row['operator']);
                 $this->setRoleID($row['r_id']);
             } else {
-                $this->operator = $operator;
+                $this->setOperator($operator);
                 $this->setRoleID(2);
             }
             
-            $this->exp_date = $row['exp_date'];
-            $this->setRfid_no($row['rfid_no']);
-            $this->icon = $row['icon'];
             $this->setAccounts($operator);
+            $this->setAdj_date($row['adj_date']);
+            $this->setExp_date($row['exp_date']);
+            $this->setIcon($row['icon']);
+            $this->setNotes ($row['notes']);
+            $this->setRfid_no($row['rfid_no']);
         } else {
             echo $mysqli->error;
             return false;
@@ -73,7 +77,7 @@
         global $mysqli;
         
         if ($result = $mysqli->query("
-            SELECT users.operator, users.r_id, exp_date, icon, rfid_no
+            SELECT users.operator, users.r_id, exp_date, icon, rfid_no, adj_date, notes
             FROM `rfid`
             LEFT JOIN users
             ON rfid.operator = users.operator
@@ -81,13 +85,171 @@
             Limit 1;
         ")){
             $row = $result->fetch_assoc();
-            $this->operator = $row['operator'];
-            $this->exp_date = $row['exp_date'];
+            $this->setAccounts($row['operator']);
+            $this->setAdj_date($row['adj_date']);
+            $this->setIcon ($row['icon']);
+            $this->setExp_date ($row['exp_date']);
+            $this->setNotes ($row['notes']);
+            $this->setOperator($row['operator']);
             $this->setRoleID($row['r_id']);
             $this->setRfid_no($row['rfid_no']);
-            $this->icon = $row['icon'];
         } else {
             return false;
+        }
+    }
+
+    public function getAccounts(){
+        return $this->accounts;
+    }
+
+    public function getAdj_date(){
+        return $this->adj_date;
+    }
+	
+    public function getExp_date(){
+        return $this->exp_date;
+    }
+	
+    public function getIcon(){
+        if ($this->icon == ""){
+            return "user";
+        }
+        return $this->icon;
+    }
+	
+    public function getNotes(){
+        return $this->Notes;
+    }
+	
+    public function getOperator(){
+        return $this->operator;
+    }
+	
+    public function getRfid_no(){
+        return $this->rfid_no;
+    }
+	
+    public function getRoleID() {
+        if ($this->roleID){
+            return $this->roleID;
+        } else {
+            return false;
+        }
+    }
+    
+    public function insertRFID($staff, $rfid_no){
+        global $mysqli;
+        global $sv;
+        
+        if (!$this->regexRFID($rfid_no)) {return "Invalid RFID Number";}
+        if ($staff->getRoleID() < $sv['editRfid']){
+            return "Insufficient role to add new RFID";
+        }
+        
+        //Check if RFID is already in table
+        if ($result = $mysqli->query("
+            SELECT *
+            FROM `rfid`
+            WHERE `rfid_no` = $rfid_no;
+        ")){
+            if ($result->num_rows > 0){
+                $row = $result->fetch_assoc();
+                return "This RFID has already been assinged to ".$row['operator'];
+            }
+        }
+        
+        if ($stmt = $mysqli->prepare("
+            INSERT INTO `rfid` (`rf_id`, `rfid_no`, `operator`) VALUES (NULL, ?, ?);
+        ")){
+            $stmt->bind_param("ss", $rfid_no, $this->operator);
+            if ($stmt->execute() === true ){
+                $row = $stmt->affected_rows;
+                $stmt->close();
+                $this->rfid_no = $rfid;
+                if ($row == 1){
+                } else {
+                    return "Users: insertRFID Count Error ".$row;
+                }
+            } else
+                //return "Users: insertRFID Execute Error";
+                return $stmt->error;
+        } else {
+            return "Error in preparing Users: insertRFID statement";
+        }
+        
+        //Maybe Move this Logic into it's own function
+        $staff_id = $staff->getOperator();
+        //Check if User is already in table
+        if ($result = $mysqli->query("
+            SELECT *
+            FROM `users`
+            WHERE `operator` = $staff_id;
+        ")){
+            if ($result->num_rows == 0){
+                //Define User in table and assign default Role
+                if ($stmt = $mysqli->prepare("
+                    INSERT INTO `users` (`u_id`, `operator`, `r_id`, `exp_date`, `icon`, `adj_date`, `notes`) 
+                    VALUES (NULL, ?, '2', NULL, NULL, CURRENT_TIME(), ?);
+                ")){
+                    $stmt->bind_param("ss", $this->operator, $staff_id);
+                    if ($stmt->execute() === true ){
+                        $row = $stmt->affected_rows;
+                        $stmt->close();
+                        $this->rfid_no = $rfid_no;
+                        if ($row == 1){
+                            return true;
+                        } else {
+                            return "Users: insertRFID Count Error ".$row;
+                        }
+                    } else
+                        return "Users: insertRFID Execute Error";
+                } else {
+                    return "Error in preparing Users: insertRFID statement";
+                }
+            }
+        }
+    }
+    
+    public function modifyRoleID($staff, $notes){
+        global $mysqli;
+        global $sv;
+
+        if ($this->operator == $staff->getOperator()){
+            return "Staff can not modify their own Role ID";
+        }
+
+        //concat staff ID onto notes for record keeping
+        $notes = "|".$staff->getOperator()."| ".$notes;
+		
+        if ($staff->getRoleID() >= $sv['editRole']){
+            //Staff must have high enough role
+            if ($stmt = $mysqli->prepare("
+                UPDATE `users`
+                SET `r_id` = ?, `adj_date` = CURRENT_TIMESTAMP, `notes`= ?
+                WHERE `operator` = ?;
+            ")){
+                $stmt->bind_param("iss", $r_id, $notes, $this->operator);
+                if ($stmt->execute() === true ){
+                    $row = $stmt->affected_rows;
+                    $stmt->close();
+                    $this->roleID = $r_id;
+                    return $row;
+                } else
+                    return "Users: updateRoleID Error";
+            } else {
+                return "Error in preparing Users: modifyRoleID statement";
+            }
+        } else {
+            echo "Insufficient Role to modify Role ID";
+        }
+    }
+	
+    public static function regexRFID($rfid_no) {
+        //10 digit format check
+        if (preg_match("/^\d{5,}$/",$rfid_no) == 0) {
+            return false;
+        } else {
+            return true;
         }
     }
 	
@@ -98,6 +260,28 @@
             return false;
         } else {
             return true;
+        }
+    }
+    
+    public static function RFIDtoID ($rfid_no) {
+        global $mysqli;
+        
+        if (preg_match("/^\d+$/",$rfid_no) == 0) {
+            return false;
+        }
+
+        if ($result = $mysqli->query("
+            SELECT operator FROM rfid WHERE rfid_no = $rfid_no
+        ")){
+            $row = $result->fetch_array(MYSQLI_NUM);;
+            $operator = $row[0];
+            if ($uta_id) {
+                return($operator);
+            } else {
+                return "No UTA ID match for RFID $rfid_no";
+            }
+        } else {
+            return "Error Users RF";
         }
     }
     
@@ -131,21 +315,29 @@
         
         $this->accounts = $accounts;
     }
+
+    public function setAdj_date($adj_date){
+        $this->adj_date = $adj_date;
+    }
+
+    public function setExp_date($exp_date){
+        $this->exp_date = $exp_date;
+    }
+
+    public function setIcon($icon){
+        $this->icon = $icon;
+    }
     
-    public function getAccounts(){
-        return $this->accounts;
+    public function setNotes($notes){
+        $this->notes = $notes;
     }
-	
-    public function getOperator(){
-        return $this->operator;
+    
+    public function setOperator($operator){
+        $this->operator = $operator;
     }
-	
-    public function getRoleID() {
-        if ($this->roleID){
-            return $this->roleID;
-        } else {
-            return false;
-        }
+
+    public function setRfid_no($rfid_no){
+        $this->rfid_no = $rfid_no;
     }
 	
     private function setRoleID($r_id){
@@ -159,87 +351,36 @@
         }
     }
     
-    public function modifyRoleID($r_id, $staff, $notes){
+    public function updateRFID($staff, $rfid_no){
         global $mysqli;
-
-        if ($this->operator == $staff->getOperator()){
-                return "Staff can not modify their own Role ID";
-        }
-
-        //concat staff ID onto notes for record keeping
-        $notes = "|".$staff->getOperator()."| ".$notes;
-		
-        if ($staff->getRoleID() >= $r_id){
-            //Staff must have high enough role
-            if ($stmt = $mysqli->prepare("
-                UPDATE `users`
-                SET `r_id` = ?, `adj_date` = CURRENT_TIMESTAMP, `notes`= ?
-                WHERE `operator` = ?;
-            ")){
-                $stmt->bind_param("iss", $r_id, $notes, $this->operator);
-                if ($stmt->execute() === true ){
-                    $row = $stmt->affected_rows;
-                    $stmt->close();
-                    $this->roleID = $r_id;
-                    return $row;
-                } else
-                    return "Users: updateRoleID Error";
-            } else {
-                return "Error in preparing Users: modifyRoleID statement";
-            }
-        } else {
-            echo "Insufficient Role";
-        }
-    }
-	
-    public function getExp_date(){
-        return $this->exp_date;
-    }
-
-    public function setExp_date(){
-        return "Function not Prepared Yet";
-    }
-	
-    public function getRfid_no(){
-        return $this->rfid_no;
-    }
-
-    public function setRfid_no($rfid_no){
-        $this->rfid_no = $rfid_no;
-        return "Function not Prepared Yet";
-    }
-	
-    public function getIcon(){
-        if ($this->icon == ""){
-            return "user";
-        }
-        return $this->icon;
-    }
-
-    public function setIcon(){
-        //check against known list
-        return "Function not Prepared Yet";
-    }
-    
-    public static function RFIDtoID ($rfid_no) {
-        global $mysqli;
+        global $sv;
         
-        if (preg_match("/^\d+$/",$rfid_no) == 0) {
-            return false;
+        if ($staff->getRoleID() < $sv['editRFID']){
+            return "Insufficient role to update RFID";
         }
-
-        if ($result = $mysqli->query("
-            SELECT operator FROM rfid WHERE rfid_no = $rfid_no
+        if ($this->rfid_no == $rfid_no){
+            return "RFID remains unchanged";
+        }
+        
+        if ($stmt = $mysqli->prepare("
+            UPDATE `rfid`
+            SET `rfid_no` = ?
+            WHERE `operator` = ?;
         ")){
-            $row = $result->fetch_array(MYSQLI_NUM);;
-            $operator = $row[0];
-            if ($uta_id) {
-                return($operator);
-            } else {
-                return "No UTA ID match for RFID $rfid_no";
-            }
+            $stmt->bind_param("ss", $rfid, $this->operator);
+            if ($stmt->execute() === true ){
+                $row = $stmt->affected_rows;
+                $stmt->close();
+                $this->rfid_no = $rfid_no;
+                if ($row == 1){
+                    return true;
+                } else {
+                    return "Users: updateRFID Count Error";
+                }
+            } else
+                return "Users: updateRFID Execute Error";
         } else {
-            return "Error Users RF";
+            return "Error in preparing Users: updateRFID statement";
         }
     }
  }?>

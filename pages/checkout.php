@@ -4,17 +4,17 @@
  *   FabApp V 0.9
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
-$total = 0.0;
 
 if ($_SESSION['type'] == "end"){
     $ticket  = unserialize($_SESSION['ticket']);
     $mats_used = unserialize($_SESSION['mats_used']);
-    $user = ($_SESSION['$pickupID'] ? Users::withID($_SESSION['$pickupID']) : Users::withID($ticket->getUser()->getOperator()) );
+	if (isset($_SESSION['$pickupID'])){
+		$user = Users::withID($_SESSION['$pickupID']);
+	} else {
+		$user = Users::withID($ticket->getUser()->getOperator());
+	}
     
-    //Run through the mats to calculate total
-    foreach ($mats_used as $mu) {
-        $total += $mu->getMaterial()->getPrice() * $mu->getUnit_used();
-    }
+    $ticket->quote();
 //} elseif ($_SESSION['type'] == "payNow") {
 } else {
     $ticket = new Transactions(filter_input(INPUT_GET, 'trans_id', FILTER_VALIDATE_INT));
@@ -31,7 +31,7 @@ if ($_SESSION['type'] == "end"){
     </div>
     <!-- /.row -->
     <div class="row">
-        <div class="col-lg-6">
+        <div class="col-md-6">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <i class="fa fa-ticket fa-fw"></i> Ticket <?php echo $ticket->getTrans_id();?>
@@ -115,8 +115,8 @@ if ($_SESSION['type'] == "end"){
                 <!-- /.panel -->
             <?php } ?>
         </div>
-        <!-- /.col-lg-6 -->
-        <div class="col-lg-6">
+        <!-- /.col-md-6 -->
+        <div class="col-md-6">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <i class="fa fa-credit-card fa-fw"></i> Pay by...
@@ -147,7 +147,7 @@ if ($_SESSION['type'] == "end"){
                         <?php }?>
                         <tr class="success">
                             <td>Total</td>
-                            <td><b><i class="fa fa-dollar fa-fw"></i><?php echo $total;?></b></td>
+                            <td><b><?php printf("<i class='fa fa-%s fa-fw'></i>%.2f" ,$sv['currency'], $ticket->quote()); ?></b></td>
                         </tr>
                         <tr>
                             <td>Notes</td>
@@ -163,7 +163,7 @@ if ($_SESSION['type'] == "end"){
             </div>
             <!-- /.panel -->
         </div>
-        <!-- /.col-lg-5 -->
+        <!-- /.col-md-5 -->
     </div>
     <!-- /.row -->
 </div>

@@ -41,7 +41,7 @@ class Mats_Used {
             $this->setMaterial($row['m_id']);
             $this->setUnit_used($row['unit_used']);
             $this->setMu_date($row['mu_date']);
-            $this->setStatus($row['status_id']);
+            $this->setStatus_id($row['status_id']);
             $this->setStaff($row['staff_id']);
             $this->setMu_notesDB($row['mu_notes']);
         }}
@@ -62,14 +62,14 @@ class Mats_Used {
         return $muArray;
     }
     
+    
     public function end($status_id, $staff){
         global $mysqli;
         
-        /* //Deny if there is a cost associated with the materials
+        //Deny if there is a cost associated with the materials
         if($this->getMaterial()->getPrice() > 0.0){
             return "This material has a cost associated with it.";
         }
-        */
         
         if ($mysqli->query("
             UPDATE `mats_used`
@@ -124,35 +124,6 @@ class Mats_Used {
         }
     }
     
-    public static function insert_Mats($trans_id, $m_id, $status_id, $staff){
-        global $mysqli;
-        global $sv;
-        
-        //Deny if user is not staff
-        if($staff->getRoleID() < $sv['LvlOfStaff']){
-            return "Must be staff in order to update";
-        }
-        
-        //Validate input variables
-        if (!Transactions::regexTrans($trans_id)) return false;
-        if (!Materials::regexID($m_id)) return false;
-        if (!Status::regexID($status_id)) return false;
-        
-        //If all is good in the hood lets make an entry
-        if($result = $mysqli->query("
-            INSERT INTO mats_used
-                (`trans_id`,`m_id`,`status_id`, `staff_id`, `mu_date`) 
-            VALUES
-                ('$trans_id', '$m_id', '$status_id', '".$staff->getOperator()."', CURRENT_TIMESTAMP);
-        ")){
-            return $mysqli->insert_id;
-        } else {
-            //echo "Error in stating materials used";
-            echo $mysqli->error;
-            return false;
-        }
-    }
-    
     //When recieving materials into inventory
     public static function insert_Inventory($m_id, $inv_rec, $status_id, $staff_id){
         global $mysqli;
@@ -164,84 +135,6 @@ class Mats_Used {
             return true;
         //echo "Invalid Amount Used - $unit_used";
         return false;
-    }
-    
-    //Use this method for writing updates to the DB for the object
-    public function updateUsed($staff){
-        global $mysqli;
-        global $sv;
-        
-        //Deny if user is not staff
-        if($staff->getRoleID() < $sv['LvlOfStaff']){
-            return "Must be staff in order to update";
-        }
-    
-        //Combine $header & $mu_notes
-        if ($this->header == "" || $this->status->getStatus_id() == 12 || $this->status->getStatus_id() == 20) {
-            $notes = $this->mu_notes;
-        } else {
-            $notes = "|".$this->header."|".$this->mu_notes;
-        }
-        $status_id = $this->status->getStatus_id();
-        
-        //invert value
-        $uu = -$this->unit_used;
-        
-        //Update Mat_used
-        if ($stmt = $mysqli->prepare("
-            UPDATE `mats_used`
-            SET `unit_used`= ?, `mu_date` = CURRENT_TIMESTAMP,
-                `status_id`= ?, `staff_id` = ?, `mu_notes` = ?
-            WHERE `mu_id` = ?;
-        ")){
-            $stmt->bind_param("dissi", $uu, $status_id, $staff, $notes, $this->mu_id);
-            if ($stmt->execute() === true ){
-                $row = $stmt->affected_rows;
-                $stmt->close();
-                return $row;
-            } else
-                return "mats_used: updateUsed Error";
-        } else {
-            return "Error in preparing mats_used: updateUsed statement";
-        }
-    }
-    
-    //Use this method for writing attributes to the DB for the object
-    public function writeAttr(){
-        global $mysqli;
-    
-        //Combine $header & $mu_notes
-        if ($this->header == "" || $this->status->getStatus_id() == 12 || $this->status->getStatus_id() == 20) {
-            $notes = $this->mu_notes;
-        } else {
-            $notes = "|".$this->header."|".$this->mu_notes;
-        }
-        $status_id = $this->status->getStatus_id();
-        $operator = $this->staff->getOperator();
-        
-        if (strcmp($this->mu_date, "") == 0)
-            $mu_date = "NULL";
-        else 
-            $mu_date = "$this->mu_date";
-        
-        //Update Mat_used
-        if ($stmt = $mysqli->prepare("
-            UPDATE mats_used
-            SET `unit_used`= ?, `mu_date` = ?,
-                `status_id`= ?, `staff_id`=?, `mu_notes` = ?
-            WHERE mu_id = ?;
-        ")){
-            $stmt->bind_param("dsissi", $this->unit_used, $mu_date, $status_id, $operator, $notes, $this->mu_id);
-            if ($stmt->execute() === true ){
-                $row = $stmt->affected_rows;
-                $stmt->close();
-                return $row;
-            } else {
-                return "mats_used WriteAttr Error - ".$stmt->error;
-            }
-        } else {
-            return "Error in preparing mats_used: WriteAttr statement";
-        }
     }
     
     public function getMu_id() {
@@ -265,7 +158,8 @@ class Mats_Used {
     }
 
     public function getMu_date() {
-        global $sv; //$sv['dateFormat']
+        global $sv; 
+		//Pull format setting from DB's site varibles
         
         return date($sv['dateFormat'],strtotime($this->mu_date));
     }
@@ -306,6 +200,9 @@ class Mats_Used {
     }
 
     public function setMu_notes($mu_notes) {
+		if($this->status->getStatus_id() == 12 || strlen($mu_notes) < 10){
+			return "Please state a reason for marking this print as failed";
+		}
         $this->mu_notes = str_replace("|", "l", $mu_notes);
     }
 
@@ -325,7 +222,7 @@ class Mats_Used {
             $this->mu_notes = $mu_notes;
     }
 
-    public function setStatus($status_id) {
+    public function setStatus_id($status_id) {
         try {
             $this->status = new Status($status_id);
         } catch (Exception $e) {
@@ -347,5 +244,94 @@ class Mats_Used {
 
     public function setTrans_id($trans_id) {
         $this->trans_id = $trans_id;
+    }
+    
+    //Use this method for writing updates to the DB for the object
+    public function updateUsed($staff){
+        global $mysqli;
+        global $sv;
+        
+        //Deny if user is not staff
+        if($staff->getRoleID() < $sv['LvlOfStaff']){
+            return "Must be staff in order to update";
+        }
+		
+        //Combine $header & $mu_notes
+		//Drop header if all is well
+        if ($this->header == "" || $this->status->getStatus_id() >= 20) {
+            $notes = $this->mu_notes;
+        } elseif ($this->status->getStatus_id() == 12 || $this->status->getStatus_id() == 15) {
+			if(strlen($mu->getMu_notes()) < 10){
+				return "Please state a reason for marking this ticket as failed/cancel.";
+			}
+            $notes = "|".$this->header."|".$this->mu_notes;
+        }
+        $status_id = $this->status->getStatus_id();
+        
+		if ($this->Material->getMeasurable() == "Y") {
+			//invert value
+			$uu = -abs($this->unit_used);
+		} else {
+			$uu = "NULL";
+		}
+        
+        //Convert to primiative variable
+        $staff_id = $staff->getOperator();
+        
+        //Update Mat_used
+        if ($stmt = $mysqli->prepare("
+            UPDATE `mats_used`
+            SET `unit_used`= ?, `mu_date` = CURRENT_TIMESTAMP,
+                `status_id`= ?, `staff_id` = ?, `mu_notes` = ?
+            WHERE `mu_id` = ?;
+        ")){
+            $stmt->bind_param("dissi", $uu, $status_id, $staff_id, $notes, $this->mu_id);
+            if ($stmt->execute() === true ){
+                $row = $stmt->affected_rows;
+                $stmt->close();
+                return $row;
+            } else
+                return "mats_used: updateUsed Error";
+        } else {
+            return "Error in preparing mats_used: updateUsed statement";
+        }
+    }
+	
+	//Use this method for writing attributes to the DB for the object
+    public function writeAttr(){
+        global $mysqli;
+    
+        //Combine $header & $mu_notes
+        if ($this->header == "") {
+            $notes = $this->mu_notes;
+        } else {
+            $notes = "|".$this->header."|".$this->mu_notes;
+        }
+        $status_id = $this->status->getStatus_id();
+        $operator = $this->staff->getOperator();
+        
+        if (strcmp($this->mu_date, "") == 0)
+            $mu_date = "NULL";
+        else 
+            $mu_date = "$this->mu_date";
+        
+        //Update Mat_used
+        if ($stmt = $mysqli->prepare("
+            UPDATE mats_used
+            SET `unit_used`= ?, `mu_date` = ?,
+                `status_id`= ?, `staff_id`=?, `mu_notes` = ?
+            WHERE mu_id = ?;
+        ")){
+            $stmt->bind_param("dsissi", $this->unit_used, $mu_date, $status_id, $operator, $notes, $this->mu_id);
+            if ($stmt->execute() === true ){
+                $row = $stmt->affected_rows;
+                $stmt->close();
+                return $row;
+            } else {
+                return "mats_used WriteAttr Error - ".$stmt->error;
+            }
+        } else {
+            return "Error in preparing mats_used: WriteAttr statement";
+        }
     }
 }

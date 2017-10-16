@@ -10,8 +10,14 @@
  * @author Jon Le
  */
  
+//Thermal Reciept Dependancies
+require_once ($_SERVER['DOCUMENT_ROOT'].'/api/php_printer/autoload.php');
+use Mike42\Escpos\Printer;
+use Mike42\Escpos\EscposImage;
+use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
+ 
 class Transactions {
-    public $device;
+    private $device;
     private $duration;
     private $est_time;
     private $purpose;
@@ -55,6 +61,110 @@ class Transactions {
         }
         
     }
+    
+    //Returns {String if error, False if there is a cost, & True if ticket & Mats have been closed}
+    public function end($status_id, $staff){
+        global $mysqli;
+        global $sv;
+        $hasCost = false;
+        $this->setStaff($staff);
+        $this->setStatus_id($status_id);
+        
+        
+        /*
+        if ($this->getStatus()->getStatus_id() == 12) {
+            Check if notes are written to allow close as Failed
+            foreach($this->mats_used as $mu){
+                if(strlen($mu->getMu_notes()) < 10){
+                    return "Please state a reason for marking this print as failed";
+                }
+            }
+            
+            if( $staff->getRoleID() < $sv['LvlOfStaff']){
+                return "You are unable to close this ticket ".$this->getTrans_id();
+            }
+            
+        } elseif ($this->getStatus()->getStatus_id() == 14){
+            // (otherwise) Allow patrons to self close we must check if payment is required
+        } else {
+            //Try to make this more general purpose
+            //This will not work for a null Vinyl or screen print job
+            //Check in end.php if DG.selectMatsFirst == N && count($dm) > 0
+            if(count($this->mats_used) == 0){
+                //Check to see if mats for that machine has an associated cost
+                $device_mats = Materials::getDeviceMats($this->getDevice()->getDg()->getDg_id());
+                foreach($device_mats as $dm){
+                    if($dm["price"] > 0){
+                        //We found what we are looking for, let's move on
+                        //If status_id == 14, then exit as payment might be required
+                        $hasCost = true;
+                        break;
+                    }
+                }
+            }
+        }
+        // Log ending time & update status
+        // of Ticket
+        if (strcmp($this->duration,"") == 0){
+            //Transaction lacks ending time
+            //So...let's give it one
+            $query = "  UPDATE `transactions`
+                        SET `t_end` = CURRENT_TIMESTAMP,
+                            transactions.status_id = '".$this->getStatus()->getStatus_id()."',  transactions.staff_id = '".$staff->getOperator()."',
+                            duration = SEC_TO_TIME (TIMESTAMPDIFF (SECOND, t_start, CURRENT_TIMESTAMP))
+                        WHERE transactions.trans_id = ".$this->getTrans_id();
+        } else {
+            $query = "  UPDATE `transactions`
+                        SET transactions.status_id = '".$this->getStatus()->getStatus_id()."',  transactions.staff_id = '".$staff->getOperator()."'
+                        WHERE transactions.trans_id = ".$this->getTrans_id();
+        }
+        if($result = $mysqli->query($query)){
+            if ($result = $mysqli->query("
+                    SELECT duration
+                    FROM transactions
+                    WHERE transactions.trans_id = ".$this->getTrans_id()
+            )){
+                $row = $result->fetch_assoc();
+                $this->setDuration($row["duration"]);
+                $result->close();
+            } else {
+                return $mysqli->error;
+            }
+        
+        */
+        
+        //If there is a remaining balance, exit
+        //Sets Duration & end time
+        $total = $this->quote();
+        if (abs ($total - 0.001) > .005){
+            debug("Total $total");
+            return false;
+            //return "$".$total;
+        }
+
+        //If device group is storable, use move instead
+        if($this->getDevice()->getDg()->getStorable() == "Y"){
+            debug("storable = Y");
+            return false;
+        }
+
+        if( $staff->getRoleID() < $sv['LvlOfStaff'] && $staff->getOperator() != $this->getUser()->getOperator()){
+            //Complete Status - no costs
+            //$this->setStatus_id(14);
+            return "You are unable to close this ticket ".$this->getTrans_id();
+        }
+        
+        $this->writeAttr();
+        foreach ($this->getMats_used() as $mu){
+            $msg = $mu->end($this->getStatus()->getStatus_id(), $staff);
+            if (is_string($msg)){
+                //method states failure
+                //return "Error Updating Material Used";
+                return $msg;
+            }
+        }
+        return true;
+    }
 	
     public static function insertTrans($operator, $d_id, $est_time, $p_id, $status_id, $staff) {
         global $mysqli;
@@ -73,147 +183,6 @@ class Transactions {
                 ('".$operator->getOperator()."','$d_id',CURRENT_TIMESTAMP,'$status_id','$p_id','$est_time','".$staff->getOperator()."');
         ")){
             return $mysqli->insert_id;
-        } else {
-            return $mysqli->error;
-        }
-    }
-    
-    //Returns {String if error, False if there is a cost, & True if ticket & Mats have been closed}
-    public function end($status_id, $staff){
-        global $mysqli;
-        global $sv;
-        $hasCost = false;
-        $this->setStaff($staff);
-        $this->setStatus_id($status_id);
-        
-        
-        if ($this->getStatus()->getStatus_id() == 12) {
-            //Check if notes are written to allow close as Failed
-            foreach($this->mats_used as $mu){
-                if(strlen($mu->getMu_notes()) < 10){
-                    return "Please state a reason for marking this print as failed";
-                }
-            }
-            
-            if( $staff->getRoleID() < $sv['LvlOfStaff']){
-                return "You are unable to close this ticket ".$this->getTrans_id();
-            }
-            
-        //} elseif ($this->getStatus()->getStatus_id() == 14){
-            // (otherwise) Allow patrons to self close we must check if payment is required
-        } else {
-            //Try to make this more general purpose
-            //This will not work for a null Vinyl or screen print job
-            //Check in end.php if DG.selectMatsFirst == N && count($dm) > 0
-            /*
-            if(count($this->mats_used) == 0){
-                //Check to see if mats for that machine has an associated cost
-                $device_mats = Materials::getDeviceMats($this->getDevice()->getDg()->getDg_id());
-                foreach($device_mats as $dm){
-                    if($dm["price"] > 0){
-                        //We found what we are looking for, let's move on
-                        //If status_id == 14, then exit as payment might be required
-                        $hasCost = true;
-                        break;
-                    }
-                }
-            }
-            */
-            
-            //If there is a remaining balance, exit
-            //Sets Duration & end time
-            $total = $this->quote();
-            if ($total > 0){
-                return false;
-                //return "$".$total;
-            }
-            
-            //If device group is storable, use move instead
-            if($this->getDevice()->getDg()->getStorable() == "Y"){
-                return false;
-            }
-
-            if( $staff->getRoleID() < $sv['LvlOfStaff'] && $staff->getOperator() != $this->getUser()->getOperator()){
-                //Complete Status - no costs
-                //$this->setStatus_id(14);
-                return "You are unable to close this ticket ".$this->getTrans_id();
-            }
-        }
-        
-        // Log ending time & update status
-        // of Ticket
-        if (strcmp($this->duration,"") == 0){
-            //Transaction lacks ending time
-            //So...let's give it one
-            $query = "  UPDATE `transactions`
-                        SET `t_end` = CURRENT_TIMESTAMP,
-                            transactions.status_id = '".$this->getStatus()->getStatus_id()."',  transactions.staff_id = '".$staff->getOperator()."',
-                            duration = SEC_TO_TIME (TIMESTAMPDIFF (SECOND, t_start, CURRENT_TIMESTAMP))
-                        WHERE transactions.trans_id = ".$this->getTrans_id();
-        } else {
-            $query = "  UPDATE `transactions`
-                        SET transactions.status_id = '".$this->getStatus()->getStatus_id()."',  transactions.staff_id = '".$staff->getOperator()."'
-                        WHERE transactions.trans_id = ".$this->getTrans_id();
-        }
-        
-        if($result = $mysqli->query($query)){
-            if ($result = $mysqli->query("
-                    SELECT duration
-                    FROM transactions
-                    WHERE transactions.trans_id = ".$this->getTrans_id()
-            )){
-                $row = $result->fetch_assoc();
-                $this->setDuration($row["duration"]);
-                $result->close();
-            } else {
-                return $mysqli->error;
-            }
-        } else {
-            return $mysqli->error;
-        }
-        
-        foreach ($this->getMats_used() as $mu){
-            $msg = $mu->end($this->getStatus()->getStatus_id(), $staff);
-            if (is_string($msg)){
-                //method states failure
-                //return "Error Updating Material Used";
-                return $msg;
-            }
-        }
-        return true;
-    }
-    
-    //This method is intended to restore a backup copy
-    public function writeAttr(){
-        global $mysqli;
-        
-        if (strcmp($this->t_end, "") == 0)
-            $t_end = "NULL";
-        else 
-            $t_end = "'$this->t_end'";
-        
-        if (strcmp($this->est_time, "") == 0)
-            $est_time = "NULL";
-        else 
-            $est_time = "'$this->est_time'";
-        
-        if (strcmp($this->duration, "") == 0)
-            $duration = "NULL";
-        else 
-            $duration = "'$this->duration'";
-        
-        if($mysqli->query("
-            UPDATE `transactions`
-            SET `d_id` = '".$this->device->getD_id()."', `operator` = '".$this->user->getOperator()."', `est_time` = $est_time,
-                `t_start` = '$this->t_start', `t_end` = $t_end, `duration` = $duration,
-                `status_id` = '".$this->status->getStatus_id()."', `p_id` = '".$this->purpose->getP_id()."', `staff_id` = ".$this->staff->getOperator()."
-            WHERE `trans_id` = '$this->trans_id'
-            LIMIT 1;
-        ")){
-            foreach($this->getMats_used() as $mu){
-                $mu->writeAttr();
-            }
-            return true;
         } else {
             return $mysqli->error;
         }
@@ -276,6 +245,113 @@ class Transactions {
         return $this->trans_id;
     }
     
+    public function move($staff, $user){
+        global $mysqli;
+        $this->setStaff($staff);
+
+        if( $staff->getRoleID() < $sv['LvlOfStaff']){
+            return "You are unable to alter this ticket ".$this->getTrans_id();
+        }
+
+        //Update the materials used for this ticket
+        foreach($this->getMats_used() as $mu){
+            $msg = $mu->updateUsed($staff);
+            if (is_string($msg)){
+                return $msg;
+            } 
+        }
+    }
+	
+	public static function printTicket($trans_id, $est_amount){
+        global $mysqli;
+		global $sv;
+		$est_cost = 0;
+		
+		//Pull Ticket Related Information
+		$ticket = new self($trans_id);
+		
+		// Set up Printer Connection
+		/*
+		$tp_array = explode("|", $sv['thermalPrinter1']);
+		$tpHost = $tp_array[0];
+		$tpPort = $tp_array[1];
+		*/
+		// Hardcoded, please remove later
+		$tpHost = "129.107.37.13";
+		$tpPort = 9100;
+		try {
+			$connector = new NetworkPrintConnector( $tpHost, $tpPort);
+			$printer = new Printer($connector);
+		} catch (Exception $e) {
+			return "Couldn't print to this printer: " . $e -> getMessage() . "\n";
+		}
+		
+		try {
+			// Print Generic Header
+			$img = EscposImage::load($_SERVER['DOCUMENT_ROOT']."/images/fablab2.png", 0);
+			$printer -> setJustification(Printer::JUSTIFY_CENTER);
+			$printer -> graphics($img);
+			$printer -> feed();
+			$printer -> text($ticket->getT_start());
+			$printer -> feed();
+			$printer -> text("Ticket: " . $ticket->getTrans_id());
+			$printer -> feed();
+			//Body
+			$printer -> feed();
+			$printer -> text("Device:   ".$ticket->getDevice()->getDevice_desc());
+			//Print Each Material
+			foreach ($ticket->getMats_used() as $mu) {
+				$printer -> feed();
+				$printer -> text("Material:   ".$mu->getMaterial()->getM_name());
+				
+				$filename = $mu->getHeader();
+				$printer -> feed();
+				if ($mu->getUnit_used() > 0){
+					$printer -> text("Est. Amount:   ".$mu->getUnit_used()." ".$mu->getMaterial()->getUnit());
+					//Calculate Cost
+					$est_cost += $mu->getMaterial()->getPrice() * $mu->getUnit_used();
+				} elseif (isset($est_amount)) {
+					$printer -> text("Est. Amount:   ".$est_amount." ".$mu->getMaterial()->getUnit());
+					//Calculate Cost
+					$est_cost += $mu->getMaterial()->getPrice() * $est_amount;
+				}
+			}
+			$printer -> feed();
+			$printer -> text("Est. Cost:   ");
+			$printer -> text("$ ".number_format($est_cost,2));
+			$printer -> feed();
+			$printer -> text("Est. Duration:   ".$ticket->getEst_time());
+			if ($filename){
+				$printer -> feed();
+				$printer -> text("File:   ".$filename);
+			}
+			$printer -> feed(4);
+			$printer -> text("Address: ______________________");
+			$printer -> feed();
+			
+			$qr = "http://fabapp.uta.edu/look.php?trans_id=".$trans_id;
+			$printer -> qrCode($qr, Printer::QR_ECLEVEL_L, 5, Printer::QR_MODEL_2);
+			//$printer->setBarcodeTextPosition(Printer::BARCODE_TEXT_BELOW);
+			//$printer->barcode( (string)$trans_id, Printer::BARCODE_CODE39);
+			$printer -> feed();
+			
+			$printer -> text("http://fablab.uta.edu/");
+			$printer -> feed();
+			$printer -> text("(817) 272-1785");
+			$printer -> feed(2);
+			$printer -> cut();
+		} catch (Exception $print_error) {
+			return $print_error->getMessage();
+		}
+		
+		try {
+			/* Close printer */
+			$printer -> close();
+		} catch( Exception $e) {
+			echo "printer was not open";
+		}
+	}
+    
     //return the Estimated cost for this ticket, set duration and t_end
     public function quote(){
         global $sv;
@@ -311,7 +387,8 @@ class Transactions {
         $cost += $diff * $this->getDevice()->getBase_price();
         
         //Take Current Cost - (what has already been paid for)
-        return ($cost - $this->totalAC());
+        //Add .0001 to prevent negative rounding errors
+        return ($cost - $this->totalAC() + .001);
     }
 
     public static function regexTime($duration) {
@@ -347,7 +424,6 @@ class Transactions {
     }
 
     public function setDevice($d_id) {
-        $this->d_id = $d_id;
         $this->device = new Devices($d_id);
     }
 
@@ -401,6 +477,42 @@ class Transactions {
             $total += $ac->getAmount();
         }
         return $total;
+    }
+    
+    //Writes all variables to the DB for a given Transaction
+    public function writeAttr(){
+        global $mysqli;
+        
+        if (strcmp($this->t_end, "") == 0)
+            $t_end = "NULL";
+        else 
+            $t_end = "'$this->t_end'";
+        
+        if (strcmp($this->est_time, "") == 0)
+            $est_time = "NULL";
+        else 
+            $est_time = "'$this->est_time'";
+        
+        if (strcmp($this->duration, "") == 0)
+            $duration = "NULL";
+        else 
+            $duration = "'$this->duration'";
+        
+        if($mysqli->query("
+            UPDATE `transactions`
+            SET `d_id` = '".$this->device->getD_id()."', `operator` = '".$this->user->getOperator()."', `est_time` = $est_time,
+                `t_start` = '$this->t_start', `t_end` = $t_end, `duration` = $duration,
+                `status_id` = '".$this->status->getStatus_id()."', `p_id` = '".$this->purpose->getP_id()."', `staff_id` = ".$this->staff->getOperator()."
+            WHERE `trans_id` = '$this->trans_id'
+            LIMIT 1;
+        ")){
+            foreach($this->getMats_used() as $mu){
+                $mu->writeAttr();
+            }
+            return true;
+        } else {
+            return $mysqli->error;
+        }
     }
 }
 ?>
