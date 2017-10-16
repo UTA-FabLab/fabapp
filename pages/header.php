@@ -30,7 +30,7 @@ date_default_timezone_set($sv['timezone']);
 session_start();
 if( isset($_SESSION['staff']) ){
     $staff = $_SESSION['staff'];
-    $_SESSION['loc'] = $_SERVER['REQUEST_URI'];
+    $staff->setLoc($_SERVER['REQUEST_URI']);
     if ($_SESSION["timeOut"] < time()) {
         header("Location:/logout.php");
     } else {
@@ -57,41 +57,43 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 //set the timeOut = current + limit of login
                 $_SESSION["timeOut"] = (intval(time()) + $staff->getTimeLimit());
                 $staff->setLoc($_SERVER['REQUEST_URI']);
-                    $_SESSION["staff"] = $staff;
-                    header("Location:".$staff->getLoc());
+                $_SESSION["staff"] = $staff;
+                header("Location:".$staff->getLoc());
                 if (!headers_sent()){
                     echo "<script>window.location.href='/index.php';</script>";
                 }
                 exit();
             } else {
-				echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','Invalid user name and/or password!', false)}</script>";
-			}
+                echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','Invalid user name and/or password!', false)}</script>";
+            }
         } else {
-            	echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','No Password!', false)}</script>";
+            echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','No Password!', false)}</script>";
         }
     } elseif( isset($_POST['searchBtn']) ){
-        if(isset($_POST['searchField'])){
-            $searchField = $_POST['searchField'];
-            if(isset($_POST['searchType'])){
-                if(strcmp($_POST['searchType'], "trans") == 0){
-                    $trans_id = $_POST['searchField'];
+        if(filter_input(INPUT_POST, 'searchField')){
+            $searchField = filter_input(INPUT_POST, 'searchField');
+            if(filter_input(INPUT_POST, 'searchType')){
+                $searchType = filter_input(INPUT_POST, 'searchType');
+                if(strcmp($searchType, "s_trans") == 0){
+                    $trans_id = $searchField;
                     header("location:/pages/lookup.php?trans_id=$trans_id");
-                } elseif (strcmp($_POST['searchType'], "operator") == 0){
-                    $operator = $_POST['searchField'];
+                } elseif (strcmp($searchType, "s_operator") == 0){
+                    $operator = $searchField;
                     header("location:/pages/lookup.php?operator=$operator");
                 } else {
-                    echo "<script>alert('Illegal Search Condition');</script>";
+                    echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','Illegal Search Condition', false)}</script>";
                 }
             } else {
-                echo "<script>alert('Invalid Search Condition');</script>";
+                echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','Illegal Search Condition', false)}</script>";
             }
+        } else {
+            echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','Please enter a number.', false)}</script>";
         }
         
     } elseif( filter_input(INPUT_POST, 'pickBtn') !== null ){
-        print_r($_POST['pickBtn']);
         if( filter_input(INPUT_POST, 'pickField') !== null){
             if(!Users::regexUser(filter_input(INPUT_POST, 'pickField'))){
-                echo "<script>alert('Invalid ID #');</script>";
+                echo "<script>alert('Invalid ID # php');</script>";
             } else {
                 $operator = filter_input(INPUT_POST, 'pickField');
                 header("location:/pages/pickup.php?operator=$operator");
@@ -99,6 +101,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
     }
 }
+//Display a Successful message from a previous page
+if ($_SESSION['success_msg']){
+    echo "<script>window.onload = function(){goModal('Success',\"$_SESSION[success_msg]\", true)}</script>";
+    $_SESSION['success_msg'] = "";
+} 
 ?>
 </head>
 <body>
@@ -185,7 +192,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             <form name="pickForm" method="POST" action="" autocomplete="off" onsubmit="return validateNum('pickForm')">
                                 <li class="sidebar-search">
                                     <div class="input-group custom-search-form">
-                                        <input type="text" name="pickField" class="form-control" placeholder="Enter ID #" maxlength="10" size="10">
+                                        <input type="text" name="pickField" id="pickField" class="form-control" placeholder="Enter ID #" maxlength="10" size="10">
                                         <span class="input-group-btn">
                                         <button class="btn btn-default" type="submit" name="pickBtn">
                                             <i class="fa fa-search"></i>
@@ -202,12 +209,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             <ul class="nav nav-second-level">
                             <form name="searchForm" method="POST" action="" autocomplete="off"  onsubmit="return validateNum('searchForm')"> 
                                 <li class="sidebar-radio">
-                                    <input type="radio" name="searchType" value="trans" id="trans" checked onchange="searchF()" onclick="searchF()"><label for="trans">Ticket</label>
-                                    <input type="radio" name="searchType" value="operator" id="operator" onchange="searchF()" onclick="searchF()"><label for="operator">ID #</label>
+                                    <input type="radio" name="searchType" value="s_trans" id="s_trans" checked onchange="searchF()" onclick="searchF()"><label for="s_trans">Ticket</label>
+                                    <input type="radio" name="searchType" value="s_operator" id="s_operator" onchange="searchF()" onclick="searchF()"><label for="s_operator">ID #</label>
                                 </li>
                                 <li class="sidebar-search">
                                     <div class="input-group custom-search-form">
-                                        <input type="number" name="searchField" class="form-control" placeholder="Search..." name="searchField" onclick="searchF()">
+                                        <input type="number" name="searchField" id="searchField" class="form-control" placeholder="Search..." name="searchField" onclick="searchF()">
                                         <span class="input-group-btn">
                                         <button class="btn btn-default" type="submit" name="searchBtn">
                                             <i class="fa fa-search"></i>
@@ -295,6 +302,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                                 <li>
                                     <a herf="#"><i class="fa fa-users fa-fw"></i> Users<span class="fa arrow"></span></a>
                                     <ul class="nav nav-third-level">
+                                        <li>
+                                            <a href="/pages/addrfid.php"><i class="fa fa-feed fa-fw"></i> Add RFID</a>
+                                        </li>
                                         <li>
                                             <a href="#"><i class="fa fa-user-circle-o fa-fw"></i> Manage Users</a>
                                         </li>

@@ -12,7 +12,7 @@
  */
 class Acct_charge {
     private $ac_id;
-    private $a_id;
+    private $account;
     private $trans_id;
     private $ac_date;
     private $user;
@@ -37,7 +37,7 @@ class Acct_charge {
             $row = $result->fetch_assoc();
         
             $this->setAc_id($row['ac_id']);
-            $this->setA_id($row['a_id']);
+            $this->setAccount($row['a_id']);
             $this->setTrans_id($row['trans_id']);
             $this->setAc_date($row['ac_date']);
             $this->setOperator($row['operator']);
@@ -131,8 +131,8 @@ class Acct_charge {
         return $this->ac_id;
     }
 
-    public function getA_id() {
-        return $this->a_id;
+    public function getAccount() {
+        return $this->account;
     }
 
     public function getTrans_id() {
@@ -173,8 +173,8 @@ class Acct_charge {
         $this->ac_id = $ac_id;
     }
 
-    public function setA_id($a_id) {
-        $this->a_id = $a_id;
+    public function setAccount($a_id) {
+        $this->account = new Accounts($a_id);
     }
 
     public function setTrans_id($trans_id) {

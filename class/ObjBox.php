@@ -64,11 +64,16 @@ class ObjBox {
         }
     }
 
-    public static function insert_Obj($trans_id, $staff_id){
+    public static function insert_Obj($trans_id, $staff){
         global $mysqli;
+        global $sv;
+        
+        //Deny if user is not staff
+        if($staff->getRoleID() < $sv['LvlOfStaff']){
+            return "Must be staff in order to update";
+        }
         
         if (!Transactions::regexTrans($trans_id)) return "Invalid Ticket #";
-        if (!Users::regexUser($staff_id)) return "Invalid Staff ID";
         
         //Check if Object already has a home
 	if ($result = $mysqli->query("
@@ -83,7 +88,7 @@ class ObjBox {
             $row = $result->fetch_assoc();
             if ( isset($row["address"]) ){
                 $address = $row["address"];
-                return "Ticket - $trans_id already been given an storage address, $address";
+                return "Ticket - $trans_id already been given an storage address. $address";
             } else 
                 $t_end = $row["t_end"];
         } else { 
@@ -102,7 +107,7 @@ class ObjBox {
             INSERT INTO objbox 
                 (`trans_id`,`o_start`,`address`,`staff_id`) 
             VALUES
-                ('$trans_id',CURRENT_TIMESTAMP,'$address','$staff_id')
+                ('$trans_id',CURRENT_TIMESTAMP,'$address','".$staff->getOperator()."')
         ")){
             return $mysqli->insert_id;
         } else {

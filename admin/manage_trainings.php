@@ -507,9 +507,9 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 
     //AJAX call to build a table of training modules for the specified device
     function selectDevice(element){
-        if (element.id == 'd_id'){
+        if (element.id === 'd_id'){
             document.getElementById("dg_id").selectedIndex = 0;
-        } else if (element.id == 'dg_id') {
+        } else if (element.id === 'dg_id') {
             document.getElementById("d_id").selectedIndex = 0;
         }
 
@@ -521,7 +521,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
             xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
         }
         xmlhttp.onreadystatechange = function() {
-            if (this.readyState == 4 && this.status == 200) {
+            if (this.readyState === 4 && this.status === 200) {
                 document.getElementById("tm").innerHTML = this.responseText;
             }
         };

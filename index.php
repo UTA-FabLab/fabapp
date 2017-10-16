@@ -80,66 +80,65 @@ echo "</div>";
                             ORDER BY dg_parent DESC, dg_id, `device_desc`
                         ")){
                             while ( $row = $result->fetch_assoc() ){ ?>
-                            <tr class="tablerow">
-                                <?php if($row["t_start"]) { ?>
-                                    <td align="right"><?php echo ("<a href=\"pages/lookup.php?trans_id=$row[trans_id]\">$row[trans_id]</a>"); ?></td>
-                                    <td>
-                                        <?php if($row['url'] && (preg_match($sv['ip_range_1'],getenv('REMOTE_ADDR')) || preg_match($sv['ip_range_2'],getenv('REMOTE_ADDR'))) ){
-                                                Devices::printDot($staff, $row['d_id'], $row["device_desc"]);
-                                                echo ("<a href=\"http://".$row["url"]."\">".$row["device_desc"]."</a>");
-                                            ?>
-                                        <?php } else {
-                                            Devices::printDot($staff, $row['d_id']);
-                                            echo $row['device_desc'];
-                                        } ?>
-                                    </td>
-                                    <?php echo("<td>".date( 'M d g:i a',strtotime($row["t_start"]) )."</td>" );
-                                    if( $row["status_id"] == 11) {
-                                        $status = new Status($row["status_id"]);
-                                        echo("<td align='center'>".$status->getMsg()."</td>");
-                                    } elseif (isset($row["est_time"])) {
-                                        echo("<td align='center'><div id=\"est".$row["trans_id"]."\">".$row["est_time"]." </div></td>" );
-                                        $str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $row["est_time"]);
-                                        sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
-                                        $time_seconds = $hours * 3600 + $minutes * 60 + $seconds;
-                                        $time_seconds = $time_seconds - (time() - strtotime($row["t_start"]) ) + $sv["grace_period"];
-                                        array_push($device_array, array($row["trans_id"], $time_seconds, $row["dg_parent"]));
-                                    } else 
-                                        echo("<td align=\"center\">-</td>"); 
-                                    if ($staff) {
-                                        if ($staff->getRoleID() >= $sv['LvlOfStaff'] || $staff->getOperator() == $row["operator"]) { ?>
+                                <tr class="tablerow">
+                                    <?php if($row["t_start"]) {
+                                        $ticket = new Transactions($row['trans_id']); ?>
+                                        <td align="right"><?php echo ("<a href=\"pages/lookup.php?trans_id=$row[trans_id]\">$row[trans_id]</a>"); ?></td>
+                                        <td>
+                                            <?php if($ticket->getDevice()->getUrl() && (preg_match($sv['ip_range_1'],getenv('REMOTE_ADDR')) || preg_match($sv['ip_range_2'],getenv('REMOTE_ADDR'))) ){
+                                                    Devices::printDot($staff, $row['d_id'], $ticket->getDevice()->getD_id());
+                                                    //echo ("<a href=\"http://".$row["url"]."\">".$row["device_desc"]."</a>");
+                                                    echo ("<a href=\"http://".$ticket->getDevice()->getUrl()."\">".$ticket->getDevice()->getDevice_desc()."</a>");
+                                                ?>
+                                            <?php } else {
+                                                Devices::printDot($staff, $ticket->getDevice()->getD_id());
+                                                echo $ticket->getDevice()->getDevice_desc();
+                                            } ?>
+                                        </td>
+                                        <?php echo("<td>".date( 'M d g:i a',strtotime($row["t_start"]) )."</td>" );
+                                        if( $row["status_id"] == 11) {
+                                            echo("<td align='center'>".$ticket->getStatus()->getMsg()."</td>");
+                                        } elseif (isset($row["est_time"])) {
+                                            echo("<td align='center'><div id=\"est".$row["trans_id"]."\">".$row["est_time"]." </div></td>" );
+                                            $str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $row["est_time"]);
+                                            sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
+                                            $time_seconds = $hours * 3600 + $minutes * 60 + $seconds- (time() - strtotime($row["t_start"]) ) + $sv["grace_period"];
+                                            array_push($device_array, array($row["trans_id"], $time_seconds, $row["dg_parent"]));
+                                        } else 
+                                            echo("<td align=\"center\">-</td>"); 
+                                        if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'] || $staff->getOperator() == $ticket->getUser()->getOperator())) { ?>
                                             <td align="center">
                                                 <button onclick="endTicket(<?php echo $row["trans_id"].",'".$row["device_desc"]."'"; ?>)">End Ticket</button>
                                             </td>
-                                        <?php } else
-                                            echo("<td align='center'>-</td>");
-                                    }
-                                } else { ?>
-                                    <td align="right"></td>
-                                    <td>
-                                        <?php if($row['url'] && (preg_match($sv['ip_range_1'],getenv('REMOTE_ADDR')) || preg_match($sv['ip_range_2'],getenv('REMOTE_ADDR'))) ){ 
-                                            Devices::printDot($staff, $row['d_id']);
-                                            echo ("<a href=\"http://".$row["url"]."\">".$row["device_desc"]."</a>");
-                                        } else {
-                                            Devices::printDot($staff, $row['d_id']);
-                                            echo $row['device_desc'];
-                                        } ?>
-                                    </td>
-                                    <td align="center"> - </td>
-                                    <td align="center"> - </td>
-                                    <?php if($row["url"] && $staff){
-                                        if ($staff->getRoleID() > 6){?>
-                                            <td  align="center"><?php echo ("<a href=\"http://".$row["url"]."\">New Ticket</a>"); ?></td>
-                                        <?php } else
-                                            echo("<td align=\"center\">-</td>");
-                                    } elseif($staff) {
-                                        if ($staff->getRoleID() > 6){?>
-                                            <td align="center"><div id="est"><a href="\pages\create.php?<?php echo("d_id=".$row["d_id"])?>">New Ticket</a></div></td>
-                                        <?php } else
-                                            echo("<td align=\"center\">-</td>");
-                                    }
-                                } ?>
-                            </tr>
+                                        <?php } elseif ($staff) {
+                                            echo("<td align='center'></td>");
+                                        }
+                                    } else { ?>
+                                        <td align="right"></td>
+                                        <td>
+                                            <?php if($row['url'] && (preg_match($sv['ip_range_1'],getenv('REMOTE_ADDR')) || preg_match($sv['ip_range_2'],getenv('REMOTE_ADDR'))) ){ 
+                                                Devices::printDot($staff, $row['d_id']);
+                                                echo ("<a href=\"http://".$row["url"]."\">".$row["device_desc"]."</a>");
+                                            } else {
+                                                Devices::printDot($staff, $row['d_id']);
+                                                echo $row['device_desc'];
+                                            } ?>
+                                        </td>
+                                        <td align="center"> - </td>
+                                        <td align="center"> - </td>
+                                        <?php if($row["url"] && $staff){
+                                            if ($staff->getRoleID() > 6){?>
+                                                <td  align="center"><?php echo ("<a href=\"http://".$row["url"]."\">New Ticket</a>"); ?></td>
+                                            <?php } else
+                                                echo("<td align=\"center\">-</td>");
+                                        } elseif($staff) {
+                                            if ($staff->getRoleID() > 6){?>
+                                                <td align="center"><div id="est"><a href="\pages\create.php?<?php echo("d_id=".$row["d_id"])?>">New Ticket</a></div></td>
+                                            <?php } else
+                                                echo("<td align=\"center\">-</td>");
+                                        }
+                                    } ?>
+                                </tr>
                             <?php }
                         } ?>
                     </table>

@@ -5,13 +5,15 @@
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 $errorMsg = "";
-$mats_used = null;
+
+if (!isset($_SESSION['type'])){
+    $_SESSION['type'] = "";
+}
 
 if (isset($_GET["trans_id"])){
     if (Transactions::regexTrans($_GET['trans_id'])){
         $trans_id = $_GET['trans_id'];
         $ticket = new Transactions($trans_id);
-        $mats_used = Mats_Used::byTrans($trans_id);
     } else {
         $errorMsg = "Invalid Ticket Number";
     }
@@ -30,8 +32,6 @@ if (isset($_GET["trans_id"])){
             if( $result->num_rows > 0){
                 $row = $result->fetch_assoc();
                 $ticket = new Transactions($row['trans_id']);
-                //Fetch All Materials Related to transaction
-                $mats_used = Mats_Used::byTrans($ticket->getTrans_id());
             } else {
                 $errorMsg = "No Transactions Found for ID# $operator";
             }
@@ -61,7 +61,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['unfail'])) {
     $t_backup->writeAttr();
     $_SESSION['ticket'] = null;
 
-    $mats_used_backup = unserialize($_SESSION['mats_used']);
+	//This may be called in the transaction
+    $mats_used_backup = $t_backup->getMats_used();
     foreach( $mats_used_backup as $mub){
         $msg = $mub->writeAttr();
     }
@@ -102,7 +103,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['unfail'])) {
                     <table class ="table table-bordered table-striped">
                         <tr>
                             <td>Device</td>
-                            <td><?php echo $ticket->device->getDevice_desc(); ?></td>
+                            <td><?php echo $ticket->getDevice()->getDevice_desc(); ?></td>
                         </tr>
                         <tr>
                             <td>Time</td>
@@ -140,7 +141,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['unfail'])) {
                 <!-- /.panel-body -->
             </div>
             <!-- /.panel -->
-            <?php foreach ($mats_used as $mu) {?>
+            <?php foreach ($ticket->getMats_used() as $mu) {?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <i class="fa fa-life-bouy fa-lg"></i> Material
@@ -220,7 +221,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['unfail'])) {
                                 </tr>
                                 <tr>
                                     <td>Address</td>
-                                    <td><input type="submit" value="<?php echo $objbox->getAddress(); ?>"></td>
+                                    <td><input type="submit" value="<?php echo $objbox->getAddress(); ?>" class="btn btn-success"></td>
                                 </tr>
                                 <tr>
                                     <td>Staff ID</td>
@@ -271,7 +272,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['unfail'])) {
                                         echo "<td>-</td>";
                                     }
                                     if ( ($ticket->getUser()->getOperator() == $staff->getOperator()) || $staff->getRoleID() >= $sv['LvlOfStaff'] ){
-                                        echo "<td><i class='fa fa-".$sv['currency']." fa-fw'></i>".sprintf("%.2f", $ac->getAmount())."</td>";
+                                        echo "<td><i class='fa fa-".$sv['currency']." fa-fw' title='".$ac->getAccount()->getName()."'></i>".number_format($ac->getAmount(), 2)."</td>";
                                     }
                                     echo "<td>".$ac->getAc_date()."</td>";
                                     echo "<td><i class='fa fa-".$ac->getStaff()->getIcon()." fa-lg' title='".$ac->getStaff()->getOperator()."'></i>";

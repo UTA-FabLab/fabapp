@@ -28,7 +28,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/class/all_classes.php');
 include_once 'gatekeeper.php';
 $json_out = array();
 
-/*
+
 //Test Data
 $input_data["type"] = "print";
 $input_data["uta_id"] = "1000000000";
@@ -38,20 +38,20 @@ $input_data["est_filament_used"] = "1";
 $input_data["est_build_time"] = "01:01:00";
 $input_data["filename"] = "Jon Le's Test";
 $input_data["p_id"] = "3";
-*/
 
+/*
 //Compare Header API Key with site variable's API Key
 $headers = apache_request_headers();
 if(isset($headers['Authorization'])){
-    if ($sv['api_key'] != $headers['Authorization'] ){
-        $json_out["authorized"] = "N";
-        $json_out["ERROR"] = "Unable to Authenticate";
-        ErrorExit(2);
-    }
+	if ($sv['api_key'] != $headers['Authorization'] ){
+		$json_out["authorized"] = "N";
+		$json_out["ERROR"] = "Unable to Authenticate";
+		ErrorExit(2);
+	}
 } else {
-    $json_out["authorized"] = "N";
-    $json_out["ERROR"] = "Header Not Set";
-    ErrorExit(2);
+	$json_out["authorized"] = "N";
+	$json_out["ERROR"] = "Header Not Set";
+	ErrorExit(2);
 }
 
 
@@ -61,7 +61,7 @@ if (! ($input_data)) {
     $json_out["ERROR"] = "Unable to decode JSON message - check syntax";
     ErrorExit(1);
 }
-
+*/
 
 // Extract message type from incoming JSON
 $type = $input_data["type"];
@@ -103,8 +103,6 @@ function PrintTransaction ($operator, $device_id) {
     global $json_out;
     global $mysqli;
     global $input_data;
-
-    $print_json = array();
 	$json_out["authorized"] = "N";
         
     foreach (gatekeeper($operator, $device_id) as $key => $value){
@@ -116,17 +114,13 @@ function PrintTransaction ($operator, $device_id) {
     }
     $auth_status = $json_out["status_id"];
 
-    $print_json["type"] = "start_ticket";
-
     if ($device_name_result = mysqli_query($mysqli, "
         SELECT  `device_desc`, `d_id`
         FROM  `devices` 
         WHERE  `device_id` =  '$device_id';
     ")){
         $row = $device_name_result->fetch_array();
-
         if (!is_null($row)){
-            $print_json["device_name"] = $row["device_desc"];
             $d_id = $row["d_id"];
         }
         else{
@@ -154,9 +148,6 @@ function PrintTransaction ($operator, $device_id) {
 		
         if (!is_null($row["m_name"])){
             $json_out["m_name"] = $print_json["m_name"] = $row["m_name"];
-            $print_json["est_cost"] = round($input_data["est_filament_used"]) * $row["price"];
-            $filament_unit = $row["unit"];
-            $print_json["est_material"] = round($input_data["est_filament_used"])." ".$filament_unit;
         } else {
             $json_out["m_name"] = "Not found";
         }
@@ -165,12 +156,10 @@ function PrintTransaction ($operator, $device_id) {
 
     if ($input_data["est_build_time"]){
         $est_build_time = $input_data["est_build_time"];
-        $print_json["est_duration"] = $print_json["est_build_time"] = $est_build_time;
     }
 
     if ($input_data["filename"]){
         $filename = "|$input_data[filename]|";
-        $print_json["filename"] = $input_data["filename"];
     }
 
     if ($input_data["p_id"]){
@@ -207,9 +196,10 @@ function PrintTransaction ($operator, $device_id) {
         return;
     }
 	
-	
-    $json_out["PRINT_JSON"] = $print_json;
-    $json_out["PRINT_RESPONSE"] = PrintReceipt($print_json);
+	$msg = Transactions::printTicket($trans_id, $input_data["est_filament_used"]);
+	if (is_string($msg)){
+		$json_out["ERROR"] = $msg;
+	}
 }
 
 
@@ -235,35 +225,6 @@ function update_end_time( $dev_id ){
         WHERE `d_id` = '$dev_id' AND t_end is NULL
         LIMIT 1
     ");
-}
-
-
-////////////////////////////////////////////////////////////////
-//
-//  PrintReceipt
-//  Prints a receipt given a JSON input
-
-function PrintReceipt ($print_json) {
-	//global $_SERVER;
-	
-    //$url = $_SERVER['DOCUMENT_ROOT']."/api/php_printer/receipt.php";
-	$url = "https://fabapp.uta.edu/api/php_printer/receipt.php";
-    $content = json_encode($print_json);
-	//echo $url."\n";
-	
-    $options = array(
-      'http' => array(
-            'method'  => 'POST',
-            'content' => $content,
-            'header'=>  "Content-Type: application/json\r\n" .
-			"Accept: application/json\r\n"
-            )
-    );
-
-    $context  = stream_context_create( $options );
-    $result = file_get_contents( $url, false, $context );
-    $response = json_decode( $result );
-    return $response;
 }
 
 

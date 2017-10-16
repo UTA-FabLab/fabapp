@@ -61,6 +61,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($errorMsg == "")) {
             
             if ($backup->writeAttr() === true){
                 $_SESSION['ticket'] = null;
+                $_SESSION['prev_msg'] = "Ticket #".$backup->getTrans_id()." has been restored.";
                 header("Location:/index.php");
             } else {
                 $errorMsg = "Unable to Un-End Ticket";
@@ -77,6 +78,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($errorMsg == "")) {
         $status_id = 0;
         
         foreach ($ticket->getMats_used() as $mu){
+            //mu_id is used to find the unique html fields
             $mu_id = $mu->getMu_id();
             
             $mu->setMu_notes($_POST["mu_notes_$mu_id"]);
@@ -96,16 +98,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($errorMsg == "")) {
                 //If mats used are set to both storage and pickup
                 // Then Deny
                 if($mu->getStatus()->getStatus_id() == 14)//Storage OR Complete
-                    $storage = true;
+                    {$storage = true;}
                 if($mu->getStatus()->getStatus_id() == 15)//Set to cancel
-                    $cancel = true;
+                    {$cancel = true;}
                 if($mu->getStatus()->getStatus_id() == 20)//pick & pay
-                    $pickup = true;
+                    {$pickup = true;}
+
                 //Write the highest status to the Ticket
                 if ($status_id < $mu->getStatus()->getStatus_id())
-                    $status_id = $mu->getStatus()->getStatus_id();
+                    {$status_id = $mu->getStatus()->getStatus_id();}
                 
-            } elseif ($mu->getStatus()->getStatus_id() == 20) {
+            } elseif ($mu->getStatus()->getStatus_id() >= 20) {
                 //Determine the destination for a pre-paid print
                 if (!Status::regexID($_POST["status_$mu_id"]))
                     {$errorMsg = "Invalid Status :".$_POST["status_$mu_id"];}
@@ -118,7 +121,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($errorMsg == "")) {
                     {$storage = true;}
                 if($mu_s == 15)//set to cancel
                     {$cancel = true;}
-                if($mu_s == 20)//pick
+                if($mu_s == 20)//Pick UP
                     {$pickup = true;}
                 //Write the highest status to the Ticket
                 if ($status_id < $mu_s)
@@ -132,17 +135,45 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($errorMsg == "")) {
             $errorMsg = "You must decide either to Pickup or Move to Storage";
         } elseif ($cancel && ($pickup && $storage)) {
             $errorMsg = "To cancel ticket, all must be set to cancel.";
-        } elseif ($errorMsg == "") {
-            if($status_id == 20){
+        } elseif ($errorMsg == "") { //No Errors Thus Far
+            //Mark Transaction w/ Status ID
+            $ticket->setStaff($staff);
+            $ticket->setStatus_id($status_id);
+            $ticket->move($staff, $user);
+    
+            if ($status_id == 12){
+                //Mark Transaction w/ Failed Status
+                $_SESSION['type'] = "failed";
+                header('Location:/pages/lookup.php?trans_id='.$ticket->getTrans_id());
+                
+            } elseif ($status_id == 14 && $ticket->getDevice()->getDG()->getStorable() == "Y") {
+                $user = "";
+                $ticket->move($staff, $user);
+                $_SESSION['type'] = "end";
+                header('Location:/pages/lookup.php?trans_id='.$ticket->getTrans_id());
+                
+            } elseif ($status_id == 15 || $status_id == 20){
+                //Cancelled or Pay Now
+                //Assess if there needs to be a charge
+
+                //send page to the payment
+                $_SESSION['type'] = "end";
                 $user = Users::withID(filter_input(INPUT_POST, "pickID"));
+                
+                //check if user is authorized to pickup print
+                $msg = AuthRecipients::validatePickUp($ticket, $user);
+                if (is_string($msg)) {
+                    $errorMsg = $msg;
+                    return;
+                } elseif ($msg === true) {
+                    $_SESSION['pickupID'] = $user;
+                }
+            
                 if(is_string($user)){
                     $errorMsg = $user;
                 } else {
-                    move($status_id, $ticket, $staff, $user);
+                    move( $ticket, $user);
                 }
-            } elseif($status_id == 14 && $ticket->getDevice()->getDG()->getStorable() == "Y") {
-                $user = "";
-                move($status_id, $ticket, $staff, $user);
             }
         }
     }
@@ -154,17 +185,11 @@ if ($errorMsg != ""){
     echo "<script type='text/javascript'> window.onload = function(){goModal('ERROR',\"$errorMsg\", false)}</script>";
 }
 
-function move($status_id, $ticket, $staff, $user){
-    global $errorMsg;
+function move($user){
     
-    if ($status_id == 12){ //Failed
-        $_SESSION['type'] = "failed";
-        //Mark Transaction w/ Failed Status
-        $msg = $ticket->end($status_id, $staff);
-        if (is_string($msg)){
-            $errorMsg = $msg;
-            return;
-        }
+    if ($ticket->getStatus()->getStatus_id() == 12){ //Failed
+        
+        //check string for length
         
         //Write Failed Ticket to the DB
         foreach($ticket->getMats_used() as $mu){
@@ -174,21 +199,18 @@ function move($status_id, $ticket, $staff, $user){
                 return;
             }
         }
-        header('Location:/pages/lookup.php?trans_id='.$ticket->getTrans_id());
         
     } elseif ($status_id == 14){
         // Status was set to complete, Insert into ObjBox
         // Send to look up page to view Address
-        //Mark Transaction w/ Status ID
-        $msg = $ticket->end($staff_id);
-        if (is_string($msg)){
-            $errorMsg = $msg;
-            return;
+        $errorMsg = $ticket->writeAttr();
+        if (is_string($errorMsg)){
+            return $errorMsg;
         }
         
         //Write Materials Used to the DB
-        foreach($mats_used as $mu){
-            $msg = $mu->updateUsed($staff_id);
+        foreach($ticket->getMats_used() as $mu){
+            $msg = $mu->updateUsed($staff);
             if (is_string($msg)){
                 $errorMsg = $msg;
                 return;
@@ -196,26 +218,15 @@ function move($status_id, $ticket, $staff, $user){
         }
 
         //Make a home for an Object to be placed into storage
-        $msg = ObjBox::insert_Obj($ticket->getTrans_id(), $staff_id);
+        $msg = ObjBox::insert_Obj($ticket->getTrans_id(), $staff);
         if (is_string($msg)){
-            $errorMsg = $msg;
-            return; // exit because ObjBox has Error
+            return $msg; // exit because ObjBox has Error
         }
-        $_SESSION['type'] = "end";
-        header('Location:/pages/lookup.php?trans_id='.$ticket->getTrans_id());
 		
-    } elseif ($status_id == 15) { //Cancelled Print assess if there needs to be a charge
-        $_SESSION['type'] = "end";
-        //Pass Object to be updated upon Successful payment
-        $ticket->setStatus($status_id);
-        $_SESSION['ticket'] = serialize($ticket);
-        $_SESSION['mats_used'] = serialize($mats_used);
-        header('Location:/pages/checkout.php');
-        
-    } elseif ($status_id == 20 ) { // Pick Up now & charge to accts
+    } elseif ($status_id == 15 || $status_id == 20) {
+        //Cancelled or Pay Now
+
         //send page to the payment
-        $_SESSION['type'] = "end";
-        echo "Pick Up now & charge to accts";
         
         //check if user is authorized to pickup print
         $msg = AuthRecipients::validatePickUp($ticket, $user);
@@ -223,13 +234,11 @@ function move($status_id, $ticket, $staff, $user){
             $errorMsg = $msg;
             return;
         } elseif ($msg === true) {
-            $_SESSION['pickupID'] = $pickupID;
+            $_SESSION['pickupID'] = $user;
         }
         
         //Pass Object to be updated upon Successful payment
-        $ticket->setStatus_id($status_id);
         $_SESSION['ticket'] = serialize($ticket);
-        $_SESSION['mats_used'] = serialize($mats_used);
         header('Location:/pages/checkout.php');
         
     } else {
@@ -241,7 +250,7 @@ function move($status_id, $ticket, $staff, $user){
 <div id="page-wrapper">
     <div class="row">
         <div class="col-lg-12">
-            <?php if ($hasCost || $ticket) {
+            <?php if ($hasCost) {
                 echo "<h1 class='page-header'>Ticket Not Closed, Yet</h1> This ticket requires payment.";
             }  elseif (false) {
                 echo "<h1 class='page-header'>Not Authorized To End Ticket</h1> You must be either staff or closing your own ticket.";
@@ -260,41 +269,42 @@ function move($status_id, $ticket, $staff, $user){
                 </div>
                 <div class="panel-body">
                     <table class="table table-striped table-bordered">
-                        <?php  //Qualify Role is staff and 3D Print Job
-                        if ($staff->getRoleID() >= $sv['LvlOfStaff'] && $ticket->getDevice()->getDg()->getStorable() == "Y") { ?>
-                            <form name="endForm" method="post" action="" autocomplete="off" onsubmit="return validateForm()">
+                        <form name="endForm" method="post" action="" autocomplete="off" onsubmit="return validateForm()">
+                            <tr>
+                                <td>Device</td>
+                                <td><?php echo $ticket->getDevice()->getDevice_desc();?></td>
+                            </tr>
+                            <tr>
+                                <td>Operator</td>
+                                <?php echo "<td><i class='fa fa-".$ticket->getUser()->getIcon()." fa-lg' title='".$ticket->getUser()->getOperator()."'></i></td>"; ?>
+                            </tr>
+                            <tr>
+                                <td>Ticket</td>
+                                <td><?php echo $ticket->getTrans_id();?></td>
+                            </tr>
+                            <tr>
+                                <td>Time</td>
+                                <td><?php echo $ticket->getT_start()." - ".$ticket->getT_end(); ?></td>
+                            </tr>
+                            <?php if ($ticket->getDuration() != "") { ?>
                                 <tr>
-                                    <td>Device</td>
-                                    <td><?php echo $ticket->getDevice()->getDevice_desc();?></td>
+                                    <td>Duration</td>
+                                    <?php echo("<td>".$ticket->getDuration()."</td>" ); ?>
                                 </tr>
-                                <tr>
-                                    <td>Operator</td>
-                                    <?php echo "<td><i class='fa fa-".$ticket->getUser()->getIcon()." fa-lg' title='".$ticket->getUser()->getOperator()."'></i></td>"; ?>
-                                </tr>
-                                <tr>
-                                    <td>Ticket</td>
-                                    <td><?php echo $ticket->getTrans_id();?></td>
-                                </tr>
-                                <tr>
-                                    <td>Time</td>
-                                    <td><?php echo $ticket->getT_start()." - ".$ticket->getT_end(); ?></td>
-                                </tr>
-                                <?php if ($ticket->getDuration() != "") { ?>
-                                    <tr>
-                                        <td>Duration</td>
-                                        <?php echo("<td>".$ticket->getDuration()."</td>" ); ?>
-                                    </tr>
-                                <?php } ?>
-                                <tr>
-                                    <td>Status</td>
-                                    <td><?php echo $ticket->getStatus()->getMsg(); ?></td>
-                                </tr>
-                                <?php foreach ($ticket->getMats_used() as $mu) {
-                                    $mu_id = $mu->getMu_id();
-                                    //Material has already been marked as paid
-                                    if ($mu->getStatus()->getStatus_id() == 20) { ?>
-                                        <tr>
-                                            <td colspan="2">
+                            <?php } ?>
+                            <tr>
+                                <td>Status</td>
+                                <td><?php echo $ticket->getStatus()->getMsg(); ?></td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">
+                                    <?php  //Qualify Role is staff and 3D Print Job
+                                    if ($staff->getRoleID() >= $sv['LvlOfStaff'] && $ticket->getDevice()->getDg()->getStorable() == "Y") {
+                                        //List each Material that is already associated with the ticket
+                                        foreach ($ticket->getMats_used() as $mu) {
+                                            $mu_id = $mu->getMu_id();
+                                            //Material has already been marked as paid
+                                            if ($mu->getStatus()->getStatus_id() == 20) { ?>
                                                 <table class="table table-bordered"><tbody>
                                                     <tr class="tablerow info">
                                                         <td><?php echo $mu->getMaterial()->getM_name();?></td>
@@ -304,6 +314,12 @@ function move($status_id, $ticket, $staff, $user){
                                                             <?php echo (" ".$mu->getMaterial()->getUnit()."\n"); ?>
                                                         </td>
                                                     </tr>
+                                                    <?php if ($mu->getStatus()->getStatus_id() == 20) { ?>
+                                                        <tr>
+                                                            <td>Material Status</td>
+                                                            <td>Pre-Paid</td>
+                                                        </tr>
+                                                    <?php } ?>
                                                     <tr>
                                                         <td>Print Status</td>
                                                         <td><select name="status_<?php echo $mu_id;?>" id="status_<?php echo $mu_id;?>" onchange="calc()">
@@ -324,11 +340,7 @@ function move($status_id, $ticket, $staff, $user){
                                                         <td><textarea name="mu_notes_<?php echo $mu_id;?>" id="mu_notes_<?php echo $mu_id;?>" class="form-control"><?php echo $mu->getMu_notes();?></textarea></td>
                                                     </tr>
                                                 </tbody></table>
-                                            </td>
-                                        </tr>
-                                    <?php } else { ?>
-                                        <tr>
-                                            <td colspan="2">
+                                            <?php } else { ?>
                                                 <table class="table table-bordered"><tbody>
                                                     <tr class="tablerow info">
                                                         <td>
@@ -339,7 +351,7 @@ function move($status_id, $ticket, $staff, $user){
                                                         </td>
                                                         <td>
                                                             <i class='fa fa-<?php echo $sv['currency'];?> fa-fw'></i> <?php echo sprintf("%.2f",$mu->getMaterial()->getPrice())." x \n";?>
-                                                            <input type="number" name="uu_<?php echo $mu_id;?>" id="uu_<?php echo $mu_id;?>" autocomplete="off" value="" min="0" max="9999" step="1" onchange="calc()" onkeyup="calc()" onclick="calc()" style="text-align:right;">
+                                                            <input type="number" name="uu_<?php echo $mu_id;?>" id="uu_<?php echo $mu_id;?>" autocomplete="off" value="<?php echo ($mu->getUnit_used());?>" min="0" max="9999" onchange="calc()" onkeyup="calc()" onclick="calc()" style="text-align:right;">
                                                             <?php echo $mu->getMaterial()->getUnit()."\n"; ?>
                                                         </td>
                                                     </tr>
@@ -365,92 +377,78 @@ function move($status_id, $ticket, $staff, $user){
                                                         <td><textarea name="mu_notes_<?php echo $mu_id;?>" id="mu_notes_<?php echo $mu_id;?>" class="form-control"><?php echo $mu->getMu_notes();?></textarea></td>
                                                     </tr>
                                                 </tbody></table>
-                                            </td>
-                                        </tr>
-                                    <?php }
-                                } ?>
+                                            <?php }
+                                        }
+                                    //Basic Ticket Closing
+                                    } else {
+                                        foreach ($ticket->getMats_used() as $mu) { ?>
+                                            <table class="table table-bordered"><tbody>
+                                                <tr class="tablerow info">
+                                                    <?php if ($mu->getMaterial()->getPrice() > 0){ ?>
+                                                        <td class="col-md-5">
+                                                            <?php echo $mu->getMaterial()->getM_name();
+                                                            if ($mu->getMaterial()->getColor_hex()){ echo "<div class=\"color-box\" style=\"background-color: #".$mu->getMaterial()->getColor_hex()."\"/>\n"; }?>
+                                                        </td>
+                                                        <td class="col-md-7">
+                                                            <?php printf("<i class='fa fa-%s fa-fw'></i>%.2f x " ,$sv['currency'], $mu->getMaterial()->getPrice());
+                                                            echo $mu->getUnit_Used()." ".$mu->getMaterial()->getUnit()."\n"; ?>
+                                                        </td>
+                                                    <?php } else {?>
+                                                        <td colspan="2"><?php echo $mu->getMaterial()->getM_name();?></td>
+                                                    <?php } ?>
+                                                </tr>
+                                                <tr>
+                                                    <td>Material Status</td>
+                                                    <td><?php echo $mu->getStatus()->getMsg()?></td>
+                                                </tr>
+                                                <?php if (strcmp($mu->getHeader(), "") != 0){ ?>
+                                                    <tr>
+                                                        <td>File Name</td>
+                                                        <td><?php echo $mu->getHeader(); ?></td>
+                                                    </tr>
+                                                <?php } ?>
+                                                <tr>
+                                                    <td>Staff</td>
+                                                    <td><?php if ($staff && $staff->getRoleID() >= $sv['LvlOfStaff'] && $mu->getStaff()){
+                                                        echo "<i class='fa fa-".$mu->getStaff()->getIcon()." fa-lg' title='".$mu->getStaff()->getOperator()."'></i>\n";
+                                                    } elseif ($mu->getStaff()) { 
+                                                        echo "<i class='fa fa-".$mu->getStaff()->getIcon()." fa-lg'></i>\n";
+                                                    }?></td>
+                                                </tr>
+                                                <?php if ($staff && $staff->getRoleID() >= $sv['LvlOfStaff'] && strcmp($mu->getMu_notes(), "") != 0){ ?>
+                                                    <tr>
+                                                        <td><i class="fa fa-pencil-square-o fa-lg"></i>Notes</td>
+                                                        <td><?php echo $mu->getMu_notes();?></td>
+                                                    </tr>
+                                                <?php } ?>
+                                            </tbody></table>
+                                        <?php }
+                                    } ?>
+                                </td>
+                            </tr>
+                            <?php //Qualify Role is staff and 3D Print Job
+                            if ($staff->getRoleID() >= $sv['LvlOfStaff'] && $ticket->getDevice()->getDg()->getStorable() == "Y") { ?>
                                 <tr id="pickTR" style="display: none;">
                                     <td>Confirm ID</td>
                                     <td><input type="text" name="pickID" class="form-control" placeholder="Enter ID #" maxlength="10" size="10"></td>
                                 </tr>
                                 <tr>
-                                    <td colspan="2"><div id="total" style="float:right;">Total : <i class="fa fa-dollar fa-fw"></i> 0.00</div></td>
+                                    <td colspan="2"><div id="total" style="float:right;">Total : <?php printf("<i class='fa fa-%s fa-fw'></i>%.2f" ,$sv['currency'], $hasCost); ?></div></td>
                                 </tr>
                                 <tr class="tablefooter">
                                     <td align="right" colspan="2">
-                                        <input type="submit" name="endBtn" value="End 3D Print"/>
+                                        <input type="submit" name="endBtn" value="End 3D Print" class="btn btn-danger"/>
                                     </td>
                                 </tr>
-                            </form>
-<?php //Basic Ticket Closing
-                        } else { ?>
-                            <tr>
-                                <td>Device</td>
-                                <td><?php echo $ticket->getDevice()->getDevice_desc();?></td>
-                            </tr>
-                            <tr>
-                                <td>Ticket</td>
-                                <td><?php echo $ticket->getTrans_id();?></td>
-                            </tr>
-                            <tr>
-                                <td>Time</td>
-                                <td><?php echo $ticket->getT_start()." - ".$ticket->getT_end(); ?></td>
-                            </tr>
-                            <?php if ($ticket->getDuration() != "") { ?>
+                            <?php } elseif ($hasCost > .005) { ?>
                                 <tr>
-                                    <td>Duration</td>
-                                    <?php echo("<td>".$ticket->getDuration()."</td>" ); ?>
+                                    <td colspan="2"><div id="total" style="float:right;">Total : <?php printf("<i class='fa fa-%s fa-fw'></i>%.2f" ,$sv['currency'], $hasCost); ?></div></td>
+                                </tr>
+                                <tr class="tablefooter">
+                                    <td colspan="2"><a class="btn btn-success pull-right">Pay Now</a></td>
                                 </tr>
                             <?php } ?>
-                            <tr>
-                                <td>Status</td>
-                                <td><?php echo $ticket->getStatus()->getMsg(); ?></td>
-                            </tr>
-                            <?php foreach ($ticket->getMats_used() as $mu) {?>
-                                <tr class="tablerow">
-                                    <?php if ($mu->getMaterial()->getPrice() > 0){ ?>
-                                        <td class="col-md-3">
-                                            <?php echo $mu->getMaterial()->getM_name();
-                                            if ($mu->getMaterial()->getColor_hex()){ ?>
-                                                <div class="color-box" style="background-color: #<?php echo $mu->getMaterial()->getColor_hex();?>;"/>
-                                            <?php } ?>
-                                        </td>
-                                        <td class="col-md-9">
-                                            <?php printf("<i class='fa fa-%s fa-fw'></i>%.2f x " ,$sv['currency'], $mu->getMaterial()->getPrice());
-                                            echo $mu->getUnit_Used()." ".$mu->getMaterial()->getUnit(); ?>
-                                        </td>
-                                    <?php } else {?>
-                                        <td class="col-md-3">Material</td>
-                                        <td class="col-md-9"><?php echo $mu->getMaterial()->getM_name();?></td>
-                                    <?php } ?>
-                                </tr>
-                                <tr class="tablerow">
-                                    <td>Material Status</td>
-                                    <td><?php echo $mu->getStatus()->getMsg()?></td>
-                                </tr>
-                                <?php if ($mu->getHeader() != ""){ ?>
-                                    <tr>
-                                        <td>File Name</td>
-                                        <td><?php echo $mu->getHeader(); ?></td>
-                                    </tr>
-                                <?php }
-                                if ($staff && $staff->getRoleID() >= $sv['LvlOfStaff'] && $mu->getMu_notes() != ""){ ?>
-                                    <tr>
-                                        <td><i class="fa fa-pencil-square-o fa-fw"></i>Notes</td>
-                                        <td><?php echo $mu->getMu_notes();?></td>
-                                    </tr>
-                                <?php }
-                            }
-                            if ($_SESSION['type'] == "end"){ ?>
-                                <tr class="tablefooter">
-                                    <td align="right" colspan="2">
-                                        <form name="undoForm" method="post" action="">
-                                            <input type="submit" name="undoBtn" value="Unend this Ticket"/>
-                                        </form>
-                                    </td>
-                                </tr>
-                            <?php }
-                        }?>
+                        </form>
                     </table>
                 </div>
             </div>
@@ -458,22 +456,21 @@ function move($status_id, $ticket, $staff, $user){
         </div>
         <!-- /.col-lg-7 -->
         <div class="col-md-5">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <i class="fa fa-database fa-fw"></i> Stats
+            <?php if ($_SESSION['type'] == "end"){ ?>
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="fa fa-undo fa-lg" title="Undo"></i> Undo...
+                    </div>
+                    <div class="panel-body">
+                        Did you accidently close the wrong ticket?
+                        <form name="undoForm" method="post" action="">
+                            <input type="submit" name="undoBtn" value="Unend this Ticket"/>
+                        </form>
+                    </div>
+                    <!-- /.panel-body -->
                 </div>
-                <div class="panel-body">
-                    <table class="table table-bordered">
-                        <tr>
-                            <td>Balance</td>
-                            <td><?php printf("<i class='fa fa-%s fa-fw'></i>%.2f" ,$sv['currency'], $hasCost); ?></td>
-                        </tr>
-                    </table>
-                </div>
-                <!-- /.panel-body -->
-            </div>
-            <!-- /.panel -->
-            <?php
+                <!-- /.panel -->
+            <?php }
             //Look for associated charges
             if($staff && $ticket->getAc() && (($ticket->getUser()->getOperator() == $staff->getOperator()) || $staff->getRoleID() >= $sv['LvlOfStaff']) ){ ?>
                 <div class="panel panel-default">
@@ -500,7 +497,7 @@ function move($status_id, $ticket, $staff, $user){
                                         echo "<td>-</td>";
                                     }
                                     if ( ($ticket->getUser()->getOperator() == $staff->getOperator()) || $staff->getRoleID() >= $sv['LvlOfStaff'] ){
-                                        echo "<td><i class='fa fa-".$sv['currency']." fa-fw'></i>".number_format($ac->getAmount(), 2)."</td>";
+                                        echo "<td><i class='fa fa-".$sv['currency']." fa-fw' title='".$ac->getAccount()->getName()."'></i>".number_format($ac->getAmount(), 2)."</td>";
                                     }
                                     echo "<td>".$ac->getAc_date()."</td>";
                                     echo "<td><i class='fa fa-".$ac->getStaff()->getIcon()." fa-lg' title='".$ac->getStaff()->getOperator()."'></i>";
@@ -589,6 +586,7 @@ function validateForm(){
 
 function calc (){
     var total = 0;
+	var prePaid = <?php echo $ticket->totalAC();?>;
     <?php 
     foreach ($ticket->getMats_used() as $mu) {
         $mu_id = $mu->getMu_id();
@@ -602,8 +600,9 @@ function calc (){
         echo ("\n\t\tdocument.getElementById('pickTR').style.display = 'table-row';\n\t} else {");
         echo ("\n\t\tdocument.getElementById('pickTR').style.display = 'none';\n\t}");
     }
-    ?> 
-    document.getElementById("total").innerHTML = "Total : <i class='fa fa-<?php echo $sv['currency'];?> fa-fw'></i> " + total.toFixed(2);
+    ?>
+	total = total - prePaid + .001;
+    document.getElementById("total").innerHTML = "Total : <i class='fa fa-<?php echo $sv['currency'];?> fa-fw'></i>" + total.toFixed(2);
 }
 <?php } ?>
 </script>

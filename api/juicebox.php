@@ -1,7 +1,7 @@
 <?php
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST");
-header("Access-Control-Allow-Headers: Cache-Control, Origin, X-Requested-With, Content-Type, Accept, Key, X-Api-Key");
+header("Access-Control-Allow-Headers: Cache-Control, Origin, X-Requested-With, Content-Type, Accept, Key, X-Api-Key, Authorization");
 /*
  *  CC BY-NC-AS UTA FabLab 2016-2017
  * 
@@ -30,6 +30,17 @@ if (! ($input_data)) {
 	ErrorExit(1);
 }
 
+//Compare Header API Key with site variable's API Key
+$headers = apache_request_headers();
+if(isset($headers['Authorization'])){
+    if ($sv['api_key'] != $headers['Authorization'] ){
+        ErrorExit(1);
+        $json_out["ERROR"] = "Unable to Authenticate";
+    }
+} else {
+    ErrorExit(1);
+    $json_out["ERROR"] = "Header Not Set";
+}
 
 // Extract message type from incoming JSON
 $type = $input_data["type"];
