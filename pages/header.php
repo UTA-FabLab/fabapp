@@ -102,7 +102,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 //Display a Successful message from a previous page
-if ($_SESSION['success_msg']){
+if (isset($_SESSION['success_msg'])){
     echo "<script>window.onload = function(){goModal('Success',\"$_SESSION[success_msg]\", true)}</script>";
     $_SESSION['success_msg'] = "";
 } 
