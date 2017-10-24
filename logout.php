@@ -8,7 +8,7 @@ session_start();
 if (!empty($_GET["n"])){
     $_SESSION['netID'] = null;
 } 
-$_SESSION["staff"] = null;
+unset($_SESSION['staff']);
 $_SESSION["timeOut"] = 0;
 header("Location:".$_SESSION['loc']);
 

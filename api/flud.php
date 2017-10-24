@@ -28,7 +28,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/class/all_classes.php');
 include_once 'gatekeeper.php';
 $json_out = array();
 
-
+/*
 //Test Data
 $input_data["type"] = "print";
 $input_data["uta_id"] = "1000000000";
@@ -38,20 +38,20 @@ $input_data["est_filament_used"] = "1";
 $input_data["est_build_time"] = "01:01:00";
 $input_data["filename"] = "Jon Le's Test";
 $input_data["p_id"] = "3";
+*/
 
-/*
 //Compare Header API Key with site variable's API Key
 $headers = apache_request_headers();
 if(isset($headers['Authorization'])){
-	if ($sv['api_key'] != $headers['Authorization'] ){
-		$json_out["authorized"] = "N";
-		$json_out["ERROR"] = "Unable to Authenticate";
-		ErrorExit(2);
-	}
+    if ($sv['api_key'] != $headers['Authorization'] ){
+        $json_out["authorized"] = "N";
+        $json_out["ERROR"] = "Unable to Authenticate";
+        ErrorExit(2);
+    }
 } else {
-	$json_out["authorized"] = "N";
-	$json_out["ERROR"] = "Header Not Set";
-	ErrorExit(2);
+    $json_out["authorized"] = "N";
+    $json_out["ERROR"] = "Header Not Set";
+    ErrorExit(2);
 }
 
 
@@ -61,24 +61,23 @@ if (! ($input_data)) {
     $json_out["ERROR"] = "Unable to decode JSON message - check syntax";
     ErrorExit(1);
 }
-*/
 
 // Extract message type from incoming JSON
 $type = $input_data["type"];
 
 // Check the request type
 if (strtolower($type) == "print") {
-        $operator  = $input_data["uta_id"];
-        $device_id = $input_data["device_id"];
-        PrintTransaction ($operator, $device_id);
+    $operator  = $input_data["uta_id"];
+    $device_id = $input_data["device_id"];
+    PrintTransaction ($operator, $device_id);
 
 } elseif (strtolower($type) == "update_end_time") {
-        $device_id = $input_data["device_id"];
-        update_end_time( $device_id );
+    $device_id = $input_data["device_id"];
+    update_end_time( $device_id );
 
 } else {
-        $json_out["ERROR"] = "Unknown type: $type";
-        ErrorExit(1);
+    $json_out["ERROR"] = "Unknown type: $type";
+    ErrorExit(1);
 }
 
 

@@ -50,23 +50,25 @@ if ($errorMsg != ""){
 }
 
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['unfail'])) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['undoBtn'])) {
+    /*
+     * Unused at the moment
     if (array_key_exists('objbox', $_SESSION)){
         $ob_backup = unserialize($_SESSION['objbox']);
         $ob_backup->writeAttr();
         $_SESSION['objbox'] = null;
     }
+     */
     
     $t_backup = unserialize($_SESSION['ticket']);
-    $t_backup->writeAttr();
-    $_SESSION['ticket'] = null;
-
-	//This may be called in the transaction
+    if ($t_backup->writeAttr() === true) {
+        unset($_SESSION['ticket']);
+    }
+    //This may be called in the transaction
     $mats_used_backup = $t_backup->getMats_used();
     foreach( $mats_used_backup as $mub){
         $msg = $mub->writeAttr();
     }
-    $_SESSION['mats_used'] = null;
     $_SESSION['type'] = "undo";
     header("Location:/pages/lookup.php?trans_id=".$t_backup->getTrans_id());
 }
@@ -79,8 +81,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['unfail'])) {
                 <h1 class="page-header">Details of Most Recent Ticket</h1>
             <?php } elseif (strcmp($_SESSION['type'], 'failed') == 0) { ?>
                 <h1 class="page-header">Details</h1><form name="undoForm" method="post" action=""><input type="submit" value="Unmark as Failed" name="unfail"></form>
-            <?php }  elseif (strcmp($_SESSION['type'], 'end') == 0) { ?>
-                <h1 class="page-header">Details: Address - <?php if ($objbox = ObjBox::byTrans($ticket->getTrans_id())) {echo $objbox->getAddress();} $_SESSION['type'] = "lookup"; ?></h1>
+            <?php }  elseif ($objbox = ObjBox::byTrans($ticket->getTrans_id())) { ?>
+                <h1 class="page-header">Details: Address - <?php echo $objbox->getAddress(); $_SESSION['type'] = "lookup"; ?></h1>
             <?php } else {?>
                 <h1 class="page-header">Details</h1>
             <?php } ?>
@@ -196,6 +198,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['unfail'])) {
         </div>
         <!-- /.col-md-6 -->
         <div class="col-md-6">
+            <?php if ($_SESSION['type'] == "end" && array_key_exists('ticket', $_SESSION)){ ?>
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="fa fa-undo fa-lg" title="Undo"></i> Undo...
+                    </div>
+                    <div class="panel-body">
+                        Did you accidently close the wrong ticket?
+                        <form name="undoForm" method="post" action="">
+                            <input type="submit" name="undoBtn" value="Unend this Ticket"/>
+                        </form>
+                    </div>
+                    <!-- /.panel-body -->
+                </div>
+                <!-- /.panel -->
+            <?php $t_backup = unserialize($_SESSION['ticket']);} ?>
             <?php if ($objbox = ObjBox::byTrans($ticket->getTrans_id())) { ?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
@@ -262,7 +279,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['unfail'])) {
                             </tr>
                             <?php foreach ($ticket->getAc() as $ac){
                                 echo"\n\t\t<tr>";
-                                    if ( $ac->getUser() ) {
+                                    if ( is_object($ac->getUser()) ) {
                                         if (($ac->getUser()->getOperator() == $staff->getOperator()) || $staff->getRoleID() >= $sv['LvlOfStaff'] ){
                                             echo "<td><i class='fa fa-".$ac->getUser()->getIcon()." fa-lg' title='".$ac->getUser()->getOperator()."'></i></td>";
                                         } else {

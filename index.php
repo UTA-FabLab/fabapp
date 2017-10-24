@@ -61,14 +61,16 @@ echo "</div>";
                     <i class="fa fa-ticket fa-fw"></i> Device Status
                 </div>
                 <div class="panel-body">
-                    <table class="table table-striped table-bordered table-hover">
-                        <tr class="tablerow">
-                            <td align="right">Ticket</td>
-                            <td>Device</td>
-                            <td>Start Time</td>
-                            <td>Est Remaining Time</td>
-                            <?php if ($staff) { ?> <td>Action</td><?php } ?>
-                        </tr>
+                    <table class="table table-striped table-bordered table-hover" id="indexTable">
+                        <thead>
+                            <tr class="tablerow">
+                                <th align="right">Ticket</td>
+                                <th>Device</td>
+                                <th>Start Time</td>
+                                <th>Est Remaining Time</td>
+                                <?php if ($staff) { ?> <td>Action</td><?php } ?>
+                            </tr>
+                        </thead>
                         <?php if ($result = $mysqli->query("
                             SELECT trans_id, device_desc, t_start, est_time, devices.dg_id, dg_parent, devices.d_id, url, operator, status_id
                             FROM devices
@@ -214,4 +216,9 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	startTimer(time, display, dg_parent);
 	
 <?php } ?>
+    window.onload = function() {
+        $('#indexTable').DataTable({
+            "iDisplayLength": 25
+        });
+    };
 </script>

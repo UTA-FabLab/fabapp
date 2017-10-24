@@ -39,28 +39,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['objbox'] = serialize($ob);
             
             foreach($mats_used as $mu){
-                $status_id = $_POST["status_".$mu->getMu_id()];
-                $status_array = explode("@", $status_id);
-                
                 $mu->setStaff($staff->getOperator());
                 $mu->setUnit_used($_POST["uu_".$mu->getMu_id()]);
-                $mu->getStatus()->setStatus_id($status_array[0]);
+                $mu->getStatus()->setStatus_id($_POST["status_".$mu->getMu_id()]);
                 $mu->setMu_notes($_POST['mu_notes_'.$mu->getMu_id()]);
-		 
-                //Print has been marked to be paid to account
-                if ($status_array[0] == 20){
-                    //check if account is being changed
-                    if ($account == 0) {
-                        $account = $status_array[1];
-                    } elseif ($account != $status_array[1]){
-                        $errorMsg = "You Must Select One Account.";
-                    }
-                }
-                
-                //Set Highest Status to the transaction
-                if ($status_id < $mu->getStatus()->getStatus_id()){
-                    $status_id = $mu->getStatus()->getStatus_id();
-                }
             }
             
             $ticket->getStatus()->setStatus_id($status_id);
@@ -123,7 +105,7 @@ if ($staff) {
                         <form action="" method="post" autocomplete="off" onsubmit="return validateForm_<?php echo $ob->getO_id();?>()">
                             <tr>
                                 <td>Device</td>
-                                <td><?php echo $ticket->device->getDevice_desc(); ?></td>
+                                <td><?php echo $ticket->getDevice()->getDevice_desc(); ?></td>
                             </tr>
                             <tr>
                                 <td>Time</td>
@@ -155,12 +137,7 @@ if ($staff) {
                                     <td>
                                         <select name="status_<?php echo $mu->getMu_id();?>" id="status_<?php echo $mu->getMu_id();?>" onchange="calc_<?php echo $ob->getO_id() ?>()" onkeyup="calc_<?php echo $ob->getO_id() ?>()">
                                             <option value="" selected disabled hidden>Select</option>
-                                            <option value="20@2" ><?php echo $sv['paySite_name'];?></option>
-                                            <option value="20@4" ><?php echo $sv['interdepartmental'];?></option>
-                                            <?php $accounts = $ticket->getUser()->getAccounts();
-                                            foreach ($accounts as $accts){
-                                                echo ("<option value='20@".$accts->getA_id()."'>".$accts->getName()."</option>\n");
-                                            }?>
+                                            <option value="20">Pick Up</option>
                                             <option value="12">Failed</option>
                                         </select>
                                     </td>

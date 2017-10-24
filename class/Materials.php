@@ -71,14 +71,14 @@ class Materials {
             return false;
         if($result = $mysqli->query("
             SELECT *
-            FROM Materials
-            WHERE m_id = $m_id
+            FROM `materials`
+            WHERE `m_id` = '$m_id'
             LIMIT 1;
         ")){
             if($result->num_rows == 1)
                 return true;
         }
-        return false;
+        return $mysqli->error;
     }
     
     public function getM_id() {

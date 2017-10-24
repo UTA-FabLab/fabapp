@@ -14,11 +14,15 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/class/Users.php');
 function gatekeeper ($operator, $d_id) {
     global $mysqli;
     global $sv;
-    $user = Users::withID($operator);
-	
+    
+    if (is_a($operator, "Users")){
+        $user = $operator;
+    } else {
+        $user = Users::withID($operator);
+    }
 
     // Check to see if ID is a 10-digit number
-    if (!$user) {
+    if (!is_object($user)) {
         return array ("status_id" => 1, "ERROR" => "Bad ID", "authorized" => "N");
     }
     
@@ -39,7 +43,8 @@ function gatekeeper ($operator, $d_id) {
         LIMIT 1;
     ")){
         if( $result->num_rows > 0){
-            return array ("status_id" => 1, "ERROR" => "Can not start new ticket on this device until previous ticket has been closed.", "authorized" => "N");
+			$row = $result->fetch_assoc();
+            return array ("status_id" => 1, "ERROR" => "Can not start new Ticket $row[trans_id] on this device until previous ticket has been closed.", "authorized" => "N");
         }
     } else {
         return array ("status_id" => 0, "ERROR" => "gk".$mysqli->error, "authorized" => "N");
@@ -52,7 +57,7 @@ function gatekeeper ($operator, $d_id) {
         JOIN `transactions` ON `transactions`.`trans_id` = `objbox`.`trans_id`
         JOIN `devices` ON `transactions`.`d_id` = `devices`.`d_id`
         JOIN `device_group` ON `device_group`.`dg_id` = `devices`.`dg_id`
-        WHERE `transactions`.`operator` = '$operator' AND `o_end` IS NULL
+        WHERE `transactions`.`operator` = '".$user->getOperator()."' AND `o_end` IS NULL
     ")){
         if($result->num_rows > 0){
             //Current Time
@@ -115,7 +120,7 @@ function gatekeeper ($operator, $d_id) {
         if ($results = $mysqli->query("
             SELECT *
             FROM `tm_enroll`
-            WHERE tm_id = $t AND operator = $operator
+            WHERE tm_id = $t AND `operator` = ".$user->getOperator()."
         ")){
             if( $results->num_rows == 1 ) {
                 $count++;
@@ -128,7 +133,7 @@ function gatekeeper ($operator, $d_id) {
     if ($count != count($training)){
         //echo "Device: ".$device_id." requires training"."<br />";
         //echo "Enroll - ". $count ." Class - ". count($training) ."<br />";
-        return array ("status_id" => 2, "ERROR" => $device->getDevice_desc()." Requires Training", "authorized" => "N");
+        return array ("status_id" => 2, "ERROR" => $user->getOperator()." Needs Training On ".$device->getDevice_desc(), "authorized" => "N");
     } else {
         //echo "authorized";
         return array ("status_id" => 10, "authorized" => "Y");
