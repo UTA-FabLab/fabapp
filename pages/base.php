@@ -26,7 +26,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
             </div>
         </div>
         <!-- /.col-md-8 -->
-        <div class="col-lg-4">
+        <div class="col-md-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <i class="fa fa-calculator fa-fw"></i> Col 4

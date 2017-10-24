@@ -8,7 +8,8 @@ $d_id = $dg_id = $operator = "";
 
 if (!$staff || $staff->getRoleID() < 7){
     //Not Authorized to see this Page
-    header('Location: index.php');
+    header('Location: /index.php');
+	exit();
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn']) && ($_POST['submitBtn'] == 'Submit') && !empty($_POST['tm_id']) && $_SESSION['type'] != 'tc_success') {
@@ -25,6 +26,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn']) && ($_POS
     } else {
         echo "<script type='text/javascript'> window.onload = function(){goModal('Error',\"$msg\", false)}</script>";
     }
+} elseif ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['teBtn'])) {
+    $id = filter_input(INPUT_POST, 'teField');
+    $user = Users::withID($id);
 }
 
 //
@@ -67,18 +71,19 @@ function submitTM($tm_id, $operator, $staff){
     </div>
     <!-- /.row -->
     <div class="row">
-        <div class="col-md-9">
+        <div class="col-md-8">
             <?php if ($staff && $staff->getRoleID() >= $sv['minRoleTrainer']) {?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-check-circle-o fa-fw"></i> Certify Completion of Training
+                        <i class="fa fa-check-circle-o fa-lg"></i> Certify Completion of Training
                     </div>
                     <div class="panel-body">
                         <table class="table table-bordered table-striped table-hover"><form name="tcForm" id="tcForm" autocomplete="off" method="POST" action="">
                             <tr>
-                                <td class="col-md-3"><a href="#" data-toggle="tooltip" data-placement="top" title="The person that conducted this training">Trainer</a></td>
-                                <td class="col-md-9">
-                                    <i class="fa fa-<?php if ( $staff->getIcon() ) echo $staff->getIcon(); else echo "user";?> fa-w"></i>
+                                <td class="col-md-3"><a href="#" data-toggle="tooltip" data-placement="top" title="The person that conducted this training">Trainer</a>
+								</td>
+                                <td class="col-md-9"><?php if ( $staff )
+                                    echo "<i class='fa fa-".$staff->getIcon()." fa-lg' title='".$staff->getOperator()."'></i>";?>
                                 </td>
                             </tr>
                             <tr>
@@ -159,7 +164,7 @@ function submitTM($tm_id, $operator, $staff){
             <?php } elseif($staff) { ?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-sign-in fa-fw"></i>  Certify Completion of Training
+                        <i class="fa fa-sign-in fa-lg"></i>  Certify Completion of Training
                     </div>
                     <div class="panel-body">
                         <?php
@@ -172,7 +177,7 @@ function submitTM($tm_id, $operator, $staff){
             <?php } else { ?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-sign-in fa-fw"></i> Please Log In
+                        <i class="fa fa-sign-in fa-lg"></i> Please Log In
                     </div>
                     <div class="panel-body">
                     </div>
@@ -181,11 +186,11 @@ function submitTM($tm_id, $operator, $staff){
                 <!-- /.panel -->
             <?php } ?>
         </div>
-        <!-- /.col-md-9 -->
-        <div class="col-md-3">
+        <!-- /.col-md-8 -->
+        <div class="col-md-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fa fa-table fa-fw"></i> Stats
+                    <i class="fa fa-table fa-lg"></i> Stats
                 </div>
                 <div class="panel-body">
                     <table class="table table-condensed">
@@ -196,7 +201,7 @@ function submitTM($tm_id, $operator, $staff){
                         ")){
                             $row = $result->fetch_assoc()?>
                             <tr>
-                                <td><i class="fa fa-file-o fa-fw"></i> Training Modules</td>
+                                <td><i class="fa fa-file-o fa-lg"></i> Training Modules</td>
                                 <td><?php echo $row['count'];?></td>
                             </tr>
                         <?php } else { ?>
@@ -210,7 +215,7 @@ function submitTM($tm_id, $operator, $staff){
                         ")){
                             $row = $result->fetch_assoc()?>
                             <tr>
-                                <td><i class="fa fa-check-circle-o fa-fw"></i> Certificates Issued</td>
+                                <td><i class="fa fa-check-circle-o fa-lg"></i> Certificates Issued</td>
                                 <td><?php echo $row['count'];?></td>
                             </tr>
                         <?php } else { ?>
@@ -224,7 +229,68 @@ function submitTM($tm_id, $operator, $staff){
             </div>
             <!-- /.panel -->
         </div>
-        <!-- /.col-md-3 -->
+        <!-- /.col-md-4 -->
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fa fa-book fa-lg"></i> Look Up Completed Trainings
+                </div>
+                <div class="panel-body">
+                    <form name="teForm" method="POST" action="" autocomplete="off" onsubmit="return stdRegEx('teField', /^\d{10}$/, 'Please enter ID #2')">
+                        <div class="input-group custom-search-form">
+                            <input type="text" name="teField" id="teField" class="form-control" placeholder="Enter ID #" maxlength="10" size="10"
+                                   value="<?php if (isset($id)) echo $id; ?>">
+                            <span class="input-group-btn">
+                            <button class="btn btn-default" type="submit" name="teBtn">
+                                <i class="fa fa-search"></i>
+                            </button>
+                            </span>
+                        </div>
+                    </form>
+                    <?php if(isset($user)){ ?>
+                        <table id="teTable" class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th class="col-sm-2">Time</th>
+                                    <th class="col-sm-2">Staff</th>
+                                    <th class="col-sm-8">Training Module</th>
+                                </tr>
+                            </thead>
+                            <?php
+                            $result = $mysqli->query("  SELECT `completed`, `staff_id`, `title`, `tm_desc`
+                                                        FROM `tm_enroll`
+                                                        LEFT JOIN `trainingmodule`
+                                                        ON `tm_enroll`.`tm_id` = `trainingmodule`.`tm_id`
+                                                        WHERE `operator` = '".$user->getOperator()."';");
+                            while ($row = $result->fetch_assoc()){
+                                echo "<tr>";
+                                    echo "<td align='center'><i class='fa fa-clock-o fa-lg' title='".date($sv['dateFormat'], strtotime($row['completed']))."'></i></td>";
+                                    $staff = Users::withID($row['staff_id']);
+                                    if (is_object($staff)){
+                                        echo" <td align='center'><i class='fa fa-".$staff->getIcon()." fa-lg' title='".$staff->getOperator()."'></i></td>";
+                                    } else {
+                                        echo "<td></td>";
+                                    }
+                                    echo "<td> $row[title]"; ?>
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
+                                                <span class="fa fa-info-circle" title="Desc"></span>
+                                            </button>
+                                            <ul class="dropdown-menu pull-right" role="menu">
+                                                <li style="padding-left: 5px;"><?php echo $row['tm_desc'];?></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php } ?>
+                        </table>
+                    <?php } ?>
+                </div>
+                <!-- /.panel-body -->
+            </div>
+            <!-- /.panel -->
+        </div>
+        <!-- /.col-md-4 -->
     </div>
     <!-- /.row -->
 </div>
@@ -235,6 +301,11 @@ function submitTM($tm_id, $operator, $staff){
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 ?>
 <script type="text/javascript">
+    window.onload = function() {
+        $('#teTable').DataTable({
+            searching: false, 
+            paging: false});
+    };
     //AJAX call to build a list of training modules for the specified device or device group
     function selectDevice(element){
         if (element.id == 'd_id'){

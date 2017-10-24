@@ -28,9 +28,11 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/connections/ldap.php');
 include_once ($_SERVER['DOCUMENT_ROOT'].'/class/all_classes.php');
 date_default_timezone_set($sv['timezone']);
 session_start();
+$_SERVER['loc'] = $_SERVER['REQUEST_URI'];
+
 if( isset($_SESSION['staff']) ){
     $staff = $_SESSION['staff'];
-    $staff->setLoc($_SERVER['REQUEST_URI']);
+	$_SESSION['loc'] = $_SERVER['REQUEST_URI'];
     if ($_SESSION["timeOut"] < time()) {
         header("Location:/logout.php");
     } else {
@@ -47,7 +49,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $_SESSION['netID'] = $_POST["netID"];
             if (Users::regexUser($operator)) {
                 $staff = Staff::withID($operator);
-                $_SESSION["staff"] = $staff;
                 //staff get either limit or limit_long as their auto logout timer
                 if ($staff->getRoleID() > $sv["LvlOfStaff"])
                     $staff->setTimeLimit( $sv["limit_long"] );
@@ -102,7 +103,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 //Display a Successful message from a previous page
-if (isset($_SESSION['success_msg'])){
+if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
     echo "<script>window.onload = function(){goModal('Success',\"$_SESSION[success_msg]\", true)}</script>";
     $_SESSION['success_msg'] = "";
 } 
@@ -303,7 +304,7 @@ if (isset($_SESSION['success_msg'])){
                                     <a herf="#"><i class="fa fa-users fa-fw"></i> Users<span class="fa arrow"></span></a>
                                     <ul class="nav nav-third-level">
                                         <li>
-                                            <a href="/pages/addrfid.php"><i class="fa fa-feed fa-fw"></i> Add RFID</a>
+                                            <a href="/admin/addrfid.php"><i class="fa fa-feed fa-fw"></i> Add RFID</a>
                                         </li>
                                         <li>
                                             <a href="#"><i class="fa fa-user-circle-o fa-fw"></i> Manage Users</a>
@@ -315,6 +316,9 @@ if (isset($_SESSION['success_msg'])){
                                 </li>
                             </ul>
                             <!-- /.nav-second-level -->
+                        </li>
+                        <li>
+                            <a href="/admin/error.php"><i class="fa fa-bolt fa-fw"></i> Error</a>
                         </li>
 <?php } ?>
                     </ul>

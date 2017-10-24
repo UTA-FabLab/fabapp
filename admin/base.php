@@ -6,7 +6,7 @@
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 if (!$staff || $staff->getRoleID() < 7){
     //Not Authorized to see this Page
-    header('Location: index.php');
+    header('Location: /index.php');
 }
 ?>
 <title><?php echo $sv['site_name'];?> Admin Base</title>
@@ -22,7 +22,7 @@ if (!$staff || $staff->getRoleID() < 7){
         <div class="col-md-8">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fa fa-ticket fa-fw"></i> Title
+                    <i class="fa fa-ticket fa-lg"></i> Title
                 </div>
                 <div class="panel-body">
                     
@@ -33,7 +33,7 @@ if (!$staff || $staff->getRoleID() < 7){
         <div class="col-md-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fa fa-calculator fa-fw"></i> Col 4
+                    <i class="fa fa-calculator fa-lg"></i> Col 4
                 </div>
                 <div class="panel-body">
                     

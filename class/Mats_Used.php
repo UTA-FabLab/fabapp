@@ -44,7 +44,8 @@ class Mats_Used {
             $this->setStatus_id($row['status_id']);
             $this->setStaff($row['staff_id']);
             $this->setMu_notesDB($row['mu_notes']);
-        }}
+        }
+    }
     
     public static function byTrans($trans_id){
         global $mysqli;
@@ -67,7 +68,7 @@ class Mats_Used {
         global $mysqli;
         
         //Deny if there is a cost associated with the materials
-        if($this->getMaterial()->getPrice() > 0.0){
+        if($this->getMaterial()->getPrice() > 0.005){
             return "This material has a cost associated with it.";
         }
         
@@ -77,7 +78,7 @@ class Mats_Used {
             WHERE `mu_id` = '".$this->getMu_id()."'
         ")){
             if ($mysqli->affected_rows == 1){
-                $this->setStatus($status_id);
+                $this->setStatus_id($status_id);
                 return TRUE;
             } else {
                 return "MU error line 85";
@@ -121,6 +122,31 @@ class Mats_Used {
         } else {
             //return "Error in stating Materials Used.";
             return $mysqli->error;
+        }
+    }
+	
+	public static function insert_Mats($trans_id, $m_id, $status_id, $staff){
+        global $mysqli;
+        
+        //Validate input variables
+        if (!Transactions::regexTrans($trans_id)) return false;
+        if (!Materials::regexID($m_id)) return false;
+        if (!Status::regexID($status_id)) return false;
+		
+		$staff_id = $staff->getOperator();
+        
+        //If all is good in the hood lets make an entry
+        if($result = $mysqli->query("
+            INSERT INTO mats_used
+                (`trans_id`,`m_id`,`status_id`, `staff_id`, `mu_date`) 
+            VALUES
+                ($trans_id, $m_id, $status_id, $staff_id, CURRENT_TIMESTAMP);
+        ")){
+            return $mysqli->insert_id;
+        } else {
+            //echo "Error in stating materials used";
+            echo $mysqli->error;
+            return false;
         }
     }
     
@@ -257,23 +283,23 @@ class Mats_Used {
         }
 		
         //Combine $header & $mu_notes
-		//Drop header if all is well
+        //Drop header if all is well
         if ($this->header == "" || $this->status->getStatus_id() >= 20) {
             $notes = $this->mu_notes;
         } elseif ($this->status->getStatus_id() == 12 || $this->status->getStatus_id() == 15) {
-			if(strlen($mu->getMu_notes()) < 10){
-				return "Please state a reason for marking this ticket as failed/cancel.";
-			}
+            if(strlen($mu->getMu_notes()) < 10){
+                return "Please state a reason for marking this ticket as failed/cancel.";
+            }
             $notes = "|".$this->header."|".$this->mu_notes;
         }
         $status_id = $this->status->getStatus_id();
         
-		if ($this->Material->getMeasurable() == "Y") {
-			//invert value
-			$uu = -abs($this->unit_used);
-		} else {
-			$uu = "NULL";
-		}
+        if ($this->Material->getMeasurable() == "Y") {
+            //invert value
+            $uu = -abs($this->unit_used);
+        } else {
+            $uu = "NULL";
+        }
         
         //Convert to primiative variable
         $staff_id = $staff->getOperator();

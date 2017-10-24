@@ -4,6 +4,10 @@
  *   FabApp V 0.9
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
+if (!$staff || $staff->getRoleID() < 7){
+    //Not Authorized to see this Page
+    header('Location: index.php');
+}
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["rfBtn"])){
     $operator = filter_input(INPUT_POST, "operator");
     $user = Users::withID($operator);
@@ -29,11 +33,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["rfBtn"])){
         } else {
             $_SESSION['success_msg'] = "RFID:$rfid was added to $operator.";
             $operator = $rfid = "";
-            //echo "<script> window.location.href = '".$_SERVER['REQUEST_URI']."'</script>";
+            echo "<script> window.location.href = '".$_SERVER['REQUEST_URI']."'</script>";
         }
     }
-    
-    
 }
 ?>
 <title><?php echo $sv['site_name'];?> Add RFID</title>
@@ -41,7 +43,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["rfBtn"])){
     <div class="row">
         <div class="col-md-12">
             <h1 class="page-header">Add RFID</h1>
-            <?php echo $_SESSION['success_msg'];?>
         </div>
         <!-- /.col-md-12 -->
     </div>
@@ -50,7 +51,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["rfBtn"])){
         <div class="col-md-8">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fa fa-wifi fa-fw"></i> Input Values
+                    <i class="fa fa-wifi fa-lg"></i> Input Values
                 </div>
                 <div class="panel-body">
                     <form onsubmit="return validateForm()" id="rfForm" method="post" autocomplete="off" action="">

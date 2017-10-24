@@ -17,7 +17,9 @@ if ($_SESSION['type'] == "end"){
     $ticket->quote();
 //} elseif ($_SESSION['type'] == "payNow") {
 } else {
-    $ticket = new Transactions(filter_input(INPUT_GET, 'trans_id', FILTER_VALIDATE_INT));
+    $ticket  = unserialize($_SESSION['ticket']);
+//} else {
+//    $ticket = new Transactions(filter_input(INPUT_GET, 'trans_id', FILTER_VALIDATE_INT));
 }
 ?>
 <title><?php echo $sv['site_name'];?> Checkout</title>
@@ -40,7 +42,7 @@ if ($_SESSION['type'] == "end"){
                     <table class ="table table-bordered">
                         <tr>
                             <td>Device</td>
-                            <td><?php echo $ticket->device->getDevice_desc(); ?></td>
+                            <td><?php echo $ticket->getDevice()->getDevice_desc(); ?></td>
                         </tr>
                         <tr>
                             <td>Time</td>

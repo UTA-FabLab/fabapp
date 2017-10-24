@@ -1,7 +1,7 @@
 <?php
 
 /*
- *  ldap.php : LDAP test 
+ *  ldap.php : LDAP test
  *
  *
 */
@@ -12,7 +12,7 @@ function AuthenticateUser($netid, $password) {
     $ldap_server = '';
     $ldap_baseDN = '';
     $ldap_bindDN = "";
-    
+
     //switch case to return roles
     switch ($netid){
         case "learner":
@@ -34,7 +34,7 @@ function AuthenticateUser($netid, $password) {
                 if (!$connection) {
                     throw new Exception(sprintf("Can't connect to '%s'.", $ldap_server), 0x5b);
                 }
-                // Bind 
+                // Bind
                 if(!@ldap_bind($connection,$ldap_bindDN,$password)) {
                     throw new Exception(@ldap_error($connection), @ldap_errno($connection));
                 }

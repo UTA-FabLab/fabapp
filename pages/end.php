@@ -4,7 +4,7 @@
  *   FabApp V 0.9
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
-$errorMsg = $hasCost = "";
+$errorMsg = "";
 $_SESSION['pickupID'] = "";
 
 //check trans_id
@@ -19,30 +19,48 @@ if (empty($_GET["trans_id"])){
         $errorMsg = $e->getMessage();
         $_SESSION['type'] = "error";
     }
-    
+    //Create backup if origin was from the home page
+    if ($ticket->getStatus()->getStatus_id() > 11){
+        $_SESSION['success_msg'] = "This Ticket ".$ticket->getTrans_id()." remains unchanged.";
+        header("Location:/pages/lookup.php?trans_id=".$ticket->getTrans_id());
+        exit();
+    }
     if ( $_SESSION['type'] == "home" && !isset($_POST['undoBtn'])){
-        //create backup
         $_SESSION['ticket'] = serialize($ticket);
+    }
     
-        //Assumes the ticket already has MU added to it or NONE
-        $device_mats = Materials::getDeviceMats($ticket->getDevice()->getDg()->getDg_id());
-        if ($ticket->getDevice()->getDg()->getSelectMatsFirst() == "Y" || count($device_mats) == 0) {
-            //Try to end ticket, if there are no associated costs
-            $status_id = 14; //Set to Complete
-            $end_result = $ticket->end($status_id, $staff);
-            if(is_string($end_result)){
-                $errorMsg = $end_result;
-            } elseif ($end_result) {
-                $_SESSION['type'] = "end";
-            } else {
-                //end_result must be false and there for there are costs associated with operation the equipment itself
-                $hasCost = $ticket->quote();
+    //Determine if any material needs to be measured
+    $measurable = "N";
+    $device_mats = Materials::getDeviceMats($ticket->getDevice()->getDg()->getDg_id());
+    if ($ticket->getDevice()->getDG()->getSelectMatsFirst() == "Y" && count($device_mats) > 0){
+        foreach($ticket->getMats_used() as $mu){
+            if ($mu->getMaterial()->getMeasurable() == "Y") {
+                $measurable = "Y";
+                break;
             }
-        } else {
-            //There might be materials that we need to add to this ticket
-            //Ticket set end time and duration, determine if there are costs
-            $hasCost = $ticket->quote();
         }
+        foreach($device_mats as $mu){
+            if ($mu->getMeasurable() == "Y") {
+                $measurable = "Y";
+                break;
+            }
+        }
+    }
+    
+    $hasCost = $ticket->quote();
+    if ($measurable == "N" && $hasCost < .005) {
+        $msg = "";
+        //No Mats or costs associated with this ticket
+        $msg = $ticket->end(14, $staff);
+        if (is_string($msg)){
+            $errorMsg = $msg;
+        } else {
+            $_SESSION['type'] = "end";
+            header("Location:/pages/lookup.php?trans_id=".$ticket->getTrans_id());
+            exit();
+        }
+    } else {
+        $errorMsg = "No End";
     }
     
 } else {
@@ -59,6 +77,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($errorMsg == "")) {
             $backup = unserialize($_SESSION['ticket']);
             //echo( "Lets undo this ticket ".$backup->getTrans_id() );
             
+            //Test if Back->trans_id() == $_GET['trans_id'] 
+           
             if ($backup->writeAttr() === true){
                 $_SESSION['ticket'] = null;
                 $_SESSION['prev_msg'] = "Ticket #".$backup->getTrans_id()." has been restored.";
@@ -181,69 +201,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($errorMsg == "")) {
 
 if ($errorMsg != ""){
     //Display Error Msg as JS alert
-    //echo "<script> alert('$errorMsg'); window.location='/pages/end.php?trans_id=".$ticket->getTrans_id()."';</script>";
+    //Removed Redirect as it creates a possible infinite loop
     echo "<script type='text/javascript'> window.onload = function(){goModal('ERROR',\"$errorMsg\", false)}</script>";
-}
-
-function move($user){
-    
-    if ($ticket->getStatus()->getStatus_id() == 12){ //Failed
-        
-        //check string for length
-        
-        //Write Failed Ticket to the DB
-        foreach($ticket->getMats_used() as $mu){
-            $msg = $mu->updateUsed($staff);
-            if (is_string($msg)){
-                $errorMsg = $msg;
-                return;
-            }
-        }
-        
-    } elseif ($status_id == 14){
-        // Status was set to complete, Insert into ObjBox
-        // Send to look up page to view Address
-        $errorMsg = $ticket->writeAttr();
-        if (is_string($errorMsg)){
-            return $errorMsg;
-        }
-        
-        //Write Materials Used to the DB
-        foreach($ticket->getMats_used() as $mu){
-            $msg = $mu->updateUsed($staff);
-            if (is_string($msg)){
-                $errorMsg = $msg;
-                return;
-            }
-        }
-
-        //Make a home for an Object to be placed into storage
-        $msg = ObjBox::insert_Obj($ticket->getTrans_id(), $staff);
-        if (is_string($msg)){
-            return $msg; // exit because ObjBox has Error
-        }
-		
-    } elseif ($status_id == 15 || $status_id == 20) {
-        //Cancelled or Pay Now
-
-        //send page to the payment
-        
-        //check if user is authorized to pickup print
-        $msg = AuthRecipients::validatePickUp($ticket, $user);
-        if (is_string($msg)) {
-            $errorMsg = $msg;
-            return;
-        } elseif ($msg === true) {
-            $_SESSION['pickupID'] = $user;
-        }
-        
-        //Pass Object to be updated upon Successful payment
-        $_SESSION['ticket'] = serialize($ticket);
-        header('Location:/pages/checkout.php');
-        
-    } else {
-        $errorMsg = "Invalid Status - E189";
-    }
 }
 ?>
 <title><?php echo $sv['site_name'];?> End Ticket</title>
@@ -256,7 +215,7 @@ function move($user){
                 echo "<h1 class='page-header'>Not Authorized To End Ticket</h1> You must be either staff or closing your own ticket.";
             } else {
                 echo "<h1 class='page-header'>End Ticket</h1>";
-            } ?>
+            } print "<br>Cost:".$hasCost;?>
         </div>
         <!-- /.col-lg-12 -->
     </div>

@@ -34,7 +34,7 @@
 
     public static function withRF($rfid_no){
         $instance = new self();
-        if (!$this->regexRFID($rfid_no)){
+        if (!self::regexRFID($rfid_no)){
             return "Invalid RFID Number";
         }
         $instance->createWithRF($rfid_no);
@@ -154,7 +154,7 @@
         ")){
             if ($result->num_rows > 0){
                 $row = $result->fetch_assoc();
-                return "This RFID has already been assinged to ".$row['operator'];
+                return "This RFID #$rfid_no has already been assinged to ".$row['operator'];
             }
         }
         
@@ -165,7 +165,7 @@
             if ($stmt->execute() === true ){
                 $row = $stmt->affected_rows;
                 $stmt->close();
-                $this->rfid_no = $rfid;
+                $this->rfid_no = $rfid_no;
                 if ($row == 1){
                 } else {
                     return "Users: insertRFID Count Error ".$row;
@@ -178,12 +178,13 @@
         }
         
         //Maybe Move this Logic into it's own function
-        $staff_id = $staff->getOperator();
+        $operator = $this->getOperator();
+		$staff_id = $staff->getOperator();
         //Check if User is already in table
         if ($result = $mysqli->query("
             SELECT *
             FROM `users`
-            WHERE `operator` = $staff_id;
+            WHERE `operator` = $operator;
         ")){
             if ($result->num_rows == 0){
                 //Define User in table and assign default Role
@@ -355,7 +356,7 @@
         global $mysqli;
         global $sv;
         
-        if ($staff->getRoleID() < $sv['editRFID']){
+        if ($staff->getRoleID() < $sv['editRfid']){
             return "Insufficient role to update RFID";
         }
         if ($this->rfid_no == $rfid_no){
@@ -367,7 +368,7 @@
             SET `rfid_no` = ?
             WHERE `operator` = ?;
         ")){
-            $stmt->bind_param("ss", $rfid, $this->operator);
+            $stmt->bind_param("ss", $rfid_no, $this->operator);
             if ($stmt->execute() === true ){
                 $row = $stmt->affected_rows;
                 $stmt->close();
@@ -377,8 +378,10 @@
                 } else {
                     return "Users: updateRFID Count Error";
                 }
-            } else
-                return "Users: updateRFID Execute Error";
+            } else {
+                //return "Users: updateRFID Execute Error";
+				return $stmt->error;
+			}
         } else {
             return "Error in preparing Users: updateRFID statement";
         }

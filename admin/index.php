@@ -1,5 +1,10 @@
 <?php
 include ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
+if (!$staff || $staff->getRoleID() < 7){
+    //Not Authorized to see this Page
+    header("Location: /index.php");
+	exit();
+}
 ?>
 <title><?php echo $sv['site_name'];?> Admin</title>
 <div id="page-wrapper">

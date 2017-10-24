@@ -66,7 +66,6 @@ class Transactions {
     public function end($status_id, $staff){
         global $mysqli;
         global $sv;
-        $hasCost = false;
         $this->setStaff($staff);
         $this->setStatus_id($status_id);
         
@@ -136,25 +135,22 @@ class Transactions {
         //If there is a remaining balance, exit
         //Sets Duration & end time
         $total = $this->quote();
-        if (abs ($total - 0.001) > .005){
+        if (abs($total - 0.001) > .005){
             debug("Total $total");
             return false;
             //return "$".$total;
         }
 
-        //If device group is storable, use move instead
-        if($this->getDevice()->getDg()->getStorable() == "Y"){
-            debug("storable = Y");
-            return false;
-        }
-
         if( $staff->getRoleID() < $sv['LvlOfStaff'] && $staff->getOperator() != $this->getUser()->getOperator()){
-            //Complete Status - no costs
-            //$this->setStatus_id(14);
+            //The closing ID must be a certain level
+            //Or they must not be closing their own ticket
             return "You are unable to close this ticket ".$this->getTrans_id();
         }
         
-        $this->writeAttr();
+        $msg = $this->writeAttr();
+        if (is_string($msg)){
+            return $msg;
+        }
         foreach ($this->getMats_used() as $mu){
             $msg = $mu->end($this->getStatus()->getStatus_id(), $staff);
             if (is_string($msg)){
@@ -237,7 +233,7 @@ class Transactions {
     public function getT_end() {
         global $sv;
         if (strcmp($this->t_end, "") == 0)
-                return "";
+            return "";
         return date($sv['dateFormat'],strtotime($this->t_end));
     }
 
@@ -498,11 +494,16 @@ class Transactions {
         else 
             $duration = "'$this->duration'";
         
+        if (strcmp($this->purpose->getP_id(), "") == 0)
+            $purpose = "NULL";
+        else 
+            $purpose = "'".$this->purpose->getP_id()."'";
+        
         if($mysqli->query("
             UPDATE `transactions`
             SET `d_id` = '".$this->device->getD_id()."', `operator` = '".$this->user->getOperator()."', `est_time` = $est_time,
                 `t_start` = '$this->t_start', `t_end` = $t_end, `duration` = $duration,
-                `status_id` = '".$this->status->getStatus_id()."', `p_id` = '".$this->purpose->getP_id()."', `staff_id` = ".$this->staff->getOperator()."
+                `status_id` = '".$this->status->getStatus_id()."', `p_id` = $purpose, `staff_id` = ".$this->staff->getOperator()."
             WHERE `trans_id` = '$this->trans_id'
             LIMIT 1;
         ")){
