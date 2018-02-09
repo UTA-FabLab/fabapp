@@ -39,7 +39,7 @@ body {
   display: inline-block;
 }
 .navbar-top-links li:last-child {
-  margin-right: 15px;
+  margin-right: 0px;
 }
 .navbar-top-links li a {
   padding: 15px;
@@ -96,13 +96,13 @@ body {
 .sidebar ul li a.active {
   background-color: #eeeeee;
 }
-.sidebar .arrow {
+.sidebar .fa-angle-left {
   float: right;
 }
-.sidebar .fa.arrow:before {
+.sidebar .fas.fa-angle-left:before {
   content: "\f104";
 }
-.sidebar .active > a > .fa.arrow:before {
+.sidebar .active > a > .fas.fa-angle-left:before {
   content: "\f107";
 }
 .sidebar .nav-second-level li,

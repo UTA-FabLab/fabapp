@@ -2,7 +2,7 @@
 
 /*
  * License - FabApp V 0.9
- * 2016-2017 CC BY-NC-AS UTA FabLab
+ * 2016-2018 CC BY-NC-AS UTA FabLab
  */
 
 /**
@@ -17,8 +17,18 @@ class AuthRecipients {
     //Check if ID can pickup object
     public static function validatePickUp($ticket, $user){
 	global $mysqli;
-        $trans_id = $ticket->getTrans_id();
-        $operator = $user->getOperator();
+        
+        if (is_object($ticket)){
+            $trans_id = $ticket->getTrans_id();
+        } else {
+            $trans_id = $ticket;
+        }
+        if (is_object($user)){
+            $operator = $user->getOperator();
+        } else {
+            $operator = $user;
+        }
+        
         
         if ($ticket->getUser()->getOperator() == $operator) {
             return true;
@@ -31,7 +41,7 @@ class AuthRecipients {
             LIMIT 1;
         ")){
             if(($result->num_rows) == 0){
-                return "ID:$operator is not authorized to claim this object.";
+                return "ID: $operator is not authorized to claim this object.";
             }
         } else {
             return "AuthRecip Error - ar1836";

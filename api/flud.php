@@ -1,6 +1,6 @@
 <?php
 /*
- *  CC BY-NC-AS UTA FabLab 2016-2017
+ *  CC BY-NC-AS UTA FabLab 2016-2018
  *
  *  flud.php : Fab Lab User Data
  *
@@ -9,7 +9,7 @@
  *
  *  Jonathan Le & Arun Kalahasti
  *  FabLab @ University of Texas at Arlington
- *  version: 0.9 beta (2017-09-15)
+ *  version: 0.9 beta (2018-01-18)
  *
 */
 
@@ -21,8 +21,7 @@
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST");
 header("Access-Control-Allow-Headers: Cache-Control, Origin, X-Requested-With, Content-Type, Accept, Key, X-Api-Key, Authorization");
-// Tell PHP what time zone before doing any date function foo 
-date_default_timezone_set('America/Chicago');
+
 require_once($_SERVER['DOCUMENT_ROOT']."/connections/db_connect8.php");
 include_once ($_SERVER['DOCUMENT_ROOT'].'/class/all_classes.php');
 include_once 'gatekeeper.php';

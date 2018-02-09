@@ -117,6 +117,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             echo "<script> alert('insert id is $result')</script>";
             header("Location:manage_trainings.php?edit=$result");
             $_SESSION['type'] = 'success';
+			exit();
         } else {
             //error detected
            echo "<script> alert(\"Invalid Input - $result\")</script>";
@@ -166,13 +167,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <div class="col-md-9">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            <i class="fa fa-search fa-lg"></i>
+                            <i class="fas fa-search fa-lg"></i>
                             <?php if( preg_match('(input_add)', $_SESSION['type']) ){
                                 echo "Add Training Module to $device";
                             } else {
                                 echo "Edit Training Module for $device";
                             }?>
-                                <div class="pull-right"> <a href='/admin/manage_trainings.php'><i class="fa fa-mail-reply fa-lg"></i>Go Back</a> </div>
+                                <div class="pull-right"> <a href='/admin/manage_trainings.php'><i class="fas fa-reply fa-lg"></i>Go Back</a> </div>
                         </div>
                         <div class="panel-body">
                             <table class="table table-striped table-bordered"><form method="post" action="" autocomplete='off' id="tmForm">
@@ -264,7 +265,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <div class="col-md-3">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            <i class="fa fa-table fa-lg"></i> Stats for this class
+                            <i class="fas fa-table fa-lg"></i> Stats for this class
                         </div>
                         <div class="panel-body">
                             <table class="table table-condensed">
@@ -276,7 +277,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     ")){
                                         $row = $result->fetch_assoc()?>
                                         <tr>
-                                            <td><i class="fa fa-check-circle-o fa-lg"></i> Certificates Issued</td>
+                                            <td><i class="far fa-check-circle fa-lg"></i> Certificates Issued</td>
                                             <td><?php echo $row['count'];?></td>
                                         </tr>
                                     <?php } else { ?>
@@ -299,7 +300,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <div class="col-md-9">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            <i class="fa fa-search fa-lg"></i> Select Device or Group
+                            <i class="fas fa-search fa-lg"></i> Select Device or Group
                         </div>
                         <div class="panel-body">
                             <div align="center">
@@ -337,7 +338,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <!-- /.panel -->
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            <i class="fa fa-edit fa-lg"></i> Training Modules
+                            <i class="fas fa-edit fa-lg"></i> Training Modules
                             <div class="pull-right">
                                 <?php if($staff->getRoleID() >= $sv['minRoleTrainer']){ ?>
                                     <button type="button" id="addBtn" onclick="addTM()">Add</button>
@@ -347,6 +348,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             </div>
                         </div>
                         <div class="panel-body">
+                            <table class="table table-bordered">
+                                <tr>
+                                    <td><a href="#" data-toogle="tooltop" data-placement="top" title="All devices covered by this Device Group">Devices</a></td>
+                                    <td id="td_deviceList"></td>
+                                </tr>
+                            </table>
                             <table class="table table-striped table-bordered table-hover" id="tm">
                             </table>
                         </div>
@@ -358,7 +365,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <div class="col-md-3">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            <i class="fa fa-table fa-lg"></i> Total Stats
+                            <i class="fas fa-table fa-lg"></i> Total Stats
                         </div>
                         <div class="panel-body">
                             <table class="table table-condensed">
@@ -369,12 +376,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 ")){
                                     $row = $result->fetch_assoc()?>
                                     <tr>
-                                        <td><i class="fa fa-file-o fa-lg"></i> Training Modules</td>
+                                        <td><i class="far fa-file fa-lg"></i> Training Modules</td>
                                         <td><?php echo $row['count'];?></td>
                                     </tr>
                                 <?php } else { ?>
                                     <tr>
-                                        <td><i class="fa fa-file-o fa-lg"></i> Training Modules</td><td>-</td></tr>
+                                        <td><i class="far fa-file fa-lg"></i> Training Modules</td><td>-</td></tr>
                                 <?php } 
                                 if($result = $mysqli->query("
                                         SELECT count(*) as count
@@ -383,7 +390,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 ")){
                                     $row = $result->fetch_assoc()?>
                                     <tr>
-                                        <td><i class="fa fa-check-circle-o fa-lg"></i> Certificates Issued</td>
+                                        <td><i class="far fa-check-circle fa-lg"></i> Certificates Issued</td>
                                         <td><?php echo $row['count'];?></td>
                                     </tr>
                                 <?php } else { ?>
@@ -512,6 +519,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         } else if (element.id === 'dg_id') {
             document.getElementById("d_id").selectedIndex = 0;
         }
+        document.getElementById("td_deviceList").innerHTML = "";
 
         if (window.XMLHttpRequest) {
             // code for IE7+, Firefox, Chrome, Opera, Safari
@@ -528,6 +536,24 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         device = element.id + "=" + element.value
         xmlhttp.open("GET","sub/getTM.php?" + device,true);
         xmlhttp.send();
+        //List Devices
+        if (element.id == 'dg_id') {
+            if (window.XMLHttpRequest) {
+                // code for IE7+, Firefox, Chrome, Opera, Safari
+                xmlhttp2 = new XMLHttpRequest();
+            } else {
+                // code for IE6, IE5
+                xmlhttp2 = new ActiveXObject("Microsoft.XMLHTTP");
+            }
+            xmlhttp2.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    document.getElementById("td_deviceList").innerHTML = this.responseText;
+                }
+            };
+            device = element.id + "=" + element.value;
+            xmlhttp2.open("GET","sub/certDevices.php?" + device,true);
+            xmlhttp2.send();
+        }
     }
     
     function success(){
