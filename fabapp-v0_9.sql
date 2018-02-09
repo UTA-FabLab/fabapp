@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 05, 2017 at 09:11 PM
+-- Generation Time: Feb 09, 2018 at 02:31 PM
 -- Server version: 5.7.14
 -- PHP Version: 5.6.25
 
@@ -19,8 +19,6 @@ SET time_zone = "+00:00";
 --
 -- Database: `fabapp-v0.9`
 --
-CREATE DATABASE IF NOT EXISTS `fabapp-v0.9` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
-USE `fabapp-v0.9`;
 
 -- --------------------------------------------------------
 
@@ -31,7 +29,7 @@ USE `fabapp-v0.9`;
 CREATE TABLE `accounts` (
   `a_id` int(11) NOT NULL,
   `name` varchar(50) NOT NULL,
-  `acct` varchar(50) NOT NULL,
+  `description` varchar(140) NOT NULL,
   `balance` decimal(6,2) NOT NULL,
   `operator` varchar(10) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -40,11 +38,11 @@ CREATE TABLE `accounts` (
 -- Dumping data for table `accounts`
 --
 
-INSERT INTO `accounts` (`a_id`, `name`, `acct`, `balance`, `operator`) VALUES
-(1, 'Outstanding', 'Outstanding charge, Payment required', '0.00', '1000129288'),
-(2, 'CSGold', 'CSGold Account', '0.00', '1000129288'),
-(3, 'FabLab', 'FabLab\'s in-House Charge Account', '0.00', '1000129288'),
-(4, 'Library UES', '1000ABC', '0.00', '1000129288');
+INSERT INTO `accounts` (`a_id`, `name`, `description`, `balance`, `operator`) VALUES
+(1, 'Outstanding', 'Outstanding charge, Payment is due', '0.50', '1000129288'),
+(2, 'CSGold', 'CSGold Account', '0.65', '1000129288'),
+(3, 'FabLab', 'FabLab\'s in-House Charge Account', '0.25', '1000129288'),
+(4, 'Library', 'General Library Account', '0.00', '1000129288');
 
 -- --------------------------------------------------------
 
@@ -55,15 +53,16 @@ INSERT INTO `accounts` (`a_id`, `name`, `acct`, `balance`, `operator`) VALUES
 CREATE TABLE `acct_charge` (
   `ac_id` int(11) NOT NULL,
   `a_id` int(11) NOT NULL,
-  `trans_id` int(11) NOT NULL,
+  `trans_id` int(11) DEFAULT NULL,
   `ac_date` datetime NOT NULL,
   `operator` varchar(10) NOT NULL,
   `staff_id` varchar(10) NOT NULL,
   `amount` decimal(7,2) NOT NULL,
+  `ac_notes` text,
   `recon_date` datetime DEFAULT NULL,
-  `recon_id` varchar(10) DEFAULT NULL,
-  `ac_notes` text
+  `recon_id` varchar(10) DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
 
 -- --------------------------------------------------------
 
@@ -76,7 +75,6 @@ CREATE TABLE `authrecipients` (
   `trans_id` int(11) NOT NULL,
   `operator` varchar(10) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
 
 -- --------------------------------------------------------
 
@@ -92,7 +90,6 @@ CREATE TABLE `auth_accts` (
   `aa_date` datetime NOT NULL,
   `staff_id` varchar(10) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
 
 -- --------------------------------------------------------
 
@@ -115,7 +112,8 @@ INSERT INTO `carrier` (`ca_id`, `provider`, `email`) VALUES
 (2, 'Verizon', 'number@vtext.com'),
 (3, 'T-Mobile', 'number@tmomail.net'),
 (4, 'Sprint', 'number@messaging.sprintpcs.com'),
-(5, 'Virgin Mobile', 'number@vmobl.com');
+(5, 'Virgin Mobile', 'number@vmobl.com'),
+(6, 'Prject Fi', 'number@msg.fi.google.com');
 
 -- --------------------------------------------------------
 
@@ -157,26 +155,25 @@ CREATE TABLE `devices` (
 --
 
 INSERT INTO `devices` (`d_id`, `device_id`, `public_view`, `device_desc`, `d_duration`, `base_price`, `dg_id`, `url`, `device_key`, `salt_key`, `exp_key`) VALUES
-(1, '0001', 'N', 'Bandsaw', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
-(2, '0002', 'N', 'Bench Grinder', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
+(1, '0001', 'Y', 'Bandsaw', '00:00:00', '0.00000', 20, NULL, '', '', NULL),
+(2, '0002', 'Y', 'Bench Grinder', '00:00:00', '0.00000', 18, NULL, '', '', NULL),
 (3, '0003', 'Y', 'Brother Embroider', '00:00:00', '0.00000', 11, NULL, '', '', NULL),
-(4, '0004', 'Y', 'CNC Plasma Cutter', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
-(5, '0005', 'N', 'Commercial Blender', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
-(6, '0006', 'N', 'Compound Miter Saw', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
-(7, '0007', 'N', 'Disc Sander', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
-(8, '0008', 'N', 'EDM Machine', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
+(4, '0004', 'Y', 'Plasma Cutter', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
+(6, '0006', 'Y', 'Compound Miter Saw', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
+(7, '0007', 'Y', 'Disc/Belt Sander Grizzly', '00:00:00', '0.00000', 18, NULL, '', '', NULL),
+(48, '0048', 'Y', 'Drill Press Ryobi', '00:00:00', '0.00000', 19, NULL, '', '', NULL),
 (9, '0009', 'Y', 'Janome Serger #1', '00:00:00', '1.00000', 10, NULL, '', '', NULL),
 (10, '0010', 'Y', 'Janome Serger #2', '00:00:00', '1.00000', 10, NULL, '', '', NULL),
 (11, '0011', 'Y', 'Janome Sewing #1', '00:00:00', '1.00000', 10, NULL, '', '', NULL),
 (12, '0012', 'Y', 'Janome Sewing #2', '00:00:00', '1.00000', 10, NULL, '', '', NULL),
-(13, '0013', 'N', 'Airbrush station', '00:00:00', '0.00000', 14, NULL, '', '', NULL),
-(14, '0014', 'N', 'Machinist\'s Drill Press', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
-(15, '0015', 'N', 'Scroll saw', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
-(16, '0016', 'N', 'Sherline CNC Mill', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
-(17, '0017', 'N', 'Sherline CNC Lathe', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
-(18, '0018', 'N', 'Shopbot Handi-bot', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
-(19, '0019', 'N', 'Shopbot PRS-Alpha ', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
-(20, '0020', 'N', 'Sawstop Table Saw', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
+(13, '0013', 'Y', 'Airbrush station', '00:00:00', '0.00000', 14, NULL, '', '', NULL),
+(14, '0014', 'Y', 'Drill Press Powermatic', '00:00:00', '0.00000', 19, NULL, '', '', NULL),
+(15, '0015', 'Y', 'Scroll Saw', '00:00:00', '0.00000', 20, NULL, '', '', NULL),
+(16, '0016', 'Y', 'Sherline CNC Mill', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
+(17, '0017', 'Y', 'Sherline CNC Lathe', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
+(18, '0018', 'Y', 'Shopbot Handi-bot', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
+(19, '0019', 'Y', 'Shopbot PRS-Alpha ', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
+(20, '0020', 'Y', 'Sawstop Table Saw', '00:00:00', '0.00000', 3, NULL, '', '', NULL),
 (21, '0021', 'Y', 'Polyprinter #1', '00:00:00', '0.00000', 2, 'polyprinter-1.uta.edu', '', '', NULL),
 (22, '0022', 'Y', 'Polyprinter #2', '00:00:00', '0.00000', 2, 'polyprinter-2.uta.edu', '', '', NULL),
 (23, '0023', 'Y', 'Polyprinter #3', '00:00:00', '0.00000', 2, 'polyprinter-3.uta.edu', '', '', NULL),
@@ -194,14 +191,16 @@ INSERT INTO `devices` (`d_id`, `device_id`, `public_view`, `device_desc`, `d_dur
 (35, '0035', 'Y', 'Boss Laser', '01:00:00', '0.00000', 4, NULL, '', '', NULL),
 (36, '0036', 'Y', 'Roland CNC Mill', '00:00:00', '0.00000', 12, NULL, '', '', NULL),
 (37, '0037', 'Y', '3D Scanner Station', '00:00:00', '0.00000', 9, NULL, '', '', NULL),
-(38, '0038', 'N', 'Glass Kiln', '00:00:00', '0.00000', 16, NULL, '', '', NULL),
-(39, '0039', 'N', 'Ceramics Kiln', '00:00:00', '0.00000', 16, NULL, '', '', NULL),
-(40, '0040', 'N', 'Mcor paper 3d printer', '00:00:00', '0.00000', NULL, NULL, '', '', NULL),
+(38, '0038', 'Y', 'Kiln Glass', '00:00:00', '0.00000', 16, NULL, '', '', NULL),
+(39, '0039', 'Y', 'Kiln Ceramics', '00:00:00', '0.00000', 16, NULL, '', '', NULL),
+(46, '0046', 'Y', 'Kiln Mix Use', '00:00:00', '0.00000', 16, NULL, '', '', NULL),
 (41, '0041', 'Y', 'Roland Vinyl Cutter', '00:00:00', '0.00000', 5, NULL, '', '', NULL),
 (42, '0042', 'Y', 'Electronics Station', '00:00:00', '0.00000', 6, NULL, '', '', NULL),
 (43, '0043', 'Y', 'uPrint SEplus', '00:00:00', '0.00000', 7, NULL, '', '', NULL),
 (44, '0044', 'Y', 'Oculus Rift', '00:00:00', '0.00000', 13, NULL, '', '', NULL),
-(45, '0045', 'Y', 'Screeny McScreen Press', '00:00:00', '0.00000', 17, NULL, '', '', NULL);
+(45, '0045', 'Y', 'Screeny McScreen Press', '00:00:00', '0.00000', 17, NULL, '', '', NULL),
+(47, '0047', 'Y', 'Disc/Belt Sander - Central Machinery', '00:00:00', '0.00000', 18, NULL, '', '', NULL),
+(49, '0049', 'Y', 'SandBlaster', '00:00:00', '0.00000', 3, NULL, '', '', NULL);
 
 -- --------------------------------------------------------
 
@@ -216,31 +215,36 @@ CREATE TABLE `device_group` (
   `dg_desc` varchar(50) NOT NULL,
   `payFirst` enum('Y','N') NOT NULL DEFAULT 'N',
   `selectMatsFirst` enum('Y','N') NOT NULL DEFAULT 'N',
-  `storable` enum('Y','N') NOT NULL DEFAULT 'N'
+  `storable` enum('Y','N') NOT NULL DEFAULT 'N',
+  `juiceboxManaged` enum('Y','N') NOT NULL DEFAULT 'N',
+  `thermalPrinterNum` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `device_group`
 --
 
-INSERT INTO `device_group` (`dg_id`, `dg_name`, `dg_parent`, `dg_desc`, `payFirst`, `selectMatsFirst`, `storable`, `measureDuration`) VALUES
-(1, '3d', NULL, '(Generic 3D Printer)', 'N', 'Y', 'Y', 'Y'),
-(2, 'poly', 1, 'PolyPrinter', 'N', 'Y', 'Y', 'Y'),
-(3, 'shop', NULL, 'Shop Room', 'N', 'N', 'N', 'N'),
-(4, 'laser', NULL, 'Laser Cutter', 'N', 'Y', 'N', 'Y'),
-(5, 'vinyl', NULL, 'Vinyl Cutter', 'N', 'N', 'N', 'Y'),
-(6, 'e_station', NULL, 'Electronics Station', 'N', 'N', 'N', 'Y'),
-(7, 'uprint', 1, 'Stratus uPrint', 'Y', 'Y', 'Y', 'Y'),
-(8, 'delta', 1, 'Delta 3D Printer', 'N', 'Y', 'Y', 'Y'),
-(9, 'scan', NULL, '3D Scan', 'N', 'N', 'N', 'Y'),
-(10, 'sew', NULL, 'Sewing Station', 'N', 'N', 'N', 'Y'),
-(11, 'embroidery', NULL, 'Embroidery Machines', 'N', 'N', 'N', 'Y'),
-(12, 'mill', NULL, 'CNC Mill', 'N', 'Y', 'N', 'Y'),
-(13, 'vr', NULL, 'VR Equipment', 'N', 'N', 'N', 'Y'),
-(14, 'air_brush', NULL, 'Air Brush Station', 'N', 'N', 'N', 'Y'),
-(15, 'NFPrinter', 1, 'Ninja Flex 3D Printer', 'N', 'Y', 'Y', 'Y'),
-(16, 'kiln', NULL, 'Electric Kilns', 'N', 'N', 'N', 'Y'),
-(17, 'screen', NULL, 'Silk Screen', 'N', 'N', 'N', 'Y');
+INSERT INTO `device_group` (`dg_id`, `dg_name`, `dg_parent`, `dg_desc`, `payFirst`, `selectMatsFirst`, `storable`, `juiceboxManaged`, `thermalPrinterNum`) VALUES
+(1, '3d', NULL, '(Generic 3D Printer)', 'N', 'Y', 'Y', 'N', 1),
+(2, 'poly', 1, 'PolyPrinter', 'N', 'Y', 'Y', 'N', 1),
+(3, 'shop', NULL, 'Shop Room', 'N', 'N', 'N', 'Y', 0),
+(4, 'laser', NULL, 'Laser Cutter', 'N', 'Y', 'N', 'N', 0),
+(5, 'vinyl', NULL, 'Vinyl Cutter', 'N', 'Y', 'N', 'N', 0),
+(6, 'e_station', NULL, 'Electronics Station', 'N', 'N', 'N', 'N', 0),
+(7, 'uprint', 1, 'Stratus uPrint', 'Y', 'Y', 'Y', 'N', 0),
+(8, 'delta', 1, 'Delta 3D Printer', 'N', 'Y', 'Y', 'N', 1),
+(9, 'scan', NULL, '3D Scan', 'N', 'N', 'N', 'N', 0),
+(10, 'sew', NULL, 'Sewing Station', 'N', 'N', 'N', 'N', 0),
+(11, 'embroidery', NULL, 'Embroidery Machines', 'N', 'N', 'N', 'N', 0),
+(12, 'mill', NULL, 'CNC Mill', 'N', 'Y', 'N', 'N', 0),
+(13, 'vr', NULL, 'VR Equipment', 'N', 'N', 'N', 'N', 0),
+(14, 'air_brush', NULL, 'Air Brush Station', 'N', 'N', 'N', 'N', 0),
+(15, 'NFPrinter', 1, 'Ninja Flex 3D Printer', 'N', 'Y', 'Y', 'Y', 0),
+(16, 'kiln', NULL, 'Electric Kilns', 'N', 'N', 'N', 'N', 0),
+(17, 'screen', NULL, 'Silk Screen', 'N', 'Y', 'N', 'N', 0),
+(18, 'sandGrind', 3, 'Sanders & Grinders', 'N', 'N', 'N', 'Y', 0),
+(19, 'drills', 3, 'Drill Presses', 'N', 'N', 'N', 'Y', 0),
+(20, 'linear_Saw', 3, 'Linear Saws', 'N', 'N', 'N', 'Y', 0);
 
 -- --------------------------------------------------------
 
@@ -259,78 +263,87 @@ CREATE TABLE `device_materials` (
 --
 
 INSERT INTO `device_materials` (`dm_id`, `dg_id`, `m_id`) VALUES
-(1, 2, 1),
-(2, 2, 13),
-(3, 2, 14),
-(4, 2, 15),
-(6, 2, 16),
-(7, 2, 17),
-(8, 2, 18),
-(9, 2, 19),
-(10, 4, 2),
-(11, 4, 5),
-(12, 4, 8),
-(13, 4, 9),
-(14, 4, 10),
-(15, 4, 11),
-(16, 4, 12),
-(17, 5, 7),
-(18, 5, 20),
-(19, 5, 21),
-(20, 5, 22),
-(21, 5, 23),
-(22, 5, 24),
-(23, 5, 25),
-(24, 5, 26),
-(25, 2, 29),
-(26, 8, 28),
-(27, 11, 52),
-(28, 16, 4),
-(29, 7, 27),
-(30, 7, 32),
-(31, 12, 1),
-(32, 12, 2),
-(33, 12, 11),
-(34, 2, 33),
-(35, 2, 34),
-(36, 2, 35),
-(37, 2, 36),
-(38, 2, 37),
-(39, 2, 38),
-(40, 2, 39),
-(41, 2, 40),
-(42, 2, 41),
-(43, 2, 42),
-(44, 5, 43),
-(45, 5, 44),
-(46, 5, 45),
-(47, 5, 46),
-(48, 5, 48),
-(49, 5, 30),
-(50, 5, 31),
-(51, 4, 53),
-(52, 15, 54),
-(53, 15, 55),
-(54, 15, 56),
-(55, 5, 57),
-(56, 5, 58),
-(57, 2, 59),
-(58, 2, 60),
-(59, 2, 61),
-(60, 2, 62),
-(61, 2, 63),
-(62, 2, 64),
-(63, 5, 65),
-(64, 5, 66),
-(65, 5, 67),
-(66, 15, 69),
-(67, 15, 70),
-(68, 15, 71),
-(69, 17, 72),
-(70, 17, 73),
-(71, 17, 74),
-(72, 17, 75),
-(73, 17, 76);
+(1, 2, 13),
+(2, 2, 14),
+(3, 2, 15),
+(4, 2, 16),
+(5, 2, 17),
+(6, 2, 18),
+(7, 2, 19),
+(8, 4, 2),
+(9, 4, 5),
+(10, 4, 8),
+(11, 4, 9),
+(12, 4, 10),
+(13, 4, 11),
+(14, 4, 12),
+(15, 5, 20),
+(16, 5, 21),
+(17, 5, 22),
+(18, 5, 23),
+(19, 5, 24),
+(20, 5, 25),
+(21, 5, 26),
+(22, 2, 29),
+(23, 8, 28),
+(24, 11, 52),
+(25, 16, 4),
+(26, 7, 27),
+(27, 7, 32),
+(28, 12, 1),
+(29, 12, 2),
+(30, 12, 11),
+(31, 2, 33),
+(32, 2, 34),
+(33, 2, 35),
+(34, 2, 36),
+(35, 2, 37),
+(36, 2, 38),
+(37, 2, 39),
+(38, 2, 40),
+(39, 2, 41),
+(40, 2, 42),
+(41, 5, 43),
+(42, 5, 44),
+(43, 5, 45),
+(44, 5, 46),
+(45, 5, 48),
+(46, 5, 30),
+(47, 5, 31),
+(48, 4, 53),
+(49, 15, 54),
+(50, 15, 55),
+(51, 15, 56),
+(52, 5, 57),
+(53, 5, 58),
+(54, 2, 59),
+(55, 2, 60),
+(56, 2, 61),
+(57, 2, 62),
+(58, 2, 63),
+(59, 2, 64),
+(60, 5, 65),
+(61, 5, 66),
+(62, 5, 67),
+(63, 15, 69),
+(64, 15, 70),
+(65, 15, 71),
+(66, 17, 68);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `error`
+--
+
+CREATE TABLE `error` (
+  `e_id` int(11) NOT NULL,
+  `e_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `page` varchar(100) NOT NULL,
+  `msg` text NOT NULL,
+  `staff_id` varchar(10) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
 
 -- --------------------------------------------------------
 
@@ -342,8 +355,8 @@ CREATE TABLE `materials` (
   `m_id` int(11) NOT NULL,
   `m_name` varchar(50) DEFAULT NULL,
   `m_parent` int(11) DEFAULT NULL,
-  `price` decimal(6,2) DEFAULT NULL,
-  `unit` varchar(10) NOT NULL,
+  `price` decimal(8,4) DEFAULT NULL,
+  `unit` varchar(50) NOT NULL,
   `color_hex` varchar(6) DEFAULT NULL,
   `measurable` enum('Y','N') NOT NULL DEFAULT 'N'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -445,49 +458,6 @@ CREATE TABLE `mats_used` (
   `mu_notes` text
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
---
--- Dumping data for table `mats_used`
---
-
-INSERT INTO `mats_used` (`mu_id`, `trans_id`, `m_id`, `unit_used`, `mu_date`, `status_id`, `staff_id`, `mu_notes`) VALUES
-(21, 43, 27, '-1.00', '2017-02-06 05:02:44', 10, '1000000009', ''),
-(22, 43, 32, '-1.00', '2017-02-06 05:02:44', 10, '1000000009', ''),
-(24, 51, 1, NULL, '2017-02-06 08:43:16', 10, '1000000009', NULL),
-(25, 52, 1, NULL, '2017-02-06 08:45:03', 10, '1000000009', NULL),
-(26, 54, 13, NULL, '2017-02-06 09:33:40', 10, '1000000009', NULL),
-(27, 55, 13, '-5.00', '2017-02-09 06:34:49', 14, '1000000009', '|file.stl|body'),
-(28, 56, 9, NULL, '2017-02-06 09:37:57', 14, '1000000009', NULL),
-(29, 59, 52, NULL, '2017-02-06 10:44:45', 10, '1000000009', NULL),
-(30, 60, 5, NULL, '2017-02-06 19:22:04', 14, '1000000009', NULL),
-(31, 62, 12, NULL, '2017-02-06 23:14:37', 14, '1000000009', NULL),
-(32, 63, 9, NULL, '2017-02-06 23:39:00', 14, '1000000009', NULL),
-(33, 64, 9, NULL, '2017-02-06 23:40:59', 14, '1000000009', NULL),
-(34, 65, 9, NULL, '2017-02-06 23:44:27', 14, '1000000009', NULL),
-(35, 66, 5, NULL, '2017-02-06 23:47:30', 14, '1000000009', NULL),
-(36, 67, 2, NULL, '2017-02-06 23:50:29', 14, '1000000009', NULL),
-(37, 68, 2, NULL, '2017-02-06 23:52:13', 14, '1000000009', NULL),
-(38, 69, 9, NULL, '2017-02-06 23:56:11', 14, '1000000009', NULL),
-(39, 70, 2, NULL, '2017-02-07 00:06:09', 14, '1000000009', NULL),
-(40, 71, 9, NULL, '2017-02-07 00:06:34', 14, '1000000009', NULL),
-(41, 72, 9, NULL, '2017-02-07 13:05:23', 14, '1000000009', NULL),
-(42, 73, 12, NULL, '2017-02-07 13:18:15', 13, '1000000008', NULL),
-(44, 55, 13, '-5.00', '2017-02-09 06:34:49', 12, '1000000009', '|file2.stl|sdfasdfasdfasdfasdf'),
-(45, 74, 62, '-50.00', '2017-02-09 07:01:22', 20, '1000000009', ''),
-(46, 75, 14, '-25.00', '2017-02-09 09:23:48', 14, '1000000009', '|Test.stl|Test Github recovery'),
-(47, 76, 37, '-5.00', '2017-02-09 20:53:38', 14, '1000000009', '|file_name.stl|Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'),
-(48, 77, 9, NULL, '2017-02-10 16:15:15', 14, '1000000009', NULL),
-(49, 78, 59, '-5.00', '2017-02-10 16:22:33', 14, '1000000009', ''),
-(50, 79, 9, NULL, '2017-02-12 10:13:26', 10, '1000000009', NULL),
-(51, 80, 42, '-5.00', '2017-02-13 18:20:56', 14, '1000000008', ''),
-(78, 83, 68, NULL, '2017-04-03 07:32:36', 10, '1000000010', NULL),
-(79, 85, 27, '-0.49', '2017-04-03 08:01:38', 20, '1000000010', ''),
-(80, 85, 32, '-0.66', '2017-04-03 08:01:38', 20, '1000000010', ''),
-(81, 86, 14, '-13.00', '2017-04-29 01:27:37', 14, '1000000010', 'This is a test3.'),
-(82, 87, 59, '-99.00', '2017-04-10 07:04:19', 12, '1000000010', 'Kill this test print.'),
-(83, 88, 14, NULL, '2017-08-16 14:22:05', 10, '1000000010', NULL),
-(84, 89, 42, NULL, '2017-08-16 14:22:42', 10, '1000000010', NULL),
-(85, 90, 64, NULL, '2017-08-16 14:23:12', 10, '1000000010', NULL),
-(86, 91, 59, NULL, '2017-08-16 14:23:39', 10, '1000000010', NULL);
 
 -- --------------------------------------------------------
 
@@ -504,20 +474,6 @@ CREATE TABLE `objbox` (
   `trans_id` int(11) DEFAULT NULL,
   `staff_id` varchar(10) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
---
--- Dumping data for table `objbox`
---
-
-INSERT INTO `objbox` (`o_id`, `o_start`, `o_end`, `address`, `operator`, `trans_id`, `staff_id`) VALUES
-(1, '2017-02-09 00:34:49', NULL, '3E', NULL, 55, '1000000009'),
-(2, '2017-02-09 01:01:22', NULL, '2D', NULL, 74, '1000000009'),
-(3, '2017-02-09 03:23:48', NULL, '3A', NULL, 75, '1000000009'),
-(4, '2017-02-09 14:53:38', NULL, '3F', NULL, 76, '1000000006'),
-(5, '2017-02-10 10:22:33', NULL, '4D', NULL, 78, '1000000009'),
-(6, '2017-02-13 12:20:56', NULL, '2B', NULL, 80, '1000000010'),
-(8, '2017-04-03 11:54:44', NULL, '5D', NULL, 81, '1000000010'),
-(12, '2017-04-28 20:27:37', NULL, '4F', NULL, 86, '1000000010');
 
 -- --------------------------------------------------------
 
@@ -590,14 +546,16 @@ CREATE TABLE `rfid` (
 --
 
 INSERT INTO `rfid` (`rf_id`, `rfid_no`, `operator`) VALUES
-(7, '20422415733', '1000000002'),
-(8, '769918733', '1000000003'),
-(9, '10818417333', '1000000004'),
-(10, '1728117533', '1000000005'),
-(11, '17819818469', '1000000006'),
-(12, '1212215733', '1000000008'),
-(13, '15817918469', '1000000009'),
-(14, '132137203252', '1000000010');
+(2, '12421415533', '1000000001'),
+(3, '20422415733', '1000000002'),
+(4, '769918733', '1000000003'),
+(5, '10818417333', '1000000004'),
+(6, '1728117533', '1000000005'),
+(7, '17819818469', '1000000006'),
+(8, '2518618469', '1000000007'),
+(9, '1212215733', '1000000008'),
+(10, '15817918469', '1000000009'),
+(11, '132137203252', '1000000010');
 
 -- --------------------------------------------------------
 
@@ -620,10 +578,10 @@ INSERT INTO `role` (`r_id`, `title`, `lvl_desc`, `r_rate`) VALUES
 (1, 'Visitor', 'Non-member lvl', '0.00'),
 (2, 'Learner', 'Student Level Membership', '0.00'),
 (3, 'Learner-RFID', 'Learner\'s with RFID access', '2.00'),
-(4, 'Community Member', 'Non-Student, 4 Month Membership', '10.00'),
+(4, 'Community Member', 'Non-Student', '10.00'),
 (7, 'Service', 'Service technicians that need to work on FabLab Equipment', '0.00'),
 (8, 'FabLabian', 'Student Worker', '0.00'),
-(9, 'LeadFabLabian', 'Student Lead', '0.00'),
+(9, 'SuperFabLabian', 'Student Worker Supervisor ', '0.00'),
 (10, 'Admin', 'Administration', '0.00');
 
 -- --------------------------------------------------------
@@ -687,8 +645,8 @@ INSERT INTO `site_variables` (`id`, `name`, `value`, `notes`) VALUES
 (4, 'box_number', '4', 'Number of Box used for object storage'),
 (5, 'letter', '7', 'Number of Rows in each Box'),
 (6, 'grace_period', '300', 'Grace period allotted to each Ticket(sec)'),
-(7, 'limit', '300', '(seconds) 5 minutes before auto-logout'),
-(8, 'limit_long', '6000', '(seconds) 100 minutes before auto-logout'),
+(7, 'limit', '180', '(seconds) 3 minutes before auto-logout'),
+(8, 'limit_long', '600', '(seconds) 10 minutes before auto-logout'),
 (9, 'maxHold', '14', '# of Days for Holding Period for 3D prints'),
 (10, 'serving', '0', 'Now serving number such and such'),
 (11, 'Lserving', '0', 'Now serving number such and such'),
@@ -701,18 +659,22 @@ INSERT INTO `site_variables` (`id`, `name`, `value`, `notes`) VALUES
 (18, 'inspectPrint', 'Once a print has been picked up & paid for we can not issue a refund.', 'Disclosure for picking up a 3D Print'),
 (19, 'site_name', 'FabApp', 'Name of site owner'),
 (20, 'paySite', 'https://csgoldweb.uta.edu/admin/quicktran/main.php', '3rd party Pay System. (CsGold)'),
-(21, 'paySite_name', 'CsGold', '3rd party pay site'),
+(21, 'paySite_name', 'CS Gold', '3rd party pay site'),
 (22, 'interdepartmental', 'Library Interdepartmental', ''),
-(23, 'currency', 'dollar', 'Icon as Defined by Font Awesome'),
+(23, 'currency', 'fas fa-dollar-sign', 'Icon as Defined by Font Awesome'),
 (24, 'LvlOfStaff', '8', 'First role level ID of staff.'),
 (25, 'minRoleTrainer', '10', 'Minimum Role Level of Trainer, below this value you can not issue a training.'),
 (26, 'editTrans', '9', ' Role level required to edit a Transaction'),
-(27, 'api_key', 'opensaysame', 'Temp fix to secure FLUD script'),
-(28, 'acct3', '8', 'At what level can a user use the house account.'),
-(29, 'acct4', '8', 'At what level can a user use the generic department account.'),
+(27, 'api_key', 'HDVmyqkZB5vsPQGAKwpLtPPQ8Pauy5DMVWsefcBVsbzv9AQnrJFhyAuqBhLCL9r8AFxtDAgjc7Qjf8bdL9eaAXd7VnejU7DHw', 'Temp fix to secure FLUD script'),
+(28, 'acct3', '9', 'At what level can a user use the house account.'),
+(29, 'acct4', '9', 'At what level can a user use the generic department account.'),
 (30, 'dateFormat', 'M d, Y g:i a', 'format the date using Php\'s date() function.'),
 (31, 'timezone', 'America/Chicago', 'Set Local Time Zone'),
-(32, 'timeInterval', '.25', 'Minimum time unit of an hour.');
+(32, 'timeInterval', '.25', 'Minimum time unit of an hour.'),
+(33, 'editRole', '10', 'Level of Staff Required to edit RoleID'),
+(34, 'editRfid', '10', 'Level of Staff Required to edit RFID'),
+(35, 'lastRfid', '624918469', 'This is the last RFID that was scanned by the JuiceBox.'),
+(36, 'ShareAccts', '10', 'Role level required to Share their Accounts for any purpose');
 
 -- --------------------------------------------------------
 
@@ -759,7 +721,6 @@ CREATE TABLE `time_clock` (
   `duration` time DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-
 -- --------------------------------------------------------
 
 --
@@ -778,14 +739,6 @@ CREATE TABLE `tm_enroll` (
   `expiration_date` datetime DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
---
--- Dumping data for table `tm_enroll`
---
-
-INSERT INTO `tm_enroll` (`tm_id`, `operator`, `completed`, `staff_id`, `current`, `altered_date`, `altered_notes`, `altered_by`, `expiration_date`) VALUES
-(2, '1000000000', '2017-08-17 07:26:54', '1000000009', 'Y', NULL, NULL, NULL, NULL),
-(12, '1000000000', '2017-08-18 11:42:33', '1000000010', 'N', NULL, NULL, NULL, NULL),
-(2, '1000000001', '2017-09-05 15:48:46', '1000000010', 'Y', NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -807,26 +760,6 @@ CREATE TABLE `trainingmodule` (
   `tm_stamp` datetime NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
---
--- Dumping data for table `trainingmodule`
---
-
-INSERT INTO `trainingmodule` (`tm_id`, `title`, `tm_desc`, `duration`, `d_id`, `dg_id`, `tm_required`, `file_name`, `file_bin`, `class_size`, `tm_stamp`) VALUES
-(1, 'CNC Room', 'General Training for initial access into the CNC Room. Additional training is require to use the power tools located inside of this facility.', '00:00:00', NULL, 3, 'Y', NULL, NULL, 4, '2017-07-20 12:54:36'),
-(2, 'Bandsaw Training', 'Required Training for use of the Bandsaw. Covers safety, basic mechanics, and basic methods.', '01:15:00', 1, NULL, 'N', NULL, NULL, 4, '2017-08-18 10:54:59'),
-(3, 'Grinding Basics', 'Required Training for the Bench Top Grinder. Covers basic safety standards, approved materials, maintenance requirements, Required Training for the Bench Top Grinder. Covers basic safety standards, approved materials, maintenance requirements, Required Training for the Bench Top Grinder. Covers basic safety standards, approved materials, maintenance requirements, Required Training for the Bench Top Grinder. Covers basic safety standards, approved materials, maintenance requirements, Required Training for the Bench Top Grinder. Covers basic safety standards, approved materials, maintenance requirements, Required Training for the Bench Top Grinder. Covers basic safety standards, approved materials, maintenance requirements, Required Training for the Bench Top Grinder. Covers basic safety standards, approved materials, maintenance requirements, ', '01:15:00', 2, NULL, 'Y', NULL, NULL, 4, '2017-07-20 12:54:36'),
-(4, 'CNC Plasma Cutter Training', 'Learn the how to use the power of plasma to cut through the toughest of materials', '02:00:00', 4, NULL, 'Y', NULL, NULL, 4, '2017-07-20 12:54:36'),
-(5, 'Sliding Compound Miter Saw Training', 'Learn safe operating procedures, how to setup miter saw for various cutting operations, and to recognize dangerous situations and their potential ramifications...', '01:45:00', 6, NULL, 'Y', NULL, NULL, 4, '2017-08-17 21:33:24'),
-(6, 'Test Device Trainings', 'asdfsdf', '02:00:00', NULL, 50, 'N', NULL, NULL, 4, '2017-07-20 12:54:36'),
-(13, 'test2', 'asdfsdf', '00:15:00', 2, NULL, 'Y', NULL, NULL, 1, '2017-07-20 12:54:36'),
-(12, 'Benchy 6', 'A deeper dive into what to grind and how to do it.', '01:45:00', 2, NULL, 'Y', NULL, NULL, 6, '2017-07-20 13:01:50'),
-(14, 'Test 3', 'asdfsdf', '01:00:00', 2, NULL, 'Y', NULL, NULL, 1, '2017-07-20 12:54:36'),
-(15, 'Test 4', 'asdfsdf', '00:30:00', 2, NULL, 'N', NULL, NULL, 3, '2017-07-20 12:54:36'),
-(16, 'Test 5', 'asdfsdf', '03:30:00', 2, NULL, 'Y', NULL, NULL, 1, '2017-07-20 12:54:36'),
-(17, '345345', 'asdfgdfgd', '01:00:00', 2, NULL, 'N', NULL, NULL, 2, '2017-07-20 12:54:36'),
-(18, '345345', 'adsfgdfg', '01:00:00', 2, NULL, 'Y', NULL, NULL, 1, '2017-07-20 12:54:36'),
-(19, '34534534', 'dfgdfg', '01:00:00', 2, NULL, 'Y', NULL, NULL, 1, '2017-07-20 12:55:12'),
-(20, 'Painting with Air', 'STUFF', '02:00:00', 13, NULL, 'Y', NULL, NULL, 3, '2017-09-05 15:52:13');
 
 -- --------------------------------------------------------
 
@@ -847,57 +780,6 @@ CREATE TABLE `transactions` (
   `staff_id` varchar(10) DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
---
--- Dumping data for table `transactions`
---
-
-INSERT INTO `transactions` (`trans_id`, `d_id`, `operator`, `est_time`, `t_start`, `t_end`, `duration`, `status_id`, `p_id`, `staff_id`) VALUES
-(76, 21, '1000000000', '05:00:00', '2017-02-09 14:53:08', '2017-02-09 14:53:38', '00:00:30', 14, 1, '1000000009'),
-(77, 34, '1000000000', '01:00:00', '2017-02-10 10:15:15', '2017-02-10 10:17:26', '00:02:11', 14, 1, '1000000009'),
-(75, 21, '1000000021', '04:00:00', '2017-02-09 03:23:16', '2017-02-09 03:23:48', '00:00:32', 14, 1, '1000000009'),
-(73, 34, '1000000034', '01:00:00', '2017-02-07 07:18:16', '2017-02-07 07:18:20', '00:00:04', 14, 2, '1000000009'),
-(74, 21, '1000000000', '10:00:00', '2017-02-09 01:00:59', '2017-02-09 01:01:22', '00:00:23', 20, 1, '1000000009'),
-(72, 34, '1000000000', '01:00:00', '2017-02-07 07:05:23', '2017-02-07 07:05:28', '00:00:05', 14, 3, '1000000009'),
-(71, 35, '1000000001', '01:00:00', '2017-02-06 18:06:34', '2017-02-13 12:35:36', '162:29:02', 14, 1, '1000000001'),
-(70, 35, '1000000000', '01:00:00', '2017-02-06 18:06:09', '2017-02-06 18:06:13', '00:00:04', 14, 1, '1000000009'),
-(69, 35, '1000000000', '01:00:00', '2017-02-06 17:56:11', '2017-02-06 17:56:15', '00:00:04', 14, 2, '1000000009'),
-(68, 35, '1000000000', '01:00:00', '2017-02-06 17:52:13', '2017-02-06 17:52:18', '00:00:05', 14, 1, '1000000009'),
-(67, 35, '1000000000', '01:00:00', '2017-02-06 17:50:29', '2017-02-06 17:50:55', '00:00:26', 14, 1, '1000000009'),
-(66, 35, '1000000000', '01:00:00', '2017-02-06 17:47:30', '2017-02-06 17:47:35', '00:00:05', 14, 1, '1000000009'),
-(65, 35, '1000000000', '01:00:00', '2017-02-06 17:44:27', '2017-02-06 17:44:31', '00:00:04', 14, 1, '1000000009'),
-(64, 35, '1000000000', '01:00:00', '2017-02-06 17:40:59', '2017-02-06 17:41:03', '00:00:04', 14, 1, '1000000009'),
-(63, 35, '1000000000', '01:00:00', '2017-02-06 17:39:00', '2017-02-06 17:39:07', '00:00:07', 14, 1, '1000000009'),
-(62, 35, '1000000035', '01:00:00', '2017-02-06 17:14:37', '2017-02-06 17:14:41', '00:00:04', 14, 1, '1000000009'),
-(61, 4, '1000000004', '01:00:00', '2017-02-06 16:48:31', '2017-02-06 16:57:54', '00:09:23', 14, 1, '1000000009'),
-(60, 34, '1000000000', '01:00:00', '2017-02-06 13:22:04', '2017-02-06 16:40:23', '03:18:19', 14, 1, '1000000009'),
-(59, 11, '1000000000', '01:00:00', '2017-02-06 04:44:45', '2017-02-06 11:11:45', '06:27:00', 14, 3, '1000000009'),
-(58, 43, '1000000000', '01:00:00', '2017-02-06 04:43:06', '2017-04-03 00:00:00', '00:00:02', 14, 1, '1000000009'),
-(57, 41, '1000000001', '01:00:00', '2017-04-02 04:31:34', '2017-04-03 02:21:53', '21:50:19', 14, 1, '1000000009'),
-(44, 41, '1000000000', '01:00:00', '2017-02-06 01:33:13', '2017-02-06 01:37:57', '00:04:44', 14, 1, '1000000009'),
-(45, 41, '1000000000', '01:00:00', '2017-02-06 01:40:09', '2017-02-06 01:40:29', '00:00:20', 14, 1, '1000000009'),
-(46, 36, '1000000000', '01:00:00', '2017-02-06 02:27:01', '2017-02-06 02:27:34', '00:00:33', 14, 1, '1000000009'),
-(47, 36, '1000000000', '01:00:00', '2017-02-06 02:28:35', '2017-02-06 02:37:29', '00:08:54', 14, 1, '1000000009'),
-(48, 36, '1000000000', '01:00:00', '2017-02-06 02:37:38', '2017-02-06 02:38:28', '00:00:50', 14, 1, '1000000009'),
-(49, 36, '1000000000', '01:00:00', '2017-02-06 02:38:39', '2017-02-06 02:41:30', '00:02:51', 14, 1, '1000000009'),
-(50, 36, '1000000000', '01:00:00', '2017-02-06 02:41:41', '2017-02-06 02:43:04', '00:01:23', 14, 1, '1000000009'),
-(51, 36, '1000000000', '01:00:00', '2017-02-06 02:43:16', '2017-02-06 02:44:52', '00:01:36', 14, 1, '1000000009'),
-(52, 36, '1000000000', '01:00:00', '2017-02-06 02:45:03', '2017-02-06 02:49:54', '00:04:51', 14, 1, '1000000009'),
-(53, 44, '1000000000', '01:00:00', '2017-02-06 02:52:38', '2017-02-06 02:52:48', '00:00:10', 14, 3, '1000000009'),
-(54, 21, '1000000000', '01:00:00', '2017-02-06 03:33:40', '2017-02-06 03:34:07', '00:00:27', 14, 1, '1000000009'),
-(55, 21, '1000000000', '01:00:00', '2017-02-06 03:34:59', '2017-02-09 00:33:09', '23:58:10', 14, 1, '1000000009'),
-(56, 35, '1000000035', '01:00:00', '2017-02-06 03:37:57', '2017-02-06 11:34:42', '07:56:45', 14, 1, '1000000009'),
-(78, 21, '1000000000', '01:00:00', '2017-02-10 10:17:44', '2017-02-10 10:22:33', '00:04:49', 14, 1, '1000000009'),
-(79, 34, '1000000001', '01:00:00', '2017-02-12 04:13:26', '2017-02-13 11:54:47', '31:41:21', 14, 3, '1000000001'),
-(80, 21, '1000000021', '01:05:00', '2017-02-13 11:26:31', '2017-02-13 12:19:37', '00:53:06', 14, 1, '1000000010'),
-(81, 21, '1000000021', '01:00:00', '2017-04-03 03:46:57', '2017-04-03 11:43:49', '07:56:52', 14, 2, '1000000010'),
-(82, 37, '1000000037', '03:00:00', '2017-04-03 02:15:21', '2017-04-10 02:23:52', '168:08:31', 14, 1, '1000000010'),
-(83, 46, '1000000046', '03:00:00', '2017-04-03 02:32:36', NULL, NULL, 10, 2, '1000000010'),
-(88, 21, '1123215555', '02:00:00', '2017-08-16 09:22:05', NULL, NULL, 10, 1, '1000000010'),
-(86, 21, '1000000021', '03:00:00', '2017-04-03 11:55:32', '2017-04-03 12:43:43', '00:48:11', 14, 1, '1000000010'),
-(87, 22, '1000000022', '02:00:00', '2017-04-10 01:57:32', '2017-04-10 02:04:19', '00:06:47', 12, 1, '1000000010'),
-(89, 22, '1000000001', '05:00:00', '2017-08-16 09:22:42', NULL, NULL, 10, 4, '1000000010'),
-(90, 23, '5000000000', '04:20:00', '2017-08-16 09:23:12', NULL, NULL, 10, 2, '1000000010'),
-(91, 26, '6000000000', '06:20:00', '2017-08-16 09:23:39', NULL, NULL, 10, 2, '1000000010');
 
 -- --------------------------------------------------------
 
@@ -910,7 +792,7 @@ CREATE TABLE `users` (
   `operator` varchar(10) NOT NULL,
   `r_id` int(11) NOT NULL,
   `exp_date` datetime DEFAULT NULL,
-  `icon` varchar(20) DEFAULT NULL,
+  `icon` varchar(40) DEFAULT NULL,
   `adj_date` datetime DEFAULT NULL,
   `notes` text NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -920,14 +802,14 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`u_id`, `operator`, `r_id`, `exp_date`, `icon`, `adj_date`, `notes`) VALUES
-(1, '1000000001', 1, NULL, NULL, NULL, ''),
-(2, '1000000002', 2, NULL, NULL, NULL, ''),
-(3, '1000000003', 3, NULL, NULL, NULL, ''),
-(4, '1000000004', 4, NULL, NULL, NULL, ''),
-(5, '1000000007', 7, NULL, NULL, NULL, ''),
-(6, '1000000008', 8, NULL, NULL, NULL, ''),
-(7, '1000000009', 9, NULL, 'bicycle', NULL, ''),
-(8, '1000000010', 10, NULL, 'institution', NULL, '');
+(3, '1000000001', 1, NULL, NULL, NULL, ''),
+(4, '1000000002', 2, NULL, 'far fa-hand-peace', NULL, ''),
+(5, '1000000003', 3, NULL, NULL, NULL, ''),
+(6, '1000000004', 4, NULL, NULL, NULL, ''),
+(7, '1000000007', 7, NULL, NULL, NULL, ''),
+(8, '1000000008', 8, NULL, 'fas fa-graduation-cap', NULL, ''),
+(9, '1000000009', 9, NULL, 'fab fa-grav fa-spin', NULL, ''),
+(10, '1000000010', 10, NULL, 'fas fa-university', NULL, '');
 
 --
 -- Indexes for dumped tables
@@ -989,6 +871,12 @@ ALTER TABLE `device_group`
 --
 ALTER TABLE `device_materials`
   ADD PRIMARY KEY (`dm_id`);
+
+--
+-- Indexes for table `error`
+--
+ALTER TABLE `error`
+  ADD PRIMARY KEY (`e_id`);
 
 --
 -- Indexes for table `materials`
@@ -1116,7 +1004,7 @@ ALTER TABLE `accounts`
 -- AUTO_INCREMENT for table `acct_charge`
 --
 ALTER TABLE `acct_charge`
-  MODIFY `ac_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `ac_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `authrecipients`
 --
@@ -1131,7 +1019,7 @@ ALTER TABLE `auth_accts`
 -- AUTO_INCREMENT for table `carrier`
 --
 ALTER TABLE `carrier`
-  MODIFY `ca_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `ca_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 --
 -- AUTO_INCREMENT for table `citation`
 --
@@ -1141,32 +1029,37 @@ ALTER TABLE `citation`
 -- AUTO_INCREMENT for table `devices`
 --
 ALTER TABLE `devices`
-  MODIFY `d_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
+  MODIFY `d_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=52;
 --
 -- AUTO_INCREMENT for table `device_group`
 --
 ALTER TABLE `device_group`
-  MODIFY `dg_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `dg_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 --
 -- AUTO_INCREMENT for table `device_materials`
 --
 ALTER TABLE `device_materials`
-  MODIFY `dm_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=74;
+  MODIFY `dm_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=67;
+--
+-- AUTO_INCREMENT for table `error`
+--
+ALTER TABLE `error`
+  MODIFY `e_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `materials`
 --
 ALTER TABLE `materials`
-  MODIFY `m_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=76;
+  MODIFY `m_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=77;
 --
 -- AUTO_INCREMENT for table `mats_used`
 --
 ALTER TABLE `mats_used`
-  MODIFY `mu_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=87;
+  MODIFY `mu_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `objbox`
 --
 ALTER TABLE `objbox`
-  MODIFY `o_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `o_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `purpose`
 --
@@ -1186,7 +1079,7 @@ ALTER TABLE `reply`
 -- AUTO_INCREMENT for table `rfid`
 --
 ALTER TABLE `rfid`
-  MODIFY `rf_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `rf_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 --
 -- AUTO_INCREMENT for table `service_call`
 --
@@ -1201,7 +1094,7 @@ ALTER TABLE `service_lvl`
 -- AUTO_INCREMENT for table `site_variables`
 --
 ALTER TABLE `site_variables`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 --
 -- AUTO_INCREMENT for table `status`
 --
@@ -1211,22 +1104,22 @@ ALTER TABLE `status`
 -- AUTO_INCREMENT for table `time_clock`
 --
 ALTER TABLE `time_clock`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `trainingmodule`
 --
 ALTER TABLE `trainingmodule`
-  MODIFY `tm_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `tm_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `transactions`
 --
 ALTER TABLE `transactions`
-  MODIFY `trans_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=92;
+  MODIFY `trans_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `u_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `u_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
