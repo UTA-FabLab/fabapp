@@ -110,8 +110,8 @@ function payNow($operator, $device, $est_time, $p_id, $status_id, $device_mats, 
                 return;
             }
         }
-        $_SESSION['type'] = "payNow";
-        header("Location:checkout.php?trans_id=".$trans_id);
+        $_SESSION['ticket'] = serialize(new Transactions($trans_id));
+        header("Location:pay.php");
     } else {
         //$insID is not an integer, it must be an error Message
         echo "<script type='text/javascript'> window.onload = function(){goModal('Error',\"Can Not Create a new Ticket - $trans_id\", false)}</script>";
@@ -187,7 +187,7 @@ if ($staff) {
                         } elseif ($device->getDg()->getpayFirst() == "Y"){?>
                             <tr class="tableheader warning">
                                 <td align="center" colspan=2>Payment Required First
-                                    <div id="quote" style="float:right"><?php echo"<i class='fa fa-$sv[currency] fa-fw'></i>"; ?> 0.00</div>
+                                    <div id="quote" style="float:right"><?php echo"<i class='$sv[currency] fa-fw'></i>"; ?> 0.00</div>
                                 </td>
                             </tr>
                             <?php foreach($device_mats as $dm) { ?>
@@ -195,7 +195,7 @@ if ($staff) {
                                     <td align="center"><?php echo $dm->getM_name();?></td>
                                     <td><input type="number" name="<?php echo "m_".$dm->getM_id();?>" 
                                         id="<?php echo "m_".$dm->getM_id();?>" min="0" max="1000" step=".01" tabindex="2" onchange="quote()"
-                                        onclick="quote()" onkeyup="quote()"><?php printf("%s * <i class='fa fa-%s fa-fw'></i>%.2f" ,
+                                        onclick="quote()" onkeyup="quote()"><?php printf("%s * <i class='%s fa-fw'></i>%.2f" ,
                                         $dm->getUnit(), $sv['currency'], $dm->getPrice()); ?></td>
                                 </tr>
                             <?php }
@@ -280,7 +280,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 <script type="text/javascript">
 function resetForm() {
     document.getElementById("cform").reset();
-    document.getElementById("quote").innerHTML = "<?php echo"<i class='fa fa-$sv[currency] fa-fw'></i>"; ?> 0.00";
+    document.getElementById("quote").innerHTML = "<?php echo"<i class='$sv[currency] fa-fw'></i>"; ?> 0.00";
 }
 	
 function validateForm() {
@@ -343,7 +343,7 @@ function quote () { <?php
         $s .="m_".$dm->getM_id()." * rate".$dm->getM_id()." +";
     }
     echo (substr($s, 0, -1).").toFixed(2);\n"); ?>
-    document.getElementById("quote").innerHTML = "<?php echo"<i class='fa fa-$sv[currency] fa-fw'></i>"; ?> " + total;
+    document.getElementById("quote").innerHTML = "<?php echo"<i class='$sv[currency] fa-fw'></i>"; ?> " + total;
     }
 <?php } ?>
 </script>
@@ -352,18 +352,18 @@ function quote () { <?php
 //Insufficent Role Code or Load Error ?>
     <div class="row">
         <div class="col-md-12">
-                <h1 class="page-header">Error</h1>
-                Please Notify Staff. <?php echo $errorMsg;?>
+            <h1 class="page-header">Error</h1>
+            Please Notify Staff. <?php echo $errorMsg;?>
         </div>
         <!-- /.col-md-12 -->
     </div>
 </div>
-<?php } } else { 
+<?php } } else {
     ?>
     <div class="row">
         <div class="col-md-12">
-                <h1 class="page-header">Create new Ticket for the <?php echo $device->getDevice_desc(); ?></h1>
-                Please Log In
+            <h1 class="page-header">Create new Ticket for the <?php if (isset($device)) echo $device->getDevice_desc(); ?></h1>
+            Please Log In
         </div>
         <!-- /.col-md-12 -->
     </div>

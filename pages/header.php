@@ -9,12 +9,13 @@
     <meta name="author" content="UTA FabLab">
     <link rel="shortcut icon" href="/images/fa-icon.png" type="image/png">
     
+    <link href="/vendor/blackrock-digital/css/sb-admin-2.css" rel="stylesheet">
+    <link href="/vendor/bootstrap/css/bootstrap.css" rel="stylesheet">
+    <link href="/vendor/datatables/css/dataTables.bootstrap.css" rel="stylesheet" type="text/css">
     <link href="/vendor/fabapp/fabapp.css?=v5" rel="stylesheet">
-    <link href="/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/vendor/fontawesome/css/fontawesome-all.css" rel="stylesheet">
     <link href="/vendor/metisMenu/metisMenu.min.css" rel="stylesheet">
-    <link href="/vendor/blackrock-digital/css/sb-admin-2.css?=v9" rel="stylesheet">
     <link href="/vendor/morrisjs/morris.css" rel="stylesheet">
-    <link href="/vendor/font-awesome/css/font-awesome.min.css?=v1" rel="stylesheet" type="text/css">
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
         <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
@@ -23,16 +24,16 @@
 <?php
 $staff = null;
 ob_start();
+session_start();
 include_once ($_SERVER['DOCUMENT_ROOT'].'/connections/db_connect8.php');
 include_once ($_SERVER['DOCUMENT_ROOT'].'/connections/ldap.php');
 include_once ($_SERVER['DOCUMENT_ROOT'].'/class/all_classes.php');
 date_default_timezone_set($sv['timezone']);
-session_start();
-$_SERVER['loc'] = $_SERVER['REQUEST_URI'];
 
 if( isset($_SESSION['staff']) ){
-    $staff = $_SESSION['staff'];
-	$_SESSION['loc'] = $_SERVER['REQUEST_URI'];
+    $staff = unserialize($_SESSION['staff']);
+    $_SESSION['loc'] = $_SERVER['PHP_SELF'];
+    //Logout if session has timed out.
     if ($_SESSION["timeOut"] < time()) {
         header("Location:/logout.php");
     } else {
@@ -43,7 +44,11 @@ if( isset($_SESSION['staff']) ){
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if( isset($_POST['signBtn']) ){
-        if ( !empty($_POST["netID"]) && !empty($_POST["pass"]) ){
+        if ( empty($_POST["netID"])){
+            echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','No User Name', false)}</script>";
+        } elseif (empty($_POST["pass"]) ){
+            echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','Missing Password', false)}</script>";
+        } else {
             //Remove 3rd argument, define attribute in ldap.php
             $operator = AuthenticateUser($_POST["netID"],$_POST["pass"]);
             $_SESSION['netID'] = $_POST["netID"];
@@ -54,12 +59,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     $staff->setTimeLimit( $sv["limit_long"] );
                 else
                     $staff->setTimeLimit( $sv["limit"] );
-                
                 //set the timeOut = current + limit of login
                 $_SESSION["timeOut"] = (intval(time()) + $staff->getTimeLimit());
-                $staff->setLoc($_SERVER['REQUEST_URI']);
-                $_SESSION["staff"] = $staff;
-                header("Location:".$staff->getLoc());
+                $_SESSION["staff"] = serialize($staff);
+                if ( isset($_SESSION['loc']) ){
+                    header("Location:$_SESSION[loc]");
+                }
                 if (!headers_sent()){
                     echo "<script>window.location.href='/index.php';</script>";
                 }
@@ -67,8 +72,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             } else {
                 echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','Invalid user name and/or password!', false)}</script>";
             }
-        } else {
-            echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','No Password!', false)}</script>";
         }
     } elseif( isset($_POST['searchBtn']) ){
         if(filter_input(INPUT_POST, 'searchField')){
@@ -105,7 +108,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 //Display a Successful message from a previous page
 if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
     echo "<script>window.onload = function(){goModal('Success',\"$_SESSION[success_msg]\", true)}</script>";
-    $_SESSION['success_msg'] = "";
+    unset($_SESSION['success_msg']);
 } 
 ?>
 </head>
@@ -129,7 +132,7 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
 <?php if(!$staff){ ?>
                 <li class="dropdown">
                     <a class="dropdown-toggle" data-toggle="dropdown" href="#"> 
-                        <i class="fa fa-sign-in fa-fw"></i> <i class="fa fa-caret-down"></i>
+                        <i class="fas fa-sign-in-alt fa-fw"></i> <i class="fas fa-caret-down"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-alerts">
                         <form role="form" class="form-horizontal" method="POST" action="" autocomplete="off">
@@ -162,13 +165,13 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
 <?php } else {?>
                 <li class="dropdown">
                     <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                        <i class="fa fa-<?php echo $staff->getIcon();?> fa-2x"></i> <i class="fa fa-caret-down"></i>
+                        <i class="<?php echo $staff->getIcon();?> fa-2x"></i> <i class="fas fa-caret-down"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-user">
-                        <li><a href="#"><i class="fa fa-gear fa-fw"></i> Settings</a></li>
-                        <li><a href="#"><i class="fa fa-bar-chart-o fa-fw"></i> Stats</a></li>
+                        <li><a href="#"><i class="fas fa-cog fa-fw"></i> Settings</a></li>
+                        <li><a href="#"><i class="fas fa-chart-bar fa-fw"></i> Stats</a></li>
                         <li class="divider"></li>
-                        <li><a href="/logout.php?n=n"><i class="fa fa-sign-out fa-fw"></i> Logout</a></li>
+                        <li><a href="/logout.php?n=n"><i class="fas fa-sign-out-alt fa-fw"></i> Logout</a></li>
                     </ul>
                     <!-- /.dropdown-user -->
                 </li>
@@ -180,15 +183,15 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                 <div class="sidebar-nav navbar-collapse">
                     <ul class="nav" id="side-menu">
                         <li>
-                            <a href="/index.php"><i class="fa fa-ticket fa-fw"></i> FabApp</a>
+                            <a href="/index.php"><i class="fas fa-ticket-alt"></i> FabApp</a>
                         </li>
                         <li>
-                            <a href="#"><i class="fa fa-calculator fa-fw"></i> Tools</a>
+                            <a href="#"><i class="fas fa-calculator"></i> Tools</a>
                         </li>
 <!-- if role > 6 {show} -->
 <?php if ($staff && $staff->getRoleID() > 6) { ?>
                         <li>
-                            <a href="#"><i class="fa fa-gift fa-fw"></i> Pick Up 3D Print<span class="fa arrow"></span></a>
+                            <a href="#"><i class="fas fa-gift"></i> Pick Up 3D Print<span class="fas fa-angle-left"></span></a>
                             <ul class="nav nav-second-level">
                             <form name="pickForm" method="POST" action="" autocomplete="off" onsubmit="return validateNum('pickForm')">
                                 <li class="sidebar-search">
@@ -196,7 +199,7 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                                         <input type="text" name="pickField" id="pickField" class="form-control" placeholder="Enter ID #" maxlength="10" size="10">
                                         <span class="input-group-btn">
                                         <button class="btn btn-default" type="submit" name="pickBtn">
-                                            <i class="fa fa-search"></i>
+                                            <i class="fas fa-search"></i>
                                         </button>
                                         </span>
                                     </div>
@@ -206,7 +209,7 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                         </li>
 <!-- if role > 6 {show} else {look up trans staff->getID()} -->
                         <li>
-                            <a href="#"><i class="fa fa-search fa-fw"></i> Look-Up By<span class="fa arrow"></span></a>
+                            <a href="#"><i class="fas fa-search fa-fw"></i> Look-Up By<span class="fas fa-angle-left"></span></a>
                             <ul class="nav nav-second-level">
                             <form name="searchForm" method="POST" action="" autocomplete="off"  onsubmit="return validateNum('searchForm')"> 
                                 <li class="sidebar-radio">
@@ -218,7 +221,7 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                                         <input type="number" name="searchField" id="searchField" class="form-control" placeholder="Search..." name="searchField" onclick="searchF()">
                                         <span class="input-group-btn">
                                         <button class="btn btn-default" type="submit" name="searchBtn">
-                                            <i class="fa fa-search"></i>
+                                            <i class="fas fa-search"></i>
                                         </button>
                                         </span>
                                     </div>
@@ -228,89 +231,89 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                         </li>
 <?php } if ($staff && $staff->getRoleID() > 6) { ?>
                         <li>
-                            <a href="#"><i class="fa fa-wrench fa-fw"></i> Service Request<span class="fa arrow"></span></a>
+                            <a href="#"><i class="fas fa-wrench fa-fw"></i> Service Request<span class="fas fa-angle-left"></span></a>
                             <ul class="nav nav-second-level">
                                 <li>
-                                    <a href="/service/newTicket.php"><i class="fa fa-fire fa-fw"></i> Report Issue</a>
+                                    <a href="/service/newTicket.php"><i class="fas fa-fire"></i> Report Issue</a>
                                 </li>
                                 <li>
-                                    <a href="/service/sortableHistory.php"><i class="fa fa-history fa-fw"></i> History</a>
+                                    <a href="/service/sortableHistory.php"><i class="fas fa-history"></i> History</a>
                                 </li>
                                 <?php
                                     if($staff->getRoleID() != 8 && $staff->getRoleID() != 9)
-                                        echo"<li><a href='/service/technicians.php'><i class='fa fa-comment-o fa-fw'></i> Open Tickets</a></li>";
+                                        echo"<li><a href='/service/technicians.php'><i class='far fa-comment fa-fw'></i> Open Tickets</a></li>";
                                 ?>
                             </ul>
                             <!-- /.nav-second-level -->
                         </li>
                         <li>
-                            <a href="#"><i class="fa fa-sitemap fa-fw"></i> Admin<span class="fa arrow"></span></a>
+                            <a href="#"><i class="fas fa-sitemap"></i> Admin<span class="fas fa-angle-left"></span></a>
                             <ul class="nav nav-second-level">
                                 <li>
-                                    <a href="/admin/index.php"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a>
+                                    <a href="/admin/index.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                                 </li>
                                 <li>
-                                    <a href="#"><i class="fa fa-money fa-fw"></i> Accounts<span class="fa arrow"></span></a>
+                                    <a href="#"><i class="far fa-money-bill-alt"></i> Accounts<span class="fas fa-angle-left"></span></a>
                                     <ul class="nav nav-third-level">
                                         <li>
-                                            <a href="#"><i class="fa fa-edit fa-fw"></i> Manage Accounts</a>
+                                            <a href="#"><i class="fas fa-pencil-alt"></i> Manage Accounts</a>
                                         </li>
                                         <li>
-                                            <a href="#"><i class="fa fa-balance-scale fa-fw"></i> Reconcile</a>
+                                            <a href="#"><i class="fas fa-balance-scale"></i> Reconcile</a>
                                         </li>
                                     </ul>
                                     <!-- /.nav-third-level -->
                                 </li>
                                 <li>
-                                    <a href="#"><i class="fa fa-bar-chart-o fa-fw"></i> Charts</a>
+                                    <a href="#"><i class="far fa-chart-bar"></i> Charts</a>
                                 </li>
                                 <li>
-                                    <a herf="#"><i class="fa fa-cubes fa-fw"></i> Devices<span class="fa arrow"></span></a>
+                                    <a herf="#"><i class="fas fa-cubes"></i> Devices<span class="fas fa-angle-left"></span></a>
                                     <ul class="nav nav-third-level">
                                         <li>
-                                            <a href="#"><i class="fa fa-cube fa-fw"></i> Manage Device</a>
+                                            <a href="#"><i class="fas fa-cube"></i> Manage Device</a>
                                         </li>
                                         <li>
-                                            <a href="#"><i class="fa fa-life-buoy fa-fw"></i> Device Materials</a>
+                                            <a href="#"><i class="far fa-life-ring"></i> Device Materials</a>
                                         </li>
                                     </ul>
                                 </li>
                                 <li>
-                                    <a herf="#"><i class="fa fa-linode fa-fw"></i> Materials<span class="fa arrow"></span></a>
+                                    <a herf="#"><i class="fab fa-linode"></i> Materials<span class="fas fa-angle-left"></span></a>
                                     <ul class="nav nav-third-level">
                                         <li>
-                                            <a href="#"><i class="fa fa-bar-chart-o fa-fw"></i> Inventory</a>
+                                            <a href="#"><i class="far fa-chart-bar"></i> Inventory</a>
                                         </li>
                                         <li>
-                                            <a href="#"><i class="fa fa-truck fa-fw"></i> Receive</a>
+                                            <a href="#"><i class="fas fa-truck"></i> Receive</a>
                                         </li>
                                         <li>
-                                            <a href="#"><i class="fa fa-life-buoy fa-fw"></i> Manage Materials</a>
+                                            <a href="#"><i class="fas fa-life-ring"></i> Manage Materials</a>
                                         </li>
                                     </ul>
                                 </li>
                                 <li>
-                                    <a herf="#"><i class="fa fa-book fa-fw"></i> Training<span class="fa arrow"></span></a>
+                                    <a herf="#"><i class="fas fa-book"></i> Training<span class="fas fa-angle-left"></span></a>
                                     <ul class="nav nav-third-level">
                                         <li>
-                                            <a href="/admin/training_certificate.php"><i class="fa fa-check-circle-o fa-fw"></i> Issue Certificate</a>
+                                            <a href="/admin/training_certificate.php"><i class="far fa-check-circle"></i> Issue Certificate</a>
                                         </li>
                                         <li>
-                                            <a href="/admin/manage_trainings.php"><i class="fa fa-edit fa-fw"></i> Manage Trainings</a>
+                                            <a href="/admin/manage_trainings.php"><i class="fas fa-edit"></i> Manage Trainings</a>
                                         </li>
                                     </ul>
                                 </li>
                                 <li>
-                                    <a herf="#"><i class="fa fa-users fa-fw"></i> Users<span class="fa arrow"></span></a>
+                                    <a herf="#"><i class="fas fa-users"></i> Users<span class="fas fa-angle-left"></span></a>
                                     <ul class="nav nav-third-level">
                                         <li>
-                                            <a href="/admin/addrfid.php"><i class="fa fa-feed fa-fw"></i> Add RFID</a>
+                                            <a href="/admin/addrfid.php"><i class="fas fa-wifi"></i> Add RFID</a>
                                         </li>
                                         <li>
-                                            <a href="#"><i class="fa fa-user-circle-o fa-fw"></i> Manage Users</a>
+                                            <a href="#"><i class="far fa-user-circle fa-fw"></i> Manage Users</a>
                                         </li>
                                         <li>
-                                            <a href="#"><i class="fa fa-tag fa-fw"></i> Citation</a>
+                                            <a href="#"><i class="fas fa-tags"></i> Citation</a>
                                         </li>
                                     </ul>
                                 </li>
@@ -318,7 +321,7 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                             <!-- /.nav-second-level -->
                         </li>
                         <li>
-                            <a href="/admin/error.php"><i class="fa fa-bolt fa-fw"></i> Error</a>
+                            <a href="/admin/error.php"><i class="fas fa-bolt"></i> Error</a>
                         </li>
 <?php } ?>
                     </ul>

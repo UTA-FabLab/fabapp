@@ -48,17 +48,17 @@ echo "</div>";
 <title><?php echo $sv['site_name'];?> Dashboard</title>
 <div id="page-wrapper">
     <div class="row">
-        <div class="col-lg-12">
+        <div class="col-md-12">
             <h1 class="page-header">Dashboard</h1>
         </div>
-        <!-- /.col-lg-12 -->
+        <!-- /.col-md-12 -->
     </div>
     <!-- /.row -->
     <div class="row">
-        <div class="col-lg-8">
+        <div class="col-md-8">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fa fa-ticket fa-fw"></i> Device Status
+                    <i class="fas fa-cubes fa-lg"></i> Device Status
                 </div>
                 <div class="panel-body">
                     <table class="table table-striped table-bordered table-hover" id="indexTable">
@@ -68,7 +68,7 @@ echo "</div>";
                                 <th>Device</td>
                                 <th>Start Time</td>
                                 <th>Est Remaining Time</td>
-                                <?php if ($staff) { ?> <td>Action</td><?php } ?>
+                                <?php if ($staff) { ?> <th>Action</th><?php } ?>
                             </tr>
                         </thead>
                         <?php if ($result = $mysqli->query("
@@ -79,7 +79,7 @@ echo "</div>";
                             LEFT JOIN (SELECT trans_id, t_start, t_end, est_time, d_id, operator, status_id FROM transactions WHERE status_id < 12 ORDER BY trans_id DESC) as t 
                             ON devices.d_id = t.d_id
                             WHERE public_view = 'Y'
-                            ORDER BY dg_parent DESC, dg_id, `device_desc`
+                            ORDER BY dg_id, `device_desc`
                         ")){
                             while ( $row = $result->fetch_assoc() ){ ?>
                                 <tr class="tablerow">
@@ -147,18 +147,18 @@ echo "</div>";
                 </div>
             </div>
         </div>
-        <!-- /.col-lg-8 -->
-        <div class="col-lg-4">
+        <!-- /.col-md-8 -->
+        <div class="col-md-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fa fa-linode fa-fw"></i> Inventory
+                    <i class="fab fa-linode fa-fw"></i> Inventory
                 </div>
                 <div class="panel-body">
                     <table class="table table-condensed">
                         <thead>
                             <tr>
                                 <th>Material</th>
-                                <th><i class="fa fa-paint-brush fa-fw"></i></th>
+                                <th><i class="fas fa-paint-brush fa-fw"></i></th>
                                 <?php if ($staff && $staff->getRoleID() >= $sv['LvlOfStaff']){?>
                                         <th>Qty on Hand</th>
                                 <?php } ?>
@@ -199,7 +199,7 @@ echo "</div>";
             </div>
             <!-- /.panel -->
         </div>
-        <!-- /.col-lg-4 -->
+        <!-- /.col-md-4 -->
     </div>
     <!-- /.row -->
 </div>
@@ -216,9 +216,8 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	startTimer(time, display, dg_parent);
 	
 <?php } ?>
-    window.onload = function() {
-        $('#indexTable').DataTable({
-            "iDisplayLength": 25
-        });
-    };
+    $('#indexTable').DataTable({
+        "iDisplayLength": 25,
+        "order": []
+    });
 </script>

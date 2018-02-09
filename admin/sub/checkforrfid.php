@@ -10,17 +10,17 @@ if (!empty(filter_input(INPUT_GET, "operator"))) {
     $operator = Users::withID(filter_input(INPUT_GET, "operator"));
     if ($operator->getRfid_no()){ ?>
         <td id="rfid_td"><input type="text" name="rfid" id="rfid"
-            value="<?php echo $operator->getRfid_no();?>" tabindex="2">
+            value="<?php echo $operator->getRfid_no();?>"  tabindex="3">
             <label for="override">Overwrite Existing RFID? </label>
-            <input type="checkbox" name="override" id="override" tabindex="3" value="yes">
+            <input type="checkbox" name="override" id="override" tabindex="4" value="yes">
         </td>
     <?php } else { ?>
         <td id="rfid_td"><input type="text" name="rfid" id="rfid" placeholder="RFID Number" 
-            tabindex="2">
+             tabindex="3">
         </td>
     <?php }
 } else { ?>
     <td id="rfid_td"><input type="text" name="rfid" id="rfid" placeholder="RFID Number" 
-        tabindex="2">
+        tabindex="3">
     </td>
 <?php } ?>

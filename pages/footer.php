@@ -31,13 +31,14 @@
 <?php if ($staff){?>
     setTimeout(function(){window.location.href = "<?php echo $_SESSION['loc']?>"}, <?php echo (1+$_SESSION["timeOut"]-time())*1000; ?>);
 <?php } else { ?>
-    setTimeout(function(){window.location.href = "<?php echo $_SESSION['loc']?>"}, 301000);
+    //setTimeout(function(){window.location.href = "<?php if (isset($_SESSION['loc'])){echo $_SESSION['loc'];} else {echo "/index.php";}?>"}, 301000);
+	setTimeout(function(){window.location.href = "/index.php"}, 301000);
 <?php } ?>
 </script>
     <script src="/vendor/jquery/jquery.min.js"></script>
     <script src="/vendor/blackrock-digital/js/sb-admin-2.js"></script>
     <script src="/vendor/datatables/js/dataTables.min.js"></script>
-    <script src="/vendor/fabapp/fabapp.js?=v24"></script>
+    <script src="/vendor/fabapp/fabapp.js?=v26"></script>
     <script src="/vendor/metisMenu/metisMenu.min.js"></script>
     <script src="/vendor/morrisjs/morris.min.js"></script>
     <script src="/vendor/raphael/raphael.min.js"></script>

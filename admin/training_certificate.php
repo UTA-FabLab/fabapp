@@ -75,15 +75,16 @@ function submitTM($tm_id, $operator, $staff){
             <?php if ($staff && $staff->getRoleID() >= $sv['minRoleTrainer']) {?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-check-circle-o fa-lg"></i> Certify Completion of Training
+                        <i class="far fa-check-circle fa-lg"></i> Certify Completion of Training
                     </div>
                     <div class="panel-body">
                         <table class="table table-bordered table-striped table-hover"><form name="tcForm" id="tcForm" autocomplete="off" method="POST" action="">
                             <tr>
-                                <td class="col-md-3"><a href="#" data-toggle="tooltip" data-placement="top" title="The person that conducted this training">Trainer</a>
-								</td>
+                                <td class="col-md-3">
+                                    <a href="#" data-toggle="tooltip" data-placement="top" title="The person that conducted this training">Trainer</a>
+				</td>
                                 <td class="col-md-9"><?php if ( $staff )
-                                    echo "<i class='fa fa-".$staff->getIcon()." fa-lg' title='".$staff->getOperator()."'></i>";?>
+                                    echo "<i class='".$staff->getIcon()." fa-lg' title='".$staff->getOperator()."'></i>";?>
                                 </td>
                             </tr>
                             <tr>
@@ -132,10 +133,10 @@ function submitTM($tm_id, $operator, $staff){
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td><a href="#" data-toogle="tooltop" data-placement="top" title="A brief description of what this training covers"></a>Description</td>
+                                    <td><a href="#" data-toogle="tooltop" data-placement="top" title="A brief description of what this training covers">Description</a></td>
                                     <td id="tm_desc"><?php echo $tm->getTm_desc()?></td>
                                 </tr>
-                                <?php } else { ?>
+                            <?php } else { ?>
                                         <select name="tm_id" id="tm_id" onchange="getDesc(this)">
                                             <option value="" hidden>Select</option>
                                             <option value="" disabled="">Please Select a Device First</option>
@@ -143,7 +144,11 @@ function submitTM($tm_id, $operator, $staff){
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td><a href="#" data-toogle="tooltop" data-placement="top" title="A brief description of what this training covers"></a>Description</td>
+                                    <td><a href="#" data-toogle="tooltop" data-placement="top" title="All devices covered by this Device Group">Devices</a></td>
+                                    <td id="td_deviceList"></td>
+                                </tr>
+                                <tr>
+                                    <td><a href="#" data-toogle="tooltop" data-placement="top" title="A brief description of what this training covers">Description</a></td>
                                     <td id="tm_desc"></td>
                                 </tr>
                             <?php } ?>
@@ -164,7 +169,7 @@ function submitTM($tm_id, $operator, $staff){
             <?php } elseif($staff) { ?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-sign-in fa-lg"></i>  Certify Completion of Training
+                        <i class="fas fa-sign-in-alt fa-lg"></i>  Certify Completion of Training
                     </div>
                     <div class="panel-body">
                         <?php
@@ -177,7 +182,7 @@ function submitTM($tm_id, $operator, $staff){
             <?php } else { ?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-sign-in fa-lg"></i> Please Log In
+                        <i class="fas fa-sign-in-alt fa-lg"></i> Please Log In
                     </div>
                     <div class="panel-body">
                     </div>
@@ -190,7 +195,7 @@ function submitTM($tm_id, $operator, $staff){
         <div class="col-md-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fa fa-table fa-lg"></i> Stats
+                    <i class="fas fa-table fa-lg"></i> Stats
                 </div>
                 <div class="panel-body">
                     <table class="table table-condensed">
@@ -201,7 +206,7 @@ function submitTM($tm_id, $operator, $staff){
                         ")){
                             $row = $result->fetch_assoc()?>
                             <tr>
-                                <td><i class="fa fa-file-o fa-lg"></i> Training Modules</td>
+                                <td><i class="far fa-file fa-lg"></i> Training Modules</td>
                                 <td><?php echo $row['count'];?></td>
                             </tr>
                         <?php } else { ?>
@@ -215,7 +220,7 @@ function submitTM($tm_id, $operator, $staff){
                         ")){
                             $row = $result->fetch_assoc()?>
                             <tr>
-                                <td><i class="fa fa-check-circle-o fa-lg"></i> Certificates Issued</td>
+                                <td><i class="far fa-check-circle fa-lg"></i> Certificates Issued</td>
                                 <td><?php echo $row['count'];?></td>
                             </tr>
                         <?php } else { ?>
@@ -228,12 +233,9 @@ function submitTM($tm_id, $operator, $staff){
                 <!-- /.panel-body -->
             </div>
             <!-- /.panel -->
-        </div>
-        <!-- /.col-md-4 -->
-        <div class="col-md-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fa fa-book fa-lg"></i> Look Up Completed Trainings
+                    <i class="fas fa-book fa-lg"></i> Look Up Completed Trainings
                 </div>
                 <div class="panel-body">
                     <form name="teForm" method="POST" action="" autocomplete="off" onsubmit="return stdRegEx('teField', /^\d{10}$/, 'Please enter ID #2')">
@@ -242,7 +244,7 @@ function submitTM($tm_id, $operator, $staff){
                                    value="<?php if (isset($id)) echo $id; ?>">
                             <span class="input-group-btn">
                             <button class="btn btn-default" type="submit" name="teBtn">
-                                <i class="fa fa-search"></i>
+                                <i class="fas fa-search"></i>
                             </button>
                             </span>
                         </div>
@@ -264,17 +266,17 @@ function submitTM($tm_id, $operator, $staff){
                                                         WHERE `operator` = '".$user->getOperator()."';");
                             while ($row = $result->fetch_assoc()){
                                 echo "<tr>";
-                                    echo "<td align='center'><i class='fa fa-clock-o fa-lg' title='".date($sv['dateFormat'], strtotime($row['completed']))."'></i></td>";
+                                    echo "<td align='center'><i class='far fa-clock fa-lg' title='".date($sv['dateFormat'], strtotime($row['completed']))."'></i></td>";
                                     $staff = Users::withID($row['staff_id']);
                                     if (is_object($staff)){
-                                        echo" <td align='center'><i class='fa fa-".$staff->getIcon()." fa-lg' title='".$staff->getOperator()."'></i></td>";
+                                        echo" <td align='center'><i class='".$staff->getIcon()." fa-lg' title='".$staff->getOperator()."'></i></td>";
                                     } else {
                                         echo "<td></td>";
                                     }
                                     echo "<td> $row[title]"; ?>
                                         <div class="btn-group">
                                             <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
-                                                <span class="fa fa-info-circle" title="Desc"></span>
+                                                <span class="fas fa-info-circle" title="Desc"></span>
                                             </button>
                                             <ul class="dropdown-menu pull-right" role="menu">
                                                 <li style="padding-left: 5px;"><?php echo $row['tm_desc'];?></li>
@@ -301,11 +303,11 @@ function submitTM($tm_id, $operator, $staff){
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 ?>
 <script type="text/javascript">
-    window.onload = function() {
-        $('#teTable').DataTable({
-            searching: false, 
-            paging: false});
-    };
+    
+    $('#teTable').DataTable({
+        searching: false, 
+        paging: false});
+    
     //AJAX call to build a list of training modules for the specified device or device group
     function selectDevice(element){
         if (element.id == 'd_id'){
@@ -314,6 +316,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
             document.getElementById("d_id").selectedIndex = 0;
         }
         document.getElementById("tm_id").selectedIndex = 0;
+        document.getElementById("td_deviceList").innerHTML = "";
 
         if (window.XMLHttpRequest) {
             // code for IE7+, Firefox, Chrome, Opera, Safari
@@ -332,6 +335,26 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         device = element.id + "=" + element.value;
         xmlhttp.open("GET","sub/certTM.php?" + device,true);
         xmlhttp.send();
+        
+        //List Devices
+        if (element.id == 'dg_id') {
+            if (window.XMLHttpRequest) {
+                // code for IE7+, Firefox, Chrome, Opera, Safari
+                xmlhttp2 = new XMLHttpRequest();
+            } else {
+                // code for IE6, IE5
+                xmlhttp2 = new ActiveXObject("Microsoft.XMLHTTP");
+            }
+            xmlhttp2.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    //document.getElementById("tr_tm").innerHTML = this.responseText;
+                    document.getElementById("td_deviceList").innerHTML = this.responseText;
+                }
+            };
+            device = element.id + "=" + element.value;
+            xmlhttp2.open("GET","sub/certDevices.php?" + device,true);
+            xmlhttp2.send();
+        }
     }
     
     

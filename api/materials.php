@@ -6,8 +6,8 @@ header("Access-Control-Allow-Headers: Cache-Control, Origin, X-Requested-With, C
 /*
  *  materials.php : Materials list interface
  *	
- *	Arun Kalahasti, 
- *  version: 0.1 alpha (2016-05-20)
+ *	Arun Kalahasti, Jonathan Le
+ *  version: 0.1 alpha (2017-10-30)
  *
 */
 
@@ -40,9 +40,6 @@ if (! ($input_data)) {
     $json_out["ERROR"] = "Unable to decode JSON message - check syntax";
     ErrorExit(1);
 }
-	
-// Tell PHP what time zone before doing any date function foo 
-date_default_timezone_set('America/Chicago');
 
 // Extract message type from incoming JSON
 $type      = $input_data["type"];
@@ -117,7 +114,7 @@ function CheckDeviceID ($device_id) {
 	global $json_out;
 	
 	// Check for valid device_id value
-    if (preg_match("/^\d{4}$/",$device_id) == 0) {
+    if (preg_match("/^\d{1,4}$/",$device_id) == 0) {
         $json_out["success"] = "N";
         $json_out["ERROR"] = "Invalid or missing device_id: $device_id";
         ErrorExit(1);

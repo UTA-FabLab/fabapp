@@ -252,11 +252,11 @@ class Devices {
         
     	if($staff){
             if($staff->getRoleID() > 7)
-                echo "<a href = '/service/sortableHistory.php?d_id=".$d_id."'><i class='fa fa-$symbol fa-fw' style='color:$color'></i></a>&nbsp;";
+                echo "<a href = '/service/sortableHistory.php?d_id=$d_id'><i class='fas fa-$symbol fa-lg' style='color:$color'></i></a>&nbsp;";
             else
-                echo "<i class='fa fa-".$symbol." fa-fw' style='color:".$color."'></i>&nbsp;";
+                echo "<i class='fas fa-$symbol fa-lg' style='color:".$color."'></i>&nbsp;";
     	} else {
-            echo "<i class='fa fa-".$symbol." fa-fw' style='color:".$color."'></i>&nbsp;";
+            echo "<i class='fas fa-$symbol fa-lg' style='color:".$color."'></i>&nbsp;";
     	}
     }
 }
