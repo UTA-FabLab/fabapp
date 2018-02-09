@@ -85,6 +85,7 @@ function stdRegEx(elementId, reg, msg){
         document.getElementById(elementId).focus();
         return false;
     }
+    return true;
 }
 
 //check forms for proper types

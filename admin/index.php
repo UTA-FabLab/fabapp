@@ -19,7 +19,7 @@ if (!$staff || $staff->getRoleID() < 7){
         <div class="col-lg-8">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fa fa-bar-chart-o fa-fw"></i> Area Chart Example
+                    <i class="far fa-chart-bar"></i> Area Chart Example
                     <div class="pull-right">
                         <div class="btn-group">
                             <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
@@ -48,7 +48,7 @@ if (!$staff || $staff->getRoleID() < 7){
             <!-- /.panel -->
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fa fa-bar-chart-o fa-fw"></i> Bar Chart Example
+                    <i class="fas fa-chart-bar fa-fw"></i> Bar Chart Example
                     <div class="pull-right">
                         <div class="btn-group">
                             <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
@@ -150,18 +150,18 @@ if (!$staff || $staff->getRoleID() < 7){
             <!-- /.panel -->
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fa fa-clock-o fa-fw"></i> Responsive Timeline
+                    <i class="far fa-clock"></i> Responsive Timeline
                 </div>
                 <!-- /.panel-heading -->
                 <div class="panel-body">
                     <ul class="timeline">
                         <li>
-                            <div class="timeline-badge"><i class="fa fa-check"></i>
+                            <div class="timeline-badge"><i class="fas fa-check"></i>
                             </div>
                             <div class="timeline-panel">
                                 <div class="timeline-heading">
                                     <h4 class="timeline-title">Lorem ipsum dolor</h4>
-                                    <p><small class="text-muted"><i class="fa fa-clock-o"></i> 11 hours ago via Twitter</small>
+                                    <p><small class="text-muted"><i class="far fa-clock"></i> 11 hours ago via Twitter</small>
                                     </p>
                                 </div>
                                 <div class="timeline-body">
@@ -170,7 +170,7 @@ if (!$staff || $staff->getRoleID() < 7){
                             </div>
                         </li>
                         <li class="timeline-inverted">
-                            <div class="timeline-badge warning"><i class="fa fa-credit-card"></i>
+                            <div class="timeline-badge warning"><i class="fas fa-credit-card"></i>
                             </div>
                             <div class="timeline-panel">
                                 <div class="timeline-heading">
@@ -183,7 +183,7 @@ if (!$staff || $staff->getRoleID() < 7){
                             </div>
                         </li>
                         <li>
-                            <div class="timeline-badge danger"><i class="fa fa-bomb"></i>
+                            <div class="timeline-badge danger"><i class="fas fa-bomb"></i>
                             </div>
                             <div class="timeline-panel">
                                 <div class="timeline-heading">
@@ -205,7 +205,7 @@ if (!$staff || $staff->getRoleID() < 7){
                             </div>
                         </li>
                         <li>
-                            <div class="timeline-badge info"><i class="fa fa-save"></i>
+                            <div class="timeline-badge info"><i class="fas fa-save"></i>
                             </div>
                             <div class="timeline-panel">
                                 <div class="timeline-heading">
@@ -216,7 +216,7 @@ if (!$staff || $staff->getRoleID() < 7){
                                     <hr>
                                     <div class="btn-group">
                                         <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-toggle="dropdown">
-                                            <i class="fa fa-gear"></i> <span class="caret"></span>
+                                            <i class="fas fa-cog"></i> <span class="caret"></span>
                                         </button>
                                         <ul class="dropdown-menu" role="menu">
                                             <li><a href="#">Action</a>
@@ -244,7 +244,7 @@ if (!$staff || $staff->getRoleID() < 7){
                             </div>
                         </li>
                         <li class="timeline-inverted">
-                            <div class="timeline-badge success"><i class="fa fa-graduation-cap"></i>
+                            <div class="timeline-badge success"><i class="fas fa-graduation-cap"></i>
                             </div>
                             <div class="timeline-panel">
                                 <div class="timeline-heading">
@@ -265,53 +265,53 @@ if (!$staff || $staff->getRoleID() < 7){
         <div class="col-lg-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fa fa-bell fa-fw"></i> Notifications Panel
+                    <i class="fas fa-bell fa-fw"></i> Notifications Panel
                 </div>
                 <!-- /.panel-heading -->
                 <div class="panel-body">
                     <div class="list-group">
                         <a href="#" class="list-group-item">
-                            <i class="fa fa-comment fa-fw"></i> New Comment
+                            <i class="fas fa-comment fa-fw"></i> New Comment
                             <span class="pull-right text-muted small"><em>4 minutes ago</em>
                             </span>
                         </a>
                         <a href="#" class="list-group-item">
-                            <i class="fa fa-twitter fa-fw"></i> 3 New Followers
+                            <i class="fab fa-twitter"></i> 3 New Followers
                             <span class="pull-right text-muted small"><em>12 minutes ago</em>
                             </span>
                         </a>
                         <a href="#" class="list-group-item">
-                            <i class="fa fa-envelope fa-fw"></i> Message Sent
+                            <i class="fas fa-envelope"></i> Message Sent
                             <span class="pull-right text-muted small"><em>27 minutes ago</em>
                             </span>
                         </a>
                         <a href="#" class="list-group-item">
-                            <i class="fa fa-tasks fa-fw"></i> New Task
+                            <i class="fas fa-tasks"></i> New Task
                             <span class="pull-right text-muted small"><em>43 minutes ago</em>
                             </span>
                         </a>
                         <a href="#" class="list-group-item">
-                            <i class="fa fa-upload fa-fw"></i> Server Rebooted
+                            <i class="fas fa-upload"></i> Server Rebooted
                             <span class="pull-right text-muted small"><em>11:32 AM</em>
                             </span>
                         </a>
                         <a href="#" class="list-group-item">
-                            <i class="fa fa-bolt fa-fw"></i> Server Crashed!
+                            <i class="fas fa-bolt"></i> Server Crashed!
                             <span class="pull-right text-muted small"><em>11:13 AM</em>
                             </span>
                         </a>
                         <a href="#" class="list-group-item">
-                            <i class="fa fa-warning fa-fw"></i> Server Not Responding
+                            <i class="fas fa-exclamation-triangle"></i> Server Not Responding
                             <span class="pull-right text-muted small"><em>10:57 AM</em>
                             </span>
                         </a>
                         <a href="#" class="list-group-item">
-                            <i class="fa fa-shopping-cart fa-fw"></i> New Order Placed
+                            <i class="fas fa-shopping-cart"></i> New Order Placed
                             <span class="pull-right text-muted small"><em>9:49 AM</em>
                             </span>
                         </a>
                         <a href="#" class="list-group-item">
-                            <i class="fa fa-money fa-fw"></i> Payment Received
+                            <i class="fas fa-money-bill-alt"></i> Payment Received
                             <span class="pull-right text-muted small"><em>Yesterday</em>
                             </span>
                         </a>
@@ -324,7 +324,7 @@ if (!$staff || $staff->getRoleID() < 7){
             <!-- /.panel -->
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fa fa-bar-chart-o fa-fw"></i> Donut Chart Example
+                    <i class="far fa-chart-bar"></i> Donut Chart Example
                 </div>
                 <div class="panel-body">
                     <div id="morris-donut-chart"></div>
@@ -335,36 +335,36 @@ if (!$staff || $staff->getRoleID() < 7){
             <!-- /.panel -->
             <div class="chat-panel panel panel-default">
                 <div class="panel-heading">
-                    <i class="fa fa-comments fa-fw"></i> Chat
+                    <i class="fas fa-comments"></i> Chat
                     <div class="btn-group pull-right">
                         <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
-                            <i class="fa fa-chevron-down"></i>
+                            <i class="fas fa-chevron-down"></i>
                         </button>
                         <ul class="dropdown-menu slidedown">
                             <li>
                                 <a href="#">
-                                    <i class="fa fa-refresh fa-fw"></i> Refresh
+                                    <i class="fas fa-sync fa-fw"></i> Refresh
                                 </a>
                             </li>
                             <li>
                                 <a href="#">
-                                    <i class="fa fa-check-circle fa-fw"></i> Available
+                                    <i class="far fa-check-circle"></i> Available
                                 </a>
                             </li>
                             <li>
                                 <a href="#">
-                                    <i class="fa fa-times fa-fw"></i> Busy
+                                    <i class="fas fa-times"></i> Busy
                                 </a>
                             </li>
                             <li>
                                 <a href="#">
-                                    <i class="fa fa-clock-o fa-fw"></i> Away
+                                    <i class="far fa-clock"></i> Away
                                 </a>
                             </li>
                             <li class="divider"></li>
                             <li>
                                 <a href="#">
-                                    <i class="fa fa-sign-out fa-fw"></i> Sign Out
+                                    <i class="fas fa-sign-out-alt"></i> Sign Out
                                 </a>
                             </li>
                         </ul>
@@ -381,7 +381,7 @@ if (!$staff || $staff->getRoleID() < 7){
                                 <div class="header">
                                     <strong class="primary-font">Jack Sparrow</strong>
                                     <small class="pull-right text-muted">
-                                        <i class="fa fa-clock-o fa-fw"></i> 12 mins ago
+                                        <i class="far fa-clock"></i> 12 mins ago
                                     </small>
                                 </div>
                                 <p>
@@ -396,7 +396,7 @@ if (!$staff || $staff->getRoleID() < 7){
                             <div class="chat-body clearfix">
                                 <div class="header">
                                     <small class=" text-muted">
-                                        <i class="fa fa-clock-o fa-fw"></i> 13 mins ago</small>
+                                        <i class="far fa-clock"></i> 13 mins ago</small>
                                     <strong class="pull-right primary-font">Bhaumik Patel</strong>
                                 </div>
                                 <p>
@@ -412,7 +412,7 @@ if (!$staff || $staff->getRoleID() < 7){
                                 <div class="header">
                                     <strong class="primary-font">Jack Sparrow</strong>
                                     <small class="pull-right text-muted">
-                                        <i class="fa fa-clock-o fa-fw"></i> 14 mins ago</small>
+                                        <i class="far fa-clock"></i> 14 mins ago</small>
                                 </div>
                                 <p>
                                     Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur bibendum ornare dolor, quis ullamcorper ligula sodales.
@@ -426,7 +426,7 @@ if (!$staff || $staff->getRoleID() < 7){
                             <div class="chat-body clearfix">
                                 <div class="header">
                                     <small class=" text-muted">
-                                        <i class="fa fa-clock-o fa-fw"></i> 15 mins ago</small>
+                                        <i class="far fa-clock"></i> 15 mins ago</small>
                                     <strong class="pull-right primary-font">Bhaumik Patel</strong>
                                 </div>
                                 <p>

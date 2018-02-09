@@ -20,9 +20,6 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/class/all_classes.php');
 include 'gatekeeper.php'; 
 $json_out = array();
 
-// Tell PHP what time zone before doing any date function foo 
-date_default_timezone_set('America/Chicago');
-
 //Compare Header API Key with site variable's API Key
 $headers = apache_request_headers();
 if(isset($headers['Authorization'])){
@@ -31,7 +28,7 @@ if(isset($headers['Authorization'])){
         $json_out["ERROR"] = "Unable to Authenticate";
     } else {
         $result = mysqli_query($mysqli, "
-            SELECT `purp_id`, `p_title` AS purpose FROM `purpose` WHERE 1;
+            SELECT `p_id`, `p_title` AS purpose FROM `purpose` WHERE 1;
         ");
         if ($mysqli->error) {
             $json_out["authorized"] = "N";

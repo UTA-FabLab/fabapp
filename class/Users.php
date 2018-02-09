@@ -26,7 +26,7 @@
     public static function withID($operator){
         $instance = new self();
         if (!self::regexUser($operator)){
-            return "Invalid ID Number";
+            return "Invalid ID Number - $operator";
         }
         $instance->createWithID($operator);
         return $instance;
@@ -35,8 +35,12 @@
     public static function withRF($rfid_no){
         $instance = new self();
         if (!self::regexRFID($rfid_no)){
-            return "Invalid RFID Number";
+            return "Invalid RFID Number - $rfid_no";
         }
+		if (!self::rfidExist($rfid_no)){
+            return "No Match for RFID Number - $rfid_no";
+        }
+		
         $instance->createWithRF($rfid_no);
         return $instance;
     }
@@ -81,18 +85,21 @@
             FROM `rfid`
             LEFT JOIN users
             ON rfid.operator = users.operator
-            WHERE rfid.rfid_no = $rfid_no
-            Limit 1;
+            WHERE rfid.rfid_no = $rfid_no;
         ")){
-            $row = $result->fetch_assoc();
-            $this->setAccounts($row['operator']);
-            $this->setAdj_date($row['adj_date']);
-            $this->setIcon ($row['icon']);
-            $this->setExp_date ($row['exp_date']);
-            $this->setNotes ($row['notes']);
-            $this->setOperator($row['operator']);
-            $this->setRoleID($row['r_id']);
-            $this->setRfid_no($row['rfid_no']);
+            if ($result->num_rows == 1) {
+                $row = $result->fetch_assoc();
+                $this->setAccounts($row['operator']);
+                $this->setAdj_date($row['adj_date']);
+                $this->setIcon ($row['icon']);
+                $this->setExp_date ($row['exp_date']);
+                $this->setNotes ($row['notes']);
+                $this->setOperator($row['operator']);
+                $this->setRoleID($row['r_id']);
+                $this->setRfid_no($row['rfid_no']);
+            } else {
+                throw new Exception("SQL Error");
+            }
         } else {
             return false;
         }
@@ -112,7 +119,7 @@
 	
     public function getIcon(){
         if ($this->icon == ""){
-            return "user";
+            return "fas fa-user";
         }
         return $this->icon;
     }
@@ -141,9 +148,11 @@
         global $mysqli;
         global $sv;
         
-        if (!$this->regexRFID($rfid_no)) {return "Invalid RFID Number";}
         if ($staff->getRoleID() < $sv['editRfid']){
             return "Insufficient role to add new RFID";
+        }
+		if (!self::regexRFID($rfid_no)){
+            return "U:151 Invalid RFID number format.";
         }
         
         //Check if RFID is already in table
@@ -241,23 +250,39 @@
                 return "Error in preparing Users: modifyRoleID statement";
             }
         } else {
-            echo "Insufficient Role to modify Role ID";
+            return "Insufficient Role to modify Role ID";
         }
     }
-	
+
+    //  The RFID must exist in the table
     public static function regexRFID($rfid_no) {
-        //10 digit format check
-        if (preg_match("/^\d{5,}$/",$rfid_no) == 0) {
+        global $mysqli;
+        //4 to 12 digit format check
+        if (preg_match("/^\d{4,12}$/",$rfid_no) == 0) {
             return false;
-        } else {
-            return true;
+        }
+		return true;
+    }
+	
+    public static function rfidExist($rfid_no){
+		global $mysqli;
+		
+        if ($result = $mysqli->query("
+            SELECT *
+            FROM `rfid`
+            WHERE `rfid`.`rfid_no` = '$rfid_no';
+        ")){
+            if($result->num_rows == 1){
+                return true;
+            }
+            return false;
         }
     }
 	
     public static function regexUser($operator) {
         //10 digit format check
         if (preg_match("/^\d{10}$/",$operator) == 0) {
-            //echo "Invalid Operator ID:".$operator;
+            //"Invalid Operator ID:".$operator;
             return false;
         } else {
             return true;
@@ -301,7 +326,7 @@
                 array_push($accounts, new Accounts($row['a_id']));
             }
         } else {
-            echo $mysqli->error;
+            //echo $mysqli->error;
             return false;
         }
         
@@ -363,6 +388,18 @@
             return "RFID remains unchanged";
         }
         
+        //Check if RFID is already in table
+        if ($result = $mysqli->query("
+            SELECT *
+            FROM `rfid`
+            WHERE `rfid_no` = $rfid_no;
+        ")){
+            if ($result->num_rows > 0){
+                $row = $result->fetch_assoc();
+                return "This RFID #$rfid_no has already been assinged to ".$row['operator'];
+            }
+        }
+        
         if ($stmt = $mysqli->prepare("
             UPDATE `rfid`
             SET `rfid_no` = ?
@@ -380,8 +417,8 @@
                 }
             } else {
                 //return "Users: updateRFID Execute Error";
-				return $stmt->error;
-			}
+                return $stmt->error;
+            }
         } else {
             return "Error in preparing Users: updateRFID statement";
         }
