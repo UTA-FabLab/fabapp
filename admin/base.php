@@ -22,7 +22,7 @@ if (!$staff || $staff->getRoleID() < 7){
         <div class="col-md-8">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fa fa-ticket fa-lg"></i> Title
+                    <i class="fas fa-ticket-alt fa-lg"></i> Title
                 </div>
                 <div class="panel-body">
                     
@@ -33,7 +33,7 @@ if (!$staff || $staff->getRoleID() < 7){
         <div class="col-md-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fa fa-calculator fa-lg"></i> Col 4
+                    <i class="fas fa-calculator fa-lg"></i> Col 4
                 </div>
                 <div class="panel-body">
                     

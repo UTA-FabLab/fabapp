@@ -2,14 +2,19 @@
 
 /* 
  * License - FabApp V 0.9
- * 2015-2016 CC BY-NC-AS UTA FabLab
+ * 2015-2017 CC BY-NC-AS UTA FabLab
  */
 session_start();
-if (!empty($_GET["n"])){
-    $_SESSION['netID'] = null;
-} 
+
+//Remove Staff From Memory
 unset($_SESSION['staff']);
 $_SESSION["timeOut"] = 0;
-header("Location:".$_SESSION['loc']);
+if (!empty($_GET["n"])){
+    $_SESSION['netID'] = null;
+    unset($_SESSION['loc']);
+    header("Location:/index.php");
+} else {
+    header("Location:".$_SESSION['loc']);
+}
 
 ?>

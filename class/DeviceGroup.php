@@ -15,7 +15,7 @@ class DeviceGroup {
     private $dg_name;
     private $dg_parent;
     private $dg_desc;
-    private $measureDuration;
+    private $juiceboxManaged;
     private $payFirst;
     private $selectMatsFirst;
     private $storable;
@@ -34,7 +34,7 @@ class DeviceGroup {
                 $this->setDg_name($row['dg_name']);
                 $this->setDg_parent($row['dg_parent']);
                 $this->setDg_desc($row['dg_desc']);
-                $this->setMeasureDuration($row['measureDuration']);
+                $this->setJuiceboxManaged($row['juiceboxManaged']);
                 $this->setPayFirst($row['payFirst']);
                 $this->setSelectMatsFirst($row['selectMatsFirst']);
                 $this->setStorable($row['storable']);
@@ -83,8 +83,8 @@ class DeviceGroup {
         return $this->dg_desc;
     }
 
-    public function getMeasureDuration(){
-        return $this->measureDuration;
+    public function getJuiceboxManaged(){
+        return $this->JuiceboxManaged;
     }
 
     public function getPayFirst() {
@@ -115,12 +115,12 @@ class DeviceGroup {
         $this->dg_desc = $dg_desc;
     }
 
-    public function setMeasureDuration($measureDuration){
+    public function setJuiceboxManaged($juiceboxManaged){
         //Only Y or N, default to N otherwise
-        if(preg_match("/[YN]{1}/", $measureDuration)){
-            $this->measureDuration = $measureDuration;
+        if(preg_match("/[YN]{1}/", $juiceboxManaged)){
+            $this->juiceboxManaged = $juiceboxManaged;
         } else {
-            $this->measureDuration = "N";
+            $this->juiceboxManaged = "N";
         }
     }
     
@@ -150,6 +150,4 @@ class DeviceGroup {
             $this->storable = "N";
         }
     }
-
-
 }

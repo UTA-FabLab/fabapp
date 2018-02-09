@@ -68,13 +68,13 @@ class Mats_Used {
         global $mysqli;
         
         //Deny if there is a cost associated with the materials
-        if($this->getMaterial()->getPrice() > 0.005){
+        if($status_id != 12 && $this->getMaterial()->getPrice() > 0.005){
             return "This material has a cost associated with it.";
         }
         
         if ($mysqli->query("
             UPDATE `mats_used`
-            SET `status_id` = '$status_id', `staff_id` = '".$staff->getOperator()."'
+            SET `status_id` = '$status_id', `staff_id` = '".$staff->getOperator()."', `mu_date` = CURRENT_TIMESTAMP
             WHERE `mu_id` = '".$this->getMu_id()."'
         ")){
             if ($mysqli->affected_rows == 1){
@@ -184,8 +184,8 @@ class Mats_Used {
     }
 
     public function getMu_date() {
-        global $sv; 
-		//Pull format setting from DB's site varibles
+        //Pull format setting from DB's site varibles
+        global $sv;
         
         return date($sv['dateFormat'],strtotime($this->mu_date));
     }
@@ -257,7 +257,11 @@ class Mats_Used {
     }
 
     public function setStaff($staff_id) {
-        $this->staff = Users::withID($staff_id);
+        if (is_object($staff_id)){
+            $this->staff = $staff_id;
+        } else {
+            $this->staff = Users::withID($staff_id);
+        }
     }
 
     public function setUnit_used($unit_used) {
@@ -287,14 +291,11 @@ class Mats_Used {
         if ($this->header == "" || $this->status->getStatus_id() >= 20) {
             $notes = $this->mu_notes;
         } elseif ($this->status->getStatus_id() == 12 || $this->status->getStatus_id() == 15) {
-            if(strlen($mu->getMu_notes()) < 10){
-                return "Please state a reason for marking this ticket as failed/cancel.";
-            }
             $notes = "|".$this->header."|".$this->mu_notes;
         }
         $status_id = $this->status->getStatus_id();
         
-        if ($this->Material->getMeasurable() == "Y") {
+        if ($this->material->getMeasurable() == "Y") {
             //invert value
             $uu = -abs($this->unit_used);
         } else {
@@ -323,23 +324,38 @@ class Mats_Used {
         }
     }
 	
-	//Use this method for writing attributes to the DB for the object
+    //Use this method for writing attributes to the DB for the object
     public function writeAttr(){
         global $mysqli;
     
         //Combine $header & $mu_notes
-        if ($this->header == "") {
+        //Drop header if all is well
+        if ($this->header == "" || $this->status->getStatus_id() >= 20) {
             $notes = $this->mu_notes;
-        } else {
+        } elseif ($this->status->getStatus_id() == 12 || $this->status->getStatus_id() == 15) {
             $notes = "|".$this->header."|".$this->mu_notes;
         }
         $status_id = $this->status->getStatus_id();
-        $operator = $this->staff->getOperator();
+        
+        if ( is_object($this->staff) )
+            $operator = $this->staff->getOperator();
+        else
+            $operator = "NULL";
         
         if (strcmp($this->mu_date, "") == 0)
             $mu_date = "NULL";
         else 
             $mu_date = "$this->mu_date";
+        
+        if (strcmp($this->unit_used, "") == 0){
+            $unit_used = "NULL";
+        } else {
+            if ($this->trans_id){
+                $unit_used = "-$this->unit_used";
+            } else {
+                $unit_used = "$this->unit_used";
+            }
+        }
         
         //Update Mat_used
         if ($stmt = $mysqli->prepare("
@@ -348,7 +364,7 @@ class Mats_Used {
                 `status_id`= ?, `staff_id`=?, `mu_notes` = ?
             WHERE mu_id = ?;
         ")){
-            $stmt->bind_param("dsissi", $this->unit_used, $mu_date, $status_id, $operator, $notes, $this->mu_id);
+            $stmt->bind_param("dsissi", $unit_used, $mu_date, $status_id, $operator, $notes, $this->mu_id);
             if ($stmt->execute() === true ){
                 $row = $stmt->affected_rows;
                 $stmt->close();

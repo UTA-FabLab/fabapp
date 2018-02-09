@@ -43,7 +43,7 @@ function gatekeeper ($operator, $d_id) {
         LIMIT 1;
     ")){
         if( $result->num_rows > 0){
-			$row = $result->fetch_assoc();
+            $row = $result->fetch_assoc();
             return array ("status_id" => 1, "ERROR" => "Can not start new Ticket $row[trans_id] on this device until previous ticket has been closed.", "authorized" => "N");
         }
     } else {
@@ -75,32 +75,58 @@ function gatekeeper ($operator, $d_id) {
     } else {
         return array ("status_id" => 0, "ERROR" => "gk".$mysqli->error, "authorized" => "N");
     }
+    ////////////////////////////////////////////////////////
+    //
+    //  Deny if membership < strtotime("now")
+    //
     
-    //if membership < date()
+    ////////////////////////////////////////////////////////
+    //
+    //  Deny if User has more than one device powered on
+    //
     
-    //User has an outstanding charge
-    $msg = Acct_charge::checkOutstanding($user->getOperator());
-    if (is_string($msg)){
-        return array ("status_id" => 1, "ERROR" => $msg,  "authorized" => "N");
+    ////////////////////////////////////////////////////////
+    //
+    //   User has an outstanding charge
+    //
+    $ac_owed = Acct_charge::checkOutstanding($user->getOperator());
+    if (is_array($ac_owed) && sizeof($ac_owed) > 0){
+        $msg = "Over due balance for Ticket :";
+        foreach(array_keys($ac_owed) as $aco_key){
+            $msg = $msg." ".$aco_key." &";
+        }
+        return array ("status_id" => 1, "ERROR" => rtrim($msg, "&"),  "authorized" => "N");
     }
     
-    // Check to see if device has training modules
+    
+    ////////////////////////////////////////////////////////
+    //
+    //   Check to see if device has training modules
+    //
     $training = array();
     if ($results = $mysqli->query("
-        SELECT *
-        FROM trainingmodule
-        LEFT JOIN devices
-        ON trainingmodule.d_id = devices.d_id
-        where devices.d_id = '$d_id' AND tm_required = 'Y'
+        SELECT `trainingmodule`.`tm_id`, `trainingmodule`.`title`
+        FROM `trainingmodule`
+        LEFT JOIN `devices`
+        ON `trainingmodule`.`d_id` = `devices`.`d_id`
+        where devices.d_id = '$d_id' AND `tm_required` = 'Y'
         UNION
-        SELECT *
-        FROM trainingmodule
-        LEFT JOIN devices
-        ON trainingmodule.dg_id = devices.dg_id
-        WHERE devices.d_id = '$d_id' AND tm_required = 'Y';
+        SELECT `trainingmodule`.`tm_id`, `trainingmodule`.`title`
+        FROM `trainingmodule`
+        LEFT JOIN `devices`
+        ON `trainingmodule`.`dg_id` = `devices`.`dg_id`
+        WHERE `devices`.`d_id` = '$d_id' AND `tm_required` = 'Y'
+        UNION
+        SELECT `trainingmodule`.`tm_id`, `trainingmodule`.`title`
+        FROM `trainingmodule`
+        LEFT JOIN `device_group`
+        ON `trainingmodule`.`dg_id` = `device_group`.`dg_parent`
+        LEFT JOIN `devices`
+        ON `device_group`.`dg_id` = `devices`.`dg_id`
+        WHERE `devices`.`d_id` = '$d_id' AND `tm_required` = 'Y';
     ")){
         while( $row = $results->fetch_assoc() ) {
-            $training[] = $row["tm_id"];
+            $training[$row["tm_id"]] = $row["title"];
         }
         $results->close();
     } else {
@@ -116,27 +142,28 @@ function gatekeeper ($operator, $d_id) {
 
     // Check if user has completed the necessary training modules
     $count = 0;
-    foreach($training as $t){
+    //foreach($training as $t){
+    foreach ($training as $tm_id => $title){
         if ($results = $mysqli->query("
             SELECT *
             FROM `tm_enroll`
-            WHERE tm_id = $t AND `operator` = ".$user->getOperator()."
+            WHERE `tm_enroll`.`tm_id` = '$tm_id' AND `operator` = '".$user->getOperator()."'
         ")){
             if( $results->num_rows == 1 ) {
                 $count++;
+            } else {
+                return array ("status_id" => 2, "ERROR" => "ID: ".$user->getOperator()." Needs ".$title, "authorized" => "N");
             }
         } else {
             return array ("status_id" => 0, "ERROR" => $mysqli->error, "authorized" => "N");
         }
     }
 	
-    if ($count != count($training)){
-        //echo "Device: ".$device_id." requires training"."<br />";
-        //echo "Enroll - ". $count ." Class - ". count($training) ."<br />";
-        return array ("status_id" => 2, "ERROR" => $user->getOperator()." Needs Training On ".$device->getDevice_desc(), "authorized" => "N");
-    } else {
+    if ($count == count($training)){
         //echo "authorized";
         return array ("status_id" => 10, "authorized" => "Y");
+    } else {
+        return array ("status_id" => 0, "ERROR" => "Gatekeeper : No Resolution", "authorized" => "N");
     }
 }
 ?>
