@@ -15,6 +15,7 @@ class Accounts {
     private $description;
     private $balance;
     private $operator;
+    private $role_access;
     
     public function __construct($a_id) {
         global $mysqli;
@@ -34,26 +35,49 @@ class Accounts {
             $this->setDescription($row['description']);
             $this->setbalance($row['balance']);
             $this->setOperator($row['operator']);
+            $this->setRole_access($row['role_access']);
         } else 
             throw new Exception("Invalid Account Constructor");
+    }
+    
+    public function getA_id() {
+        return $this->a_id;
+    }
+
+    public function getBalance() {
+        return $this->balance;
+    }
+
+    public function getDescription() {
+        return $this->description;
+    }
+
+    public function getName() {
+        return $this->name;
+    }
+
+    public function getOperator() {
+        return $this->operator;
+    }
+    
+    public function getRole_access(){
+        return $this->role_access ;
     }
     
     public static function listAccts($user, $staff){
         global $mysqli;
         global $sv;
         $accounts = array();
-        $init = array(1,2);
+        $init = array(2);
         
         //Pull available accounts for user
         foreach ($user->getAccounts() as $a){
             array_push($init, $a->getA_id());
         }
         
-        if ($staff->getRoleID() >= $sv['ShareAccts']){
-            //Pull available accounts for Staff
-            foreach ($staff->getAccounts() as $a){
-                array_push($init, $a->getA_id());
-            }
+        //Pull available accounts for Staff
+        foreach ($staff->getAccounts() as $a){
+            array_push($init, $a->getA_id());
         }
         
         //Remove any duplicates
@@ -67,50 +91,36 @@ class Accounts {
             while($row = $result->fetch_assoc()){
                 if (in_array($row['a_id'],$init) ){
                     array_push($accounts, new Accounts($row['a_id']));
+                } elseif ($row['role_access'] <= $staff->getRoleID()) {
+                    array_push($accounts, new Accounts($row['a_id']));
                 }
             }
         }
         return $accounts;
-    }
-    
-    public function getA_id() {
-        return $this->a_id;
-    }
-
-    public function getName() {
-        return $this->name;
-    }
-
-    public function getDescription() {
-        return $this->description;
-    }
-
-    public function getBalance() {
-        return $this->balance;
-    }
-
-    public function getOperator() {
-        return $this->operator;
     }
 
     public function setA_id($a_id) {
         $this->a_id = $a_id;
     }
 
-    public function setName($name) {
-        $this->name = $name;
+    private function setBalance($balance) {
+        $this->balance = $balance;
     }
 
     public function setDescription($description) {
         $this->description = $description;
     }
 
-    private function setBalance($balance) {
-        $this->balance = $balance;
+    public function setName($name) {
+        $this->name = $name;
     }
 
     public function setOperator($operator) {
         $this->operator = $operator;
+    }
+    
+    public function setRole_access($ra){
+        $this->role_access = $ra;
     }
     
     public function updateBalance($amount){

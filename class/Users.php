@@ -37,7 +37,7 @@
         if (!self::regexRFID($rfid_no)){
             return "Invalid RFID Number - $rfid_no";
         }
-		if (!self::rfidExist($rfid_no)){
+        if (!self::rfidExist($rfid_no)){
             return "No Match for RFID Number - $rfid_no";
         }
 		
@@ -144,6 +144,23 @@
         }
     }
     
+    public function history(){
+        global $mysqli;
+        $tickets = array();
+        
+        if ($result = $mysqli->query("
+            SELECT `trans_id`
+            FROM `transactions`
+            WHERE `transactions`.`operator` = '".$this->operator."'
+            ORDER BY `trans_id` DESC;
+        ")){
+            while($row = $result->fetch_assoc()){
+                array_push($tickets, new Transactions($row['trans_id']));
+            }
+        }
+        return $tickets;
+    }
+    
     public function insertRFID($staff, $rfid_no){
         global $mysqli;
         global $sv;
@@ -151,7 +168,7 @@
         if ($staff->getRoleID() < $sv['editRfid']){
             return "Insufficient role to add new RFID";
         }
-		if (!self::regexRFID($rfid_no)){
+        if (!self::regexRFID($rfid_no)){
             return "U:151 Invalid RFID number format.";
         }
         
@@ -188,7 +205,7 @@
         
         //Maybe Move this Logic into it's own function
         $operator = $this->getOperator();
-		$staff_id = $staff->getOperator();
+        $staff_id = $staff->getOperator();
         //Check if User is already in table
         if ($result = $mysqli->query("
             SELECT *
@@ -261,7 +278,7 @@
         if (preg_match("/^\d{4,12}$/",$rfid_no) == 0) {
             return false;
         }
-		return true;
+        return true;
     }
 	
     public static function rfidExist($rfid_no){
@@ -280,8 +297,9 @@
     }
 	
     public static function regexUser($operator) {
+        global $sv;
         //10 digit format check
-        if (preg_match("/^\d{10}$/",$operator) == 0) {
+        if (preg_match("/".$sv['regexUser']."/",$operator) == 0) {
             //"Invalid Operator ID:".$operator;
             return false;
         } else {
@@ -311,7 +329,7 @@
         }
     }
     
-    public function setAccounts($operator){
+    private function setAccounts($operator){
         global $mysqli;
         global $sv;
         $accounts = array();
@@ -331,13 +349,18 @@
         }
         
         //See if operator can use any default accounts
-        //Based on $sv attributes for acct3 & acct4
+        //Based on $sv attributes for acct1, acct3, & acct4
+        /*
+        if ($sv['acct1'] <= $this->roleID){
+            array_push($accounts, new Accounts(1));
+        }
         if ($sv['acct3'] <= $this->roleID){
             array_push($accounts, new Accounts(3));
         }
         if ($sv['acct4'] <= $this->roleID){
             array_push($accounts, new Accounts(4));
         }
+        */
         
         $this->accounts = $accounts;
     }
@@ -374,6 +397,82 @@
             //User's Role LvL has expired, default to 1
             $this->roleID = 1;
             return "User's role has expired.";
+        }
+    }
+    
+    public function ticketsAssist(){
+        global $mysqli;
+        
+        if ($result = $mysqli->query("
+            SELECT Count(trans_id) as assist
+            FROM `transactions`
+            WHERE `staff_id` = '".$this->operator."'
+        ")){
+            $row = $result->fetch_assoc();
+            return $row['assist'];
+        }
+    }
+    
+    public function ticketsAssistRank(){
+        global $mysqli;
+        global $sv;
+        $i = 0;
+        
+        if ($result = $mysqli->query("
+            SELECT Count(trans_id) as Visits, `staff_id`
+            FROM `transactions`
+            WHERE t_start 
+            BETWEEN  DATE_ADD(CURRENT_DATE, INTERVAL -$sv[rank_period] MONTH)
+            AND CURRENT_DATE
+            Group BY `staff_id` ORDER BY Visits DESC
+        ")){
+            while($row = $result->fetch_assoc()){
+                $i++;
+                if ($row['staff_id'] == $this->operator){
+                    return $i;
+                }
+            }
+            return "-";
+        }
+    }
+    
+    public function ticketsTotal(){
+        global $mysqli;
+        
+        if ($result = $mysqli->query("
+            SELECT Count(trans_id) as visits
+            FROM `transactions`
+            WHERE `operator` = '".$this->operator."'
+        ")){
+            if ($result->num_rows == 1){
+                $row = $result->fetch_assoc();
+                return $row['visits'];
+            } else{
+                return 0;
+            }
+        }
+    }
+    
+    public function ticketsTotalRank(){
+        global $mysqli;
+        global $sv;
+        $i = 0;
+        
+        if ($result = $mysqli->query("
+            SELECT Count(trans_id) as Visits, `operator`
+            FROM `transactions`
+            WHERE t_start 
+            BETWEEN  DATE_ADD(CURRENT_DATE, INTERVAL -$sv[rank_period] MONTH)
+            AND CURRENT_DATE
+            Group BY `operator` ORDER BY Visits DESC
+        ")){
+            while($row = $result->fetch_assoc()){
+                $i++;
+                if ($row['operator'] == $this->operator){
+                    return $i;
+                }
+            }
+            return "-";
         }
     }
     

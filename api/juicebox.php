@@ -7,7 +7,7 @@ header("Access-Control-Allow-Headers: Cache-Control, Origin, X-Requested-With, C
  * 
  *  Suleiman Barakat & Jon Le
  *  FabLab @ University of Texas at Arlington
- *  version: 0.9 beta (2017-10-30)
+ *  version: 0.9 beta (2018-03-14)
  */
 require_once ($_SERVER['DOCUMENT_ROOT']."/connections/db_connect8.php");
 include_once ($_SERVER['DOCUMENT_ROOT'].'/class/all_classes.php');
@@ -23,10 +23,17 @@ include_once 'gatekeeper.php';
 //$test_input = json_encode(array("type" => "end_transaction", "trans_id" => "149"));
 //$input_data = json_decode($test_input, true);
 
-/*
+
 //Compare Header API Key with site variable's API Key
 $headers = apache_request_headers();
-if(isset($headers['Authorization'])){
+if ($sv['api_key'] == "") {
+    $json_out["api_key"] = "Not Set";
+} elseif(isset($headers['authorization'])){
+    if ($sv['api_key'] != $headers['authorization'] ){
+        $json_out["ERROR"] = "Unable to authenticate Device";
+        ErrorExit(1);
+    }
+} elseif(isset($headers['Authorization'])){
     if ($sv['api_key'] != $headers['Authorization'] ){
         $json_out["ERROR"] = "Unable to Authenticate Device";
         ErrorExit(1);
@@ -35,7 +42,6 @@ if(isset($headers['Authorization'])){
     $json_out["ERROR"] = "Header Are Not Set";
     ErrorExit(1);
 }
-*/
 
 // Input posted with "Content-Type: application/json" header
 $input_data = json_decode(file_get_contents('php://input'), true);

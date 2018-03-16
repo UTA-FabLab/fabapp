@@ -6,8 +6,8 @@ header("Access-Control-Allow-Headers: Cache-Control, Origin, X-Requested-With, C
 /*
  *  purpose.php : purpose list interface
  *
- *	Arun Kalahasti, 
- *  version: 0.1 alpha (2016-05-20)
+ *	Arun Kalahasti & Jon Le
+ *  version: 0.9 alpha (2018-03-14)
  *
 */
 
@@ -22,26 +22,35 @@ $json_out = array();
 
 //Compare Header API Key with site variable's API Key
 $headers = apache_request_headers();
-if(isset($headers['Authorization'])){
+if ($sv['api_key'] == "") {
+    $json_out["api_key"] = "Not Set";
+} elseif(isset($headers['authorization'])){
+    if ($sv['api_key'] != $headers['authorization'] ){
+        $json_out["authorized"] = "N";
+        $json_out["ERROR"] = "Unable to authenticate Device purpose";
+    }
+} elseif(isset($headers['Authorization'])){
     if ($sv['api_key'] != $headers['Authorization'] ){
         $json_out["authorized"] = "N";
-        $json_out["ERROR"] = "Unable to Authenticate";
-    } else {
-        $result = mysqli_query($mysqli, "
-            SELECT `p_id`, `p_title` AS purpose FROM `purpose` WHERE 1;
-        ");
-        if ($mysqli->error) {
-            $json_out["authorized"] = "N";
-            $json_out["ERROR"] = $mysqli->error;
-        }
-
-        while($row = $result->fetch_array(MYSQL_ASSOC)) {
-            $json_out[] = $row;
-        }
+        $json_out["ERROR"] = "Unable to Authenticate Device purpose";
     }
 } else {
     $json_out["authorized"] = "N";
     $json_out["ERROR"] = "Header Not Set";
+}
+
+if (!isset($json_out["ERROR"])){
+	$result = mysqli_query($mysqli, "
+		SELECT `p_id`, `p_title` AS purpose FROM `purpose` WHERE 1;
+	");
+	if ($mysqli->error) {
+		$json_out["authorized"] = "N";
+		$json_out["ERROR"] = $mysqli->error;
+	} else {
+		while($row = $result->fetch_array(MYSQL_ASSOC)) {
+			$json_out[] = $row;
+		}
+	}
 }
 
 

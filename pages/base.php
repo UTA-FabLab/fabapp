@@ -3,7 +3,7 @@
  *   CC BY-NC-AS UTA FabLab 2016-2017
  *   FabApp V 0.9
  */
- //This will import all of the CSS and HTML code nessary to build the basic page
+ //This will import all of the CSS and HTML code necessary to build the basic page
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
 /*	
@@ -19,7 +19,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['BaseBtn']) ){
 
 
 
-    //////////////////////Method 2 for Reguar Expressions
+    //////////////////////Method 2 for Regular Expressions
     //  This will look for 1 to many digits
     $roleid = filter_input(INPUT_POST,'roleSelect');
     if (preg_match("/^\d+$/", $roleid) == 0){
@@ -68,10 +68,10 @@ if ( !empty($_GET['variable'])){
     <div class="row">
         <div class="col-md-12">
             <?php if (isset($dg)) { ?>
-                    <h1 class="page-header"><?php echo $dg->getDg_desc();?></h1>
-                    Notice that all the values have been reset.  We have been redirect via the php command header().  This will remove the html POST intent, and if you hit refresh you will not see the browser asking you are you sure you want to reload this page.
+                <h1 class="page-header"><?php echo $dg->getDg_desc();?></h1>
+                Notice that all the values have been reset.  We have been redirect via the php command header().  This will remove the html POST intent, and if you hit refresh you will not see the browser asking you are you sure you want to reload this page.
             <?php } else { ?>
-                    <h1 class="page-header">Page Name</h1>
+                <h1 class="page-header">Page Name</h1>
             <?php } ?>
         </div>
         <!-- /.col-md-12 -->
@@ -100,15 +100,15 @@ if ( !empty($_GET['variable'])){
                                 <select name="dg_id" tabindex="3">
                                     <option disabled hidden selected value="">Device Group</option>
                                     <?php if($result = $mysqli->query("
-                                            SELECT DISTINCT `device_group`.`dg_id`, `device_group`.`dg_desc`
-                                            FROM `device_group`
-                                            WHERE 1;
+                                        SELECT DISTINCT `device_group`.`dg_id`, `device_group`.`dg_desc`
+                                        FROM `device_group`
+                                        WHERE 1;
                                     ")){
-                                            while($row = $result->fetch_assoc()){
-                                                    echo("<option value='$row[dg_id]'>$row[dg_desc]</option>");
-                                            }
+                                        while($row = $result->fetch_assoc()){
+                                            echo("<option value='$row[dg_id]'>$row[dg_desc]</option>");
+                                        }
                                     } else {
-                                            echo ("Device list Error - SQL ERROR");
+                                        echo ("Device list Error - SQL ERROR");
                                     }?>
                                 </select>
                             </td>
@@ -159,12 +159,11 @@ if ( !empty($_GET['variable'])){
 <!-- /#page-wrapper -->
 <script>
 function validateForm(){
-    var field1 = document.getElementById('field1').value;
-    if (field1 === null || field1 === "") {
-        alert("Field 1 is Empty");
-        document.getElementById('field1').focus();
-        return false;
-    }
+	//to improve UX, I'd recommend using this JS script to perform regular expression checks
+	// pass the following arguments to stdRegex(id of input, the regular expression you wish to use, invalid message)
+	if (stdRegEx("field1", "/<?php echo $sv['regexUser'];?>/", "Field 1 is Empty") === false){
+		return false;
+	}
 	
     var field2 = document.getElementById('field2').value;
     if (field2 === null || field2 === "") {

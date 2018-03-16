@@ -59,7 +59,8 @@ class Acct_charge {
         if ($result = $mysqli->query("
             SELECT `ac_id`
             FROM `acct_charge`
-            WHERE `trans_id` = '$trans_id';
+            WHERE `trans_id` = '$trans_id'
+            ORDER BY `ac_id` ASC;
         ")){
             while($row = $result->fetch_assoc()){
                 array_push( $acArray, new self($row['ac_id']) );
@@ -127,12 +128,11 @@ class Acct_charge {
         if ($a_id == 1) {
             $acct = new Accounts(1);
             $acct->updateBalance($amount);
-            $ac_notes = "'Debit Charge'";
+            $ac_notes = "Debit Charge";
         } else {
-            $ac_owed = Acct_charge::checkOutstanding($payee->getOperator());
+            $ac_owed = Acct_charge::checkOutstanding($ticket->getUser()->getOperator());
             //if ticket has a related acct charge to a_id == 1
             if (isset($ac_owed[$trans_id])){
-                echo "isset $trans_id";
                 //invert the amount owed and reduce the account balance
                 $acct = new Accounts(1);
                 $acct->updateBalance(-1.0 * $amount);
@@ -140,34 +140,24 @@ class Acct_charge {
                     INSERT INTO `acct_charge` 
                         (`a_id`, `trans_id`, `ac_date`, `operator`, `staff_id`, `amount`, `ac_notes`) 
                     VALUES
-                        ('1', '$trans_id', CURRENT_TIME(), '".$payee->getOperator()."','".$staff->getOperator()."', '".-1.0 * $amount."', \"Credit Charge\");
-                ")){
-                    
-                } else {
+                        ('1', '$trans_id', CURRENT_TIME(), '$payee','".$staff->getOperator()."', '".-1.0 * $amount."', \"Credit Charge\");
+                ")){ } else {
                     return $mysqli->error;
                 }
             }
-            
             //insert AC to credit AR
-            $ac_notes = "NULL";
+            $ac_notes = NULL;
         }
         
-        /*  use prepared statements
+        $s_operator = $staff->getOperator();
         if ($stmt = $mysqli->prepare("
             INSERT INTO `acct_charge` 
                 (`a_id`, `trans_id`, `ac_date`, `operator`, `staff_id`, `amount`, `ac_notes`)
             VALUES
                 (?, ?, CURRENT_TIME(), ?, ?, ?, ?);
         ")){
-            $stmt->bind_param("iiiis", $a_id, $trans_id, $payee->getOperator(), $staff->getOperator(), $amount, $ac_notes);
-        }
-         */
-        if ($mysqli->query("
-            INSERT INTO `acct_charge` 
-                (`a_id`, `trans_id`, `ac_date`, `operator`, `staff_id`, `amount`, `ac_notes`) 
-            VALUES
-                ('$a_id', '$trans_id', CURRENT_TIME(), '".$payee->getOperator()."','".$staff->getOperator()."', '$amount', $ac_notes);
-        ")){
+            $stmt->bind_param("iissds", $a_id, $trans_id, $payee, $s_operator, $amount, $ac_notes);
+            $stmt->execute();
             $ac_id = $mysqli->insert_id;
             
             //Update Account's Balance
@@ -313,7 +303,35 @@ class Acct_charge {
                 $this->account->updateBalance(-$amount);
             }
         } else {
-            return"AC293 ERROR - ".$mysqli->error;
+            return"AC306 ERROR - ".$mysqli->error;
+        }
+        
+        //Void Debit Charge of OutStanding Fine
+        if ($result = $mysqli->query("
+            SELECT `acct_charge`.`ac_id`, `acct_charge`.`amount`
+            FROM `acct_charge`
+            WHERE `acct_charge`.`trans_id` = '".$this->getTrans_id()."' AND `acct_charge`.`a_id` = '1'
+            ORDER BY `ac_id` DESC;
+        ")){
+            while($row = $result->fetch_assoc()){
+                if ($row['amount'] < .001){
+                    if ($mysqli->query("
+                        UPDATE `acct_charge`
+                        SET `ac_date` = CURRENT_TIMESTAMP,  `staff_id` = '".$staff->getOperator()."',
+                            `amount` = 0.0, `ac_notes` = 'Void Payment'
+                        WHERE `acct_charge`.`ac_id` = $row[ac_id];
+                    ")){
+                        if ($mysqli->affected_rows == 1){
+                            //Remove amount from Acct balance
+                            $ticket = new Transactions($this->getTrans_id());
+                            $acct1 = new Accounts(1);
+                            $acct1->updateBalance(abs($row['amount']));
+                        }
+                    } else {
+                        return"AC293 ERROR - ".$mysqli->error;
+                    }
+                }
+            }
         }
     }
 }

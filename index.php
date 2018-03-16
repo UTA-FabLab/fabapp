@@ -7,41 +7,6 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 $device_array = array();
 $_SESSION['type'] = "home";
 
-
-//temp solution to merge old DB w/ new
-//otherwise disable
-/*
-echo "<div class='pull-right'>";
-if ($mysqli->query("
-	UPDATE `transactions`
-	SET `d_id` = `device_id`, `operator` = `uta_id`, `p_id` = `purp_id`
-	WHERE `device_id` IS NOT NULL;
-")){
-    echo "T:".$mysqli->affected_rows.", ";
-} else {
-    echo ("T-Error, ");
-}
-if ($mysqli->query("
-	UPDATE `mats_used`
-	SET `mu_date` = `date`, `mu_notes` = `notes`
-	WHERE `date` IS NOT NULL;
-")){
-    echo "MU:".$mysqli->affected_rows.", ";
-} else {
-    echo ("MU-Error, ");
-}
-if ($mysqli->query("
-    UPDATE `objbox`
-    SET `operator` = `pickupid`
-    WHERE `pickupid` IS NOT NULL;
-")){
-    echo "OB:".$mysqli->affected_rows;
-} else {
-    echo ("OB-Error");
-}
-echo "</div>";
- */
-
 //print details of $staff
 //print_r($staff);
 ?>
@@ -64,10 +29,10 @@ echo "</div>";
                     <table class="table table-striped table-bordered table-hover" id="indexTable">
                         <thead>
                             <tr class="tablerow">
-                                <th align="right">Ticket</td>
-                                <th>Device</td>
-                                <th>Start Time</td>
-                                <th>Est Remaining Time</td>
+                                <th align="right">Ticket</th>
+                                <th>Device</th>
+                                <th>Start Time</th>
+                                <th>Est Remaining Time</th>
                                 <?php if ($staff) { ?> <th>Action</th><?php } ?>
                             </tr>
                         </thead>
@@ -176,7 +141,8 @@ echo "</div>";
                             ORDER BY `m_name` ASC;
                         ")){
                             while ($row = $result->fetch_assoc()){
-                                if ($staff && $staff->getRoleID() >= $sv['LvlOfStaff']){ ?>
+                                //if ($staff && $staff->getRoleID() >= $sv['LvlOfStaff']){ 
+                                if (true){?>
                                     <tr>
                                         <td><?php echo $row['m_name']; ?></td>
                                         <td><div class="color-box" style="background-color: #<?php echo $row['color_hex'];?>;"/></td>

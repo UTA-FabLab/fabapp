@@ -69,7 +69,7 @@ if (!empty($_GET["d_id"]) && Devices::regexDID($_GET["d_id"])) {
                     )){
                         if($staffIcon->num_rows > 0){
                             $staffIcon = mysqli_fetch_array($staffIcon, MYSQLI_ASSOC);
-                            echo "<td align='center' style='padding: 15px'><i class='fa fa-" . $staffIcon['icon'] . " fa-lg fa-fw'></i></td>";
+                            echo "<td align='center' style='padding: 15px'><i class='".$staffIcon['icon']." fa-lg fa-fw'></i></td>";
                         } else
                             echo "<td align='center' style='padding: 2px;'>Invalid User ID</td>";
                     } else

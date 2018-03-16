@@ -2,7 +2,9 @@
 
 // Thermal printer connection settings
 
-$tphost = "ip address";
-$tpport = 9100;
 
+$tp = array(
+    array("0.0.0.0",1000),    //Thermal Printer 0
+    array("0.0.0.0",1000)     //Thermal Printer 1
+)
 ?>

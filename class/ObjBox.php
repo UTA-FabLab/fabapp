@@ -29,7 +29,7 @@ class ObjBox {
         
         if($result = $mysqli->query("
             SELECT *
-            FROM `objox`
+            FROM `objbox`
             WHERE `o_id` = '$o_id'
             LIMIT 1
         ")){
@@ -42,7 +42,7 @@ class ObjBox {
             $this->setTrans_id($row['trans_id']);
             $this->setStaff($row['staff_id']);
         } else 
-            throw new Exception('Invalid Object Call');
+            throw new Exception('Invalid Object Call '.$o_id);
     }
     
     public static function byTrans($trans_id){
@@ -121,17 +121,43 @@ class ObjBox {
     public function getAddress() {
         return $this->address;
     }
+    
+    public static function getAddyNumber(){
+        global $sv;
+        $addyN = array();
+        
+        for ($i=1; $i <= $sv["box_number"]; $i++){
+            array_push($addyN, $i);
+        }
+        return $addyN;
+    }
+    
+    public static function getAddyLetter(){
+        global $sv;
+        $addyL = array();
+        $letter = array("A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z");
+        
+        for($i=0; $i < $sv["letter"]; $i++){
+            array_push($addyL, $letter[$i]);
+        }
+        return $addyL;
+    }
 
-    public function getUser() {
-        return $this->user;
+    public function getStaff() {
+        if (is_object($this->staff)){
+            return $this->staff;
+        } else {
+            return new Staff();
+        }
+        
     }
 
     public function getTransaction() {
         return $this->transaction;
     }
 
-    public function getStaff() {
-        return $this->staff;
+    public function getUser() {
+        return $this->user;
     }
 
     public static function insert_Obj($trans_id, $staff){
@@ -247,12 +273,12 @@ class ObjBox {
             }
             $result->close();
             
-            //If Occupied Addresses == Total # of possible Addresses ObjBox Must be Full
-            if(count($occupied) == $sv["box_number"]*$sv["letter"])
+            //If Occupied Addresses >= Total # of possible Addresses ObjBox Must be Full
+            if(count($occupied) >= $sv["box_number"]*$sv["letter"])
                 return "You seem to be full on Objects, please contact Admin to empty your ObjectBox Storage.";
             
             //sentinel loop - suggest check suggest
-            $address = rand(1,$sv["box_number"]).$letter[rand(0,$sv["letter"]-1)];
+            $address = rand(1,$sv["box_number"]).$letter[rand(0,$sv["letter"])];
             //Assume there will be a match
             $match = TRUE;
             $i=0;
@@ -272,9 +298,9 @@ class ObjBox {
                 }
             }
             return $address;
-		} else {
-			return $mysqli->error;
-		}
+        } else {
+            return $mysqli->error;
+        }
     }
     
     public function pickedUpBy($user, $staff){
@@ -316,7 +342,7 @@ class ObjBox {
         $this->o_end = $o_end;
     }
 
-    private function setAddress($address) {
+    public function setAddress($address) {
         $this->address = $address;
     }
 

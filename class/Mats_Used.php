@@ -229,6 +229,7 @@ class Mats_Used {
 		if($this->status->getStatus_id() == 12 || strlen($mu_notes) < 10){
 			return "Please state a reason for marking this print as failed";
 		}
+		$mu_notes = htmlspecialchars($mu_notes);
         $this->mu_notes = str_replace("|", "l", $mu_notes);
     }
 

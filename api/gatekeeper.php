@@ -63,7 +63,8 @@ function gatekeeper ($operator, $d_id) {
             //Current Time
             $now = new DateTime();
             while($row = $result->fetch_array()){
-                //if 3D Printer, you must pay
+                //Deny if Object in storage is from the same Device Group
+                //Deny if Object in storage is older than maxHold
                 $o_start = new DateTime($row['o_start']);
                 $o_start->add(new DateInterval("P".$sv['maxHold']."D"));
                 
