@@ -20,8 +20,8 @@ if($staff){
                 echo "<script>console.log(\"$errorMsg\");</script>";
             }
         } else {
-			echo "<script>console.log(\"$user\");</script>";
-		}
+            echo "<script>console.log(\"$user\");</script>";
+        }
     }
 } else {
     $errorMsg = "You Must Be Logged In to Pick Up a Print";
@@ -51,7 +51,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $errorMsg == "") {
                 $mu->setStaff($staff->getOperator());
                 $mu->setUnit_used($_POST["uu_".$mu->getMu_id()]);
                 $mu->getStatus()->setStatus_id($mu_s);
-                $mu->setMu_notes($_POST['mu_notes_'.$mu->getMu_id()]);
+                //$mu->setMu_notes($_POST['mu_notes_'.$mu->getMu_id()]);
+				//$mu->setMu_notes(filter_input(INPUT_POST, 'mu_notes_'.$mu->getMu_id(), FILTER_SANITIZE_ENCODED));
+				$mu->setMu_notes($_POST['mu_notes_'.$mu->getMu_id()]);
                 
                 if ($mu_s > $status_id){
                     $status_id = $mu_s;
@@ -59,25 +61,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $errorMsg == "") {
             }
             
             $ticket->getStatus()->setStatus_id($status_id);
-            /*
-            if ($status_id == 12 && $errorMsg == ""){
-                //$_SESSION['type'] = "failed";
-                //Write the state to the DB
-                $rtn = $ticket->writeAttr();
-                if ($rtn == true){
-                    $ob->pickedUpBy($user, $staff);
-                    //Display the newly updated Ticket
-                    $loc = "/pages/lookup.php?trans_id=".$ob->getTransaction()->getTrans_id();
-                }
-            } elseif ($status_id == 20 && $errorMsg == ""){
-             */
             if ($status_id == 12 or $status_id == 20){
                 echo "<script>console.log(\"Quote: ".$ticket->quote()."\");</script>";
                 if ($ticket->quote() >= .005){
                     //Pass Object to be updated upon Successful payment
                     $_SESSION['ticket'] = serialize($ticket);
-                    //Account to be Charged
-                    $_SESSION['pre_select'] = $account;
+                    $_SESSION['pickupUser'] = serialize($user);
                     $loc = "/pages/pay.php";
                 } else {
                     if ($ticket->writeAttr()){
@@ -267,59 +256,6 @@ if ($staff) {
                 <!-- /.panel-body -->
             </div>
             <!-- /.panel -->
-            <?php //Look for associated charges
-            if( isset($ticket) && $ticket->getAc() ){?>
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <i class="fas fa-credit-card fa-lg"></i> Related Charges
-                    </div>
-                    <div class="panel-body">
-                        <table class="table table-bordered">
-                            <tr>
-                                <td class="col-sm-1">By</td>
-                                <td class="col-sm-2">Amount</td>
-                                <td class="col-sm-7">Account</td>
-                                <td class="col-sm-2">Staff</td>
-                            </tr>
-                            <?php foreach ($ticket->getAc() as $ac){
-                                if ($ac->getAccount()->getA_id() == 1 )
-                                    echo"\n\t\t<tr class=\"danger\">";
-                                else 
-                                    echo"\n\t\t<tr>";
-                                
-                                    if ( is_object($ac->getUser()) ) {
-                                        if (($ac->getUser()->getOperator() == $staff->getOperator()) || $staff->getRoleID() >= $sv['LvlOfStaff'] ){
-                                            echo "<td><i class='".$ac->getUser()->getIcon()." fa-lg' title='".$ac->getUser()->getOperator()."'></i></td>";
-                                        } else {
-                                            echo "<td><i class='".$ac->getUser()->getIcon()." fa-lg'></i></td>";
-                                        }
-                                    } else {
-                                        echo "<td>-</td>";
-                                    }
-                                    if ( ($ticket->getUser()->getOperator() == $staff->getOperator()) || $staff->getRoleID() >= $sv['LvlOfStaff'] ){
-                                        echo "<td><i class='".$sv['currency']."'></i> ".number_format($ac->getAmount(), 2)."</td>";
-                                    }
-                                    echo "<td><i class='far fa-calendar-alt' title='".$ac->getAc_date()."'> ".$ac->getAccount()->getName()."</i></td>";
-                                    echo "<td><i class='".$ac->getStaff()->getIcon()." fa-lg' title='".$ac->getStaff()->getOperator()."'></i>";
-                                    if ($ac->getAc_notes()){ ?>
-                                        <div class="btn-group">
-                                            <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
-                                                <span class="fas fa-music" title="Notes"></span>
-                                            </button>
-                                            <ul class="dropdown-menu pull-right" role="menu">
-                                                <li style="padding-left: 5px;"><?php echo $ac->getAccount()->getA_id().": ".$ac->getAc_notes();?></li>
-                                            </ul>
-                                        </div>
-                                    <?php }
-                                    echo "</td>";
-                                echo"</tr>\n";
-                            } ?>
-                        </table>
-                    </div>
-                    <!-- /.panel-body -->
-                </div>
-                <!-- /.panel -->
-            <?php } ?>
         </div>
         <!-- /.col-lg-4 -->
     </div>

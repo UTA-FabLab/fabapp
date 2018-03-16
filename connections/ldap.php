@@ -1,7 +1,7 @@
 <?php
 
 /*
- *  ldap.php : LDAP test
+ *  ldap.php : LDAP test 
  *
  *
 */
@@ -9,10 +9,10 @@
 //local function for testing & bypass
 function AuthenticateUser($netid, $password) {
     $attribute = '';
-    $ldap_server = '';
+    $ldap_server = 'ldaps://ldap';
     $ldap_baseDN = '';
     $ldap_bindDN = "";
-
+    
     //switch case to return roles
     switch ($netid){
         case "learner":
@@ -23,7 +23,7 @@ function AuthenticateUser($netid, $password) {
             return "1000000007";
         case "staff":
             return "1000000008";
-        case "super":
+        case "lead":
             return "1000000009";
         case "admin":
             return "1000000010";
@@ -34,7 +34,7 @@ function AuthenticateUser($netid, $password) {
                 if (!$connection) {
                     throw new Exception(sprintf("Can't connect to '%s'.", $ldap_server), 0x5b);
                 }
-                // Bind
+                // Bind 
                 if(!@ldap_bind($connection,$ldap_bindDN,$password)) {
                     throw new Exception(@ldap_error($connection), @ldap_errno($connection));
                 }

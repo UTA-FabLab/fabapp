@@ -97,7 +97,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     } elseif( filter_input(INPUT_POST, 'pickBtn') !== null ){
         if( filter_input(INPUT_POST, 'pickField') !== null){
             if(!Users::regexUser(filter_input(INPUT_POST, 'pickField'))){
-                echo "<script>alert('Invalid ID # php');</script>";
+                echo "<script>window.onload = function(){goModal('Success',\"Invalid ID # ".filter_input(INPUT_POST, pickField)."\", true)}</script>";
             } else {
                 $operator = filter_input(INPUT_POST, 'pickField');
                 header("location:/pages/pickup.php?operator=$operator");
@@ -109,7 +109,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
     echo "<script>window.onload = function(){goModal('Success',\"$_SESSION[success_msg]\", true)}</script>";
     unset($_SESSION['success_msg']);
-} 
+} elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
+    echo "<script>window.onload = function(){goModal('Success',\"$_SESSION[error_msg]\", true)}</script>";
+    unset($_SESSION['error_msg']);
+}
 ?>
 </head>
 <body>
@@ -168,8 +171,7 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                         <i class="<?php echo $staff->getIcon();?> fa-2x"></i> <i class="fas fa-caret-down"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-user">
-                        <li><a href="#"><i class="fas fa-cog fa-fw"></i> Settings</a></li>
-                        <li><a href="#"><i class="fas fa-chart-bar fa-fw"></i> Stats</a></li>
+                        <li><a href="/pages/info.php"><i class="fas fa-info fa-fw"></i> Information</a></li>
                         <li class="divider"></li>
                         <li><a href="/logout.php?n=n"><i class="fas fa-sign-out-alt fa-fw"></i> Logout</a></li>
                     </ul>
@@ -291,6 +293,9 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                                             <a href="#"><i class="fas fa-life-ring"></i> Manage Materials</a>
                                         </li>
                                     </ul>
+                                </li>
+								<li>
+                                    <a href="/admin/onboarding.php"><i class="fas fa-clipboard"></i> OnBoarding</a>
                                 </li>
                                 <li>
                                     <a herf="#"><i class="fas fa-book"></i> Training<span class="fas fa-angle-left"></span></a>

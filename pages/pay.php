@@ -17,13 +17,6 @@ if ( $staff && isset($_SESSION['ticket']) ){
     } else {
         $user = $ticket->getUser();
     }
-
-    if ( isset($_SESSION['pre_select']) ){
-        $pre_select = $_SESSION['pre_select'];
-        unset($_SESSION['pre_select']);
-    } else {
-        $pre_select = "";
-    }
 } else {
     echo "<script> console.log('Pay.php : No Ticket to be found'); </script>";
     //Not logged In
@@ -33,14 +26,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['payBtn']) && $errorMs
     $selectPay = filter_input(INPUT_POST, "selectPay");
     if ( preg_match("/^\d{1,3}$/", $selectPay) ){
         //The person paying may not be the person who is authorized to pick up a print
-        $payee = Users::withID(filter_input(INPUT_POST,'payee'));
-        if (is_object($payee)){
-            echo "<script> console.log('SP: $selectPay, payee: ".$payee->getOperator()."'); </script>";
-            $result = Acct_charge::insertCharge($ticket, $selectPay, $payee, $staff);
-        } else {
-            echo "<script> console.log('SP: $selectPay, payee: ".$payee."'); </script>";
-            $errorMsg = $payee;
-        }
+        $payee = filter_input(INPUT_POST,'payee');
+        echo "<script> console.log('SP: $selectPay, payee: $payee'); </script>";
+        $result = Acct_charge::insertCharge($ticket, $selectPay, $payee, $staff);
     }
     
     if (is_int($result)){
@@ -219,14 +207,11 @@ if ($errorMsg != ""){
                                 <?php
                                     $accounts = Accounts::listAccts($user, $staff);
                                     $ac_owed = Acct_charge::checkOutstanding($ticket->getUser()->getOperator());
-                                    if (isset($ac_owed[$ticket->getTrans_id()])){
-                                        unset($accounts[0]);
-                                    }
                                     foreach($accounts as $a){
-                                        if ($pre_select == $a->getA_id()){
-                                            echo("<option value='".$a->getA_id()."' title='".$a->getDescription()."' selected>".$a->getName()."</option>");
+                                        if (isset($ac_owed[$ticket->getTrans_id()]) && $a->getA_id() == 1){
+                                            //Don't Show it
                                         } else {
-                                            echo("<option value='".$a->getA_id()."' title='".$a->getDescription()."'>".$a->getName()."</option>");
+                                            echo("<option value='".$a->getA_id()."' title=\"".$a->getDescription()."\">".$a->getName()."</option>");
                                         }
                                     }
                                 ?>
@@ -331,10 +316,12 @@ function openWin() {
             var answer = confirm(message);
             if (answer){
                 myWindow.close();
-                btn.innerHTML = "Confirm Payment";
                 setTimeout(function(){console.log("waiting");},1500);
                 openBoolean = !openBoolean;
                 return true;
+            } else {
+                btn.classList.toggle("btn-danger");
+                btn.innerHTML = "Launch <?php echo $sv['paySite_name'];?>";
             }
             openBoolean = !openBoolean;
             return false;

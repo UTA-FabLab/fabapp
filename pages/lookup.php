@@ -47,18 +47,17 @@ if ($errorMsg == ""){
     if ($objbox === false){
         unset($objbox);
     }
-}
 
-if ( isset($_SESSION['backup_ticket']) ){
-    //pull the original state of the ticket into memory
-    $t_backup = unserialize($_SESSION['backup_ticket']);
+    if ( isset($_SESSION['backup_ticket']) ){
+        //pull the original state of the ticket into memory
+        $t_backup = unserialize($_SESSION['backup_ticket']);
+    }
 }
 
 if ($errorMsg != ""){
     $_SESSION['loc'] = "/index.php";
     echo "<script> alert('$errorMsg'); window.location.href='/index.php';</script>";
 }
-
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (isset($_POST['undoBtn'])){
@@ -94,6 +93,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['ticket'] = serialize($ticket);
             header("Location:/pages/pay.php");
         }
+    } elseif (isset($_POST['newHome'])){
+        $box = filter_input(INPUT_POST, "box");
+        $letter = filter_input(INPUT_POST, "letter");
+        $objbox->setAddress($box.$letter);
+        $objbox->writeAttr();
+        header("Location:/pages/lookup.php?trans_id=".$ticket->getTrans_id());
+    } elseif(isset($_POST['endBtn'])){
+        header("Location:/pages/end.php?trans_id=".$ticket->getTrans_id());
     }
 }
 ?>
@@ -171,6 +178,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     </table>
                 </div>
                 <!-- /.panel-body -->
+				<?php if ($ticket->getDuration() == "") { ?>
+					<div class="panel-footer">
+						<div align="right"><form name="moveForm" method="post" action="">
+							<button type="submit" class="btn btn-primary" name="endBtn">End</button>
+						</form></div>
+					</div>
+				<?php } ?>
             </div>
             <!-- /.panel -->
             <?php foreach ($ticket->getMats_used() as $mu) {?>
@@ -234,14 +248,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
         <!-- /.col-lg-5 -->
         <div class="col-lg-5">
-            <?php if (isset($t_backup) && $staff && $t_backup->getTrans_id() == $ticket->getTrans_id() && $staff->getRoleID() >= $sv['LvlOfStaff']){
-            //if ($_SESSION['type'] == "end" && array_key_exists('ticket', $_SESSION)){ ?>
+            <?php if (isset($t_backup) && $staff && $t_backup->getTrans_id() == $ticket->getTrans_id() && $staff->getRoleID() >= $sv['LvlOfStaff'] &&
+			($t_backup != $ticket)){ ?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <i class="fas fa-undo fa-lg" title="Undo"></i> Undo...
                     </div>
                     <div class="panel-body">
-                        Did you accidently close the wrong ticket?
+                        Did you accidentally close the wrong ticket?
                         <i class="fas fa-info-circle" title="The previous state of this ticket is stored in memory."></i>
                         <form name="undoForm" method="post" action="">
                             <input type="submit" name="undoBtn" value="Unend this Ticket"/>
@@ -280,12 +294,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <?php if ($objbox->getO_end()){
                                             echo $objbox->getAddress();
                                         } else { ?>
-                                            <input type="submit" value="<?php echo $objbox->getAddress(); ?>" class="btn btn-success">
+                                            <input type="submit" value="<?php echo $objbox->getAddress(); ?>" class="btn btn-success"
+                                                   data-toggle="modal" data-target="#addyModal">
                                         <?php } ?>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>Staff ID</td>
+                                    <td>Staff</td>
                                     <td><?php echo "<i class='".$objbox->getStaff()->getIcon()." fa-lg' title='".$objbox->getStaff()->getOperator()."'></i>";?></td>
                                 </tr>
                             <?php } else { ?>
@@ -304,6 +319,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         </table>
                     </div>
                     <!-- /.panel-body -->
+                    <?php if ($objbox->getO_end() == ""){ ?>
+                        <div align="right" class="panel-footer"><form name="payForm" method="post" action="">
+                            <button type="submit" name="payBtn" class="btn btn-danger">
+                                Pick-up Print <?php echo "<i class='".$sv['currency']."'></i> ".number_format($ticket->quote(), 2); ?>
+                            </button>
+                        </form></div>
+                        <!-- /.panel-footer -->
+                    <?php } ?>
                 </div>
                 <!-- /.panel -->
             <?php }
@@ -316,9 +339,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <div class="panel-body">
                         <table class="table table-bordered">
                             <tr>
-                                <td class="col-sm-1">By</td>
+                                <td class="col-sm-2">Paid By</td>
                                 <td class="col-sm-2">Amount</td>
-                                <td class="col-sm-7">Account</td>
+                                <td class="col-sm-5">Account</td>
                                 <td class="col-sm-2">Staff</td>
                             </tr>
                             <?php foreach ($ticket->getAc() as $ac){
@@ -376,7 +399,49 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <!-- /.row -->
 </div>
 <!-- /#page-wrapper -->
+<div id="addyModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <!-- Modal content-->
+        <div class="modal-content">
+            <form name="moveForm" method="post" action="" onsubmit="return verifyMove()">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title" id="modal-title">Change Address</h4>
+            </div>
+            <div class="modal-body">
+                <p id="modal-body" title="Pick a good one">Select New Address</p>
+                <select name="box" id="box">
+                    <option hidden selected value="">Select Shelf</option>
+                    <?php
+                        foreach(ObjBox::getAddyNumber() as $addyN){
+                            echo "<option value=\"$addyN\">$addyN</option>";
+                        }
+                    ?>
+                </select>
+                <select name="letter" id="letter">
+                    <option hidden selected value="">Select Letter</option>
+                    <?php
+                        foreach(ObjBox::getAddyLetter() as $addyL){
+                            echo "<option value=\"$addyL\">$addyL</option>";
+                        }
+                    ?>
+                </select>
+          </div>
+          <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary" name="newHome">Save</button>
+          </div> 
+        </form>
+        </div>
+    </div>
+</div>
+<!-- Modal -->
 <?php
 //Standard call for dependencies
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 ?>
+<script type="text/javascript">
+function verifyMove(){
+    return true;
+}
+</script>

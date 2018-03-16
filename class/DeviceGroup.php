@@ -19,6 +19,7 @@ class DeviceGroup {
     private $payFirst;
     private $selectMatsFirst;
     private $storable;
+    private $thermalPrinterNum;
     
     public function __construct($dg_id){
         global $mysqli;
@@ -38,6 +39,7 @@ class DeviceGroup {
                 $this->setPayFirst($row['payFirst']);
                 $this->setSelectMatsFirst($row['selectMatsFirst']);
                 $this->setStorable($row['storable']);
+                $this->setThermalPrinterNum($row['thermalPrinterNum']);
                 $result->close();
             }
         }
@@ -99,6 +101,11 @@ class DeviceGroup {
         return $this->storable;
     }
 
+    public function getThermalPrinterNum() {
+        return $this->thermalPrinterNum;
+    }
+    
+
     public function setDg_id($dg_id) {
         $this->dg_id = $dg_id;
     }
@@ -149,5 +156,9 @@ class DeviceGroup {
         } else {
             $this->storable = "N";
         }
+    }
+
+    public function setThermalPrinterNum($tpn) {
+        $this->thermalPrinterNum = $tpn;
     }
 }

@@ -12,6 +12,7 @@
  
 //Thermal Reciept Dependancies
 require_once ($_SERVER['DOCUMENT_ROOT'].'/api/php_printer/autoload.php');
+require_once ($_SERVER['DOCUMENT_ROOT'].'/connections/tp_connect.php');
 use Mike42\Escpos\Printer;
 use Mike42\Escpos\EscposImage;
 use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
@@ -127,6 +128,24 @@ class Transactions {
             }
         }
     }
+    
+    public function end_octopuppet(){
+        global $mysqli;
+		$status_id = 11;
+        
+        $total = $this->quote();
+        if ($mysqli->query("
+            UPDATE `transactions`
+            SET `t_end` = '$this->t_end', `duration` = '$this->duration', `status_id` = '$status_id'
+            WHERE `trans_id` = '$this->trans_id';
+        ")){
+            if ($mysqli->affected_rows == 1){
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
 	
     public static function insertTrans($operator, $d_id, $est_time, $p_id, $status_id, $staff) {
         global $mysqli;
@@ -226,25 +245,22 @@ class Transactions {
         }
     }
 	
-    public static function printTicket($trans_id, $est_amount){
+    public static function printTicket($trans_id){
         global $mysqli;
-        global $sv;
+        global $tp;
         $est_cost = 0;
 
-        //Pull Ticket Related Information
-        $ticket = new self($trans_id);
-
-        // Set up Printer Connection
-        /*
-        $tp_array = explode("|", $sv['thermalPrinter1']);
-        $tpHost = $tp_array[0];
-        $tpPort = $tp_array[1];
-        */
-        // Hardcoded, please remove later
-        $tpHost = "129.107.37.13";
-        $tpPort = 9100;
         try {
-            $connector = new NetworkPrintConnector( $tpHost, $tpPort);
+            //Pull Ticket Related Information
+            $ticket = new self($trans_id);
+        } catch(Exception $e) {
+            echo $e;
+            return $e;
+        }
+        
+        try {
+            $tpn = $ticket->getDevice()->getDg()->getThermalPrinterNum();
+            $connector = new NetworkPrintConnector( $tp[$tpn][0], $tp[$tpn][1]);
             $printer = new Printer($connector);
         } catch (Exception $e) {
             return "Couldn't print to this printer: " . $e -> getMessage() . "\n";
@@ -277,7 +293,7 @@ class Transactions {
                 } elseif (isset($est_amount)) {
                     $printer -> text("Est. Amount:   ".$est_amount." ".$mu->getMaterial()->getUnit());
                     //Calculate Cost
-					$est_cost += $mu->getMaterial()->getPrice() * $est_amount;
+                    $est_cost += $mu->getMaterial()->getPrice() * $est_amount;
                 }
             }
             $printer -> feed();
@@ -286,22 +302,22 @@ class Transactions {
             $printer -> feed();
             $printer -> text("Est. Duration:   ".$ticket->getEst_time());
             if ($filename){
-                    $printer -> feed();
-                    $printer -> text("File:   ".$filename);
+                $printer -> feed();
+                $printer -> text("File:   ".$filename);
             }
             $printer -> feed(3);
             $printer -> text("Address: ______________________");
             $printer -> feed();
             $printer -> text("Potential Problems?  ( Y )  ( N )");
-			$printer -> feed();
-			$printer -> text("NOTES: _________________________");
-			$printer -> feed(2);
-			$printer -> text("________________________________");
-			$printer -> feed(2);
-			$printer -> text("________________________________");
-			$printer -> feed(3);
-			$printer -> graphics(EscposImage::load($_SERVER['DOCUMENT_ROOT']."/images/sig.png", 0));
-			//EscposImage::load($_SERVER['DOCUMENT_ROOT']."/images/fablab2.png", 0);
+            $printer -> feed();
+            $printer -> text("NOTES: _________________________");
+            $printer -> feed(2);
+            $printer -> text("________________________________");
+            $printer -> feed(2);
+            $printer -> text("________________________________");
+            $printer -> feed(3);
+            $printer -> graphics(EscposImage::load($_SERVER['DOCUMENT_ROOT']."/images/sig.png", 0));
+            //EscposImage::load($_SERVER['DOCUMENT_ROOT']."/images/fablab2.png", 0);
 			
             $printer -> feed();
             $printer -> text("http://fablab.uta.edu/");
@@ -345,6 +361,11 @@ class Transactions {
             $h = floor($diff / 3600);
             $m = $diff / 60 % 60;
             $s = $diff % 60;
+            if ($h > 800){
+                $h = 800;
+                $m = 0;
+                $s = 0;
+            }
             $this->setDuration("$h:$m:$s");
             $diff = $diff/3600;
         }

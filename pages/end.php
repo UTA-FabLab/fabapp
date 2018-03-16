@@ -10,7 +10,7 @@ unset($_SESSION['pickupUser']);
 //check trans_id
 if (empty($_GET["trans_id"])){
     $errorMsg = "Ticket # is Missing.";
-	$_SESSION['type'] = "error";
+    $_SESSION['type'] = "error";
 } elseif ($staff) {
     $trans_id = filter_input(INPUT_GET, "trans_id", FILTER_VALIDATE_INT);
     try {
@@ -142,7 +142,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($errorMsg == "")) {
                     {$errorMsg = $msg;}
             
                 $mu->setStatus_id($mu_s);
-                
             }
             echo "<script>console.log( 'Debug MU ID $mu_id, Status:$mu_s');</script>";
         }
@@ -172,7 +171,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($errorMsg == "")) {
             } elseif ($status_id == 14) {
                 if ($ticket->getDevice()->getDG()->getStorable() == "Y"){
                     $msg = $ticket->move($staff);
-                    $msg = true;
                 } elseif ($hasCost > .005) {
                     //Ticket has a balance, Store ticket state
                     $_SESSION['ticket'] = serialize($ticket);
@@ -214,6 +212,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($errorMsg == "")) {
                     header('Location:/pages/pay.php');
                 }
             }
+        } else {
+            echo "<script>console.log( \"Debug ErroMsg e217: $errorMsg\");</script>";
         }
     }
 }

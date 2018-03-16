@@ -9,7 +9,7 @@
  *
  *  Jonathan Le & Arun Kalahasti
  *  FabLab @ University of Texas at Arlington
- *  version: 0.9 beta (2018-01-18)
+ *  version: 0.9 beta (2018-03-14)
  *
 */
 
@@ -38,19 +38,28 @@ $input_data["est_build_time"] = "01:01:00";
 $input_data["filename"] = "Jon Le's Test";
 $input_data["p_id"] = "3";
 */
+//Test End
+$input_data["type"] = "update_end_time";
+$input_data["device_id"] = 21;
 
+/*
 //Compare Header API Key with site variable's API Key
 $headers = apache_request_headers();
-if(isset($headers['Authorization'])){
+if ($sv['api_key'] == "") {
+    $json_out["api_key"] = "Not Set";
+} elseif (isset($headers['authorization'])) {
+    if ($sv['api_key'] != $headers['authorization'] ){
+        $json_out["ERROR"] = "Unable to authenticate Device";
+        ErrorExit(1);
+    }
+} elseif (isset($headers['Authorization'])) {
     if ($sv['api_key'] != $headers['Authorization'] ){
-        $json_out["authorized"] = "N";
-        $json_out["ERROR"] = "Unable to Authenticate";
-        ErrorExit(2);
+        $json_out["ERROR"] = "Unable to Authenticate Device";
+        ErrorExit(1);
     }
 } else {
-    $json_out["authorized"] = "N";
-    $json_out["ERROR"] = "Header Not Set";
-    ErrorExit(2);
+    $json_out["ERROR"] = "Header Are Not Set";
+    ErrorExit(1);
 }
 
 
@@ -60,7 +69,7 @@ if (! ($input_data)) {
     $json_out["ERROR"] = "Unable to decode JSON message - check syntax";
     ErrorExit(1);
 }
-
+*/
 // Extract message type from incoming JSON
 $type = $input_data["type"];
 
@@ -101,7 +110,7 @@ function PrintTransaction ($operator, $device_id) {
     global $json_out;
     global $mysqli;
     global $input_data;
-	$json_out["authorized"] = "N";
+    $json_out["authorized"] = "N";
         
     foreach (gatekeeper($operator, $device_id) as $key => $value){
         $json_out[$key] =  $value;
@@ -164,40 +173,39 @@ function PrintTransaction ($operator, $device_id) {
         $p_id = $input_data["p_id"];
     }
 
-	//V.87 to v.90 hybrid call
     if ($insert_result = $mysqli->query("
         INSERT INTO transactions 
-            (`operator`,`d_id`,`t_start`,`status_id`,`p_id`,`est_time`, `uta_id`, `device_id`, `purp_id`) 
+            (`operator`,`d_id`,`t_start`,`status_id`,`p_id`,`est_time`) 
         VALUES
-            ('$operator','$d_id',CURRENT_TIMESTAMP,'$auth_status','$p_id','$est_build_time','$operator','00$d_id','$p_id');
+            ('$operator','$d_id',CURRENT_TIMESTAMP,'$auth_status','$p_id','$est_build_time');
     ")){
         $trans_id = $json_out["trans_id"] = $mysqli->insert_id;
-		$print_json["trans_id"] = $trans_id;
+        $print_json["trans_id"] = $trans_id;
         
         if ($stmt = $mysqli->prepare("
             INSERT INTO mats_used
-                (`trans_id`,`m_id`,`status_id`, `mu_notes`, `mu_date`, `date`) 
+                (`trans_id`,`m_id`, `unit_used`, `status_id`, `mu_notes`, `mu_date`) 
             VALUES
-                (?, ?, ?, ?, CURRENT_TIMESTAMP,CURRENT_TIMESTAMP);
+                (?, ?, ?, ?, CURRENT_TIMESTAMP);
         ")){
-            $bind_param = $stmt->bind_param("iiis", $trans_id, $m_id, $auth_status, $filename);
+            $bind_param = $stmt->bind_param("iidis", $trans_id, $m_id, $input_data["est_filament_used"], $auth_status, $filename);
             $stmt->execute();
             $stmt->close();
         } else {
-			$json_out["ERROR"] = $mysqli->error;
+            $json_out["ERROR"] = $mysqli->error;
             $json_out["authorized"] = "N";
             return;
         }
     } else {
         $json_out["ERROR"] = $mysqli->error;
-		$json_out["authorized"] = "N";
+        $json_out["authorized"] = "N";
         return;
     }
 	
-	$msg = Transactions::printTicket($trans_id, $input_data["est_filament_used"]);
-	if (is_string($msg)){
-		$json_out["ERROR"] = $msg;
-	}
+    $msg = Transactions::printTicket($trans_id);
+    if (is_string($msg)){
+        $json_out["ERROR"] = $msg;
+    }
 }
 
 
@@ -207,22 +215,28 @@ function PrintTransaction ($operator, $device_id) {
 //  updates the database with a given device ID. Will not close the ticket, only updates the time and status
 
 function update_end_time( $dev_id ){
-	global $json_out;
-	global $mysqli;
+    global $json_out;
+    global $mysqli;
     
 	// Check for deviceID value
     if (! (preg_match("/^\d*$/", $dev_id))) {
         $json_out["ERROR"] = "Invalid transaction number";
         ErrorExit(1);
     }
- 
-    $update_result = mysqli_query($mysqli,"
-        UPDATE `transactions`
-        SET `t_end` = CURRENT_TIMESTAMP, `status_id` = '11',
-            `duration` = SEC_TO_TIME (TIMESTAMPDIFF (SECOND,  t_start, CURRENT_TIMESTAMP))
-        WHERE `d_id` = '$dev_id' AND t_end is NULL
-        LIMIT 1
-    ");
+	if ($result = $mysqli->query("
+		SELECT *
+		FROM `transactions`
+		WHERE `d_id` = '$dev_id' AND `t_end` is NULL
+	")){
+		$row = $result->fetch_assoc();
+		$ticket = new Transactions($row['trans_id']);
+	}
+	
+    if ($ticket->end_octopuppet()){
+        $json_out["success"] = "Update Successful for ".$ticket->getTrans_id();
+    } else {
+        $json_out["ERROR"] = "Check function End Octopuppet";
+    }
 }
 
 

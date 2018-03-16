@@ -27,7 +27,7 @@ if ($staff && $staff->getRoleID () < 7) {
                 </div>
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-ticket fa-fw"></i> New Ticket
+                        <i class="fas fa-ticket-alt fa-fw"></i> New Ticket
                     </div>
                     <form name="scform" method= "POST"  action="/service/insertSC.php" onsubmit="return validateForm();">
                         <table class="table table-striped">

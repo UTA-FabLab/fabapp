@@ -6,8 +6,8 @@ header("Access-Control-Allow-Headers: Cache-Control, Origin, X-Requested-With, C
 /*
  *  materials.php : Materials list interface
  *	
- *	Arun Kalahasti, Jonathan Le
- *  version: 0.1 alpha (2017-10-30)
+ *	Arun Kalahasti & Jon Le
+ *  version: 0.9 alpha (2018-03-14)
  *
 */
 
@@ -22,11 +22,17 @@ $json_out = array();
 
 //Compare Header API Key with site variable's API Key
 $headers = apache_request_headers();
-if(isset($headers['Authorization'])){
+if ($sv['api_key'] == "") {
+    $json_out["api_key"] = "Not Set";
+} elseif(isset($headers['authorization'])){
+    if ($sv['api_key'] != $headers['authorization'] ){
+        $json_out["ERROR"] = "Unable to authenticate Device";
+        ErrorExit(1);
+    }
+} elseif(isset($headers['Authorization'])){
     if ($sv['api_key'] != $headers['Authorization'] ){
-        $json_out["authorized"] = "N";
-        $json_out["ERROR"] = "Unable to Authenticate";
-        ErrorExit(2);
+        $json_out["ERROR"] = "Unable to Authenticate Device";
+        ErrorExit(1);
     }
 } else {
     $json_out["authorized"] = "N";

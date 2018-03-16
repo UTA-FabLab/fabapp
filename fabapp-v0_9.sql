@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 09, 2018 at 02:31 PM
+-- Generation Time: Mar 16, 2018 at 08:45 PM
 -- Server version: 5.7.14
 -- PHP Version: 5.6.25
 
@@ -19,6 +19,8 @@ SET time_zone = "+00:00";
 --
 -- Database: `fabapp-v0.9`
 --
+CREATE DATABASE IF NOT EXISTS `fabapp-v0.9` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+USE `fabapp-v0.9`;
 
 -- --------------------------------------------------------
 
@@ -26,23 +28,26 @@ SET time_zone = "+00:00";
 -- Table structure for table `accounts`
 --
 
+DROP TABLE IF EXISTS `accounts`;
 CREATE TABLE `accounts` (
   `a_id` int(11) NOT NULL,
   `name` varchar(50) NOT NULL,
   `description` varchar(140) NOT NULL,
   `balance` decimal(6,2) NOT NULL,
-  `operator` varchar(10) NOT NULL
+  `operator` varchar(10) NOT NULL,
+  `role_access` varchar(2) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `accounts`
 --
 
-INSERT INTO `accounts` (`a_id`, `name`, `description`, `balance`, `operator`) VALUES
-(1, 'Outstanding', 'Outstanding charge, Payment is due', '0.50', '1000129288'),
-(2, 'CSGold', 'CSGold Account', '0.65', '1000129288'),
-(3, 'FabLab', 'FabLab\'s in-House Charge Account', '0.25', '1000129288'),
-(4, 'Library', 'General Library Account', '0.00', '1000129288');
+INSERT INTO `accounts` (`a_id`, `name`, `description`, `balance`, `operator`, `role_access`) VALUES
+(1, 'Unpaid', 'Unpaid charge, Blocked until Paid', '2.70', '1000129288', '9'),
+(2, 'CSGold', 'CSGold Account', '8.80', '1000129288', '8'),
+(3, 'FabLab', 'FabLab\'s in-House Charge Account', '0.25', '1000129288', '9'),
+(4, 'Library', 'General Library Account', '0.00', '1000129288', '9'),
+(5, 'IDT', 'Inter-Departmental Transfers', '0.50', '1000129288', '9');
 
 -- --------------------------------------------------------
 
@@ -50,6 +55,7 @@ INSERT INTO `accounts` (`a_id`, `name`, `description`, `balance`, `operator`) VA
 -- Table structure for table `acct_charge`
 --
 
+DROP TABLE IF EXISTS `acct_charge`;
 CREATE TABLE `acct_charge` (
   `ac_id` int(11) NOT NULL,
   `a_id` int(11) NOT NULL,
@@ -70,11 +76,19 @@ CREATE TABLE `acct_charge` (
 -- Table structure for table `authrecipients`
 --
 
+DROP TABLE IF EXISTS `authrecipients`;
 CREATE TABLE `authrecipients` (
   `ar_id` int(11) NOT NULL,
   `trans_id` int(11) NOT NULL,
   `operator` varchar(10) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `authrecipients`
+--
+
+INSERT INTO `authrecipients` (`ar_id`, `trans_id`, `operator`) VALUES
+(3, 71, '1000129288');
 
 -- --------------------------------------------------------
 
@@ -82,6 +96,7 @@ CREATE TABLE `authrecipients` (
 -- Table structure for table `auth_accts`
 --
 
+DROP TABLE IF EXISTS `auth_accts`;
 CREATE TABLE `auth_accts` (
   `aa_id` int(11) NOT NULL,
   `a_id` int(11) NOT NULL,
@@ -97,6 +112,7 @@ CREATE TABLE `auth_accts` (
 -- Table structure for table `carrier`
 --
 
+DROP TABLE IF EXISTS `carrier`;
 CREATE TABLE `carrier` (
   `ca_id` int(11) NOT NULL,
   `provider` varchar(50) NOT NULL,
@@ -121,6 +137,7 @@ INSERT INTO `carrier` (`ca_id`, `provider`, `email`) VALUES
 -- Table structure for table `citation`
 --
 
+DROP TABLE IF EXISTS `citation`;
 CREATE TABLE `citation` (
   `c_id` int(11) NOT NULL,
   `staff_id` varchar(10) NOT NULL,
@@ -136,6 +153,7 @@ CREATE TABLE `citation` (
 -- Table structure for table `devices`
 --
 
+DROP TABLE IF EXISTS `devices`;
 CREATE TABLE `devices` (
   `d_id` int(11) NOT NULL,
   `device_id` varchar(4) NOT NULL,
@@ -208,6 +226,7 @@ INSERT INTO `devices` (`d_id`, `device_id`, `public_view`, `device_desc`, `d_dur
 -- Table structure for table `device_group`
 --
 
+DROP TABLE IF EXISTS `device_group`;
 CREATE TABLE `device_group` (
   `dg_id` int(11) NOT NULL,
   `dg_name` varchar(10) NOT NULL,
@@ -225,14 +244,14 @@ CREATE TABLE `device_group` (
 --
 
 INSERT INTO `device_group` (`dg_id`, `dg_name`, `dg_parent`, `dg_desc`, `payFirst`, `selectMatsFirst`, `storable`, `juiceboxManaged`, `thermalPrinterNum`) VALUES
-(1, '3d', NULL, '(Generic 3D Printer)', 'N', 'Y', 'Y', 'N', 1),
-(2, 'poly', 1, 'PolyPrinter', 'N', 'Y', 'Y', 'N', 1),
+(1, '3d', NULL, '(Generic 3D Printer)', 'N', 'Y', 'Y', 'N', 0),
+(2, 'poly', 1, 'PolyPrinter', 'N', 'Y', 'Y', 'N', 0),
 (3, 'shop', NULL, 'Shop Room', 'N', 'N', 'N', 'Y', 0),
 (4, 'laser', NULL, 'Laser Cutter', 'N', 'Y', 'N', 'N', 0),
 (5, 'vinyl', NULL, 'Vinyl Cutter', 'N', 'Y', 'N', 'N', 0),
 (6, 'e_station', NULL, 'Electronics Station', 'N', 'N', 'N', 'N', 0),
 (7, 'uprint', 1, 'Stratus uPrint', 'Y', 'Y', 'Y', 'N', 0),
-(8, 'delta', 1, 'Delta 3D Printer', 'N', 'Y', 'Y', 'N', 1),
+(8, 'delta', 1, 'Delta 3D Printer', 'N', 'Y', 'Y', 'N', 0),
 (9, 'scan', NULL, '3D Scan', 'N', 'N', 'N', 'N', 0),
 (10, 'sew', NULL, 'Sewing Station', 'N', 'N', 'N', 'N', 0),
 (11, 'embroidery', NULL, 'Embroidery Machines', 'N', 'N', 'N', 'N', 0),
@@ -252,6 +271,7 @@ INSERT INTO `device_group` (`dg_id`, `dg_name`, `dg_parent`, `dg_desc`, `payFirs
 -- Table structure for table `device_materials`
 --
 
+DROP TABLE IF EXISTS `device_materials`;
 CREATE TABLE `device_materials` (
   `dm_id` int(11) NOT NULL,
   `dg_id` int(11) NOT NULL,
@@ -336,6 +356,7 @@ INSERT INTO `device_materials` (`dm_id`, `dg_id`, `m_id`) VALUES
 -- Table structure for table `error`
 --
 
+DROP TABLE IF EXISTS `error`;
 CREATE TABLE `error` (
   `e_id` int(11) NOT NULL,
   `e_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -344,13 +365,13 @@ CREATE TABLE `error` (
   `staff_id` varchar(10) DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
-
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `materials`
 --
 
+DROP TABLE IF EXISTS `materials`;
 CREATE TABLE `materials` (
   `m_id` int(11) NOT NULL,
   `m_name` varchar(50) DEFAULT NULL,
@@ -447,6 +468,7 @@ INSERT INTO `materials` (`m_id`, `m_name`, `m_parent`, `price`, `unit`, `color_h
 -- Table structure for table `mats_used`
 --
 
+DROP TABLE IF EXISTS `mats_used`;
 CREATE TABLE `mats_used` (
   `mu_id` int(11) NOT NULL,
   `trans_id` int(11) DEFAULT NULL,
@@ -458,13 +480,13 @@ CREATE TABLE `mats_used` (
   `mu_notes` text
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `objbox`
 --
 
+DROP TABLE IF EXISTS `objbox`;
 CREATE TABLE `objbox` (
   `o_id` int(11) NOT NULL,
   `o_start` datetime NOT NULL,
@@ -475,12 +497,14 @@ CREATE TABLE `objbox` (
   `staff_id` varchar(10) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
+
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `purpose`
 --
 
+DROP TABLE IF EXISTS `purpose`;
 CREATE TABLE `purpose` (
   `p_id` int(11) NOT NULL,
   `p_title` varchar(100) NOT NULL
@@ -502,6 +526,7 @@ INSERT INTO `purpose` (`p_id`, `p_title`) VALUES
 -- Table structure for table `queue`
 --
 
+DROP TABLE IF EXISTS `queue`;
 CREATE TABLE `queue` (
   `q_id` int(11) NOT NULL,
   `d_id` varchar(4) NOT NULL,
@@ -521,6 +546,7 @@ CREATE TABLE `queue` (
 -- Table structure for table `reply`
 --
 
+DROP TABLE IF EXISTS `reply`;
 CREATE TABLE `reply` (
   `sr_id` int(11) NOT NULL,
   `sc_id` int(11) NOT NULL,
@@ -535,27 +561,13 @@ CREATE TABLE `reply` (
 -- Table structure for table `rfid`
 --
 
+DROP TABLE IF EXISTS `rfid`;
 CREATE TABLE `rfid` (
   `rf_id` int(11) NOT NULL,
   `rfid_no` varchar(64) NOT NULL,
   `operator` varchar(10) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
---
--- Dumping data for table `rfid`
---
-
-INSERT INTO `rfid` (`rf_id`, `rfid_no`, `operator`) VALUES
-(2, '12421415533', '1000000001'),
-(3, '20422415733', '1000000002'),
-(4, '769918733', '1000000003'),
-(5, '10818417333', '1000000004'),
-(6, '1728117533', '1000000005'),
-(7, '17819818469', '1000000006'),
-(8, '2518618469', '1000000007'),
-(9, '1212215733', '1000000008'),
-(10, '15817918469', '1000000009'),
-(11, '132137203252', '1000000010');
 
 -- --------------------------------------------------------
 
@@ -563,6 +575,7 @@ INSERT INTO `rfid` (`rf_id`, `rfid_no`, `operator`) VALUES
 -- Table structure for table `role`
 --
 
+DROP TABLE IF EXISTS `role`;
 CREATE TABLE `role` (
   `r_id` int(11) NOT NULL,
   `title` varchar(100) NOT NULL,
@@ -590,6 +603,7 @@ INSERT INTO `role` (`r_id`, `title`, `lvl_desc`, `r_rate`) VALUES
 -- Table structure for table `service_call`
 --
 
+DROP TABLE IF EXISTS `service_call`;
 CREATE TABLE `service_call` (
   `sc_id` int(11) NOT NULL,
   `staff_id` varchar(10) NOT NULL,
@@ -606,6 +620,7 @@ CREATE TABLE `service_call` (
 -- Table structure for table `service_lvl`
 --
 
+DROP TABLE IF EXISTS `service_lvl`;
 CREATE TABLE `service_lvl` (
   `sl_id` int(11) NOT NULL,
   `msg` varchar(50) NOT NULL
@@ -627,6 +642,7 @@ INSERT INTO `service_lvl` (`sl_id`, `msg`) VALUES
 -- Table structure for table `site_variables`
 --
 
+DROP TABLE IF EXISTS `site_variables`;
 CREATE TABLE `site_variables` (
   `id` int(11) NOT NULL,
   `name` varchar(20) NOT NULL,
@@ -641,40 +657,40 @@ CREATE TABLE `site_variables` (
 INSERT INTO `site_variables` (`id`, `name`, `value`, `notes`) VALUES
 (1, 'uprint_conv', '16.387', 'inches^3 to grams'),
 (2, 'minTime', '1', 'Minimum hour charge for a device'),
-(3, 'LaserMax', '1', 'Maximum Time Limit for Laser Cutter'),
-(4, 'box_number', '4', 'Number of Box used for object storage'),
-(5, 'letter', '7', 'Number of Rows in each Box'),
-(6, 'grace_period', '300', 'Grace period allotted to each Ticket(sec)'),
-(7, 'limit', '180', '(seconds) 3 minutes before auto-logout'),
-(8, 'limit_long', '600', '(seconds) 10 minutes before auto-logout'),
-(9, 'maxHold', '14', '# of Days for Holding Period for 3D prints'),
-(10, 'serving', '0', 'Now serving number such and such'),
-(11, 'Lserving', '0', 'Now serving number such and such'),
+(3, 'box_number', '4', 'Number of Box used for object storage'),
+(4, 'letter', '7', 'Number of Rows in each Box'),
+(5, 'grace_period', '300', 'Grace period allotted to each Ticket(sec)'),
+(6, 'limit', '180', '(seconds) 3 minutes before auto-logout'),
+(7, 'limit_long', '6000', '(seconds) 100 minutes before auto-logout'),
+(8, 'maxHold', '14', '# of Days for Holding Period for 3D prints'),
+(9, 'serving', '0', 'Now serving number such and such'),
+(10, 'bServing', '0', 'Boss Laser Now serving number'),
+(11, 'eServing', '0', 'Epilog Laser Now serving number'),
 (12, 'sNext', '0', 'Last Number Issued for 3D Printing'),
-(13, 'lNext', '0', 'Last Number Issued for Laser'),
-(14, 'forgotten', 'webapps.uta.edu/oit/selfservice/', 'UTA\'s Password Reset'),
-(15, 'check_expire', 'N', 'Do we deny users if they have an expired membership. Expected Values (Y,N)'),
-(16, 'ip_range_1', '/^127\\.0\\.0\\..*/', 'Block certain abilities based upon IP. Follow Regex format.'),
-(17, 'ip_range_2', '/^127\\.0\\.0\\..*/', 'Block certain abilities based upon IP. Follow Regex format.'),
-(18, 'inspectPrint', 'Once a print has been picked up & paid for we can not issue a refund.', 'Disclosure for picking up a 3D Print'),
-(19, 'site_name', 'FabApp', 'Name of site owner'),
-(20, 'paySite', 'https://csgoldweb.uta.edu/admin/quicktran/main.php', '3rd party Pay System. (CsGold)'),
-(21, 'paySite_name', 'CS Gold', '3rd party pay site'),
-(22, 'interdepartmental', 'Library Interdepartmental', ''),
+(13, 'bNext', '0', 'Last Number Issued for Boss Laser'),
+(14, 'eNext', '0', 'Last Number Issued for Epilog Laser'),
+(15, 'forgotten', 'webapps.uta.edu/oit/selfservice/', 'UTA\'s Password Reset'),
+(16, 'check_expire', 'N', 'Do we deny users if they have an expired membership. Expected Values (Y,N)'),
+(17, 'ip_range_1', '/^127\\.0\\.0\\..*/', 'Block certain abilities based upon IP. Follow Regex format.'),
+(18, 'ip_range_2', '/^127\\.0\\.0\\..*/', 'Block certain abilities based upon IP. Follow Regex format.'),
+(19, 'inspectPrint', 'Once a print has been picked up & paid for we can not issue a refund.', 'Disclosure for picking up a 3D Print'),
+(20, 'site_name', 'FabApp', 'Name of site owner'),
+(21, 'paySite', 'https://csgoldweb.uta.edu/admin/quicktran/main.php', '3rd party Pay System. (CsGold)'),
+(22, 'paySite_name', 'CS Gold', '3rd party pay site'),
 (23, 'currency', 'fas fa-dollar-sign', 'Icon as Defined by Font Awesome'),
-(24, 'LvlOfStaff', '8', 'First role level ID of staff.'),
-(25, 'minRoleTrainer', '10', 'Minimum Role Level of Trainer, below this value you can not issue a training.'),
-(26, 'editTrans', '9', ' Role level required to edit a Transaction'),
-(27, 'api_key', 'HDVmyqkZB5vsPQGAKwpLtPPQ8Pauy5DMVWsefcBVsbzv9AQnrJFhyAuqBhLCL9r8AFxtDAgjc7Qjf8bdL9eaAXd7VnejU7DHw', 'Temp fix to secure FLUD script'),
-(28, 'acct3', '9', 'At what level can a user use the house account.'),
-(29, 'acct4', '9', 'At what level can a user use the generic department account.'),
-(30, 'dateFormat', 'M d, Y g:i a', 'format the date using Php\'s date() function.'),
-(31, 'timezone', 'America/Chicago', 'Set Local Time Zone'),
-(32, 'timeInterval', '.25', 'Minimum time unit of an hour.'),
-(33, 'editRole', '10', 'Level of Staff Required to edit RoleID'),
-(34, 'editRfid', '10', 'Level of Staff Required to edit RFID'),
-(35, 'lastRfid', '624918469', 'This is the last RFID that was scanned by the JuiceBox.'),
-(36, 'ShareAccts', '10', 'Role level required to Share their Accounts for any purpose');
+(24, 'api_key', 'HDVmyqkZB5vsPQGAKwpLtPPQ8Pauy5DMVWsefcBVsbzv9AQnrJFhyAuqBhLCL9r8AFxtDAgjc7Qjf8bdL9eaAXd7VnejU7DHw', 'Temp fix to secure FLUD script'),
+(25, 'dateFormat', 'M d, Y g:i a', 'format the date using Php\'s date() function.'),
+(26, 'timezone', 'America/Chicago', 'Set Local Time Zone'),
+(27, 'timeInterval', '.25', 'Minimum time unit of an hour.'),
+(28, 'LvlOfStaff', '8', 'First role level ID of staff.'),
+(29, 'minRoleTrainer', '10', 'Minimum Role Level of Trainer, below this value you can not issue a training.'),
+(30, 'editTrans', '9', ' Role level required to edit a Transaction'),
+(31, 'editRole', '10', 'Level of Staff Required to edit RoleID'),
+(32, 'editRfid', '10', 'Level of Staff Required to edit RFID'),
+(33, 'lastRfid', '624918469', 'This is the last RFID that was scanned by the JuiceBox.'),
+(34, 'regexUser', '^\\d{10}$', 'regular expression used to verify a user\'s identification number'),
+(35, 'regexPayee', '^\\d{9,10}$', 'regular expression used to verify a payee\'s identification number'),
+(36, 'rank_period', '3', '# of months the rank is based off of');
 
 -- --------------------------------------------------------
 
@@ -682,6 +698,7 @@ INSERT INTO `site_variables` (`id`, `name`, `value`, `notes`) VALUES
 -- Table structure for table `status`
 --
 
+DROP TABLE IF EXISTS `status`;
 CREATE TABLE `status` (
   `status_id` int(11) NOT NULL,
   `msg` varchar(255) DEFAULT NULL
@@ -713,6 +730,7 @@ INSERT INTO `status` (`status_id`, `msg`) VALUES
 -- Table structure for table `time_clock`
 --
 
+DROP TABLE IF EXISTS `time_clock`;
 CREATE TABLE `time_clock` (
   `id` int(11) NOT NULL,
   `staff_id` varchar(10) NOT NULL,
@@ -727,6 +745,7 @@ CREATE TABLE `time_clock` (
 -- Table structure for table `tm_enroll`
 --
 
+DROP TABLE IF EXISTS `tm_enroll`;
 CREATE TABLE `tm_enroll` (
   `tm_id` int(11) NOT NULL,
   `operator` varchar(10) NOT NULL,
@@ -739,13 +758,13 @@ CREATE TABLE `tm_enroll` (
   `expiration_date` datetime DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
-
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `trainingmodule`
 --
 
+DROP TABLE IF EXISTS `trainingmodule`;
 CREATE TABLE `trainingmodule` (
   `tm_id` int(11) NOT NULL,
   `title` varchar(100) NOT NULL,
@@ -760,6 +779,19 @@ CREATE TABLE `trainingmodule` (
   `tm_stamp` datetime NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
+--
+-- Dumping data for table `trainingmodule`
+--
+
+INSERT INTO `trainingmodule` (`tm_id`, `title`, `tm_desc`, `duration`, `d_id`, `dg_id`, `tm_required`, `file_name`, `file_bin`, `class_size`, `tm_stamp`) VALUES
+(28, 'Compound Mitre Saw Training', 'introduction to the compound mitre saw', '02:00:00', 6, NULL, 'Y', NULL, NULL, 4, '2017-11-08 19:43:09'),
+(29, 'SawStop safety training', 'The real thing.', '02:00:00', 20, NULL, 'Y', NULL, NULL, 4, '2018-01-04 11:55:34'),
+(27, 'ShopBot Part 2', 'Demonstration', '02:00:00', 19, NULL, 'Y', NULL, NULL, 3, '2017-11-06 20:19:03'),
+(25, 'ShopBot Training part 1', 'ShopBot basics, safety, and fundamental commands', '02:00:00', 19, NULL, 'Y', NULL, NULL, 3, '2017-10-30 20:11:58'),
+(26, 'Drills and Drill Press Training', 'Training on both hand drills and both drill presses', '02:00:00', NULL, 19, 'Y', NULL, NULL, 5, '2017-11-01 18:09:06'),
+(23, 'General Shoproom Training', 'Get an overview of all the Shop Room equipment and learn how to operate safety in this space! This training is required and a signed liability waiver must be on file before learners will be permitted to participate in any of the equipment specific trainings.', '01:00:00', NULL, 3, 'N', NULL, NULL, 5, '2017-10-23 17:11:25'),
+(24, 'Sanding and Grinding Training', 'trained on random orbital sander, both combo sanders, bench grinder', '02:00:00', NULL, 18, 'Y', NULL, NULL, 2, '2017-10-25 19:44:33'),
+(22, 'Plasma Cutter Training', 'for reals this time', '02:00:00', 4, NULL, 'Y', NULL, NULL, 5, '2017-10-24 14:48:40');
 
 -- --------------------------------------------------------
 
@@ -767,6 +799,7 @@ CREATE TABLE `trainingmodule` (
 -- Table structure for table `transactions`
 --
 
+DROP TABLE IF EXISTS `transactions`;
 CREATE TABLE `transactions` (
   `trans_id` int(11) NOT NULL,
   `d_id` int(11) NOT NULL,
@@ -780,13 +813,13 @@ CREATE TABLE `transactions` (
   `staff_id` varchar(10) DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
-
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `users`
 --
 
+DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `u_id` int(11) NOT NULL,
   `operator` varchar(10) NOT NULL,
@@ -802,14 +835,14 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`u_id`, `operator`, `r_id`, `exp_date`, `icon`, `adj_date`, `notes`) VALUES
-(3, '1000000001', 1, NULL, NULL, NULL, ''),
-(4, '1000000002', 2, NULL, 'far fa-hand-peace', NULL, ''),
-(5, '1000000003', 3, NULL, NULL, NULL, ''),
-(6, '1000000004', 4, NULL, NULL, NULL, ''),
-(7, '1000000007', 7, NULL, NULL, NULL, ''),
-(8, '1000000008', 8, NULL, 'fas fa-graduation-cap', NULL, ''),
-(9, '1000000009', 9, NULL, 'fab fa-grav fa-spin', NULL, ''),
-(10, '1000000010', 10, NULL, 'fas fa-university', NULL, '');
+(1, '1000000001', 1, NULL, NULL, NULL, ''),
+(2, '1000000002', 2, NULL, 'far fa-hand-peace', NULL, ''),
+(3, '1000000003', 3, NULL, NULL, NULL, ''),
+(4, '1000000004', 4, NULL, NULL, NULL, ''),
+(5, '1000000007', 7, NULL, NULL, NULL, ''),
+(6, '1000000008', 8, NULL, 'fas fa-graduation-cap', NULL, ''),
+(7, '1000000009', 9, NULL, 'fab fa-grav fa-spin', NULL, ''),
+(8, '1000000010', 10, NULL, 'fas fa-university', NULL, '');
 
 --
 -- Indexes for dumped tables
@@ -999,7 +1032,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `accounts`
 --
 ALTER TABLE `accounts`
-  MODIFY `a_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `a_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 --
 -- AUTO_INCREMENT for table `acct_charge`
 --
@@ -1009,7 +1042,7 @@ ALTER TABLE `acct_charge`
 -- AUTO_INCREMENT for table `authrecipients`
 --
 ALTER TABLE `authrecipients`
-  MODIFY `ar_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `ar_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 --
 -- AUTO_INCREMENT for table `auth_accts`
 --
@@ -1079,7 +1112,7 @@ ALTER TABLE `reply`
 -- AUTO_INCREMENT for table `rfid`
 --
 ALTER TABLE `rfid`
-  MODIFY `rf_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `rf_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `service_call`
 --
@@ -1109,7 +1142,7 @@ ALTER TABLE `time_clock`
 -- AUTO_INCREMENT for table `trainingmodule`
 --
 ALTER TABLE `trainingmodule`
-  MODIFY `tm_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+  MODIFY `tm_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 --
 -- AUTO_INCREMENT for table `transactions`
 --
@@ -1119,7 +1152,7 @@ ALTER TABLE `transactions`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `u_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `u_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

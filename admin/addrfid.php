@@ -178,7 +178,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 
 <script type="text/javascript">
     function validateForm() {
-        if (stdRegEx("operator", /^\d{10}$/, "Invalid ID #") === false){
+        if (stdRegEx("operator", /<?php echo $sv['regexUser'];?>/, "Invalid ID #") === false){
             return false;
         }
         if (stdRegEx("rfid", /^\d{4,12}$/, "Invalid RFID #") === false){
