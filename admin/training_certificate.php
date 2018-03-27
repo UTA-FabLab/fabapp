@@ -211,12 +211,13 @@ function submitTM($tm_id, $operator, $staff){
                             </tr>
                         <?php } else { ?>
                             <tr>
-                                <td>Training Modules</td><td>-</td></tr>
+                                <td>Training Modules</td><td>-</td>
+                            </tr>
                         <?php } ?>
-                            <?php if($result = $mysqli->query("
-                                SELECT count(*) as count
-                                FROM `tm_enroll`
-                                WHERE `current` = 'Y'
+                        <?php if($result = $mysqli->query("
+                            SELECT count(*) as count
+                            FROM `tm_enroll`
+                            WHERE `current` = 'Y'
                         ")){
                             $row = $result->fetch_assoc()?>
                             <tr>
@@ -225,7 +226,8 @@ function submitTM($tm_id, $operator, $staff){
                             </tr>
                         <?php } else { ?>
                             <tr>
-                                <td>Training Enrollments</td><td>-</td></tr>
+                                <td>Training Enrollments</td><td>-</td>
+                            </tr>
                         <?php } ?>
                         </tbody>
                     </table>

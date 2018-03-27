@@ -55,8 +55,8 @@ if ($errorMsg == ""){
 }
 
 if ($errorMsg != ""){
-    $_SESSION['loc'] = "/index.php";
-    echo "<script> alert('$errorMsg'); window.location.href='/index.php';</script>";
+	$_SESSION['error_msg'] = $errorMsg;
+    header("Location:/index.php");
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -178,7 +178,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     </table>
                 </div>
                 <!-- /.panel-body -->
-				<?php if ($ticket->getDuration() == "") { ?>
+				<?php if ($ticket->getDuration() == "" && ($staff->getRoleID() >= $sv['LvlOfStaff'] || $staff->getOperator() == $ticket->getUser()->getOperator())) { ?>
 					<div class="panel-footer">
 						<div align="right"><form name="moveForm" method="post" action="">
 							<button type="submit" class="btn btn-primary" name="endBtn">End</button>
@@ -312,7 +312,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     }?></td>
                                 </tr>
                                 <tr>
-                                    <td>Staff ID</td>
+                                    <td>Staff</td>
                                     <td><?php echo "<i class=\"".$objbox->getStaff()->getIcon()." fa-lg\"></i> ";?></td>
                                 </tr>
                             <?php } ?>
@@ -363,7 +363,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         echo "<td><i class='".$sv['currency']."'></i> ".number_format($ac->getAmount(), 2)."</td>";
                                     }
                                     echo "<td><i class='far fa-calendar-alt' title='".$ac->getAc_date()."'> ".$ac->getAccount()->getName()."</i></td>";
-                                    echo "<td><i class='".$ac->getStaff()->getIcon()." fa-lg' title='".$ac->getStaff()->getOperator()."'></i>";
+                                    if ($staff && $staff->getRoleID() >= $sv['LvlOfStaff']){
+										echo "<td><i class='".$ac->getStaff()->getIcon()." fa-lg' title='".$ac->getStaff()->getOperator()."'></i>";
+									} else {
+										echo "<td><i class='".$ac->getStaff()->getIcon()." fa-lg'></i>";
+									}
                                     if ($ac->getAc_notes()){ ?>
                                         <div class="btn-group">
                                             <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">

@@ -312,11 +312,13 @@ class ObjBox {
             return $msg;
         }
         
+        /*
         $quote = $this->transaction->quote();
         $ac_owed = Acct_charge::checkOutstanding($user->getOperator());
         if ($quote > .005 && isset($ac_owed[$this->transaction->getTrans_id()])){
-            return "Error OB290 : Ticket has a Balance";
+            return "Error OB318 : Ticket has a Balance";
         }
+         */
         
         //Update ObjBox Table
         if ($mysqli->query("

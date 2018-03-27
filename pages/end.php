@@ -9,6 +9,7 @@ unset($_SESSION['pickupUser']);
 
 //check trans_id
 if (empty($_GET["trans_id"])){
+	
     $errorMsg = "Ticket # is Missing.";
     $_SESSION['type'] = "error";
 } elseif ($staff) {
@@ -64,9 +65,11 @@ if (empty($_GET["trans_id"])){
             header("Location:/pages/lookup.php?trans_id=".$ticket->getTrans_id());
             exit();
         }
-    } else {
-        //$errorMsg = "No End";
-        $errorMsg;
+    } elseif($staff->getRoleID() < $sv['LvlOfStaff']) {
+        //Ticket has cost, This isn't their ticket, and they are not staff
+		header("Location:/index.php");
+        $_SESSION['error_msg'] = "This ticket may have a cost. Please ask a staff member to help you close this ticket.";
+		exit();
     }
     
 } else {
@@ -78,26 +81,7 @@ if (empty($_GET["trans_id"])){
 if ($_SERVER["REQUEST_METHOD"] == "POST" && ($errorMsg == "")) {
     
     //Undo Button was Pressed
-    if (isset($_POST['undoBtn'])) {
-        if ($_SESSION['type'] == "end"){
-            $backup = unserialize($_SESSION['backup_ticket']);
-            //echo( "Lets undo this ticket ".$backup->getTrans_id() );
-            
-            //Test if Back->trans_id() == $_GET['trans_id'] 
-           
-            if ($backup->writeAttr() === true){
-                unset($_SESSION['backup_ticket']);
-                // "Ticket #".$backup->getTrans_id()." has been restored.";
-                header("Location:/index.php");
-            } else {
-                $errorMsg = "Unable to Un-End Ticket";
-            }
-        } else {
-            $errorMsg = "Unable to Un-End Ticket";
-        }
-        
-    //End Button was Pressed
-    } elseif(isset($_POST['endBtn'])) {
+    if(isset($_POST['endBtn'])) {
         //Decision Check of Mats_used, only one destination allowed
         $storage = false; //status id = 14
         $cancel = false; //status id = 15
@@ -116,8 +100,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($errorMsg == "")) {
             $mu_id = $mu->getMu_id();
             
             $mu->setStaff($staff);
-            $mu->setMu_notes(filter_input(INPUT_POST, "mu_notes_$mu_id", FILTER_SANITIZE_MAGIC_QUOTES));
-            $string = filter_input(INPUT_POST, "mu_notes_$mu_id", FILTER_SANITIZE_MAGIC_QUOTES);
+            $mu->setMu_notes(filter_input(INPUT_POST, "mu_notes_$mu_id"));
 			
             if (!Status::regexID($_POST["status_$mu_id"]))
                 {$errorMsg = "Invalid Status - MU$mu_id: ".filter_input(INPUT_POST, "status_$mu_id");}
@@ -167,8 +150,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($errorMsg == "")) {
                     header('Location:/pages/lookup.php?trans_id='.$ticket->getTrans_id());
                 }
                 
-            //} elseif ($status_id == 14 && $ticket->getDevice()->getDG()->getStorable() == "Y") {
+            
             } elseif ($status_id == 14) {
+                echo "<script>console.log( \"Debug Status 14\");</script>";
                 if ($ticket->getDevice()->getDG()->getStorable() == "Y"){
                     $msg = $ticket->move($staff);
                 } elseif ($hasCost > .005) {
@@ -178,13 +162,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($errorMsg == "")) {
                 }
                 if (is_string($msg)){
                     $errorMsg = $msg;
-                    echo "<script>console.log( \"Debug ErroMsg e183: $errorMsg\");</script>";
+                    echo "<script>console.log( \"Debug ErroMsg e162: $errorMsg\");</script>";
                 } else {
                     $_SESSION['type'] = "end";
                     header('Location:/pages/lookup.php?trans_id='.$ticket->getTrans_id());
                 }
 
             } elseif ($status_id == 15 || $status_id == 20){
+                echo "<script>console.log( \"Debug Status $status_id\");</script>";
                 //Cancelled or Pay Now
                 //Assess if there needs to be a charge
                 
@@ -303,7 +288,7 @@ if ($errorMsg != ""){
                                                         </td>
                                                         <td>
                                                             <i class='<?php echo $sv['currency'];?> fa-fw'></i> <?php echo $mu->getMaterial()->getPrice()." x "; ?>
-                                                            <input type="number" name="uu_<?php echo $mu_id;?>" id="uu_<?php echo $mu_id;?>" autocomplete="off" value="<?php echo ($mu->getUnit_used());?>" min="0" max="9999" style="text-align:right;" readonly="true">
+                                                            <input type="text" name="uu_<?php echo $mu_id;?>" id="uu_<?php echo $mu_id;?>" autocomplete="off" size=4 value="<?php echo ($mu->getUnit_used());?>" style="text-align:right;" readonly="true">
                                                             <?php echo ($mu->getMaterial()->getUnit());
                                                             if ($mu->getMu_date()){ ?>
                                                                 <i class="far fa-calendar-alt fa-lg" title="<?php echo $mu->getMu_date();?>"></i>

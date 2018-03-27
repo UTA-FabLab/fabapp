@@ -51,9 +51,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $errorMsg == "") {
                 $mu->setStaff($staff->getOperator());
                 $mu->setUnit_used($_POST["uu_".$mu->getMu_id()]);
                 $mu->getStatus()->setStatus_id($mu_s);
-                //$mu->setMu_notes($_POST['mu_notes_'.$mu->getMu_id()]);
-				//$mu->setMu_notes(filter_input(INPUT_POST, 'mu_notes_'.$mu->getMu_id(), FILTER_SANITIZE_ENCODED));
-				$mu->setMu_notes($_POST['mu_notes_'.$mu->getMu_id()]);
+                $mu->setMu_notes($_POST['mu_notes_'.$mu->getMu_id()]);
                 
                 if ($mu_s > $status_id){
                     $status_id = $mu_s;
@@ -275,7 +273,6 @@ if(is_array($objbox_array)){foreach ($objbox_array as $ob) {
             echo ("var rate_".$mu->getMu_id()." = ".$mu->getMaterial()->getPrice().";\n\t");
             echo ("var uu_".$mu->getMu_id()." = document.getElementById('uu_".$mu->getMu_id()."').value;\n\t");
             echo ("if (status_".$mu->getMu_id()." == 12)\n\t\t\t");
-            //echo ("total -= rate_".$mu->getMu_id()." * uu_".$mu->getMu_id().";\n");
             echo ("total -= rate_".$mu->getMu_id()." * uu_".$mu->getMu_id().";\n");
         } else {
             echo ("var status_".$mu->getMu_id()." = document.getElementById('status_".$mu->getMu_id()."').value;\n\t");
