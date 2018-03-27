@@ -26,6 +26,9 @@ function goModal(title, body, auto){
     }
 }
 
+function loadingModal(){
+    $('#loadingModal').modal('show');
+}
 
 function searchF(){
     var sForm = document.forms['searchForm'];
@@ -68,11 +71,6 @@ function startTimer(duration, display, dg_parent) {
             display.textContent = "- "+ hours + ":" + minutes + ":" + seconds;
             display.className="message";
             --timer;
-        }
-
-        if (timer == 0 && dg_parent == 1){
-            window.alert("A Printer's time has expired");
-            window.location.reload(1);
         }	
     }, 1000);
 }
@@ -115,3 +113,17 @@ function validateNum(caller) {
         }
     }
 }
+
+//Toggle Focus
+$("#loginlink").on('click', function(){
+    console.log("loginlink focus");
+    var x = setTimeout('$("#netID").focus()', 200);
+});
+$("#pickLink").on('click', function(){
+    console.log("pickLink focus");
+    var x = setTimeout('$("#pickField").focus()', 200);
+});
+$("#searchLink").on('click', function(){
+    console.log("searchLink focus");
+    var x = setTimeout('$("#searchField").focus()', 200);
+});

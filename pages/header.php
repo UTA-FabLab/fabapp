@@ -110,7 +110,7 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
     echo "<script>window.onload = function(){goModal('Success',\"$_SESSION[success_msg]\", true)}</script>";
     unset($_SESSION['success_msg']);
 } elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
-    echo "<script>window.onload = function(){goModal('Success',\"$_SESSION[error_msg]\", true)}</script>";
+    echo "<script>window.onload = function(){goModal('Error',\"$_SESSION[error_msg]\", false)}</script>";
     unset($_SESSION['error_msg']);
 }
 ?>
@@ -134,8 +134,8 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
 <!--php class Staff if not logged in-->
 <?php if(!$staff){ ?>
                 <li class="dropdown">
-                    <a class="dropdown-toggle" data-toggle="dropdown" href="#"> 
-                        <i class="fas fa-sign-in-alt fa-fw"></i> <i class="fas fa-caret-down"></i>
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="loginlink"> 
+                        <i class="fas fa-sign-in-alt fa-lg"></i> <i class="fas fa-caret-down"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-alerts">
                         <form role="form" class="form-horizontal" method="POST" action="" autocomplete="off">
@@ -143,7 +143,7 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                             <label for="email" class="col-sm-3 control-label">
                                 NetID</label>
                             <div class="col-sm-9">
-                                <input type="text" class="form-control" name="netID" placeholder="NetID" value="<?php if(isset($_SESSION['netID'])) echo $_SESSION['netID'];?>"/>
+                                <input type="text" class="form-control" id="netID" name="netID" placeholder="NetID" value="<?php if(isset($_SESSION['netID'])) echo $_SESSION['netID'];?>"/>
                             </div>
                         </div>
                         <div class="form-group">
@@ -155,7 +155,7 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                         </div>
                         <div class="row">
                             <div class="col-sm-12 col-sm-offset-1">
-                                <button type="submit" class="btn btn-primary btn-sm" name="signBtn">
+                                <button type="submit" class="btn btn-primary btn-sm" name="signBtn" onclick="loadingModal()">
                                     Sign In</button>
                                 <a href="http://<?php echo $sv["forgotten"];?>">Forgot your password?</a>
                             </div>
@@ -171,9 +171,9 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                         <i class="<?php echo $staff->getIcon();?> fa-2x"></i> <i class="fas fa-caret-down"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-user">
-                        <li><a href="/pages/info.php"><i class="fas fa-info fa-fw"></i> Information</a></li>
+                        <li><a href="/pages/info.php" onclick="loadingModal()"><i class="fas fa-info fa-fw"></i> Information</a></li>
                         <li class="divider"></li>
-                        <li><a href="/logout.php?n=n"><i class="fas fa-sign-out-alt fa-fw"></i> Logout</a></li>
+                        <li><a href="/logout.php?n=n" onclick="loadingModal()"><i class="fas fa-sign-out-alt fa-fw"></i> Logout</a></li>
                     </ul>
                     <!-- /.dropdown-user -->
                 </li>
@@ -187,13 +187,10 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                         <li>
                             <a href="/index.php"><i class="fas fa-ticket-alt"></i> FabApp</a>
                         </li>
-                        <li>
-                            <a href="#"><i class="fas fa-calculator"></i> Tools</a>
-                        </li>
 <!-- if role > 6 {show} -->
 <?php if ($staff && $staff->getRoleID() > 6) { ?>
                         <li>
-                            <a href="#"><i class="fas fa-gift"></i> Pick Up 3D Print<span class="fas fa-angle-left"></span></a>
+                            <a href="#" id="pickLink"><i class="fas fa-gift"></i> Pick Up 3D Print<span class="fas fa-angle-left"></span></a>
                             <ul class="nav nav-second-level">
                             <form name="pickForm" method="POST" action="" autocomplete="off" onsubmit="return validateNum('pickForm')">
                                 <li class="sidebar-search">
@@ -211,7 +208,7 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                         </li>
 <!-- if role > 6 {show} else {look up trans staff->getID()} -->
                         <li>
-                            <a href="#"><i class="fas fa-search fa-fw"></i> Look-Up By<span class="fas fa-angle-left"></span></a>
+                            <a href="#" id="searchLink"><i class="fas fa-search fa-fw"></i> Look-Up By<span class="fas fa-angle-left"></span></a>
                             <ul class="nav nav-second-level">
                             <form name="searchForm" method="POST" action="" autocomplete="off"  onsubmit="return validateNum('searchForm')"> 
                                 <li class="sidebar-radio">
@@ -231,70 +228,14 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                             </form>
                             </ul>
                         </li>
-<?php } if ($staff && $staff->getRoleID() > 6) { ?>
-                        <li>
-                            <a href="#"><i class="fas fa-wrench fa-fw"></i> Service Request<span class="fas fa-angle-left"></span></a>
-                            <ul class="nav nav-second-level">
-                                <li>
-                                    <a href="/service/newTicket.php"><i class="fas fa-fire"></i> Report Issue</a>
-                                </li>
-                                <li>
-                                    <a href="/service/sortableHistory.php"><i class="fas fa-history"></i> History</a>
-                                </li>
-                                <?php
-                                    if($staff->getRoleID() != 8 && $staff->getRoleID() != 9)
-                                        echo"<li><a href='/service/technicians.php'><i class='far fa-comment fa-fw'></i> Open Tickets</a></li>";
-                                ?>
-                            </ul>
-                            <!-- /.nav-second-level -->
-                        </li>
+<?php } if (is_object($staff) && $staff->getRoleID() >= $sv['LvlOfStaff']) { ?>
                         <li>
                             <a href="#"><i class="fas fa-sitemap"></i> Admin<span class="fas fa-angle-left"></span></a>
                             <ul class="nav nav-second-level">
                                 <li>
-                                    <a href="/admin/index.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                                    <a href="/admin/now_serving.php"><i class="fas fa-list-ol"></i> Now Serving</a>
                                 </li>
                                 <li>
-                                    <a href="#"><i class="far fa-money-bill-alt"></i> Accounts<span class="fas fa-angle-left"></span></a>
-                                    <ul class="nav nav-third-level">
-                                        <li>
-                                            <a href="#"><i class="fas fa-pencil-alt"></i> Manage Accounts</a>
-                                        </li>
-                                        <li>
-                                            <a href="#"><i class="fas fa-balance-scale"></i> Reconcile</a>
-                                        </li>
-                                    </ul>
-                                    <!-- /.nav-third-level -->
-                                </li>
-                                <li>
-                                    <a href="#"><i class="far fa-chart-bar"></i> Charts</a>
-                                </li>
-                                <li>
-                                    <a herf="#"><i class="fas fa-cubes"></i> Devices<span class="fas fa-angle-left"></span></a>
-                                    <ul class="nav nav-third-level">
-                                        <li>
-                                            <a href="#"><i class="fas fa-cube"></i> Manage Device</a>
-                                        </li>
-                                        <li>
-                                            <a href="#"><i class="far fa-life-ring"></i> Device Materials</a>
-                                        </li>
-                                    </ul>
-                                </li>
-                                <li>
-                                    <a herf="#"><i class="fab fa-linode"></i> Materials<span class="fas fa-angle-left"></span></a>
-                                    <ul class="nav nav-third-level">
-                                        <li>
-                                            <a href="#"><i class="far fa-chart-bar"></i> Inventory</a>
-                                        </li>
-                                        <li>
-                                            <a href="#"><i class="fas fa-truck"></i> Receive</a>
-                                        </li>
-                                        <li>
-                                            <a href="#"><i class="fas fa-life-ring"></i> Manage Materials</a>
-                                        </li>
-                                    </ul>
-                                </li>
-								<li>
                                     <a href="/admin/onboarding.php"><i class="fas fa-clipboard"></i> OnBoarding</a>
                                 </li>
                                 <li>
@@ -313,12 +254,6 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                                     <ul class="nav nav-third-level">
                                         <li>
                                             <a href="/admin/addrfid.php"><i class="fas fa-wifi"></i> Add RFID</a>
-                                        </li>
-                                        <li>
-                                            <a href="#"><i class="far fa-user-circle fa-fw"></i> Manage Users</a>
-                                        </li>
-                                        <li>
-                                            <a href="#"><i class="fas fa-tags"></i> Citation</a>
                                         </li>
                                     </ul>
                                 </li>

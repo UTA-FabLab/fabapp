@@ -1,14 +1,56 @@
 <?php
 /*
- *   CC BY-NC-AS UTA FabLab 2016-2017
+ *   CC BY-NC-AS UTA FabLab 2016-2018
+ * 
  *   FabApp V 0.9
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 $device_array = array();
 $_SESSION['type'] = "home";
 
-//print details of $staff
-//print_r($staff);
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if(isset($_POST['alertBtn'])){
+        echo "<script>console.log( \"Debug : alertBtn\");</script>";
+        $myNum = strtoupper($_POST["myNum"]);
+        $_SESSION['myNum'] = $myNum;
+    }
+    //print new wait tab and advance the number
+    if( isset($_POST['print_s']) ){
+        $i = $sv['next']+1;
+        wait($i);
+        advanceNum($i, "next");
+        
+    } elseif( isset($_POST['print_e']) ){
+        $i = $sv['eNext']+1;
+        wait($i);
+        advanceNum($i, "eNext");
+        
+    } elseif( isset($_POST['print_b']) ){
+        $i = $sv['bNext']+1;
+        wait($i);
+        advanceNum($i, "bNext");
+        
+    } elseif( isset($_POST['print_m']) ){
+        $i = $sv['mNext']+1;
+        wait($i);
+        advanceNum($i, "mNext");
+    }
+}
+function advanceNum($i, $str){
+    global $mysqli;
+    
+    if ($result = $mysqli->query("
+      UPDATE site_variables
+      SET value = $i
+      WHERE site_variables.name = '$str';
+    ")){
+        header("Location: /index.php");
+    } else {
+        $_SESSION['error_msg'] = "SQL Error";
+        header("Location: /index.php");
+    }
+    exit();
+}
 ?>
 <title><?php echo $sv['site_name'];?> Dashboard</title>
 <div id="page-wrapper">
@@ -56,8 +98,7 @@ $_SESSION['type'] = "home";
                                                     Devices::printDot($staff, $row['d_id'], $ticket->getDevice()->getD_id());
                                                     //echo ("<a href=\"http://".$row["url"]."\">".$row["device_desc"]."</a>");
                                                     echo ("<a href=\"http://".$ticket->getDevice()->getUrl()."\">".$ticket->getDevice()->getDevice_desc()."</a>");
-                                                ?>
-                                            <?php } else {
+                                            } else {
                                                 Devices::printDot($staff, $ticket->getDevice()->getD_id());
                                                 echo $ticket->getDevice()->getDevice_desc();
                                             } ?>
@@ -114,9 +155,83 @@ $_SESSION['type'] = "home";
         </div>
         <!-- /.col-md-8 -->
         <div class="col-md-4">
+            <?php if ($sv['next'] >= 1 || $sv['eNext'] >= 1 || $sv['bNext'] >= 1 || $sv['mNext'] >= 1){ ?>
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="fas fa-list-ol fa-lg"></i> Now Serving
+                    </div>
+                    <div class="panel-body" id="now_serving_panel">
+					<div align="center" ><a href='http://fablab.uta.edu/policy/' style='color:blue'>UTA FabLab's Wait Policy</a></div>
+                        <table class="table table-striped table-bordered" >
+                            <?php if (is_object($staff) && $staff->getRoleID() >= $sv['LvlOfStaff']){ ?> <form method="post" action="">
+                                <tr>
+                                    <td>Equipment</td>
+                                    <td>Now Serving</td>
+                                    <td>Next #</td>
+                                </tr>
+                                <?php if ($sv['next'] != 0){ ?><tr id="next">
+                                    <td>PolyPrinter</td>
+                                    <td align="center"><h4 id="serving"><?php echo $sv['serving']; ?></h4></td>
+                                    <td align="center"><button class="btn btn-basic" title="Click to issue the next Wait-Tab"
+                                            name='print_s' onclick="loadingModal()"><?php echo $sv['next']+1; ?> <i class="fas fa-print"> </button></td>
+                                </tr><?php } ?>
+                                <?php if ($sv['eNext'] != 0){ ?><tr id="next">
+                                    <td>Epilog Laser</td>
+                                    <td align="center"><h4 id="eServing">E<?php echo $sv['eServing']; ?></h4></td>
+                                    <td align="center"><button class="btn btn-basic" title="Click to issue the next Wait-Tab"
+                                            name='print_e' onclick="loadingModal()">E<?php echo $sv['eNext']+1; ?> <i class="fas fa-print"> </button></td>
+                                </tr><?php } ?>
+                                <?php if ($sv['bNext'] != 0){ ?><tr id="next">
+                                    <td>Boss Laser</td>
+                                    <td align="center"><h4 id="bServing">B<?php echo $sv['bServing']; ?></h4></td>
+                                    <td align="center"><button class="btn btn-basic" title="Click to issue the next Wait-Tab"
+                                            name='print_b' onclick="loadingModal()">B<?php echo $sv['bNext']+1; ?> <i class="fas fa-print"> </button></td>
+                                </tr><?php } ?>
+                                <?php if ($sv['mNext'] != 0){ ?><tr id="next">
+                                    <td><?php echo $sv['misc'];?></td>
+                                    <td align="center"><h4 id="mServing">M<?php echo $sv['mServing']; ?></h4></td>
+                                    <td align="center"><button class="btn btn-basic" title="Click to issue the next Wait-Tab"
+                                            name='print_m' onclick="loadingModal()">M<?php echo $sv['mNext']+1; ?> <i class="fas fa-print"> </button></td>
+                                </tr><?php } ?>
+                            </form><?php } else { ?>
+                                <tr>
+                                    <td>Equipment</td>
+                                    <td>Now Serving</td>
+                                    <td>Next #</td>
+                                </tr>
+                                <?php if ($sv['next'] != 0){ ?><tr id="next">
+                                    <td>PolyPrinter</td>
+                                    <td align="center"><h4 id="serving"><?php echo $sv['serving']; ?></h4></td>
+                                    <td align="center" title="Next Issuable Number"><?php echo $sv['next']+1; ?></td>
+                                </tr><?php } ?>
+                                <?php if ($sv['eNext'] != 0){ ?><tr id="next">
+                                    <td>Epilog Laser</td>
+                                    <td align="center"><h4 id="eServing">E<?php echo $sv['eServing']; ?></h4></td>
+                                    <td align="center" title="Next Issuable Number">E<?php echo $sv['eNext']+1; ?></td>
+                                </tr><?php } ?>
+                                <?php if ($sv['bNext'] != 0){ ?><tr id="next">
+                                    <td>Boss Laser</td>
+                                    <td align="center"><h4 id="bServing">B<?php echo $sv['bServing']; ?></h4></td>
+                                    <td align="center" title="Next Issuable Number">B<?php echo $sv['bNext']+1; ?></td>
+                                </tr><?php } ?>
+                                <?php if ($sv['mNext'] != 0){ ?><tr id="next">
+                                    <td><?php echo $sv['misc'];?></td>
+                                    <td align="center"><h4 id="mServing">M<?php echo $sv['mServing']; ?></h4></td>
+                                    <td align="center" title="Next Issuable Number">M<?php echo $sv['mNext']+1; ?></td>
+                                </tr><?php } ?>
+                            <?php } ?>
+                        </table>
+                    </div>
+                    <div class="panel-footer"><form method="post" action="">
+                        <input name="myNum" id="myNum" type="text" title="Have a Wait-Tab? Enter your number and get a browser based alert." value='<?php if (isset($_SESSION['myNum'])){echo $_SESSION['myNum'];}?>'/>
+                        <button class="btn btn-warning" title="Have a Wait-Tab? Enter your number and get a browser based alert." name="alertBtn">Pop-Up Alert</button>
+                    </div></form>
+                </div>
+            <?php } ?>
+                    
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fab fa-linode fa-fw"></i> Inventory
+                    <i class="fas fa-warehouse fa-fw"></i> Inventory
                 </div>
                 <div class="panel-body">
                     <table class="table table-condensed">
@@ -186,4 +301,58 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         "iDisplayLength": 25,
         "order": []
     });
+<?php if(!is_object($staff) && ($sv['next'] >= 1 || $sv['eNext'] >= 1 || $sv['bNext'] >= 1 || $sv['mNext'] >= 1)) { ?>
+	//Update page if number changes, check every
+	setInterval(function(){
+		if (window.XMLHttpRequest) {
+			// code for IE7+, Firefox, Chrome, Opera, Safari
+			xmlhttp = new XMLHttpRequest();
+		} else {
+			// code for IE6, IE5
+			xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+		}
+		xmlhttp.onreadystatechange = function() {
+			if (this.readyState == 4 && this.status == 200) {
+				document.getElementById("now_serving_panel").innerHTML = this.responseText;
+			}
+		};
+		xmlhttp.open("GET","pages/sub/getWait.php",true);
+		xmlhttp.send();
+		myNum = document.getElementById("myNum").value;
+		
+		<?php if($sv["serving"] != 0) { ?>
+			var x = document.getElementById("serving").innerHTML;
+			if (x == myNum){
+				var msg = "Your Number: " + myNum + " has been called.";
+				setTimeout(function(){alert(msg);window.location = "index.php";}, 2500);
+				document.getElementById("myNum").value = "";
+			}
+		<?php } ?>
+		<?php if($sv["eServing"] != 0) { ?>
+			var x = document.getElementById("eServing").innerHTML;
+			if (x == myNum){
+				var msg = "Your Number: " + myNum + " has been called.";
+				setTimeout(function(){alert(msg);window.location = "index.php";}, 2500);
+				document.getElementById("myNum").value = "";
+			}
+		<?php } ?>
+		<?php if($sv["bServing"] != 0) { ?>
+			var x = document.getElementById("bServing").innerHTML;
+			if (x == myNum){
+				var msg = "Your Number: " + myNum + " has been called.";
+				setTimeout(function(){alert(msg);window.location = "index.php";}, 2500);
+				document.getElementById("myNum").value = "";
+			}
+		<?php } ?>
+		<?php if($sv["mServing"] != 0) { ?>
+			var x = document.getElementById("mServing").innerHTML;
+			if (x == myNum){
+				var msg = "Your Number: " + myNum + " has been called.";
+				setTimeout(function(){alert(msg);window.location = "index.php";}, 2500);
+				document.getElementById("myNum").value = "";
+			}
+		<?php } ?>
+		
+	}, 5000);
+<?php } ?>
 </script>

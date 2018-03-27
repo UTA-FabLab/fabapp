@@ -20,6 +20,17 @@
     </div>
 </div>
 <!-- Modal -->
+<div id="loadingModal" class="modal fade">
+    <div class="modal-dialog modal-sm">
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-body text-center">
+                <i class="fas fa-spinner fa-pulse fa-3x"></i>
+          </div>
+        </div>
+    </div>
+</div>
+<!-- Modal -->
     
 <!-- dev details -->
 <div class="col-sm-12">
@@ -38,7 +49,7 @@
     <script src="/vendor/jquery/jquery.min.js"></script>
     <script src="/vendor/blackrock-digital/js/sb-admin-2.js"></script>
     <script src="/vendor/datatables/js/dataTables.min.js"></script>
-    <script src="/vendor/fabapp/fabapp.js?=v26"></script>
+    <script src="/vendor/fabapp/fabapp.js"></script>
     <script src="/vendor/metisMenu/metisMenu.min.js"></script>
     <script src="/vendor/morrisjs/morris.min.js"></script>
     <script src="/vendor/raphael/raphael.min.js"></script>

@@ -37,7 +37,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['payBtn']) && $errorMs
         if (is_object($ob)){
             $msg = $ob->pickedUpBy($user, $staff);
             if (is_string($msg)){
-                $errorMsg = $msg;
+                $_SESSION['errorMsg'] = $msg;
             }
         }
         
@@ -57,6 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['payBtn']) && $errorMs
 if ($errorMsg != ""){
     echo "<script> console.log('Error P70: $errorMsg'); </script>";
     echo "<script> window.onload = function(){goModal(\"Error\", \"$errorMsg\", false);}</script>";
+    $_SESSION['errorMsg'] = $errorMsg;
 }
 ?>
 <title><?php echo $sv['site_name'];?> Pay</title>
@@ -108,9 +109,9 @@ if ($errorMsg != ""){
                         </tr>
                         <tr>
                             <td>Staff</td>
-                            <td><?php if ( $ticket->getStaff() ) 
-                                echo "<i class='".$ticket->getStaff()->getIcon()." fa-lg' title='".$ticket->getStaff()->getOperator()."'></i>";?>
-                            </td>
+                            <td><?php if ( is_object($ticket->getStaff()) ) {
+									echo "<i class='".$ticket->getStaff()->getIcon()." fa-lg' title='".$ticket->getStaff()->getOperator()."'></i>";
+							}?></td>
                         </tr>
                     </table>
                 </div>
@@ -197,7 +198,7 @@ if ($errorMsg != ""){
                 <div class="panel-heading">
                     <i class="fas fa-calculator"></i> Method of Payment
                 </div>
-                <form method="post" action="" onsubmit="return openWin()">
+                <form method="post" action="" onsubmit="return openWin()" autocomplete="off">
                 <div class="panel-body">
                     <table class="table table-bordered">
                         <tr>

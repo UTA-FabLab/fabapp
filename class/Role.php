@@ -19,9 +19,9 @@ class Role{
         }
 
         if ($result = $mysqli->query("
-            SELECT title
-            FROM Role
-            WHERE r_id = $r_id
+            SELECT `title`
+            FROM `role`
+            WHERE `r_id` = '$r_id'
             Limit 1;
         ")){
             $row = $result->fetch_assoc();
@@ -35,8 +35,8 @@ class Role{
         global $mysqli;
 
         if ($result = $mysqli->query("
-            SELECT r_id, title
-            FROM Role
+            SELECT `r_id`, `title`
+            FROM `role`
             WHERE 1;
         ")){
             return $result;
