@@ -39,14 +39,16 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
                                 <th>Device</th>
                                 <th>Start Time</th>
                                 <th>Status</th>
+                                <th>Amount</th>
                             </tr>
                         </thead>
                         <?php foreach ($staff->history() as $ticket){ ?>
                             <tr>
-                                <td align="Center"><a href="/pages/lookup.php?trans_id=<?php echo $ticket->getTrans_id();?>"><?php echo $ticket->getTrans_id();?></a></td>
-                                <td><?php echo $ticket->getDevice()->getDevice_desc();?></td>
-                                <td><?php echo $ticket->getT_start();?></td>
-                                <td><?php echo $ticket->getStatus()->getMsg();?></td>
+                                <td align="Center"><a href="/pages/lookup.php?trans_id=<?php echo $ticket[0];?>"><?php echo $ticket[0];?></a></td>
+                                <td><?php echo $ticket[1];?></td>
+                                <td><?php echo $ticket[2];?></td>
+                                <td><?php echo $ticket[3];?></td>
+                                <td><?php echo $ticket[4];?></td>
                             </tr>
                         <?php }?>
                     </table>

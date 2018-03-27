@@ -149,13 +149,19 @@
         $tickets = array();
         
         if ($result = $mysqli->query("
-            SELECT `trans_id`
+            SELECT `transactions`.`trans_id`, `devices`.`device_desc`, `transactions`.`t_start`, `status`.`msg`, `acct_charge`.`amount`
             FROM `transactions`
+            LEFT JOIN `devices`
+            ON `transactions`.`d_id` = `devices`.`d_id`
+            LEFT JOIN `status`
+            ON `transactions`.`status_id` = `status`.`status_id`
+            LEFT JOIN `acct_charge`
+            ON `transactions`.`trans_id` = `acct_charge`.`trans_id`
             WHERE `transactions`.`operator` = '".$this->operator."'
             ORDER BY `trans_id` DESC;
         ")){
             while($row = $result->fetch_assoc()){
-                array_push($tickets, new Transactions($row['trans_id']));
+                array_push($tickets, array($row['trans_id'], $row['device_desc'], $row['t_start'], $row['msg'], $row['amount']));
             }
         }
         return $tickets;
