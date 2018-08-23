@@ -154,13 +154,10 @@ class Transactions {
         if ($this->status->getStatus_id() != 12 && abs($total - 0.001) > .005){
             debug("Total $total");
             return false;
-            //return "$".$total;
         }
 
-        if( $staff->getRoleID() < $sv['LvlOfStaff'] && $staff->getOperator() != $this->getUser()->getOperator()){
-            //The closing ID must be a certain level
-            //Or they must not be closing their own ticket
-            return "You are unable to close this ticket ".$this->getTrans_id();
+        if(strcmp($staff->getOperator(), $ticket->getUser()->getOperator()) == 0 && $staff->getRoleID() < $sv['editTrans']){
+            $errorMsg = "Please ask a staff member to close this ticket.";
         }
         
         $msg = $this->writeAttr();

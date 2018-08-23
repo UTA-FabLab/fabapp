@@ -71,7 +71,11 @@ if (empty($_GET["trans_id"])){
         }
     } elseif($staff->getRoleID() < $sv['LvlOfStaff']) {
         //Ticket has cost, This isn't their ticket, and they are not staff
-        $_SESSION['error_msg'] = "This ticket may have a cost. Please ask a staff member to help you close this ticket.";
+        $errorMsg = "This ticket may have a cost. Please ask a staff member to help you close this ticket.";
+    } elseif(strcmp($staff->getOperator(), $ticket->getUser()->getOperator()) == 0 && $staff->getRoleID() < $sv['editTrans']){
+        if ($ticket->quote("mats") > .005 || $measurable == "Y"){
+            $errorMsg = "Please ask a fellow staff member to close this ticket.";
+        }
     }
     
 } else {
@@ -205,17 +209,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($errorMsg == "")) {
 }
 if ($errorMsg != ""){
     $_SESSION['error_msg'] = $errorMsg;
-    header("location: /index.php");
+    header("Location:/pages/lookup.php?trans_id=".$ticket->getTrans_id());
+    exit();
 }
 ?>
 <title><?php echo $sv['site_name'];?> End Ticket</title>
 <div id="page-wrapper">
     <div class="row">
         <div class="col-lg-12">
-            <?php if ($baseCost) {
-                echo "<h1 class='page-header'>Ticket Not Closed Yet</h1> This ticket may require payment.";
-            }  elseif (false) {
+            <?php  if (strcmp($staff->getOperator(), $ticket->getUser()->getOperator()) == 0) {
                 echo "<h1 class='page-header'>Not Authorized To End Ticket</h1> You must be either staff or closing your own ticket.";
+            } elseif ($baseCost) {
+                echo "<h1 class='page-header'>Ticket Not Closed Yet</h1> This ticket may require payment.";
             } else {
                 echo "<h1 class='page-header'>End Ticket</h1>";
             }?>
