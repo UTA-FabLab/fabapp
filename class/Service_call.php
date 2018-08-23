@@ -123,6 +123,12 @@ class Service_call {
     public function getUser() {
         return $this->user;
     }
+    
+    public static function regexTime($duration) {
+        if ( preg_match("/^\d{1,3}:\d{2}:\d{2}$/", $duration) == 1 )
+            return true;
+        return false;
+    }
 
     public function setD_id($d_id) {
         if (preg_match("/^\d+$/",$device_id) == 0)
@@ -131,7 +137,7 @@ class Service_call {
     }
 
     public function setD_duration($d_duration) {
-        if(Transactions::regexTime($d_duration)){
+        if(self::regexTime($d_duration)){
             $this->d_duration = $d_duration;
         } else {
             echo ("Invalid time $d_duration. ");

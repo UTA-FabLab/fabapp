@@ -71,6 +71,14 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
                             <td align="Center">Tickets Assisted</td>
                             <td><p title="<?php echo "$sv[rank_period] Month Rank : ".$staff->ticketsAssistRank();?>"><?php echo $staff->ticketsAssist();?></p></td>
                         </tr>
+                        <tr>
+                            <td align="Center">Assigned Role</td>
+                            <td><p><?php echo Role::getTitle($staff->getRoleID());?></p></td>
+                        </tr>
+                        <tr>
+                            <td align="Center">LC</td>
+                            <td><p><?php echo $staff->getLong_close();?></p></td>
+                        </tr>
                     </table>
                 </div>
                 <!-- /.panel-body -->

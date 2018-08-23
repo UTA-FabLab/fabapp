@@ -4,15 +4,13 @@
  *   FabApp V 0.9
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
-$errorMsg = $hasCost = "";
+$errorMsg = $baseCost = "";
 unset($_SESSION['pickupUser']);
 
 //check trans_id
 if (empty($_GET["trans_id"])){
-	
     $errorMsg = "Ticket # is Missing.";
-    $_SESSION['type'] = "error";
-} elseif ($staff) {
+} elseif (is_object ($staff)) {
     $trans_id = filter_input(INPUT_GET, "trans_id", FILTER_VALIDATE_INT);
     try {
         //Exception is thrown if ticket is not found
@@ -33,6 +31,9 @@ if (empty($_GET["trans_id"])){
     //Create backup if origin was from the home page
     if ( $_SESSION['type'] == "home" && !isset($_POST['undoBtn'])){
         $_SESSION['backup_ticket'] = serialize($ticket);
+        if (isset($_SESSION['backup_ob'])){
+            unset($_SESSION['backup_ob']);
+        }
     }
     
     //Determine if any material needs to be measured
@@ -53,28 +54,28 @@ if (empty($_GET["trans_id"])){
         }
     }
     
-    $hasCost = $ticket->quote();
-    if ($measurable == "N" && $hasCost < .005) {
+    $baseCost = $ticket->quote("");
+    if ($measurable == "N" && $baseCost < .005) {
         $msg = "";
         //No Mats or costs associated with this ticket
         $msg = $ticket->end(14, $staff);
         if (is_string($msg)){
             $errorMsg = $msg;
         } else {
+            if (isset($_SESSION['ac_id'])){
+                unset($_SESSION['ac_id']);
+            }
             $_SESSION['type'] = "end";
             header("Location:/pages/lookup.php?trans_id=".$ticket->getTrans_id());
             exit();
         }
     } elseif($staff->getRoleID() < $sv['LvlOfStaff']) {
         //Ticket has cost, This isn't their ticket, and they are not staff
-		header("Location:/index.php");
         $_SESSION['error_msg'] = "This ticket may have a cost. Please ask a staff member to help you close this ticket.";
-		exit();
     }
     
 } else {
-    //Not logged In
-    header("location: /index.php");
+    $errorMsg = "Unknown Parameters";
 }
 
 //When the user hits Submit
@@ -155,7 +156,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($errorMsg == "")) {
                 echo "<script>console.log( \"Debug Status 14\");</script>";
                 if ($ticket->getDevice()->getDG()->getStorable() == "Y"){
                     $msg = $ticket->move($staff);
-                } elseif ($hasCost > .005) {
+                } elseif ($ticket->quote("Mats") > .005) {
                     //Ticket has a balance, Store ticket state
                     $_SESSION['ticket'] = serialize($ticket);
                     header('Location:/pages/pay.php');
@@ -188,7 +189,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($errorMsg == "")) {
                 if(is_string($user)){
                     $errorMsg = $user;
                     echo "<script>console.log( 'Debug ErroMsg e210: $errorMsg');</script>";
-                } elseif ($errorMsg == "" && $ticket->quote() < .005) {
+                } elseif ($errorMsg == "" && $ticket->quote("mats") < .005) {
                     $ticket->writeAttr();
                     header('Location:/pages/lookup.php?trans_id='.$ticket->getTrans_id());
                 } elseif ($errorMsg == ""){
@@ -203,15 +204,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($errorMsg == "")) {
     }
 }
 if ($errorMsg != ""){
-    echo "<script>window.onload = function(){goModal('Error',\"$errorMsg\", false)}</script>";
+    $_SESSION['error_msg'] = $errorMsg;
+    header("location: /index.php");
 }
 ?>
 <title><?php echo $sv['site_name'];?> End Ticket</title>
 <div id="page-wrapper">
     <div class="row">
         <div class="col-lg-12">
-            <?php if ($hasCost) {
-                echo "<h1 class='page-header'>Ticket Not Closed, Yet</h1> This ticket may require payment.";
+            <?php if ($baseCost) {
+                echo "<h1 class='page-header'>Ticket Not Closed Yet</h1> This ticket may require payment.";
             }  elseif (false) {
                 echo "<h1 class='page-header'>Not Authorized To End Ticket</h1> You must be either staff or closing your own ticket.";
             } else {
@@ -236,7 +238,16 @@ if ($errorMsg != ""){
                             </tr>
                             <tr>
                                 <td>Operator</td>
-                                <?php echo "<td><i class='".$ticket->getUser()->getIcon()." fa-lg' title='".$ticket->getUser()->getOperator()."'></i></td>"; ?>
+                                <td>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                                            <i class="<?php echo $ticket->getUser()->getIcon();?> fa-lg" title="<?php echo $ticket->getUser()->getOperator();?>"></i>
+                                        </button>
+                                        <ul class="dropdown-menu" role="menu">
+                                            <li style="padding-left: 5px;"><?php echo $ticket->getUser()->getOperator();?></li>
+                                        </ul>
+                                    </div>
+                                </td>
                             </tr>
                             <tr>
                                 <td>Ticket</td>
@@ -341,7 +352,7 @@ if ($errorMsg != ""){
                                                 <?php if ($mu->getHeader() != ""){ ?>
                                                     <tr>
                                                         <td>File Name</td>
-                                                        <td><?php echo $mu->getHeader(); ?></td>
+                                                        <td><div style="word-wrap: break-word;"><?php echo $mu->getHeader(); ?></div></td>
                                                     </tr>
                                                 <?php } ?>
                                                 <tr>
@@ -416,7 +427,7 @@ if ($errorMsg != ""){
                                 </tr>
                             <?php } ?>
                             <tr>
-                                <td colspan="2"><div id="total" style="float:right;">Total : <?php printf("<i class='%s'></i> %.2f" ,$sv['currency'], $hasCost); ?></div></td>
+                                <td colspan="2"><div id="total" style="float:right;">Total : <?php printf("<i class='%s'></i> %.2f" ,$sv['currency'], $baseCost); ?></div></td>
                             </tr>
                             <tr class="tablefooter">
                                 <td align="right" colspan="2">
@@ -521,77 +532,100 @@ if ($errorMsg != ""){
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 ?>
 <script type="text/javascript">
-<?php if ($ticket->getMats_used() !== NULL){ ?>
-function validateForm(){
-    var storage = false;//14
-    var cancel = false;//15
-    var pickup = false;//20
-    <?php foreach($ticket->getMats_used() as $mu) {
-        $mu_id = $mu->getMu_id();
-        echo ("//Make sure material has been weighed\n");
-        echo ("\tvar x = document.getElementById('uu_$mu_id').value;\n");
-        echo ("\tif (x == null || x == ''){\n");
-        echo ("\t\talert('Please Weigh Object');\n");
-        echo ("\t\tdocument.getElementById('uu_$mu_id').focus();\n");
-        echo ("\t\treturn false;\n");
-        echo ("\t}\n");
-        
-        //Check Status dropdown
-        echo ("\n\t//Status Select Check\n");
-        echo ("\tvar x = document.getElementById('status_$mu_id').value;\n");
-        echo ("\tif (x == null || x == ''){\n");
-        echo ("\t\talert('Please Select Status');\n");
-        echo ("\t\tdocument.getElementById('status_$mu_id').focus();");
-        echo ("\n\t\treturn false;\n\t}");
-        echo ("\n\tif (x == 14){");
-        echo ("\n\t\tstorage = true;\n\t} else if(x == 20) {");
-        echo ("\n\t\tpickup = true;\n\t} else if(x == 15) {");
-        echo ("\n\t\tcancel = true;\n\t} ");
-        
-        //check Notes Field
-        echo ("\n\tif (x == 12 || x == 15){\n");
-        echo ("\t\t//Notes Field Required for Failed or Canceled Prints \n");
-        echo ("\t\tvar notes = document.getElementById('mu_notes_$mu_id').value;\n");
-        echo ("\t\tvar msg = '';\n");
-        echo ("\t\tif (notes.length < 10){\n");
-        echo ("\t\t\tmsg='Please Explain More......'\n");
-        echo ("\t\t\tif (notes.length == 0){\n");
-        echo ("\t\t\t\tmsg='Please state why this might have failed or need to be canceled'\n");
-        echo ("\t\t\t}\n");
-        echo ("\t\t\talert(msg);\n");
-        echo ("\t\t\tdocument.getElementById('mu_notes_$mu_id').focus();\n");
-        echo ("\t\t\treturn false;\n\t\t}\n\t}\n\n\t");
-    }?>
-    
-    if (pickup && storage){
-        alert("You must decide either to Pickup or Move to Storage");
-        return false;
-    } else if (cancel && (pickup && storage)) {
-        alert('To cancel ticket, all materials must be set to CANCEL.');
-        return false;
+<?php if ($ticket->getMats_used() !== NULL){
+    if ($ticket->getDevice()->getDG()->getStorable() == "Y"){ ?>
+    function validateForm(){
+        var storage = false;//14
+        var cancel = false;//15
+        var pickup = false;//20
+        <?php foreach($ticket->getMats_used() as $mu) {
+            $mu_id = $mu->getMu_id();
+            echo ("//Make sure material has been weighed\n");
+            echo ("\tvar x = document.getElementById('uu_$mu_id').value;\n");
+            echo ("\tif (x == null || x == ''){\n");
+            echo ("\t\talert('Please Weigh Object');\n");
+            echo ("\t\tdocument.getElementById('uu_$mu_id').focus();\n");
+            echo ("\t\treturn false;\n");
+            echo ("\t}\n");
+
+            //Check Status dropdown
+            echo ("\n\t//Status Select Check\n");
+            echo ("\tvar x = document.getElementById('status_$mu_id').value;\n");
+            echo ("\tif (x == null || x == ''){\n");
+            echo ("\t\talert('Please Select Status');\n");
+            echo ("\t\tdocument.getElementById('status_$mu_id').focus();");
+            echo ("\n\t\treturn false;\n\t}");
+            echo ("\n\tif (x == 14){");
+            echo ("\n\t\tstorage = true;\n\t} else if(x == 20) {");
+            echo ("\n\t\tpickup = true;\n\t} else if(x == 15) {");
+            echo ("\n\t\tcancel = true;\n\t} ");
+
+            //check Notes Field
+            echo ("\n\tif (x == 12 || x == 15){\n");
+            echo ("\t\t//Notes Field Required for Failed or Canceled Prints \n");
+            echo ("\t\tvar notes = document.getElementById('mu_notes_$mu_id').value;\n");
+            echo ("\t\tvar msg = '';\n");
+            echo ("\t\tif (notes.length < 10){\n");
+            echo ("\t\t\tmsg='Please Explain More......'\n");
+            echo ("\t\t\tif (notes.length == 0){\n");
+            echo ("\t\t\t\tmsg='Please state why this might have failed or need to be canceled'\n");
+            echo ("\t\t\t}\n");
+            echo ("\t\t\talert(msg);\n");
+            echo ("\t\t\tdocument.getElementById('mu_notes_$mu_id').focus();\n");
+            echo ("\t\t\treturn false;\n\t\t}\n\t}\n\n\t");
+        }?>
+
+        if (pickup && storage){
+            alert("You must decide either to Pickup or Move to Storage");
+            return false;
+        } else if (cancel && (pickup && storage)) {
+            alert('To cancel ticket, all materials must be set to CANCEL.');
+            return false;
+        }
+
+        //if pickup check ID for #
     }
-    
-    //if pickup check ID for #
-}
+    <?php } else { ?>
+    function validateForm(){
+        <?php foreach($ticket->getMats_used() as $mu) {
+            $mu_id = $mu->getMu_id();
+            //Check Status dropdown
+            echo ("\n\t\t//Status Select Check\n");
+            echo ("\t\tvar x = document.getElementById('status_$mu_id').value;\n");
+            echo ("\t\tif (x == null || x == ''){\n");
+            echo ("\t\t\talert('Please Select Status');\n");
+            echo ("\t\t\tdocument.getElementById('status_$mu_id').focus();");
+            echo ("\n\t\t\treturn false;\n\t}");
+        } ?>
+    }
+    <?php } ?>
 
 function calc (){
     var total = 0;
-    //var prePaid = <?php echo $ticket->totalAC();?>;
-    var hasCost = <?php echo $hasCost;?>;
+    var prePaid = <?php echo $ticket->totalAC();?>;
+    var hasCost = <?php echo $baseCost;?>;
     var success = 0; //determinate for charging for machine costs.
     <?php 
     foreach ($ticket->getMats_used() as $mu) {
         $mu_id = $mu->getMu_id();
         echo ("\n\t//Material: $mu_id");
         echo ("\n\tvar status_$mu_id = document.getElementById('status_$mu_id').value;");
-        echo ("\n\tvar rate_$mu_id = ".$mu->getMaterial()->getPrice().";");
-        echo ("\n\tvar vol_$mu_id = document.getElementById('uu_$mu_id').value;");
-        //drop from calculation because it is already included in the HasCost attribute
-        if ($mu->getStatus()->getStatus_id() < 20){
-            echo ("\n\n\tif (status_$mu_id != 12){");
-            echo ("\n\t\ttotal += rate_$mu_id * vol_$mu_id;");
-            echo ("\n\t\tsuccess = 1;\n\t}");
+        if ($mu->getMaterial()->getMeasurable() == "Y"){
+            echo ("\n\tvar rate_$mu_id = ".$mu->getMaterial()->getPrice().";");
+            echo ("\n\tvar vol_$mu_id = document.getElementById('uu_$mu_id').value;");
+            //drop from calculation because it is already included in the HasCost attribute
+            if ($mu->getStatus()->getStatus_id() < 20){
+                echo ("\n\n\tif (status_$mu_id != 12){");
+                echo ("\n\t\ttotal += rate_$mu_id * vol_$mu_id;");
+                echo ("\n\t\tsuccess = 1;\n\t}");
+            }
+        } else {
+            if ($mu->getStatus()->getStatus_id() < 20){
+                echo ("\n\n\tif (status_$mu_id != 12){");
+                echo ("\n\t\tsuccess = 1;\n\t}");
+            }
         }
+        //Display ID Confirmation Box
         if ($staff->getRoleID() >= $sv['LvlOfStaff'] && $ticket->getDevice()->getDg()->getStorable() == "Y") {
             echo ("\n\n\tif (status_$mu_id == 20 || status_$mu_id == 15) {");
             echo ("\n\t\tdocument.getElementById('pickTR').style.display = 'table-row';\n\t} else {");
@@ -599,7 +633,7 @@ function calc (){
         }
     }
     ?>
-    total = total + .001 + hasCost * success;
+    total = (total + .001 + hasCost) * success;
     document.getElementById("total").innerHTML = "Total : <i class='<?php echo $sv['currency'];?>'></i> " + total.toFixed(2);
 }
 <?php } ?>

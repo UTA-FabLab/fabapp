@@ -21,10 +21,12 @@ if (empty($_GET["d_id"])){
         $device = new Devices($d_id);
         $device_mats = Materials::getDeviceMats($device->getDg()->getDg_id());
         //convert the time limit of a device
-        $timeArry = explode(':', $device->getD_duration());
-        $hour = $timeArry[0];
-        $minutes = $timeArry[1];
-        $limit = $hour + $minutes/60;
+        if ($device->getD_duration()){
+            $timeArry = explode(':', $device->getD_duration());
+            $hour = $timeArry[0];
+            $minutes = $timeArry[1];
+            $limit = $hour + $minutes/60;
+        }
     }
 }
 
@@ -172,7 +174,7 @@ if ($staff) {
                         </tr>
                         <tr class="tablerow">
                             <td align="center">ID Number</td>
-                            <td><input type="text" name="operator" placeholder="1000000000" value="<?php if(isset($operator)) echo $operator->getOperator();?>"
+                            <td><input type="text" name="operator" id="operator" placeholder="1000000000" value="<?php if(isset($operator)) echo $operator->getOperator();?>"
                                 maxlength="10" size="10" autofocus tabindex="1"></td>
                         </tr>                      
                         <?php //if no materials are related to this device group
@@ -230,7 +232,7 @@ if ($staff) {
                                 <td align="center">Estimated Time</td>
                                 <td>
                                     <input type="number" name="hours" id="hours" tabindex="6" min="0" max="100" 
-                                        step="1" placeholder="hh" ></input>Hours
+                                        step="1" placeholder="hh" value =0></input>Hours
                                     <select name="minutes" id="minutes" tabindex="7">
                                         <option value="00">00</option>
                                         <option value="05">05</option>
@@ -284,14 +286,7 @@ function resetForm() {
 }
 	
 function validateForm() {
-    var x = document.forms["cform"]["operator"].value;
-	var reg = /^\d{10}$/;
-	//Mav ID Check
-    if (x === null || x === "" || !reg.test(x)) {
-        if (!reg.test(x)) {
-                alert("Invalid ID #");
-            }
-            document.forms["cform"]["operator"].focus();
+    if (!stdRegEx("operator", /<?php echo $sv['regexUser'];?>/, "Invalid ID #")){
         return false;
     }
     //Material Check Uprint

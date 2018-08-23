@@ -6,10 +6,11 @@
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 $d_id = $dg_id = $operator = "";
 
-if (!$staff || $staff->getRoleID() < 7){
+if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
     //Not Authorized to see this Page
     header('Location: /index.php');
-	exit();
+    $_SESSION['error_msg'] = "Insufficient role level to access, sorry.";
+    exit();
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn']) && ($_POST['submitBtn'] == 'Submit') && !empty($_POST['tm_id']) && $_SESSION['type'] != 'tc_success') {
@@ -329,7 +330,6 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         }
         xmlhttp.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
-                //document.getElementById("tr_tm").innerHTML = this.responseText;
                 document.getElementById("tm_id").innerHTML = this.responseText;
                 document.getElementById("tm_desc").innerHTML = "";
             }
@@ -349,7 +349,6 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
             }
             xmlhttp2.onreadystatechange = function() {
                 if (this.readyState == 4 && this.status == 200) {
-                    //document.getElementById("tr_tm").innerHTML = this.responseText;
                     document.getElementById("td_deviceList").innerHTML = this.responseText;
                 }
             };

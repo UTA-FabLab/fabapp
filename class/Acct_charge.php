@@ -11,16 +11,17 @@
  * @author Jon Le
  */
 class Acct_charge {
-    private $ac_id;
-    private $account;
-    private $trans_id;
     private $ac_date;
-    private $user;
-    private $staff;
+    private $ac_id;
+    private $ac_notes;
+    private $account;
     private $amount;
     private $recon_date;
     private $recon_id;
-    private $ac_notes;
+    private $trans_id;
+    //Objects
+    private $staff;
+    private $user;
     
     public function __construct($ac_id) {
         global $mysqli;
@@ -44,7 +45,7 @@ class Acct_charge {
             $this->setTrans_id($row['trans_id']);
             $this->setAc_date($row['ac_date']);
             $this->setOperator($row['operator']);
-            $this->setStaff_id($row['staff_id']);
+            $this->setStaff($row['staff_id']);
             $this->setAmount($row['amount']);
             $this->setRecon_date($row['recon_date']);
             $this->setRecon_id($row['recon_id']);
@@ -116,10 +117,48 @@ class Acct_charge {
         //No Balance Owed
     }
     
+    public function edit($err_check, $ac_operator, $ac_amount, $ac_date, $ac_acct, $ac_staff_id, $ac_note){
+        $diff = 0;
+        if($this->getUser()->getOperator() != $ac_operator){
+            $diff +=1;
+            $this->setOperator($ac_operator);
+        }
+        if($this->getAmount()!= $ac_amount){
+            $diff +=1;
+            $this->setAmount($ac_amount);
+        }
+        if(strtotime($this->getAc_date()) != strtotime($ac_date)){
+            $diff +=1;
+            $this->setAc_date(date("Y-m-d H:i:s",strtotime($ac_date)));
+        }
+        if($this->getAccount()->getA_id() != $ac_acct){
+            $diff +=1;
+            $this->setAccount($ac_acct);
+        }
+        if($this->getStaff()->getOperator() != $ac_staff_id){
+            $diff +=1;
+            $this->setStaff($ac_staff_id);
+        }
+        if($this->getAc_notes() != $ac_note){
+            $diff +=1;
+            $this->setAc_notes($ac_note);
+        }
+
+        if ($diff > 0){
+            $str = $this->writeAttr();
+            if (is_string($str)){
+                //Must be an Error
+                return $str.$err_check;
+            }
+            return $err_check+$str;
+        }
+        return $err_check;
+    }
+	
     public static function insertCharge($ticket, $a_id, $payee, $staff){
         global $mysqli;
         $trans_id = $ticket->getTrans_id();
-        $amount = $ticket->quote();
+        $amount = $ticket->quote("mats");
         
         if ($amount < .005){
             return "No Balance Due: ".$amount;
@@ -184,6 +223,12 @@ class Acct_charge {
         global $sv;
         
         return date($sv['dateFormat'],strtotime($this->ac_date));
+    }
+    
+    public function getAc_date_picker() {
+        if ($this->ac_date == "")
+            return "";
+        return date('m/d/Y g:i a',strtotime($this->ac_date));
     }
 
     public function getAccount() {
@@ -258,16 +303,18 @@ class Acct_charge {
     }
 
     private function setOperator($operator) {
-        $user = Users::withID($operator);
+        if ($user = Users::payee($operator)){} else {
+            $user = Users::withID($operator);
+        }
         $this->user = $user;
     }
 
-    private function setStaff_id($staff_id) {
-        $staff = Users::withID($staff_id);
-        $this->staff = $staff;
-    }
-
-    public function setStaff($staff) {
+    public function setStaff($staff_id) {
+        if (is_object($staff_id)){
+            $staff = $staff_id;
+        } else {
+            $staff = Users::withID($staff_id);
+        }
         $this->staff = $staff;
     }
 
@@ -284,6 +331,7 @@ class Acct_charge {
     }
 
     public function setAc_notes($ac_notes) {
+        $ac_notes = htmlspecialchars_decode($ac_notes);
         $this->ac_notes = $ac_notes;
     }
     
@@ -299,11 +347,11 @@ class Acct_charge {
             if ($mysqli->affected_rows == 1){
                 //Remove amount from Acct balance
                 $ticket = new Transactions($this->getTrans_id());
-                $amount = $ticket->quote();
+                $amount = $ticket->quote("mats");
                 $this->account->updateBalance(-$amount);
             }
         } else {
-            return"AC306 ERROR - ".$mysqli->error;
+            return"AC347 ERROR - ".$mysqli->error;
         }
         
         //Void Debit Charge of OutStanding Fine
@@ -328,10 +376,43 @@ class Acct_charge {
                             $acct1->updateBalance(abs($row['amount']));
                         }
                     } else {
-                        return"AC293 ERROR - ".$mysqli->error;
+                        return"AC367 ERROR - ".$mysqli->error;
                     }
                 }
             }
+        }
+    }
+	
+    private function writeAttr(){
+        global $mysqli;
+
+        $a_id = $this->getAccount()->getA_id();
+        $ac_id = $this->getAc_id();
+        $amount = $this->getAmount();
+        if ($this->getAc_notes() == ""){
+            $notes = NULL;
+        } else {
+            $notes = $this->getAc_notes();
+        }
+        $operator = $this->user->getOperator();
+        $staff_id = $this->staff->getOperator();
+
+
+        if ($stmt = $mysqli->prepare("
+            UPDATE `acct_charge`
+            SET `a_id` = ?, `ac_date` = ?, `amount` = ?, `ac_notes` = ?, `operator` = ?, `staff_id` = ?
+            WHERE `ac_id` = ?;
+        ")){
+            $stmt->bind_param("isdsssi", $a_id, $this->ac_date, $amount, $notes, $operator, $staff_id, $ac_id);
+            if ($stmt->execute() === true ){
+            $row = $stmt->affected_rows;
+            $stmt->close();
+            return $row;
+            } else {
+                return "mats_used WriteAttr Error - ".$stmt->error;
+            }
+        } else {
+            return "Error in preparing Acct_charge: WriteAttr statement";
         }
     }
 }

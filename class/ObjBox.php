@@ -64,6 +64,38 @@ class ObjBox {
         }
     }
     
+    public function edit($err_catch, $ob_start, $ob_end, $ob_operator, $ob_staff_id){
+        $diff = false;
+        
+        if (strtotime($this->getO_start()) != strtotime($ob_start)){
+            $diff = true;
+            $this->setO_start(date("Y-m-d H:i:s",strtotime($ob_start)));
+        }
+        if (strtotime($this->getO_end()) != strtotime($ob_end)){
+            $diff = true;
+            $this->setO_end(date("Y-m-d H:i:s",strtotime($ob_end)));
+        }
+        if( true != $ob_operator){
+			//is_object($this->getUser()->getOperator()) 
+            $diff = true;
+            $this->setUser($ob_operator);
+        }
+        if($this->getStaff()->getOperator() != $ob_staff_id){
+            $diff = true;
+            $this->setStaff($ob_staff_id);
+        }
+        
+        if ($diff){
+            $str = $this->writeAttr();
+            if (is_string($str)){
+                return $err_catch." | ".$str;
+            }
+            return $err_catch+$str;
+        } else {
+            return $err_catch;
+        }
+    }
+    
     public static function findObj($user){
 	global $mysqli;
         $instance = array();
@@ -112,10 +144,20 @@ class ObjBox {
         return date('M d, Y g:i a',strtotime($this->o_start));
     }
 
+    public function getO_start_picker() {
+        return date("m/d/Y g:i a",strtotime($this->o_start));
+    }
+
     public function getO_end() {
         if ($this->o_end == "")
             return "";
         return date('M d, Y g:i a',strtotime($this->o_end));
+    }
+
+    public function getO_end_picker() {
+        if ($this->o_end == "")
+            return "";
+        return date('m/d/Y g:i a',strtotime($this->o_end));
     }
 
     public function getAddress() {
@@ -157,7 +199,11 @@ class ObjBox {
     }
 
     public function getUser() {
-        return $this->user;
+        if (is_object($this->user)){
+            return $this->user;
+        } else {
+            return new Users();
+        }
     }
 
     public static function insert_Obj($trans_id, $staff){
@@ -312,13 +358,12 @@ class ObjBox {
             return $msg;
         }
         
-        /*
-        $quote = $this->transaction->quote();
+        
+        $quote = $this->transaction->quote("mats");
         $ac_owed = Acct_charge::checkOutstanding($user->getOperator());
         if ($quote > .005 && isset($ac_owed[$this->transaction->getTrans_id()])){
-            return "Error OB318 : Ticket has a Balance";
+            return "Error OB319 : Ticket has a Balance";
         }
-         */
         
         //Update ObjBox Table
         if ($mysqli->query("
@@ -382,6 +427,11 @@ class ObjBox {
     public function writeAttr(){
         global $mysqli;
         
+        if (strcmp($this->o_start, "") == 0)
+            $o_start = "NULL";
+        else 
+            $o_start = "'$this->o_start'";
+        
         if (strcmp($this->o_end, "") == 0)
             $o_end = "NULL";
         else 
@@ -394,7 +444,7 @@ class ObjBox {
         
         if($mysqli->query("
             UPDATE `objbox`
-            SET `o_end` = $o_end, `operator` = $user, `staff_id` = '". $this->staff->getOperator()."', `address` = '$this->address'
+            SET `o_start` = $o_start, `o_end` = $o_end, `operator` = $user, `staff_id` = '". $this->staff->getOperator()."', `address` = '$this->address'
             WHERE `o_id` = '".$this->o_id."'
             LIMIT 1;
         ")){

@@ -4,9 +4,11 @@
  *   FabApp V 0.9
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
-if (!$staff || $staff->getRoleID() < 7){
+if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
     //Not Authorized to see this Page
     header('Location: /index.php');
+    $_SESSION['error_msg'] = "Insufficient role level to access, sorry.";
+    exit();
 }
 ?>
 <title><?php echo $sv['site_name'];?> Error</title>

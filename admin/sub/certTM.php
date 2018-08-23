@@ -2,7 +2,7 @@
 
 /*
  * License - FabApp V 0.9
- * 2016-2017 CC BY-NC-AS UTA FabLab
+ * 2016-2018 CC BY-NC-AS UTA FabLab
  *
  * Ajax called by training_certificate.php
  */
@@ -24,7 +24,7 @@ if (!empty(filter_input(INPUT_GET, "d_id"))) {
         exit();
     }
 } else {
-    echo ("<tr class='tablerow' id='tm'><td colspan=4>ERROR - input</td>");
+    echo ("<option disabled hidden selected value='ERROR'>ERROR - INPUT</option>");
     exit();
 } 
 

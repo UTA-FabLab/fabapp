@@ -16,10 +16,11 @@
     private $adj_date;
     private $exp_date;
     private $icon;
+    private $long_close;
+    private $notes;
     private $operator;
     private $rfid_no;
     private $roleID;
-    private $notes;
 
     public function __construct() {}
 
@@ -44,12 +45,23 @@
         $instance->createWithRF($rfid_no);
         return $instance;
     }
+    
+    public static function payee($operator){
+        $instance = new self();
+        if (preg_match("/^\d{9}$/",$operator) == 0){
+            return false;
+        }
+        $instance->setOperator($operator);
+        $instance->setRoleID(1);
+        $instance->setIcon("far fa-id-card");
+        return $instance;
+    }
 
     public function createWithID($operator){
         global $mysqli;
 
         if ($result = $mysqli->query("
-            SELECT users.operator, users.r_id, exp_date, icon, rfid_no, adj_date, notes
+            SELECT users.operator, users.r_id, exp_date, icon, rfid_no, adj_date, notes, long_close
             FROM `users`
             LEFT JOIN rfid
             ON users.operator = rfid.operator
@@ -69,6 +81,7 @@
             $this->setAdj_date($row['adj_date']);
             $this->setExp_date($row['exp_date']);
             $this->setIcon($row['icon']);
+            $this->setLong_close ($row['long_close']);
             $this->setNotes ($row['notes']);
             $this->setRfid_no($row['rfid_no']);
         } else {
@@ -93,6 +106,7 @@
                 $this->setAdj_date($row['adj_date']);
                 $this->setIcon ($row['icon']);
                 $this->setExp_date ($row['exp_date']);
+                $this->setLong_close ($row['long_close']);
                 $this->setNotes ($row['notes']);
                 $this->setOperator($row['operator']);
                 $this->setRoleID($row['r_id']);
@@ -122,6 +136,10 @@
             return "fas fa-user";
         }
         return $this->icon;
+    }
+	
+    public function getLong_close(){
+        return $this->long_close;
     }
 	
     public function getNotes(){
@@ -208,8 +226,17 @@
         } else {
             return "Error in preparing Users: insertRFID statement";
         }
+        //By Default assign Role 2
+        $this->insertUser($staff, 2);
+    }
+    
+    public function insertUser($staff, $role_id){
+        global $mysqli;
+        global $sv;
         
-        //Maybe Move this Logic into it's own function
+        if ($staff->getRoleID() < $sv['minRoleTrainer']){
+            return "Insufficient role to Modify Role";
+        }
         $operator = $this->getOperator();
         $staff_id = $staff->getOperator();
         //Check if User is already in table
@@ -221,28 +248,49 @@
             if ($result->num_rows == 0){
                 //Define User in table and assign default Role
                 if ($stmt = $mysqli->prepare("
-                    INSERT INTO `users` (`u_id`, `operator`, `r_id`, `exp_date`, `icon`, `adj_date`, `notes`) 
-                    VALUES (NULL, ?, '2', NULL, NULL, CURRENT_TIME(), ?);
+                    INSERT INTO `users` (`operator`, `r_id`, `adj_date`, `notes`) 
+                    VALUES (?, ?, CURRENT_TIME(), ?);
                 ")){
-                    $stmt->bind_param("ss", $this->operator, $staff_id);
+                    $stmt->bind_param("sss", $this->operator, $role_id, $staff_id);
                     if ($stmt->execute() === true ){
                         $row = $stmt->affected_rows;
                         $stmt->close();
-                        $this->rfid_no = $rfid_no;
                         if ($row == 1){
+                            $this->setRoleID($role_id);
                             return true;
                         } else {
-                            return "Users: insertRFID Count Error ".$row;
+                            return "Users: insertUser Count Error ".$row;
                         }
                     } else
-                        return "Users: insertRFID Execute Error";
+                        return "Users: insertUser Execute Error";
                 } else {
-                    return "Error in preparing Users: insertRFID statement";
+                    return "Error in preparing Users: insertUser statement";
+                }
+            } else{
+                //User is in table, lets modify & update adjustment date
+                if ($stmt = $mysqli->prepare("
+                    UPDATE `users` SET `r_id` = ?, `adj_date` = CURRENT_TIME(), `notes` = ? WHERE `users`.`operator` = ?;
+                ")){
+                    $stmt->bind_param("sss", $role_id, $staff_id, $this->operator);
+                    if ($stmt->execute() === true ){
+                        $row = $stmt->affected_rows;
+                        $stmt->close();
+                        if ($row == 1){
+                            $this->setRoleID($role_id);
+                            return true;
+                        } else {
+                            return "Users: insertUser Update Error ".$row;
+                        }
+                    } else
+                        return "Users: insertUser: Update Execute Error";
+                } else {
+                    return "Error in preparing Users Update: insertUser statement";
                 }
             }
+        } else {
+            return "Error in searching Users.";
         }
     }
-    
     public function modifyRoleID($staff, $notes){
         global $mysqli;
         global $sv;
@@ -383,6 +431,10 @@
         $this->icon = $icon;
     }
     
+    public function setLong_close($lc){
+        $this->long_close = $lc;
+    }
+    
     public function setNotes($notes){
         $this->notes = $notes;
     }
@@ -427,7 +479,7 @@
         if ($result = $mysqli->query("
             SELECT Count(trans_id) as Visits, `staff_id`
             FROM `transactions`
-            WHERE t_start 
+            WHERE `staff_id` IS NOT NULL AND `t_start`
             BETWEEN  DATE_ADD(CURRENT_DATE, INTERVAL -$sv[rank_period] MONTH)
             AND CURRENT_DATE
             Group BY `staff_id` ORDER BY Visits DESC

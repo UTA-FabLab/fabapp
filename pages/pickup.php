@@ -60,8 +60,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $errorMsg == "") {
             
             $ticket->getStatus()->setStatus_id($status_id);
             if ($status_id == 12 or $status_id == 20){
-                echo "<script>console.log(\"Quote: ".$ticket->quote()."\");</script>";
-                if ($ticket->quote() >= .005){
+                echo "<script>console.log(\"Quote: ".$ticket->quote("mats")."\");</script>";
+                if ($ticket->quote("mats") >= .005){
                     //Pass Object to be updated upon Successful payment
                     $_SESSION['ticket'] = serialize($ticket);
                     $_SESSION['pickupUser'] = serialize($user);

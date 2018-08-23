@@ -11,6 +11,7 @@
     
     <link href="/vendor/blackrock-digital/css/sb-admin-2.css" rel="stylesheet">
     <link href="/vendor/bootstrap/css/bootstrap.css" rel="stylesheet">
+    <link href="/vendor/bs-datetimepicker/css/bootstrap-datetimepicker.min.css" rel="stylesheet">
     <link href="/vendor/datatables/css/dataTables.bootstrap.css" rel="stylesheet" type="text/css">
     <link href="/vendor/fabapp/fabapp.css?=v5" rel="stylesheet">
     <link href="/vendor/fontawesome/css/fontawesome-all.css" rel="stylesheet">
@@ -45,13 +46,18 @@ if( isset($_SESSION['staff']) ){
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if( isset($_POST['signBtn']) ){
         if ( empty($_POST["netID"])){
-            echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','No User Name', false)}</script>";
+            $_SESSION['error_msg'] = 'No User Name';
         } elseif (empty($_POST["pass"]) ){
-            echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','Missing Password', false)}</script>";
+            $_SESSION['error_msg'] = 'Missing Password';
         } else {
             //Remove 3rd argument, define attribute in ldap.php
             $operator = AuthenticateUser($_POST["netID"],$_POST["pass"]);
-            $_SESSION['netID'] = $_POST["netID"];
+            if (array_key_exists('netID', $_SESSION)){
+                if ($_SESSION['netID'] != $_POST["netID"]){
+                    unset($_SESSION['loc']);
+                }
+                $_SESSION['netID'] = $_POST["netID"];
+            }
             if (Users::regexUser($operator)) {
                 $staff = Staff::withID($operator);
                 //staff get either limit or limit_long as their auto logout timer
@@ -129,56 +135,55 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                 <a class="navbar-brand" id="navbar-brand" href="http://fablab.uta.edu"><img src="/images/FLlogo_143.png" type="image/png"></a>
             </div>
             <!-- /.navbar-header -->
-
             <ul class="nav navbar-top-links navbar-right">
-<!--php class Staff if not logged in-->
-<?php if(!$staff){ ?>
-                <li class="dropdown">
-                    <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="loginlink"> 
-                        <i class="fas fa-sign-in-alt fa-lg"></i> <i class="fas fa-caret-down"></i>
-                    </a>
-                    <ul class="dropdown-menu dropdown-alerts">
-                        <form role="form" class="form-horizontal" method="POST" action="" autocomplete="off">
-                        <div class="form-group">
-                            <label for="email" class="col-sm-3 control-label">
-                                NetID</label>
-                            <div class="col-sm-9">
-                                <input type="text" class="form-control" id="netID" name="netID" placeholder="NetID" value="<?php if(isset($_SESSION['netID'])) echo $_SESSION['netID'];?>"/>
+                <!--php class Staff if not logged in-->
+                <?php if(!$staff){ ?>
+                    <li class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="loginlink"> 
+                            <i class="fas fa-sign-in-alt fa-lg"></i> <i class="fas fa-caret-down"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-alerts">
+                            <form role="form" class="form-horizontal" method="POST" action="" autocomplete="off">
+                            <div class="form-group">
+                                <label for="email" class="col-sm-3 control-label">
+                                    NetID</label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" id="netID" name="netID" placeholder="NetID" value="<?php if(isset($_SESSION['netID'])) echo $_SESSION['netID'];?>"/>
+                                </div>
                             </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="exampleInputPassword1" class="col-sm-3 control-label">
-                                Password</label>
-                            <div class="col-sm-9">
-                                <input type="password" class="form-control" name="pass" placeholder="Password" />
+                            <div class="form-group">
+                                <label for="exampleInputPassword1" class="col-sm-3 control-label">
+                                    Password</label>
+                                <div class="col-sm-9">
+                                    <input type="password" class="form-control" name="pass" placeholder="Password" />
+                                </div>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-sm-12 col-sm-offset-1">
-                                <button type="submit" class="btn btn-primary btn-sm" name="signBtn" onclick="loadingModal()">
-                                    Sign In</button>
-                                <a href="http://<?php echo $sv["forgotten"];?>">Forgot your password?</a>
+                            <div class="row">
+                                <div class="col-sm-12 col-sm-offset-1">
+                                    <button type="submit" class="btn btn-primary btn-sm" name="signBtn" onclick="loadingModal()">
+                                        Sign In</button>
+                                    <a href="http://<?php echo $sv["forgotten"];?>">Forgot your password?</a>
+                                </div>
                             </div>
-                        </div>
-                        </form>
-                    </ul>
-                    <!-- /.dropdown-login -->
-                </li>
-<!--php class Staff if logged in-->
-<?php } else {?>
-                <li class="dropdown">
-                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                        <i class="<?php echo $staff->getIcon();?> fa-2x"></i> <i class="fas fa-caret-down"></i>
-                    </a>
-                    <ul class="dropdown-menu dropdown-user">
-                        <li><a href="/pages/info.php" onclick="loadingModal()"><i class="fas fa-info fa-fw"></i> Information</a></li>
-                        <li class="divider"></li>
-                        <li><a href="/logout.php?n=n" onclick="loadingModal()"><i class="fas fa-sign-out-alt fa-fw"></i> Logout</a></li>
-                    </ul>
-                    <!-- /.dropdown-user -->
-                </li>
-                <!-- /.dropdown -->
-<?php }?>    
+                            </form>
+                        </ul>
+                        <!-- /.dropdown-login -->
+                    </li>
+                <!--php class Staff if logged in-->
+                <?php } else {?>
+                    <li class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                            <i class="<?php echo $staff->getIcon();?> fa-2x"></i> <i class="fas fa-caret-down"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-user">
+                            <li><a href="/pages/info.php" onclick="loadingModal()"><i class="fas fa-info fa-fw"></i> Information</a></li>
+                            <li class="divider"></li>
+                            <li><a href="/logout.php?n=n" onclick="loadingModal()"><i class="fas fa-sign-out-alt fa-fw"></i> Logout</a></li>
+                        </ul>
+                        <!-- /.dropdown-user -->
+                    </li>
+                    <!-- /.dropdown -->
+            <?php }?>    
             </ul>
             <!-- /.navbar-top-links -->
             <div class="navbar-default sidebar" role="navigation">
@@ -187,83 +192,92 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                         <li>
                             <a href="/index.php"><i class="fas fa-ticket-alt"></i> FabApp</a>
                         </li>
-<!-- if role > 6 {show} -->
-<?php if ($staff && $staff->getRoleID() > 6) { ?>
                         <li>
-                            <a href="#" id="pickLink"><i class="fas fa-gift"></i> Pick Up 3D Print<span class="fas fa-angle-left"></span></a>
-                            <ul class="nav nav-second-level">
-                            <form name="pickForm" method="POST" action="" autocomplete="off" onsubmit="return validateNum('pickForm')">
-                                <li class="sidebar-search">
-                                    <div class="input-group custom-search-form">
-                                        <input type="text" name="pickField" id="pickField" class="form-control" placeholder="Enter ID #" maxlength="10" size="10">
-                                        <span class="input-group-btn">
-                                        <button class="btn btn-default" type="submit" name="pickBtn">
-                                            <i class="fas fa-search"></i>
-                                        </button>
-                                        </span>
-                                    </div>
-                                </li>
-                            </form>
-                            </ul>
+                            <a href="/pages/inventory.php"><i class="fas fa-warehouse"></i> Inventory</a>
                         </li>
-<!-- if role > 6 {show} else {look up trans staff->getID()} -->
-                        <li>
-                            <a href="#" id="searchLink"><i class="fas fa-search fa-fw"></i> Look-Up By<span class="fas fa-angle-left"></span></a>
-                            <ul class="nav nav-second-level">
-                            <form name="searchForm" method="POST" action="" autocomplete="off"  onsubmit="return validateNum('searchForm')"> 
-                                <li class="sidebar-radio">
-                                    <input type="radio" name="searchType" value="s_trans" id="s_trans" checked onchange="searchF()" onclick="searchF()"><label for="s_trans">Ticket</label>
-                                    <input type="radio" name="searchType" value="s_operator" id="s_operator" onchange="searchF()" onclick="searchF()"><label for="s_operator">ID #</label>
-                                </li>
-                                <li class="sidebar-search">
-                                    <div class="input-group custom-search-form">
-                                        <input type="number" name="searchField" id="searchField" class="form-control" placeholder="Search..." name="searchField" onclick="searchF()">
-                                        <span class="input-group-btn">
-                                        <button class="btn btn-default" type="submit" name="searchBtn">
-                                            <i class="fas fa-search"></i>
-                                        </button>
-                                        </span>
-                                    </div>
-                                </li>
-                            </form>
-                            </ul>
-                        </li>
-<?php } if (is_object($staff) && $staff->getRoleID() >= $sv['LvlOfStaff']) { ?>
-                        <li>
-                            <a href="#"><i class="fas fa-sitemap"></i> Admin<span class="fas fa-angle-left"></span></a>
-                            <ul class="nav nav-second-level">
-                                <li>
-                                    <a href="/admin/now_serving.php"><i class="fas fa-list-ol"></i> Now Serving</a>
-                                </li>
-                                <li>
-                                    <a href="/admin/onboarding.php"><i class="fas fa-clipboard"></i> OnBoarding</a>
-                                </li>
-                                <li>
-                                    <a herf="#"><i class="fas fa-book"></i> Training<span class="fas fa-angle-left"></span></a>
-                                    <ul class="nav nav-third-level">
-                                        <li>
-                                            <a href="/admin/training_certificate.php"><i class="far fa-check-circle"></i> Issue Certificate</a>
-                                        </li>
-                                        <li>
-                                            <a href="/admin/manage_trainings.php"><i class="fas fa-edit"></i> Manage Trainings</a>
-                                        </li>
-                                    </ul>
-                                </li>
-                                <li>
-                                    <a herf="#"><i class="fas fa-users"></i> Users<span class="fas fa-angle-left"></span></a>
-                                    <ul class="nav nav-third-level">
-                                        <li>
-                                            <a href="/admin/addrfid.php"><i class="fas fa-wifi"></i> Add RFID</a>
-                                        </li>
-                                    </ul>
-                                </li>
-                            </ul>
-                            <!-- /.nav-second-level -->
-                        </li>
-                        <li>
-                            <a href="/admin/error.php"><i class="fas fa-bolt"></i> Error</a>
-                        </li>
-<?php } ?>
+                        <!-- if role > 6 {show} -->
+                        <?php if ($staff && $staff->getRoleID() >=  $sv['LvlOfStaff']) { ?>
+                            
+                            <li>
+                                <a href="#" id="searchLink"><i class="fas fa-search fa-fw"></i> Look-Up By<span class="fas fa-angle-left"></span></a>
+                                <ul class="nav nav-second-level">
+                                <form name="searchForm" method="POST" action="" autocomplete="off"  onsubmit="return validateNum('searchForm')"> 
+                                    <li class="sidebar-radio">
+                                        <input type="radio" name="searchType" value="s_trans" id="s_trans" checked onchange="searchF()" onclick="searchF()"><label for="s_trans">Ticket</label>
+                                        <input type="radio" name="searchType" value="s_operator" id="s_operator" onchange="searchF()" onclick="searchF()"><label for="s_operator">ID #</label>
+                                    </li>
+                                    <li class="sidebar-search">
+                                        <div class="input-group custom-search-form">
+                                            <input type="number" name="searchField" id="searchField" class="form-control" placeholder="Search..." name="searchField" onclick="searchF()">
+                                            <span class="input-group-btn">
+                                            <button class="btn btn-default" type="submit" name="searchBtn">
+                                                <i class="fas fa-search"></i>
+                                            </button>
+                                            </span>
+                                        </div>
+                                    </li>
+                                </form>
+                                </ul>
+                            </li>
+                            <li>
+                                <a href="/admin/now_serving.php"><i class="fas fa-list-ol"></i> Now Serving</a>
+                            </li>
+                            <li>
+                                <a href="#" id="pickLink"><i class="fas fa-gift"></i> Pick Up 3D Print<span class="fas fa-angle-left"></span></a>
+                                <ul class="nav nav-second-level">
+                                <form name="pickForm" method="POST" action="" autocomplete="off" onsubmit="return validateNum('pickForm')">
+                                    <li class="sidebar-search">
+                                        <div class="input-group custom-search-form">
+                                            <input type="text" name="pickField" id="pickField" class="form-control" placeholder="Enter ID #" maxlength="10" size="10">
+                                            <span class="input-group-btn">
+                                            <button class="btn btn-default" type="submit" name="pickBtn">
+                                                <i class="fas fa-search"></i>
+                                            </button>
+                                            </span>
+                                        </div>
+                                    </li>
+                                </form>
+                                </ul>
+                            </li>
+                        <?php } if (is_object($staff) && $staff->getRoleID() >= $sv['LvlOfStaff']) { ?>
+                            <li>
+                                <a href="#"><i class="fas fa-sitemap"></i> Admin<span class="fas fa-angle-left"></span></a>
+                                <ul class="nav nav-second-level">
+                                    <li>
+                                        <a href="/admin/objbox.php"><i class="fas fa-gift"></i> Objects in Storage</a>
+                                    </li>
+                                    <li>
+                                        <a href="/admin/onboarding.php"><i class="fas fa-clipboard"></i> OnBoarding</a>
+                                    </li>
+                                    <li>
+                                        <a herf="#"><i class="fas fa-book"></i> Training<span class="fas fa-angle-left"></span></a>
+                                        <ul class="nav nav-third-level">
+                                            <li>
+                                                <a href="/admin/training_certificate.php"><i class="far fa-check-circle"></i> Issue Certificate</a>
+                                            </li>
+                                            <li>
+                                                <a href="/admin/manage_trainings.php"><i class="fas fa-edit"></i> Manage Trainings</a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li>
+                                        <a herf="#"><i class="fas fa-users"></i> Users<span class="fas fa-angle-left"></span></a>
+                                        <ul class="nav nav-third-level">
+                                            <li>
+                                                <a href="/admin/addrfid.php"><i class="fas fa-wifi"></i> Add RFID</a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                                <!-- /.nav-second-level -->
+                            </li>
+                            <li>
+                                <a href="/pages/emulate.php"><i class="fab fa-android"></i> Emulate</a>
+                            </li>
+                            <li>
+                                <a href="/admin/error.php"><i class="fas fa-bolt"></i> Error</a>
+                            </li>
+                        <?php } ?>
                     </ul>
                 </div>
                 <!-- /.sidebar-collapse -->

@@ -3,16 +3,22 @@
  *   FabApp V 0.9
  */
 
-function endTicket(trans_id, device_desc) {
-    var message = "Are you sure you want to end ";
-    message = message.concat(device_desc);
-    message = message.concat("\n\n\Ticket # ");
-    message = message.concat(trans_id);
-    var answer = confirm(message);
-    if (answer){
+function endTicket(trans_id, device_desc, lc) {
+    if (lc == "N"){
         var dest = "/pages/end.php?trans_id=";
         dest = dest.concat(trans_id);
         window.location.href = dest;
+    } else {
+        var message = "End "+device_desc+"?";
+        message = message.concat("\nPlease Enter the Ticket # ");
+        var answer = prompt(message);
+        if (answer == trans_id){
+            var dest = "/pages/end.php?trans_id=";
+            dest = dest.concat(trans_id);
+            window.location.href = dest;
+        } else {
+            alert("Please Enter the Correct Ticket # for "+device_desc+".");
+        }
     }
 }
 
