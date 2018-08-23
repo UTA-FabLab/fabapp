@@ -55,7 +55,6 @@ class Materials {
             ORDER BY m_name ASC;
         ")){
             while( $row = $result->fetch_assoc() ) {
-                //array_push ($device_mats, array("m_id" => $row["m_id"], "price" => $row["price"], "m_name" => $row["m_name"], "unit" => $row["unit"]));
                 array_push($device_mats, new self($row['m_id']));
             }
             return $device_mats;

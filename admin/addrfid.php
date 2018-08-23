@@ -4,9 +4,11 @@
  *   FabApp V 0.9
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
-if (!$staff || $staff->getRoleID() < 7){
+if (!$staff || $staff->getRoleID() < $sv['minRoleTrainer']){
     //Not Authorized to see this Page
-    header('Location: index.php');
+    header('Location: /index.php');
+    $_SESSION['error_msg'] = "Insufficient role level to access, sorry.";
+    exit();
 }
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["rfBtn"])){
     $operator = filter_input(INPUT_POST, "operator");

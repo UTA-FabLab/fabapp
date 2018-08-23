@@ -4,6 +4,7 @@
  *   FabApp V 0.9
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
+$_SESSION['type'] = "lookup";
 $errorMsg = "";
 
 if (isset($_GET["trans_id"])){
@@ -55,7 +56,7 @@ if ($errorMsg == ""){
 }
 
 if ($errorMsg != ""){
-	$_SESSION['error_msg'] = $errorMsg;
+    $_SESSION['error_msg'] = $errorMsg;
     header("Location:/index.php");
 }
 
@@ -65,7 +66,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             if (isset($_SESSION['ac_id'])){
                 $ac = new Acct_charge($_SESSION['ac_id']);
-                $ac->voidPayment($staff);
+                if ($ac->getTrans_id() == $t_backup->getTrans_id()){
+                    $ac->voidPayment($staff);
+                    unset($_SESSION['ac_id']);
+                }
             } else{
                 echo "<script>console.log(\"lookup.php: Unable Void Payment\");</script>";
             }
@@ -99,8 +103,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $objbox->setAddress($box.$letter);
         $objbox->writeAttr();
         header("Location:/pages/lookup.php?trans_id=".$ticket->getTrans_id());
-    } elseif(isset($_POST['endBtn'])){
+    } elseif (isset($_POST['endBtn'])){
         header("Location:/pages/end.php?trans_id=".$ticket->getTrans_id());
+    } elseif (isset($_POST['editBtn'])){
+        $_SESSION["edit_trans"] = $trans_id;
+        header("Location:/pages/edit.php");
+    } elseif (isset($_POST['newCharge'])){
+        
     }
 }
 ?>
@@ -108,9 +117,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <div id="page-wrapper">
     <div class="row">
         <div class="col-lg-12">
-            <?php if (isset($operator)) { ?>
-                <h1 class="page-header">Details of Most Recent Ticket</h1>
-            <?php }  elseif ( isset($objbox) && is_object($objbox) && $objbox->getO_end() == "") { ?>
+            <?php if ( isset($objbox) && $objbox->getO_end() == "") { ?>
                 <h1 class="page-header"><i class="fas fa-map-marker fa-lg"></i> <?php echo $objbox->getAddress(); $_SESSION['type'] = "lookup"; ?></h1>
             <?php } else {?>
                 <h1 class="page-header">Details</h1>
@@ -125,10 +132,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <div class="panel-heading">
                     <i class="fas fa-ticket-alt fa-lg"></i> Ticket # <b><?php echo $ticket->getTrans_id(); ?></b>
                     <?php if ($staff && $staff->getRoleID() >= $sv['editTrans']){ ?>
-                    <div class="pull-right"><form name="undoForm" method="post" action="" autocomplete='off'>
-                        <input type="submit" name="editBtn" value="Edit" disabled title="Not Ready Yet :("/>
-                    </form></div>
-                    <?php } ?>
+                        <div class="pull-right"><form name="editForm" method="post" action="" autocomplete='off'>
+                            <input type="submit" name="editBtn" value="Edit"/>
+                        </form></div>
+                    <?php }?>
                 </div>
                 <div class="panel-body">
                     <table class ="table table-bordered table-striped">
@@ -147,15 +154,58 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     echo $ticket->getDuration();
                                     //Display Device per hour cost
                                     if ($ticket->getDevice()->getBase_price() > .000001){
-                                        echo " * <i class='$sv[currency]'></i>".$ticket->getDevice()->getBase_price(). "/hour";
-                                    }
+                                        echo " * <i class='$sv[currency]'></i>".$ticket->getDevice()->getBase_price(). "/hour"; ?>
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                                                <i class="fas fa-info"></i>
+                                            </button>
+                                            <ul class="dropdown-menu" role="menu">
+                                                <li style="padding-left: 5px;">The minium charge is <?php echo $sv["minTime"];?> hour.</li>
+                                            </ul>
+                                        </div>
+                                    <?php }
+                                    if($ticket->getEst_time()){ ?>
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                                                <i class="fas fa-stopwatch fa-lg" title="<?php echo $ticket->getEst_time();?>"></i>
+                                            </button>
+                                            <ul class="dropdown-menu" role="menu">
+                                                <li style="padding-left: 5px;">Estimated Time <?php echo $ticket->getEst_time();?></li>
+                                            </ul>
+                                        </div>
+                                    <?php }
                                 ?></td>
+                            </tr>
+                        <?php } else  if ($ticket->getDevice()->getBase_price() > .005){ ?>
+                            <tr>
+                                <td>Cost
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                                            <i class="fas fa-info"></i>
+                                        </button>
+                                        <ul class="dropdown-menu" role="menu">
+                                            <li style="padding-left: 5px;">The minium charge is <?php echo $sv["minTime"];?> hour.</li>
+                                        </ul>
+                                    </div>
+                                </td>
+                                <td>
+                                    <?php echo " <i class='$sv[currency]'></i>".$ticket->getDevice()->getBase_price(). "/hour"; ?>
+                                </td>
                             </tr>
                         <?php }
                         if ( $staff && ($ticket->getUser()->getOperator() == $staff->getOperator() || $staff->getRoleID() >= $sv['LvlOfStaff']) ){ ?>
                             <tr>
                                 <td>Operator</td>
-                                <td><i class="<?php echo $ticket->getUser()->getIcon();?> fa-lg" title="<?php echo $ticket->getUser()->getOperator();?>"></i></td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                                            <i class="<?php echo $ticket->getUser()->getIcon();?> fa-lg" title="<?php echo $ticket->getUser()->getOperator();?>"></i>
+                                        </button>
+                                        <ul class="dropdown-menu" role="menu">
+                                            <li style="padding-left: 5px;"><?php echo $ticket->getUser()->getOperator();?></li>
+                                        </ul>
+                                    </div>
+                                </td>
                             </tr>
                         <?php } else { ?>
                             <tr>
@@ -170,21 +220,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <?php if ($staff && $staff->getRoleID() >= $sv['LvlOfStaff']){ ?>
                             <tr>
                                 <td>Staff</td>
-                                <td><?php if ( is_object($ticket->getStaff()) ) 
-                                    echo "<i class='".$ticket->getStaff()->getIcon()." fa-lg' title='".$ticket->getStaff()->getOperator()."'></i>";?>
+                                <td><?php if ( is_object($ticket->getStaff()) ) { ?>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                                            <i class="<?php echo $ticket->getStaff()->getIcon();?> fa-lg" title="<?php echo $ticket->getStaff()->getOperator();?>"></i>
+                                        </button>
+                                        <ul class="dropdown-menu" role="menu">
+                                            <li style="padding-left: 5px;"><?php echo $ticket->getStaff()->getOperator();?></li>
+                                        </ul>
+                                    </div>
+                                <?php } ?>
                                 </td>
                             </tr>
-                        <?php }?>
+                        <?php } else { ?>
+                            <tr>
+                                <td>Staff</td>
+                                <td><i class="<?php echo $ticket->getStaff()->getIcon();?> fa-lg" title="<?php echo $ticket->getStaff()->getOperator();?>"></i></td>
+                            </tr>
+                        <?php } ?>
                     </table>
                 </div>
                 <!-- /.panel-body -->
-				<?php if ($ticket->getDuration() == "" && ($staff->getRoleID() >= $sv['LvlOfStaff'] || $staff->getOperator() == $ticket->getUser()->getOperator())) { ?>
-					<div class="panel-footer">
-						<div align="right"><form name="moveForm" method="post" action="">
-							<button type="submit" class="btn btn-primary" name="endBtn">End</button>
-						</form></div>
-					</div>
-				<?php } ?>
+                <?php if ($ticket->getStatus()->getStatus_id() <= 11 && isset($staff) && ($staff->getRoleID() >= $sv['LvlOfStaff'] || $staff->getOperator() == $ticket->getUser()->getOperator())) { ?>
+                    <div class="panel-footer">
+                        <div align="right"><form name="moveForm" method="post" action="">
+                            <button type="submit" class="btn btn-primary" name="endBtn">End</button>
+                        </form></div>
+                    </div>
+                <?php } ?>
             </div>
             <!-- /.panel -->
             <?php foreach ($ticket->getMats_used() as $mu) {?>
@@ -193,9 +256,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <i class="far fa-life-ring fa-lg"></i> Material
                     </div>
                     <div class="panel-body">
-                        <table class="table table-bordered table-striped">
+                        <table class="table table-bordered table-striped" style="table-layout:fixed">
                             <tr class="tablerow">
-                                <?php if ($mu->getMaterial()->getPrice() > 0){ ?>
+                                <?php if ($mu->getMaterial()->getMeasurable() == "Y"){ ?>
                                     <td class="col-md-5">
                                         <?php echo $mu->getMaterial()->getM_name();
                                         if ($mu->getMaterial()->getColor_hex()){ echo "<div class=\"color-box\" style=\"background-color: #".$mu->getMaterial()->getColor_hex()."\"/>\n"; }?>
@@ -220,15 +283,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <?php if (strcmp($mu->getHeader(), "") != 0){ ?>
                                 <tr>
                                     <td>File Name</td>
-                                    <td><?php echo $mu->getHeader(); ?></td>
+                                    <td><div style="word-wrap: break-word;"><?php echo $mu->getHeader(); ?></div></td>
                                 </tr>
                             <?php } 
                             if (is_object($mu->getStaff())) {?>
                                 <tr>
                                     <td>Staff</td>
-                                    <td><?php if ( $staff && $staff->getRoleID() >= $sv['LvlOfStaff'] ){
-                                        echo "<i class='".$mu->getStaff()->getIcon()." fa-lg' title='".$mu->getStaff()->getOperator()."'></i>\n";
-                                    } else { 
+                                    <td><?php if ( $staff && $staff->getRoleID() >= $sv['LvlOfStaff'] ){ ?>
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                                                <i class="<?php echo $mu->getStaff()->getIcon();?> fa-lg" title="<?php echo $mu->getStaff()->getOperator();?>"></i>
+                                            </button>
+                                            <ul class="dropdown-menu" role="menu">
+                                                <li style="padding-left: 5px;"><?php echo $mu->getStaff()->getOperator();?></li>
+                                            </ul>
+                                        </div>
+                                    <?php } else { 
                                         echo "<i class='".$mu->getStaff()->getIcon()." fa-lg'></i>\n";
                                     }?></td>
                                 </tr>
@@ -301,7 +371,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 </tr>
                                 <tr>
                                     <td>Staff</td>
-                                    <td><?php echo "<i class='".$objbox->getStaff()->getIcon()." fa-lg' title='".$objbox->getStaff()->getOperator()."'></i>";?></td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                                                <i class="<?php echo $objbox->getStaff()->getIcon();?> fa-lg" title="<?php echo $objbox->getStaff()->getOperator();?>"></i>
+                                            </button>
+                                            <ul class="dropdown-menu" role="menu">
+                                                <li style="padding-left: 5px;"><?php echo $objbox->getStaff()->getOperator();?></li>
+                                            </ul>
+                                        </div>
+                                    </td>
                                 </tr>
                             <?php } else { ?>
                                 <tr>
@@ -322,7 +401,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <?php if ($objbox->getO_end() == ""){ ?>
                         <div align="right" class="panel-footer"><form name="payForm" method="post" action="">
                             <button type="submit" name="payBtn" class="btn btn-danger">
-                                Pick-up Print <?php echo "<i class='".$sv['currency']."'></i> ".number_format($ticket->quote(), 2); ?>
+                                Pick-up Print <?php echo "<i class='".$sv['currency']."'></i> ".number_format($ticket->quote("mats"), 2); ?>
                             </button>
                         </form></div>
                         <!-- /.panel-footer -->
@@ -331,18 +410,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <!-- /.panel -->
             <?php }
             //Look for associated charges
-            if($staff && $ticket->getAc() && (($ticket->getUser()->getOperator() == $staff->getOperator()) || $staff->getRoleID() >= $sv['LvlOfStaff']) ){?>
+            if(is_object($staff) && $ticket->getAc() && (($ticket->getUser()->getOperator() == $staff->getOperator()) || $staff->getRoleID() >= $sv['LvlOfStaff']) ){?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <i class="fas fa-credit-card fa-lg"></i> Related Charges
+                        <?php if (false && $staff && $staff->getRoleID() >= $sv['editTrans']){ ?>
+                            <div class="pull-right"><form name="newCharge" method="post" action="" autocomplete='off'>
+                                <input type="submit" name="newCharge" value="Add New Charge"/>
+                            </form></div>
+                        <?php } ?>
                     </div>
                     <div class="panel-body">
                         <table class="table table-bordered">
                             <tr>
                                 <td class="col-sm-2">Paid By</td>
                                 <td class="col-sm-2">Amount</td>
-                                <td class="col-sm-5">Account</td>
-                                <td class="col-sm-2">Staff</td>
+                                <td class="col-sm-3">Account</td>
+                                <td class="col-sm-3">Staff</td>
                             </tr>
                             <?php foreach ($ticket->getAc() as $ac){
                                 if ($ac->getAccount()->getA_id() == 1 )
@@ -351,9 +435,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     echo"\n\t\t<tr>";
                                 
                                     if ( is_object($ac->getUser()) ) {
-                                        if (($ac->getUser()->getOperator() == $staff->getOperator()) || $staff->getRoleID() >= $sv['LvlOfStaff'] ){
-                                            echo "<td><i class='".$ac->getUser()->getIcon()." fa-lg' title='".$ac->getUser()->getOperator()."'></i></td>";
-                                        } else {
+                                        if (($ac->getUser()->getOperator() == $staff->getOperator()) || $staff->getRoleID() >= $sv['LvlOfStaff'] ){ ?>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                                                        <i class="<?php echo $ac->getUser()->getIcon();?> fa-lg" title="<?php echo $ac->getUser()->getOperator();?>"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu" role="menu">
+                                                        <li style="padding-left: 5px;"><?php echo $ac->getUser()->getOperator();?></li>
+                                                    </ul>
+                                                </div>
+                                            </td>
+                                        <?php } else {
                                             echo "<td><i class='".$ac->getUser()->getIcon()." fa-lg'></i></td>";
                                         }
                                     } else {
@@ -361,26 +454,44 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     }
                                     if ( ($ticket->getUser()->getOperator() == $staff->getOperator()) || $staff->getRoleID() >= $sv['LvlOfStaff'] ){
                                         echo "<td><i class='".$sv['currency']."'></i> ".number_format($ac->getAmount(), 2)."</td>";
-                                    }
-                                    echo "<td><i class='far fa-calendar-alt' title='".$ac->getAc_date()."'> ".$ac->getAccount()->getName()."</i></td>";
-                                    if ($staff && $staff->getRoleID() >= $sv['LvlOfStaff']){
-										echo "<td><i class='".$ac->getStaff()->getIcon()." fa-lg' title='".$ac->getStaff()->getOperator()."'></i>";
-									} else {
-										echo "<td><i class='".$ac->getStaff()->getIcon()." fa-lg'></i>";
-									}
-                                    if ($ac->getAc_notes()){ ?>
+                                    } ?>
+                                    <td>
                                         <div class="btn-group">
-                                            <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
-                                                <span class="fas fa-music" title="Notes"></span>
+                                            <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                                                <i class='far fa-calendar-alt' title="<?php echo $ac->getAc_date();?>"></i>
                                             </button>
-                                            <ul class="dropdown-menu pull-right" role="menu">
-                                                <li style="padding-left: 5px;"><?php echo $ac->getAc_notes();?></li>
+                                            <ul class="dropdown-menu" role="menu">
+                                                <li style="padding-left: 5px;"><?php echo $ac->getAc_date();?></li>
                                             </ul>
                                         </div>
-                                    <?php }
-                                    echo "</td>";
-                                echo"</tr>\n";
-                            } ?>
+                                        <?php echo $ac->getAccount()->getName();?>
+                                    </td>
+                                    <td>
+                                        <?php if ($staff->getRoleID() >= $sv['LvlOfStaff']){ ?>
+                                            <div class="btn-group">
+                                                <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                                                    <i class="<?php echo $ac->getStaff()->getIcon();?> fa-lg" title="<?php echo $ac->getStaff()->getOperator();?>"></i>
+                                                </button>
+                                                <ul class="dropdown-menu" role="menu">
+                                                    <li style="padding-left: 5px;"><?php echo $ac->getStaff()->getOperator();?></li>
+                                                </ul>
+                                            </div>
+                                            <?php if ($ac->getAc_notes()){ ?>
+                                                <div class="btn-group">
+                                                    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                                                        <span class="fas fa-music" title="Notes"></span>
+                                                    </button>
+                                                    <ul class="dropdown-menu pull-right" role="menu">
+                                                        <li style="padding-left: 5px;"><?php echo $ac->getAc_notes();?></li>
+                                                    </ul>
+                                                </div>
+                                            <?php } ?>
+                                        <?php } else {
+                                            echo "<i class='".$ac->getStaff()->getIcon()." fa-lg'></i>";
+                                        } ?>
+                                    </td>
+                                </tr>
+                            <?php } ?>
                         </table>
                     </div>
                     <!-- /.panel-body -->
@@ -403,17 +514,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <!-- /.row -->
 </div>
 <!-- /#page-wrapper -->
-<div id="addyModal" class="modal fade" role="dialog">
+<div id="addyModal" class="modal">
     <div class="modal-dialog">
         <!-- Modal content-->
         <div class="modal-content">
             <form name="moveForm" method="post" action="" onsubmit="return verifyMove()">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 class="modal-title" id="modal-title">Change Address</h4>
+                <h4 class="modal-title">Change Address</h4>
             </div>
             <div class="modal-body">
-                <p id="modal-body" title="Pick a good one">Select New Address</p>
+                <p title="Pick a good one">Select New Address</p>
                 <select name="box" id="box">
                     <option hidden selected value="">Select Shelf</option>
                     <?php
@@ -430,12 +541,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         }
                     ?>
                 </select>
-          </div>
-          <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-primary" name="newHome">Save</button>
-          </div> 
-        </form>
+            </div>
+            <div class="modal-footer">
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                  <button type="submit" class="btn btn-primary" name="newHome">Save</button>
+            </div> 
+            </form>
         </div>
     </div>
 </div>
@@ -446,6 +557,19 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 ?>
 <script type="text/javascript">
 function verifyMove(){
-    return true;
+    //Box Check
+    var b = document.forms["moveForm"]["box"].value;
+    if (b === null || b === "") {
+        alert("Please select a Shelf Number");
+        document.forms["moveForm"]["box"].focus();
+        return false;
+    }
+    //Letter Check
+    var l = document.forms["moveForm"]["letter"].value;
+    if (l === null || l === "") {
+        alert("Please select a Letter");
+        document.forms["moveForm"]["letter"].focus();
+        return false;
+    }
 }
 </script>

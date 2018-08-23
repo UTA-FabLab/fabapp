@@ -4,17 +4,22 @@
  *   FabApp V 0.9
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
-if (!$staff || $staff->getRoleID() < 7){
+if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
     //Not Authorized to see this Page
     header('Location: /index.php');
     $_SESSION['error_msg'] = "Insufficient role level to access, sorry.";
+    exit();
 }
 if ($_SERVER["REQUEST_METHOD"] == "POST"){
 	//print new wait tab and advance the number
     if( isset($_POST['print_s']) ){
         $i = $sv['next']+1;
         wait($i);
-        updateWait(array( "next" => $i));
+        updateWait(array (  "serving" => $_POST['serving'],
+                            "eServing" => $_POST['eServing'],
+                            "bServing" => $_POST['bServing'],
+                            "mServing" => $_POST['mServing'],
+                            "misc" => $_POST['misc']));
         
     } elseif( isset($_POST['reset']) ){
         updateWait(array ('serving' => 0, 'next' => 0));
@@ -22,7 +27,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST"){
     } elseif( isset($_POST['print_e']) ){
         $i = $sv['eNext']+1;
         wait("E".$i);
-        updateWait(array ("eNext" => $i));
+        updateWait(array (  "serving" => $_POST['serving'],
+                            "eServing" => $_POST['eServing'],
+                            "bServing" => $_POST['bServing'],
+                            "mServing" => $_POST['mServing'],
+                            "misc" => $_POST['misc']));
         
     } elseif( isset($_POST['eReset']) ){
         updateWait(array ('eServing' => 0, 'eNext' => 0));
@@ -30,7 +39,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST"){
     } elseif( isset($_POST['print_b']) ){
         $i = $sv['bNext']+1;
         wait("B".$i);
-        updateWait(array("bNext" => $i));
+        updateWait(array (  "serving" => $_POST['serving'],
+                            "eServing" => $_POST['eServing'],
+                            "bServing" => $_POST['bServing'],
+                            "mServing" => $_POST['mServing'],
+                            "misc" => $_POST['misc']));
 
     } elseif( isset($_POST['bReset']) ){
         updateWait(array ('bServing' => 0, 'bNext' => 0));
@@ -38,7 +51,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST"){
     } elseif( isset($_POST['print_m']) ){
         $i = $sv['mNext']+1;
         wait("M".$i);
-        updateWait(array("mNext" => $i));
+        updateWait(array (  "serving" => $_POST['serving'],
+                            "eServing" => $_POST['eServing'],
+                            "bServing" => $_POST['bServing'],
+                            "mServing" => $_POST['mServing'],
+                            "misc" => $_POST['misc']));
 		
     } elseif( isset($_POST['mReset']) ){
         updateWait(array ('mServing' => 0, 'mNext' => 0, "misc" => "Misc"));
@@ -98,7 +115,7 @@ function updateWait($pair){
     <div class="row">
         <div class="col-md-8">
             <div class="panel panel-default">
-			<form method="post" action="" onsubmit="return confirm_form()">
+                <form method="post" action="" onsubmit="return confirm_form()" name="ns_form">
                     <div class="panel-heading">
                         <i class="fas fa-list-ol fa-lg"></i> Now Serving
                     </div>
@@ -127,7 +144,7 @@ function updateWait($pair){
                             <tr id="next">
                                 <td>Boss Laser</td>
                                 <td align="center">B<input type="number" size="1" value="<?php echo $sv['bServing']; ?>" min="0" style="width: 3em" name="bServing" tabindex="3"/></td>
-                                <td align="center"><form method="post" action=""><button class="btn btn-basic" title="Click to issue the next Wait-Tab"
+                                <td align="center"><button class="btn btn-basic" title="Click to issue the next Wait-Tab"
                                             name='print_b'>B<?php echo $sv['bNext']+1; ?> <i class="fas fa-print"></button></td>
                                 <td align="center"><button class="btn btn-basic" name="bReset" onclick="clicked='Boss Laser'">Reset</button></td>
                             </tr>
@@ -142,7 +159,7 @@ function updateWait($pair){
                     </div>
                     <div class="panel-footer">
                         <div align="right">
-                            <button class="btn btn-success" name="saveBtn">Save</button>
+                            <button type="submit" class="btn btn-success" name="saveBtn">Save</button>
                         </div>
                     </div>
                 </form>
@@ -169,4 +186,12 @@ function confirm_form(){
     }
     return true;
 }
+$(document).keypress(
+    function(event){
+     if (event.which == '13') {
+        event.preventDefault();
+      }
+
+
+});
 </script>

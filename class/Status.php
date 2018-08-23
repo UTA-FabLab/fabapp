@@ -37,7 +37,7 @@ class Status {
         global $mysqli;
         $sArray = array();
         
-        if ($result = $myqsli->query("
+        if ($result = $mysqli->query("
             SELECT *
             FROM status
             WHERE 1;
@@ -45,7 +45,6 @@ class Status {
             while($row = $result->fetch_assoc()){
                 $sArray[$row['status_id']] = $row['msg'];
             }
-            $mysqli->close();
             return $sArray;
         } else {
             return false;

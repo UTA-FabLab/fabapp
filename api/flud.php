@@ -37,12 +37,12 @@ $input_data["est_filament_used"] = "1";
 $input_data["est_build_time"] = "01:01:00";
 $input_data["filename"] = "Jon Le's Test";
 $input_data["p_id"] = "3";
-*/
+
 //Test End
 $input_data["type"] = "update_end_time";
 $input_data["device_id"] = 21;
 
-/*
+*/
 //Compare Header API Key with site variable's API Key
 $headers = apache_request_headers();
 if ($sv['api_key'] == "") {
@@ -69,7 +69,6 @@ if (! ($input_data)) {
     $json_out["ERROR"] = "Unable to decode JSON message - check syntax";
     ErrorExit(1);
 }
-*/
 // Extract message type from incoming JSON
 $type = $input_data["type"];
 
@@ -223,14 +222,15 @@ function update_end_time( $dev_id ){
         $json_out["ERROR"] = "Invalid transaction number";
         ErrorExit(1);
     }
-	if ($result = $mysqli->query("
-		SELECT *
-		FROM `transactions`
-		WHERE `d_id` = '$dev_id' AND `t_end` is NULL
-	")){
-		$row = $result->fetch_assoc();
-		$ticket = new Transactions($row['trans_id']);
-	}
+    
+    if ($result = $mysqli->query("
+            SELECT *
+            FROM `transactions`
+            WHERE `d_id` = '$dev_id' AND `t_end` is NULL
+    ")){
+        $row = $result->fetch_assoc();
+        $ticket = new Transactions($row['trans_id']);
+    }
 	
     if ($ticket->end_octopuppet()){
         $json_out["success"] = "Update Successful for ".$ticket->getTrans_id();

@@ -21,7 +21,7 @@ use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
 
 function wait($str){
     global $tp;
-	global $sv;
+    global $sv;
 
     // Set up Printer
     try {

@@ -5,9 +5,10 @@
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
-if (!$staff || $staff->getRoleID() < 7){
+if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
     //Not Authorized to see this Page
     header('Location: /index.php');
+    $_SESSION['error_msg'] = "Insufficient role level to access, You must be a Trainer.";
 }
 
 if($_SESSION['type'] == 'success'){
@@ -115,9 +116,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $result = TrainingModule::insertTM($title, $tm_desc, $duration, $d_id, $dg_id, $tm_required, $class_size, $staff);
         if (is_int($result)){
             echo "<script> alert('insert id is $result')</script>";
-            header("Location:manage_trainings.php?edit=$result");
             $_SESSION['type'] = 'success';
-			exit();
+            header("Location:manage_trainings.php?edit=$result");
+            exit();
         } else {
             //error detected
            echo "<script> alert(\"Invalid Input - $result\")</script>";

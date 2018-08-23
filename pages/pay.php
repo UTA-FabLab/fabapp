@@ -110,8 +110,8 @@ if ($errorMsg != ""){
                         <tr>
                             <td>Staff</td>
                             <td><?php if ( is_object($ticket->getStaff()) ) {
-									echo "<i class='".$ticket->getStaff()->getIcon()." fa-lg' title='".$ticket->getStaff()->getOperator()."'></i>";
-							}?></td>
+                                echo "<i class='".$ticket->getStaff()->getIcon()." fa-lg' title='".$ticket->getStaff()->getOperator()."'></i>";
+                            }?></td>
                         </tr>
                     </table>
                 </div>
@@ -226,7 +226,7 @@ if ($errorMsg != ""){
                         <tr>
                             <td>Amount</td>
                             <td>
-                                <b><?php printf("<i class='%s'></i> %.2f" ,$sv['currency'], $ticket->quote()); ?></b>
+                                <b><?php printf("<i class='%s'></i> %.2f" ,$sv['currency'], $ticket->quote("mats")); ?></b>
                             </td>
                         </tr>
                         <tr>
@@ -305,7 +305,7 @@ var openBoolean = false;
 var btn = document.getElementById("payBtn");
 function openWin() {
     var selectPay = document.getElementById("selectPay").value;
-    if (selectPay === "2" && (<?php echo $ticket->quote();?> >= .01)){
+    if (selectPay === "2" && (<?php echo $ticket->quote("mats");?> >= .01)){
         if (!openBoolean) {
             myWindow = window.open("<?php echo $sv['paySite'];?>", "myWindow", "top=100,width=750,height=500");
             btn.classList.toggle("btn-danger");
@@ -331,7 +331,7 @@ function openWin() {
 }
 function updateBtn(x){
     if (x == 2){
-        if (<?php echo $ticket->quote();?> >= .01){
+        if (<?php echo $ticket->quote("mats");?> >= .01){
             btn.innerHTML = "Launch <?php echo $sv['paySite_name'];?>";
         } else {
             btn.innerHTML = "Complete";

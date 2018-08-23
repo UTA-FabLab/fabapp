@@ -107,7 +107,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
                             <td>Device Name:</td>
                             <td><?php
                                 echo "<select class='form-control' name='dev' id = 'dev'>";
-                                $default_value = "SELECT `device_desc`, `d_id`, `dg_id` FROM `devices` AS `d_id` WHERE `d_id` = (SELECT `d_id` FROM `service_cal`l AS `d_id` WHERE `sc_id` = ". $_GET['service_call_id'] . ")";
+                                $default_value = "SELECT `device_desc`, `d_id`, `dg_id` FROM `devices` AS `d_id` WHERE `d_id` = (SELECT `d_id` FROM `service_call` AS `d_id` WHERE `sc_id` = ". $_GET['service_call_id'] . ")";
                                 if ($default = $mysqli->query($default_value)){
                                     $default = mysqli_fetch_array($default);
                                     $list_elements = "SELECT `d_id`, `device_desc` FROM `devices` WHERE `dg_id` = " . $default['dg_id'] . " ORDER BY `device_desc` ASC";
@@ -122,29 +122,31 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
                                         }
                                     }
                                     else
-                                    echo "<option value=0>Error Loading Device Group</option>";
+                                        echo "<option value=0>Error Loading Device Group</option>";
                                     echo "</select>";
-                                } else
-                                    echo "There was an error loading device description";						
+                                } else {
+                                    //echo "There was an error loading device description";
+                                    echo $mysqli->error;
+                                }
                             ?></td>
                         </tr>
                         <tr>
-                                <td>Service Level</td>
-                                <td align = 'center'><?php
-                                if($options = $mysqli->query("SELECT sl_id,msg FROM service_lvl")){
-                                        if($status = $mysqli->query("SELECT sl_id FROM service_call WHERE sc_id = " . $_GET['service_call_id'])){
-                                                $status = mysqli_fetch_array($status);
-                                                while($row = $options->fetch_array(MYSQLI_ASSOC)){
-                                                        echo "<label class='radio-inline'><input type='radio' name='service_level' value='" . $row['sl_id'] . "'" . (($status['sl_id'] == $row['sl_id']) ? "checked='checked'" : "") . ">" . $row['msg'] . "</label>";
-                                                }
-                                                echo "<label class='radio-inline'><input type='radio' name='service_level' value='100'>Completed</label>";
-                                        }
-                                        else
-                                                echo "Error loading Service Call";
+                            <td>Service Level</td>
+                            <td align = 'center'><?php
+                            if($options = $mysqli->query("SELECT sl_id,msg FROM service_lvl")){
+                                if($status = $mysqli->query("SELECT sl_id FROM service_call WHERE sc_id = " . $_GET['service_call_id'])){
+                                    $status = mysqli_fetch_array($status);
+                                    while($row = $options->fetch_array(MYSQLI_ASSOC)){
+                                        echo "<label class='radio-inline'><input type='radio' name='service_level' value='" . $row['sl_id'] . "'" . (($status['sl_id'] == $row['sl_id']) ? "checked='checked'" : "") . ">" . $row['msg'] . "</label>";
+                                    }
+                                    echo "<label class='radio-inline'><input type='radio' name='service_level' value='100'>Completed</label>";
                                 }
                                 else
-                                        echo "Error loading Service Levels";
-                                ?></td>
+                                    echo "Error loading Service Call";
+                            }
+                            else
+                                echo "Error loading Service Levels";
+                            ?></td>
                         </tr>
                         <tr>
                             <td>Notes:</td>

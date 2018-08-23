@@ -75,11 +75,6 @@ class Accounts {
             array_push($init, $a->getA_id());
         }
         
-        //Pull available accounts for Staff
-        foreach ($staff->getAccounts() as $a){
-            array_push($init, $a->getA_id());
-        }
-        
         //Remove any duplicates
         $init = array_unique($init);
         

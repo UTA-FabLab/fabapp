@@ -17,7 +17,6 @@ header("Access-Control-Allow-Headers: Cache-Control, Origin, X-Requested-With, C
 
 require_once( __DIR__."/../connections/db_connect8.php");
 include_once ($_SERVER['DOCUMENT_ROOT'].'/class/all_classes.php');
-include 'gatekeeper.php'; 
 $json_out = array();
 
 //Compare Header API Key with site variable's API Key

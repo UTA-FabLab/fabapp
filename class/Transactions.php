@@ -1,6 +1,6 @@
 <?php
 /*
- *   CC BY-NC-AS UTA FabLab 2016-2017
+ *   CC BY-NC-AS UTA FabLab 2016-2018
  *   FabApp V 0.9
  */
 
@@ -18,19 +18,19 @@ use Mike42\Escpos\EscposImage;
 use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
  
 class Transactions {
-    private $device;
     private $duration;
     private $est_time;
-    private $purpose;
-    private $user;
-    private $staff;
-    private $status;
     private $t_start;
     private $t_end;
     private $trans_id;
     //Objects
     private $ac;
+    private $device;
     private $mats_used;
+    private $purpose;
+    private $staff;
+    private $status;
+    private $user;
     
     public function __construct($trans_id){
         global $mysqli;
@@ -64,6 +64,83 @@ class Transactions {
         
     }
     
+    private function calc_duration(){
+        $diff = strtotime($this->t_end) - strtotime($this->t_start);
+        $h = floor($diff / 3600);
+        $m = $diff / 60 % 60;
+        $s = $diff % 60;
+        if ($h > 800){
+            $h = 800;
+            $m = 0;
+            $s = 0;
+        }
+        $this->setDuration("$h:$m:$s");
+        return $diff/3600;
+    }
+    
+    //If the values are different then we will update the the DB
+    public function edit($err_catch, $d_id, $t_start, $t_end, $h, $m, $s, $operator, $status_id, $staff_id){
+        $diff = 0;
+        
+        if ($this->device->getD_id() != $d_id){
+            $diff = true;
+            $this->setDevice($d_id);
+        }
+        if (strtotime($this->getT_start()) != strtotime($t_start)){
+            $diff = true;
+            $this->setT_start(date("Y-m-d H:i:s",strtotime($t_start)));
+        }
+        if (strtotime($this->getT_end()) != strtotime($t_end)){
+            $diff = true;
+            if($t_end == ""){
+                $this->setT_end();
+            } else {
+                $this->setT_end(date("Y-m-d H:i:s",strtotime($t_end)));
+            }
+        }
+        //Setup Test Duration Test - Either compare empty string or H:M:S time
+        if ($h.$m.$s == "" && $t_end != "") {
+            $diff = true;
+            $this->calc_duration();
+        } elseif ($h.$m.$s == "" && $status_id == 10){
+            $test = "";
+            if (strcmp($this->getDuration(), $test)){
+                $diff = true;
+                $this->setDuration("");
+            }
+        } else {
+            $test = $h."h ".$m."m $s"."s";
+            if (strcmp($this->getDuration(), $test) != 0){
+                $diff = true;
+                $this->setDuration("$h:$m:$s");
+            }
+        }
+        
+        if ($this->getUser()->getOperator() != $operator){
+            $diff = true;
+            $this->setUser($operator);
+        }
+        if ($this->getStatus()->getStatus_id() != $status_id){
+            $diff = true;
+            $this->setStatus_id($status_id);
+        }
+        if(is_object($this->getStaff())){
+            if ($this->getStaff()->getOperator() != $staff_id){
+                $diff = true;
+                $this->setStaffWId($staff_id);
+            }
+        } else {
+            $diff = true;
+            $this->setStaffWId($staff_id);
+        }
+        
+        if ($diff || $err_catch > 0){
+            return $this->writeAttr();
+        } else {
+            return;
+        }
+    }
+    
     //Returns {String if error, False if there is a cost, & True if ticket & Mats have been closed}
     public function end($status_id, $staff){
         global $mysqli;
@@ -73,7 +150,7 @@ class Transactions {
         
         //If there is a remaining balance, exit
         //Sets Duration & end time
-        $total = $this->quote();
+        $total = $this->quote("mats");
         if ($this->status->getStatus_id() != 12 && abs($total - 0.001) > .005){
             debug("Total $total");
             return false;
@@ -107,7 +184,7 @@ class Transactions {
     public function end_juicebox(){
         global $mysqli;
         
-        $total = $this->quote();
+        $total = $this->quote("mats");
         if (abs($total - 0.001) > .005){
             //Status = Moveable
             //Intended to block additional Power On Until Learner Pays Balance
@@ -118,32 +195,37 @@ class Transactions {
         }
         if ($mysqli->query("
             UPDATE `transactions`
-            SET `t_end` = '$this->t_end', `duration` = '$this->duration', `status_id` = '$status_id'
-            WHERE `trans_id` = '$this->trans_id';
+            SET `t_end` = '".$this->t_end."', `duration` = '".$this->duration."', `status_id` = '$status_id'
+            WHERE `trans_id` = '".$this->trans_id."';
         ")){
             if ($mysqli->affected_rows == 1){
                 return true;
             } else {
                 return "Check end_juicebox.php";
             }
+        } else {
+            return "Update Error T130";
         }
     }
     
     public function end_octopuppet(){
         global $mysqli;
-		$status_id = 11;
-        
-        $total = $this->quote();
+        $status_id = 11;
+		
+        $this->quote("mats");
         if ($mysqli->query("
             UPDATE `transactions`
-            SET `t_end` = '$this->t_end', `duration` = '$this->duration', `status_id` = '$status_id'
-            WHERE `trans_id` = '$this->trans_id';
+            SET `t_end` = '".$this->t_end."', `duration` = '".$this->duration."', `status_id` = '$status_id'
+            WHERE `trans_id` = '".$this->trans_id."	';
         ")){
             if ($mysqli->affected_rows == 1){
                 return true;
             } else {
                 return false;
             }
+        } else {
+            return false;
+            //return "End OctoPuppet Error T150";
         }
     }
 	
@@ -184,6 +266,12 @@ class Transactions {
         $time = "$sArray[0]h $sArray[1]m $sArray[2]s";
         return $time;
     }
+    
+    public function getDuration_raw() {
+        if (strcmp($this->duration,"") == 0)
+                return "";
+        return $this->duration;
+    }
 
     public function getEst_time() {
         return $this->est_time;
@@ -212,7 +300,10 @@ class Transactions {
     public function getT_start() {
         global $sv;
         return date($sv['dateFormat'],strtotime($this->t_start));
-        //return $this->t_start;
+    }
+
+    public function getT_start_picker() {
+        return date("m/d/Y g:i a",strtotime($this->t_start));
     }
 
     public function getT_end() {
@@ -220,6 +311,12 @@ class Transactions {
         if (strcmp($this->t_end, "") == 0)
             return "";
         return date($sv['dateFormat'],strtotime($this->t_end));
+    }
+
+    public function getT_end_picker() {
+        if (strcmp($this->t_end, "") == 0)
+            return "";
+        return date("m/d/Y g:i a",strtotime($this->t_end));
     }
 
     public function getTrans_id() {
@@ -241,7 +338,7 @@ class Transactions {
             //Log moving item into ObjManager
             return ObjBox::insert_Obj($this->trans_id, $staff);
         } else {
-            return "T352: updateError ".$mysqli->error;
+            return "T244: moveError ";
         }
     }
 	
@@ -338,14 +435,17 @@ class Transactions {
     }
     
     //return the Estimated cost for this ticket, set duration and t_end
-    public function quote(){
+    public function quote($str){
         global $sv;
         $cost = 0;
         
-        //Add up costs of materials
-        foreach ($this->getMats_used() as $mu){
-            if ($mu->getStatus()->getStatus_id() != 12){
-                $cost += $mu->getUnit_used() * $mu->getMaterial()->getPrice();
+        //Decide of we need to include the cost of materials in this calculation
+        if ($str == "mats"){
+            //Add up costs of materials
+            foreach ($this->getMats_used() as $mu){
+                if ($mu->getStatus()->getStatus_id() != 12){
+                    $cost += $mu->getUnit_used() * $mu->getMaterial()->getPrice();
+                }
             }
         }
         //Find the difference between right now and the start time
@@ -357,17 +457,7 @@ class Transactions {
             //Set End Time
             $this->setT_end(date("Y-m-d H:i:s", strtotime("now")));
             
-            $diff = strtotime($this->t_end) - strtotime($this->t_start);
-            $h = floor($diff / 3600);
-            $m = $diff / 60 % 60;
-            $s = $diff % 60;
-            if ($h > 800){
-                $h = 800;
-                $m = 0;
-                $s = 0;
-            }
-            $this->setDuration("$h:$m:$s");
-            $diff = $diff/3600;
+            $diff = $this->calc_duration();
         }
         
         //Minimum Time Interval
@@ -387,6 +477,13 @@ class Transactions {
         if ( preg_match("/^\d{1,3}:\d{2}:\d{2}$/", $duration) == 1 )
             return true;
         return false;
+        $sArray = explode(":", $duration);
+        $h = $sArray[0] + $sArray[1]/60;
+        if ($h === 0){
+            // Total Time is 0
+            return false;
+        }
+        return true;
     }
     
     public static function regexTrans($trans_id){
@@ -514,9 +611,13 @@ class Transactions {
             LIMIT 1;
         ")){
             foreach($this->getMats_used() as $mu){
-                $mu->writeAttr();
+                $str = $mu->writeAttr();
             }
-            return true;
+            if (is_string($str)){
+                return $str;
+            } else {
+                return true;
+            }
         } else {
             return $mysqli->error;
         }

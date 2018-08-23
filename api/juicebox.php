@@ -20,7 +20,7 @@ include_once 'gatekeeper.php';
 //Test Turn On Using Operator IDs
 //$test_input = json_encode(array("type" => "utaid_double", "device" => "2", "number" => "1000000003", "number_employee" => "1000000008"));
 //Test End
-//$test_input = json_encode(array("type" => "end_transaction", "trans_id" => "149"));
+//$test_input = json_encode(array("type" => "end_transaction", "trans_id" => "26619"));
 //$input_data = json_decode($test_input, true);
 
 
@@ -59,29 +59,32 @@ if ( isset($input_data["type"]) ){
     ErrorExit(1);
 }
 
-if (strtolower($type) == "utaid_double"){				// added this part to support user + learner transaction with utaid
-	$user = Users::withID($input_data["number"]);
-	$staff = Users::withID($input_data["number_employee"]);
-	$device_id = $input_data["device"];
-	OnTransaction_double($user, $staff, $device_id);
+if (strtolower($type) == "utaid_double"){
+    // added this part to support user + learner transaction with utaid
+    $user = Users::withID($input_data["number"]);
+    $staff = Users::withID($input_data["number_employee"]);
+    $device_id = $input_data["device"];
+    OnTransaction_double($user, $staff, $device_id);
 
-} elseif(strtolower($type) == "rfid_double"){				// added this part to support user + learner transac 
-	$user = RFIDtoUTAID($input_data["number"]);
-	$staff = RFIDtoUTAID($input_data["number_employee"]);
-	$device_id = $input_data["device"];
-	OnTransaction_double($user, $staff, $device_id);
+} elseif(strtolower($type) == "rfid_double"){
+    // added this part to support user + learner transac 
+    $user = RFIDtoUTAID($input_data["number"]);
+    $staff = RFIDtoUTAID($input_data["number_employee"]);
+    $device_id = $input_data["device"];
+    OnTransaction_double($user, $staff, $device_id);
 
 } elseif(strtolower($type) == "check_status_utaid"){
-	check_user_status( Users::withID($input_data["number"]) );
+    check_user_status( Users::withID($input_data["number"]) );
 	
 } elseif(strtolower($type) == "check_status_rfid"){
-	check_user_status( RFIDtoUTAID($input_data["number"]) );
+    check_user_status( RFIDtoUTAID($input_data["number"]) );
 
 }elseif( strtolower($type) == "end_transaction" ){
-	end_transaction( $input_data["trans_id"] );
+    end_transaction( $input_data["trans_id"] );
+    
 } else {
-	$json_out["ERROR"] = "Unknown type: $type";
-	ErrorExit(1);
+    $json_out["ERROR"] = "Unknown type: $type";
+    ErrorExit(1);
 }
 
 echo json_encode($json_out);
@@ -222,7 +225,7 @@ function end_transaction( $trans_id ){
     $ticket = new Transactions($trans_id);
     $msg = $ticket->end_juicebox();
 
-    if ($msg){
+    if ($msg === true){
         $json_out["CONTENT"] = "Ticket ".$trans_id." has been closed";
         $json_out["success"] = "Y";
     } else {
