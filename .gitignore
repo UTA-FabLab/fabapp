@@ -13,7 +13,6 @@ $RECYCLE.BIN/
 /connections/ldap.php
 /connections/tp_connect.php
 /test.php
-/api/php-printer
 /api/ldap.php
 /api/powertails.php
 /api/ReadMatch.php
