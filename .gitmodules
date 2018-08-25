@@ -1,0 +1,2 @@
+[submodule "api/php_printer"]
+	url = https://github.com/mike42/escpos-php.git
