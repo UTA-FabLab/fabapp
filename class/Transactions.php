@@ -156,7 +156,7 @@ class Transactions {
             return false;
         }
 
-        if(strcmp($staff->getOperator(), $ticket->getUser()->getOperator()) == 0 && $staff->getRoleID() < $sv['editTrans']){
+        if(strcmp($staff->getOperator(), $this->getUser()->getOperator()) == 0 && $staff->getRoleID() < $sv['editTrans']){
             $errorMsg = "Please ask a staff member to close this ticket.";
         }
         
