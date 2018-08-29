@@ -227,7 +227,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
             }
         };
         
-        xmlhttp.open("GET","/admin/sub/getDevices.php?val="+ document.getElementById("devGrp").value, true);
+        xmlhttp.open("GET","/pages/sub/getDevices.php?val="+ document.getElementById("devGrp").value, true);
         xmlhttp.send();
     }
 

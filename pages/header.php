@@ -275,6 +275,9 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                                 <a href="/pages/emulate.php"><i class="fab fa-android"></i> Emulate</a>
                             </li>
                             <li>
+                                <a href="/pages/wait_ticket.php"><i class="fas fa-list-ol"></i> Wait Queue Ticket</a>
+                            </li>
+                            <li>
                                 <a href="/admin/error.php"><i class="fas fa-bolt"></i> Error</a>
                             </li>
                         <?php } ?>
