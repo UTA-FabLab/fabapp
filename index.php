@@ -171,7 +171,7 @@ function advanceNum($i, $str){
                                                                         array_push($device_array, array($row["Q_id"], $time_seconds, 1));
                                                                     } ?>
 
-                                                                    //<!-- Last Contact Time -->
+                                                                    <!-- Last Contact Time -->
                                                                     <?php if (isset($row['last_contact'])) { ?> 
                                                                         <i class="far fa-bell" align="center" title="Last Alerted @ <?php echo(date($sv['dateFormat'], strtotime($row['last_contact']))) ?>"></i> <?php
                                                                     } ?>
