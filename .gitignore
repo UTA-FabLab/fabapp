@@ -60,8 +60,6 @@ connections/
 
 nbproject/private/
 
-class/Notifications\.php
-
 pages/emulate\.php
 
 class/example\.php
