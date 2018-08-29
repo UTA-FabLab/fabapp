@@ -1,5 +1,8 @@
 <?php
-
+/*
+ *   CC BY-NC-AS UTA FabLab 2016-2018
+ *   FabApp V 0.91
+ */
 
 //Thermal Reciept Dependancies
 require_once ($_SERVER['DOCUMENT_ROOT'].'/api/php_printer/autoload.php');
@@ -93,7 +96,7 @@ class Wait_queue {
         if(isset($d_id) && $dg_id!=2) {
 
             if ($mysqli->query("
-                INSERT INTO wait_queue 
+                INSERT INTO `wait_queue` 
                   (`operator`,`dev_id`,`Devgr_id`,`start_date`, `Op_email`, `Op_phone`, `last_contact`) 
                 VALUES
                     ('$operator','$d_id','$dg_id',CURRENT_TIMESTAMP, '$email', '$phone', CURRENT_TIMESTAMP);
@@ -110,7 +113,7 @@ class Wait_queue {
             } else {
                 echo ("<div style='text-align: center'>
                     <div class='alert alert-danger'>
-                        Error1 updating contact info!
+                        ".$mysqli->error."
                     </div> </div>");
                 return $mysqli->error;
             }
@@ -600,59 +603,73 @@ class Wait_queue {
                 }
             }
         }
+        // Sort the array
+        sort($estTimes);
 
+        //echo "<br/><br/><br/><br/><br/><br/><br/>";
+        //echo '<pre>'; print_r($estTimes); echo '</pre>';
 
-                    
-                    // Sort the array
-                    sort($estTimes);
+        // Assign estimated wait times to those in the wait queue
+        // if the number of devices in the queue is greater than the number of devices in the group, then do not estimate times for those customers
+        if ($result2 = $mysqli->query("
+            SELECT Q_id
+            FROM wait_queue WQ JOIN device_group DG ON WQ.devgr_id = DG.dg_id
+            WHERE valid = 'Y' AND WQ.Devgr_id = $device_group
+            ORDER BY Q_id;
+        ")) {
 
-                    //echo "<br/><br/><br/><br/><br/><br/><br/>";
-                    //echo '<pre>'; print_r($estTimes); echo '</pre>';
+            // For each device waiting in this device group
+            $count = 0;
+            while ($row2 = $result2->fetch_assoc())
+            {
+                // If their wait number is smaller than the number of devices in this device group then give them an estimated time
+                if ($count < count($estTimes)) {
+                    $rhours = floor($estTimes[$count] / 3600);
+                    $rmins = floor($estTimes[$count] / 60 % 60);
+                    $rsecs = floor($estTimes[$count] % 60);
+                    $timeFormat = sprintf('%02d:%02d:%02d', $rhours, $rmins, $rsecs);
 
-                    // Assign estimated wait times to those in the wait queue
-                    // if the number of devices in the queue is greater than the number of devices in the group, then do not estimate times for those customers
-                    if ($result2 = $mysqli->query("
-                        SELECT Q_id
-                        FROM wait_queue WQ JOIN device_group DG ON WQ.devgr_id = DG.dg_id
-                        WHERE valid = 'Y' AND WQ.Devgr_id = $device_group
-                        ORDER BY Q_id;
-                    ")) {
-                        
-                        // For each device waiting in this device group
-                        $count = 0;
-                        while ($row2 = $result2->fetch_assoc())
-                        {
-                            // If their wait number is smaller than the number of devices in this device group then give them an estimated time
-                            if ($count < count($estTimes)) {
-                                $rhours = floor($estTimes[$count] / 3600);
-                                $rmins = floor($estTimes[$count] / 60 % 60);
-                                $rsecs = floor($estTimes[$count] % 60);
-                                $timeFormat = sprintf('%02d:%02d:%02d', $rhours, $rmins, $rsecs);
-                                
-                                //echo ($timeFormat."<br/>");
+                    //echo ($timeFormat."<br/>");
 
-                                if ($result3 = $mysqli->query("
-                                    UPDATE wait_queue
-                                    SET estTime = '$timeFormat'
-                                    WHERE Q_id = ".$row2['Q_id']."
-                                "));
-                            }
-
-                            // If their wait number is greater than the number of devices in this device group then do not estimate their time
-                            else {
-                                if ($result3 = $mysqli->query("
-                                    UPDATE wait_queue
-                                    SET estTime = NULL
-                                    WHERE Q_id = ".$row2['Q_id']."
-                                "));
-                            }
-
-                            $count++;
-                        }
-                    }
+                    if ($result3 = $mysqli->query("
+                        UPDATE wait_queue
+                        SET estTime = '$timeFormat'
+                        WHERE Q_id = ".$row2['Q_id']."
+                    "));
                 }
 
+                // If their wait number is greater than the number of devices in this device group then do not estimate their time
+                else {
+                    if ($result3 = $mysqli->query("
+                        UPDATE wait_queue
+                        SET estTime = NULL
+                        WHERE Q_id = ".$row2['Q_id']."
+                    "));
+                }
 
+                $count++;
+            }
+        }
+    }
+
+    public static function hasWait(){
+        global $mysqli;
+        return mysqli_num_rows($mysqli->query(" SELECT * FROM `wait_queue` WHERE `valid`='Y' "))>0;
+    }
+    
+    public static function getTabResult(){
+        global $mysqli;
+        return  $mysqli->query("
+            SELECT `dg_id`, `dg_desc`
+            FROM `device_group`
+            WHERE `device_group`.`dg_id` IN ( SELECT `dg_id`
+                FROM `devices`
+                GROUP BY `dg_id`
+                HAVING COUNT(*) >= 1
+            )
+            ORDER BY `dg_id`;
+        ");
+    }
 
 
     public static function regexPhone($phone) {
@@ -699,14 +716,9 @@ class Wait_queue {
         $ticket = new self($q_id);
 
         // Set up Printer Connection
-        /*
         $tp_array = explode("|", $sv['thermalPrinter1']);
         $tpHost = $tp_array[0];
         $tpPort = $tp_array[1];
-        */
-        // Hardcoded, please remove later
-        $tpHost = "129.107.37.13";
-        $tpPort = 9100;
         try {
             $connector = new NetworkPrintConnector( $tpHost, $tpPort);
             $printer = new Printer($connector);

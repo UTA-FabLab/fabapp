@@ -181,6 +181,8 @@ function PrintTransaction ($operator, $device_id) {
         $trans_id = $json_out["trans_id"] = $mysqli->insert_id;
         $print_json["trans_id"] = $trans_id;
         
+        Wait_queue::transferFromWaitQueue($operator, $d_id);
+        
         if ($stmt = $mysqli->prepare("
             INSERT INTO mats_used
                 (`trans_id`,`m_id`, `unit_used`, `status_id`, `mu_notes`, `mu_date`) 

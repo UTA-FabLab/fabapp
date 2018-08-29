@@ -1,7 +1,7 @@
 <?php
 /*
- *   CC BY-NC-AS UTA FabLab 2016-2017
- *   FabApp V 0.9
+ *   CC BY-NC-AS UTA FabLab 2016-2018
+ *   FabApp V 0.91
  */
 require_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 require_once ($_SERVER['DOCUMENT_ROOT'].'/api/gatekeeper.php');
@@ -28,6 +28,9 @@ if (empty($_GET["d_id"])){
             $limit = $hour + $minutes/60;
         }
     }
+}
+if (!empty($_GET["operator"])) {
+    $operator = Users::withID($_GET['operator']);
 }
 
 //When the user hits Submit
