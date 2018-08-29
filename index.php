@@ -63,58 +63,6 @@ function advanceNum($i, $str){
     <!-- Wait Queue -->
     <?php if (Wait_queue::hasWait()) {?>
         <div class="row">
-            <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?>
-                <div class="col-md-4">
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <i class="fa fa-print fa-fw"></i>Process Ticket
-                        </div>
-                        <!-- /.panel-heading -->
-                        <div class="panel-body">
-                            <div class="row">
-                                <div class="col-lg-11">
-                                    <tr>
-                                        <td>Device</td>
-                                        <td>
-                                            <select class="form-control" name="devGrp" id="devGrp" onChange="change_group()" >
-                                                <option value="" selected hidden> Select Device</option>
-                                                <?php // Load all of the device groups that are being waited for - signified with a 'DG' in front of the value attribute
-                                                    if ($result = $mysqli->query("
-                                                            SELECT DISTINCT D.`device_desc`, D.`dg_id`, D.`d_id`
-                                                            FROM `devices` D 
-                                                            JOIN `wait_queue` WQ on D.`dg_id` = WQ.`Devgr_id`
-                                                            LEFT JOIN (SELECT trans_id, t_start, t_end, d_id, operator, status_id FROM transactions WHERE status_id < 12  ORDER BY trans_id DESC) as t
-                                                            ON D.`d_id` = t.`d_id`
-                                                            WHERE WQ.`valid`='Y' AND (WQ.`Devgr_id` = 2 OR D.`d_id` = WQ.`Dev_id`) AND t.`trans_id` IS NULL
-                                                    ")) {
-                                                        while ( $rows = mysqli_fetch_array ( $result ) ) {
-                                                            // Create value in the form of DG_dgID-dID
-                                                            echo "<option value=". "DG_" . $rows ['dg_id'] . "-" . $rows ['d_id'].">" . $rows ['device_desc'] . "</option>";
-                                                        }
-                                                    } else {
-                                                        die ("There was an error loading the device groups.");
-                                                    } ?> 
-                                            </select>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Operator</td>
-                                        <td>
-                                            <select class="form-control" name="deviceList" id="deviceList">
-                                                <option value ="" selected hidden> Select Device First</option>
-                                            </select>
-                                        </td>
-                                    </tr>
-                                </div>
-                                <!-- /.col-md-11 -->
-                            </div>
-
-                            <button class="btn btn-primary" type="button" id="addBtn" onclick="newTicket()">Create Ticket</button>
-                        </div>
-                        <!-- /.panel-body -->
-                    </div>
-                </div>
-            <?php } ?>
             <div class="col-md-8">
                 <div class="panel panel-default">
                     <div class="panel-heading">
@@ -270,6 +218,58 @@ function advanceNum($i, $str){
                 </div>
             </div>
             <!-- /.col-md-8 -->
+            <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?>
+                <div class="col-md-4">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <i class="fa fa-print fa-fw"></i>Process Ticket
+                        </div>
+                        <!-- /.panel-heading -->
+                        <div class="panel-body">
+                            <div class="row">
+                                <div class="col-lg-11">
+                                    <tr>
+                                        <td>Device</td>
+                                        <td>
+                                            <select class="form-control" name="devGrp" id="devGrp" onChange="change_group()" >
+                                                <option value="" selected hidden> Select Device</option>
+                                                <?php // Load all of the device groups that are being waited for - signified with a 'DG' in front of the value attribute
+                                                    if ($result = $mysqli->query("
+                                                            SELECT DISTINCT D.`device_desc`, D.`dg_id`, D.`d_id`
+                                                            FROM `devices` D 
+                                                            JOIN `wait_queue` WQ on D.`dg_id` = WQ.`Devgr_id`
+                                                            LEFT JOIN (SELECT trans_id, t_start, t_end, d_id, operator, status_id FROM transactions WHERE status_id < 12  ORDER BY trans_id DESC) as t
+                                                            ON D.`d_id` = t.`d_id`
+                                                            WHERE WQ.`valid`='Y' AND (WQ.`Devgr_id` = 2 OR D.`d_id` = WQ.`Dev_id`) AND t.`trans_id` IS NULL
+                                                    ")) {
+                                                        while ( $rows = mysqli_fetch_array ( $result ) ) {
+                                                            // Create value in the form of DG_dgID-dID
+                                                            echo "<option value=". "DG_" . $rows ['dg_id'] . "-" . $rows ['d_id'].">" . $rows ['device_desc'] . "</option>";
+                                                        }
+                                                    } else {
+                                                        die ("There was an error loading the device groups.");
+                                                    } ?> 
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Operator</td>
+                                        <td>
+                                            <select class="form-control" name="deviceList" id="deviceList">
+                                                <option value ="" selected hidden> Select Device First</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                </div>
+                                <!-- /.col-md-11 -->
+                            </div>
+
+                            <button class="btn btn-primary" type="button" id="addBtn" onclick="newTicket()">Create Ticket</button>
+                        </div>
+                        <!-- /.panel-body -->
+                    </div>
+                </div>
+            <?php } ?>
         </div>
         <!-- /.row -->
     <?php } ?>
