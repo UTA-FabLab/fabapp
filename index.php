@@ -95,13 +95,14 @@ function advanceNum($i, $str){
                             <div class="tab-content">
                                 <?php
                                 if ($Tabresult = Wait_queue::getTabResult()) {
-                                    do {
+                                    while($tab = $Tabresult->fetch_assoc()){
+                                        $number_of_queue_tables++;
                                         // Give all of the dynamic tables a name so they can be called when their tab is clicked ?>
-                                        <div class="tab-pane fade" <?php echo("id=\"".$tab["dg_id"]."\"") ?> >
-                                            <table class="table table-striped table-bordered table-hover" <?php echo("id=\"waitTable_".$number_of_queue_tables."\"") ?>>
+                                        <div class="tab-pane fade <?php if ($number_of_queue_tables++ == 1) echo "in active";?>" <?php echo("id=\"".$tab["dg_id"]."\"") ?> >
+                                            <table class="table table-striped table-bordered table-hover" <?php echo("id=\"waitTable_$number_of_queue_tables\"") ?>>
                                                 <thead>
                                                     <tr class="tablerow">
-                                                        <th><i class="fa fa-th-list"></i> Queue #</th>
+                                                        <th><i class="fa fa-th-list"></i> Queue #<?php echo $number_of_queue_tables;?></th>
                                                         <th><i class="fa fa-th-list"></i> Priority</th>
                                                         <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?> <th><i class="far fa-user"></i> MavID</th><?php } ?>
                                                         <?php if ($tab["dg_id"]==2) { ?> <th><i class="far fa-flag"></i> Device Group</th><?php } ?>
@@ -208,8 +209,7 @@ function advanceNum($i, $str){
                                                 </tbody>
                                             </table>
                                         </div>
-                                        <?php $number_of_queue_tables++;
-                                    } while ($tab = $Tabresult->fetch_assoc());
+                                    <?php }
                                 } ?>
                                 </div>
                         </div>
