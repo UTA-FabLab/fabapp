@@ -659,16 +659,17 @@ class Wait_queue {
     
     public static function getTabResult(){
         global $mysqli;
-        return  $mysqli->query("
-            SELECT `dg_id`, `dg_desc`
+        if ($result = $mysqli->query("
+            SELECT `dg_id`, `device_group`.`dg_desc`
             FROM `device_group`
-            WHERE `device_group`.`dg_id` IN ( SELECT `dg_id`
-                FROM `devices`
-                GROUP BY `dg_id`
-                HAVING COUNT(*) >= 1
-            )
-            ORDER BY `dg_id`;
-        ");
+            LEFT JOIN `wait_queue`
+            ON `wait_queue`.`Devgr_id` = `device_group`.`dg_id`
+            WHERE `wait_queue`.`valid`= 'Y';
+        ")){
+            return  $result;
+        } else {
+            return false;
+        }
     }
 
 
