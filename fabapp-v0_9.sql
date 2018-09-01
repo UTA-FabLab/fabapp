@@ -845,6 +845,25 @@ INSERT INTO `users` (`u_id`, `operator`, `r_id`, `exp_date`, `icon`, `adj_date`,
 (8, '1000000010', 10, NULL, 'fas fa-university', NULL, '');
 
 --
+-- Table structure for table `wait_queue`
+--
+
+DROP TABLE IF EXISTS `wait_queue`;
+CREATE TABLE IF NOT EXISTS `wait_queue` (
+  `Q_id` int(11) NOT NULL,
+  `Operator` char(10) DEFAULT NULL,
+  `Dev_id` int(11) DEFAULT NULL,
+  `Devgr_id` int(11) DEFAULT NULL,
+  `Start_date` datetime DEFAULT NULL,
+  `estTime` time DEFAULT NULL,
+  `End_date` datetime DEFAULT NULL,
+  `last_contact` datetime DEFAULT NULL,
+  `valid` enum('Y','N') DEFAULT 'Y',
+  `Op_email` varchar(100) DEFAULT NULL,
+  `Op_phone` char(10) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+--
 -- Indexes for dumped tables
 --
 
@@ -1025,6 +1044,15 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `operator` (`operator`);
 
 --
+-- Indexes for table `wait_queue`
+--
+ALTER TABLE `wait_queue`
+  ADD PRIMARY KEY (`Q_id`),
+  ADD KEY `Operator` (`Operator`),
+  ADD KEY `Dev_id` (`Dev_id`),
+  ADD KEY `Devgr_id` (`Devgr_id`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -1153,6 +1181,9 @@ ALTER TABLE `transactions`
 --
 ALTER TABLE `users`
   MODIFY `u_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+
+ALTER TABLE `wait_queue`
+  MODIFY `Q_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
