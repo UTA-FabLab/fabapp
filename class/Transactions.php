@@ -1,7 +1,7 @@
 <?php
 /*
  *   CC BY-NC-AS UTA FabLab 2016-2018
- *   FabApp V 0.9
+ *   FabApp V 0.91
  */
 
 /**
@@ -227,6 +227,8 @@ class Transactions {
         if (!self::regexTime($est_time)) return "Bad Time - $est_time";
         if (!Purpose::regexID($p_id)) return "Invalid Purpose";
         if (!Status::regexID($status_id)) return "Invalid Status";
+        
+        Wait_queue::transferFromWaitQueue($operator->getOperator(), $d_id);
         
         if ($mysqli->query("
             INSERT INTO transactions 
