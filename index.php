@@ -86,14 +86,8 @@ function advanceNum($i, $str){
                                     ORDER BY dg_id;
                                 ")) {
                                         $count = 0;
-    
                                         while ($row = $result->fetch_assoc()) { ?>
-                                            <?php if ($count == 0) { ?>
-                                            <li class="active">
-                                            <?php }
-                                            else { ?>
-                                            <li class="">
-                                            <?php } ?>
+                                            <li class="<?php if ($count == 0) echo "active";?>">
                                                 <a <?php echo("href=\"#".$row["dg_id"]."\""); ?>  data-toggle="tab" aria-expanded="false"> <?php echo($row["dg_desc"]); ?> </a>
                                             </li>
                                         <?php $count++; 
@@ -132,12 +126,7 @@ function advanceNum($i, $str){
                                                             ORDER BY Q_id;
                                                     ")) {
                                                         $counter = 1;
-                                                        if ($tab["dg_id"]==2) {
-                                                            Wait_queue::calculateWaitTimes();   
-                                                        }
-                                                        if ($tab["dg_id"]!=2) {
                                                             Wait_queue::calculateDeviceWaitTimes();      
-                                                        }
 
                                                         while ($row = $result->fetch_assoc()) { ?>
                                                             <tr class="tablerow">
