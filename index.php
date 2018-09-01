@@ -85,11 +85,19 @@ function advanceNum($i, $str){
                                     )
                                     ORDER BY dg_id;
                                 ")) {
-                                    while ($row = $result->fetch_assoc()) { ?> 
-                                        <li class="">
-                                            <a <?php echo("href=\"#".$row["dg_id"]."\""); ?>  data-toggle="tab" aria-expanded="false"> <?php echo($row["dg_desc"]); ?> </a>
-                                        </li>
-                                    <?php }
+                                        $count = 0;
+    
+                                        while ($row = $result->fetch_assoc()) { ?>
+                                            <?php if ($count == 0) { ?>
+                                            <li class="active">
+                                            <?php }
+                                            else { ?>
+                                            <li class="">
+                                            <?php } ?>
+                                                <a <?php echo("href=\"#".$row["dg_id"]."\""); ?>  data-toggle="tab" aria-expanded="false"> <?php echo($row["dg_desc"]); ?> </a>
+                                            </li>
+                                        <?php $count++; 
+                                        }
                                 } ?>
                             </ul>
                             <div class="tab-content">
