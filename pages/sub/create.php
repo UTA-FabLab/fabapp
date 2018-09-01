@@ -1,37 +1,33 @@
 <?php
 /*
- *   CC BY-NC-AS UTA FabLab 2016-2018
- *   FabApp V 0.91
+ *   CC BY-NC-AS UTA FabLab 2016-2017
+ *   FabApp V 0.9
  */
 require_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 require_once ($_SERVER['DOCUMENT_ROOT'].'/api/gatekeeper.php');
 $time = $errorMsg = "";
 $error = false;
 
-// Check Device ID
-if (empty($_GET["d_id"])){
-    $errorMsg = "Device ID is Missing.";
-    $error = true;
-} else {
+if (!empty($_GET["d_id"])){
     $d_id = filter_input(INPUT_GET,'d_id');
     if (!Devices::regexDID($d_id)) {
-        $errorMsg = "Bad device ID";	
+        $errorMsg = "Bad device ID";    
         $error = true;
     } else {
         $device = new Devices($d_id);
         $device_mats = Materials::getDeviceMats($device->getDg()->getDg_id());
         //convert the time limit of a device
-        if ($device->getD_duration()){
-            $timeArry = explode(':', $device->getD_duration());
-            $hour = $timeArry[0];
-            $minutes = $timeArry[1];
-            $limit = $hour + $minutes/60;
-        }
+        $timeArry = explode(':', $device->getD_duration());
+        $hour = $timeArry[0];
+        $minutes = $timeArry[1];
+        $limit = $hour + $minutes/60;
     }
 }
+
 if (!empty($_GET["operator"])) {
     $operator = Users::withID($_GET['operator']);
 }
+
 
 //When the user hits Submit
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['ticketBtn'])) {
@@ -48,7 +44,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['ticketBtn'])) {
         $errorMsg = "Status Code:".$gk_msg["status_id"]." - ".$gk_msg["ERROR"];
         $error = true;
     } else {
-	$status_id = $gk_msg['status_id'];
+    $status_id = $gk_msg['status_id'];
         $operator = Users::withID(filter_input(INPUT_POST,'operator'));
     }
     
@@ -177,7 +173,7 @@ if ($staff) {
                         </tr>
                         <tr class="tablerow">
                             <td align="center">ID Number</td>
-                            <td><input type="text" name="operator" id="operator" placeholder="1000000000" value="<?php if(isset($operator)) echo $operator->getOperator();?>"
+                            <td><input type="text" name="operator" placeholder="1000000000" value="<?php if(isset($operator)) echo $operator->getOperator();?>"
                                 maxlength="10" size="10" autofocus tabindex="1"></td>
                         </tr>                      
                         <?php //if no materials are related to this device group
@@ -235,7 +231,7 @@ if ($staff) {
                                 <td align="center">Estimated Time</td>
                                 <td>
                                     <input type="number" name="hours" id="hours" tabindex="6" min="0" max="100" 
-                                        step="1" placeholder="hh" value =0></input>Hours
+                                        step="1" placeholder="hh" ></input>Hours
                                     <select name="minutes" id="minutes" tabindex="7">
                                         <option value="00">00</option>
                                         <option value="05">05</option>
@@ -287,9 +283,16 @@ function resetForm() {
     document.getElementById("cform").reset();
     document.getElementById("quote").innerHTML = "<?php echo"<i class='$sv[currency] fa-fw'></i>"; ?> 0.00";
 }
-	
+    
 function validateForm() {
-    if (!stdRegEx("operator", /<?php echo $sv['regexUser'];?>/, "Invalid ID #")){
+    var x = document.forms["cform"]["operator"].value;
+    var reg = /^\d{10}$/;
+    //Mav ID Check
+    if (x === null || x === "" || !reg.test(x)) {
+        if (!reg.test(x)) {
+                alert("Invalid ID #");
+            }
+            document.forms["cform"]["operator"].focus();
         return false;
     }
     //Material Check Uprint

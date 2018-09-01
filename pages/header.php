@@ -1,4 +1,8 @@
 <!DOCTYPE html>
+<!--
+ *   CC BY-NC-AS UTA FabLab 2016-2018
+ *   FabApp V 0.91
+ -->
 <html lang="en">
 <head>
 
@@ -271,9 +275,9 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                                 </ul>
                                 <!-- /.nav-second-level -->
                             </li>
-                            <li>
-                                <a href="/pages/emulate.php"><i class="fab fa-android"></i> Emulate</a>
-                            </li>
+							<li>
+								<a href="/pages/wait_ticket.php"><i class="fas fa-list-ol"></i> Wait Queue Ticket</a>
+							</li>
                             <li>
                                 <a href="/admin/error.php"><i class="fas fa-bolt"></i> Error</a>
                             </li>
