@@ -23,7 +23,6 @@ include_once 'gatekeeper.php';
 //$test_input = json_encode(array("type" => "end_transaction", "trans_id" => "26619"));
 //$input_data = json_decode($test_input, true);
 
-
 //Compare Header API Key with site variable's API Key
 $headers = apache_request_headers();
 if ($sv['api_key'] == "") {
@@ -80,7 +79,7 @@ if (strtolower($type) == "utaid_double"){
     check_user_status( RFIDtoUTAID($input_data["number"]) );
 
 }elseif( strtolower($type) == "end_transaction" ){
-    end_transaction( $input_data["trans_id"] );
+    end_transaction( $input_data["dev_id"] );
     
 } else {
     $json_out["ERROR"] = "Unknown type: $type";
@@ -219,18 +218,31 @@ function RFIDtoUTAID ($rfid_no) {
 }
 
 
-function end_transaction( $trans_id ){
+function end_transaction( $dev_id ){
     global $json_out;
 
-    $ticket = new Transactions($trans_id);
+	// Check for deviceID value
+    if (! (preg_match("/^\d*$/", $dev_id))) {
+        $json_out["ERROR"] = "Invalid transaction number";
+        ErrorExit(1);
+    }
+	if ($result = $mysqli->query("
+		SELECT *
+		FROM `transactions`
+		WHERE `d_id` = '$dev_id' AND `t_end` is NULL
+	")){
+		$row = $result->fetch_assoc();
+		$ticket = new Transactions($row['trans_id']);
+	}
+	
     $msg = $ticket->end_juicebox();
 
     if ($msg === true){
-        $json_out["CONTENT"] = "Ticket ".$trans_id." has been closed";
+        $json_out["CONTENT"] = "Ticket ".$ticket->getTrans_id()." has been closed";
         $json_out["success"] = "Y";
     } else {
         $json_out["success"] = "N";
-        $json_out['ERROR'] = $msg;
+		Error::insertError($_SERVER['PHP_SELF'],  $msg, "");
         ErrorExit(1);
     }
 }
