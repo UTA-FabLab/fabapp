@@ -79,7 +79,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $ob = unserialize($_SESSION['backup_ob']);
                 $ob->writeAttr();
                 unset($_SESSION['backup_ob']);
-            } elseif (is_object($objbox))
+            } elseif (isset($objbox) && is_object($objbox))
                 $objbox->unend($staff);
             unset($_SESSION['backup_ticket']);
         } else {
@@ -256,7 +256,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <?php } else { ?>
                             <tr>
                                 <td>Staff</td>
-                                <td><i class="<?php echo $ticket->getStaff()->getIcon();?> fa-lg" title="<?php echo $ticket->getStaff()->getOperator();?>"></i></td>
+                                <td><?php if ( is_object($ticket->getStaff()) ) { ?>
+									<i class="<?php echo $ticket->getStaff()->getIcon();?> fa-lg" title="<?php echo $ticket->getStaff()->getOperator();?>"></i>
+								<?php } else {echo "-";} ?></td>
                             </tr>
                         <?php } ?>
                     </table>
