@@ -186,23 +186,15 @@ class Transactions {
             //Status = Moveable
             //Intended to block additional Power On Until Learner Pays Balance
             // Alt logic, payments get placed into a "tab"
-            $status_id = 11;
+            $this->setStatus_id(11);
         } else {
-            $status_id = 14;
+            $this->setStatus_id(14);
         }
-        if ($mysqli->query("
-            UPDATE `transactions`
-            SET `t_end` = '".$this->t_end."', `duration` = '".$this->duration."', `status_id` = '$status_id'
-            WHERE `trans_id` = '".$this->trans_id."';
-        ")){
-            if ($mysqli->affected_rows == 1){
-                return true;
-            } else {
-                return "Check end_juicebox.php";
-            }
-        } else {
-            return "Update Error T130";
-        }
+		$msg = $this->writeAttr();
+		if (is_string($msg)){						 
+			return $msg;
+		}
+		return true;
     }
     
     public function end_octopuppet(){
@@ -611,8 +603,11 @@ class Transactions {
         ")){
             foreach($this->getMats_used() as $mu){
                 $str = $mu->writeAttr();
+				if (is_string($str)){
+					break;
+				}
             }
-            if (is_string($str)){
+            if (isset($str) && is_string($str)){
                 return $str;
             } else {
                 return true;

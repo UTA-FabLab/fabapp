@@ -94,7 +94,7 @@
         global $mysqli;
         
         if ($result = $mysqli->query("
-            SELECT users.operator, users.r_id, exp_date, icon, rfid_no, adj_date, notes
+            SELECT users.operator, users.r_id, exp_date, icon, rfid_no, adj_date, notes, long_close
             FROM `rfid`
             LEFT JOIN users
             ON rfid.operator = users.operator
