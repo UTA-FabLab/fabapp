@@ -157,7 +157,9 @@ function advanceNum($i, $str){
                                                                 <!-- Start Time, Estimated Time, Last Contact Time -->
                                                                 <td>
                                                                     <!-- Start Time -->
+                                                                <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?>
                                                                     <i class="far fa-calendar-alt" align="center" title="Started @ <?php echo( date($sv['dateFormat'],strtotime($row['Start_date'])) ) ?>"></i>
+                                                                <?php } ?>
 
                                                                     <!-- Estimated Time -->
                                                                     <?php if (isset($row['estTime'])) {
@@ -173,9 +175,11 @@ function advanceNum($i, $str){
                                                                     } ?>
 
                                                                     <!-- Last Contact Time -->
+                                                                <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?>
                                                                     <?php if (isset($row['last_contact'])) { ?> 
                                                                         <i class="far fa-bell" align="center" title="Last Alerted @ <?php echo(date($sv['dateFormat'], strtotime($row['last_contact']))) ?>"></i> <?php
                                                                     } ?>
+                                                                <?php } ?>
                                                                 </td>
 
                                                                 <!-- Send an Alert -->
@@ -594,7 +598,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
     for(var i=1; i<= <?php echo $number_of_queue_tables;?>; i++){
         str = "#waitTable_"+i
     $(str).DataTable({
-		"iDisplayLength": 25,
+		"iDisplayLength": 10,
 		"order": []
 		});
     }
