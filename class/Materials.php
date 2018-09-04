@@ -22,7 +22,7 @@ class Materials {
         global $mysqli;
         
         if (!preg_match("/^\d+$/", $m_id))
-            throw new Exception('Invalid Ticket Number');
+            throw new Exception('Material ID Number');
         if ($result = $mysqli->query("
             SELECT *
             FROM `materials`

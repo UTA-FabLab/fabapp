@@ -223,9 +223,15 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                                 </form>
                                 </ul>
                             </li>
-                            <li>
-                                <a href="/admin/now_serving.php"><i class="fas fa-list-ol"></i> Now Serving</a>
-                            </li>
+                            <?php if ( $sv['wait_system'] == "new"){ ?>
+                                <li>
+                                    <a href="/pages/wait_ticket.php"><i class="fas fa-list-ol"></i> Wait Queue Ticket</a>
+                                </li>
+                            <?php } else { ?>
+                                <li>
+                                    <a href="/admin/now_serving.php"><i class="fas fa-list-ol"></i> Now Serving</a>
+                                </li>
+                            <?php } ?>
                             <li>
                                 <a href="#" id="pickLink"><i class="fas fa-gift"></i> Pick Up 3D Print<span class="fas fa-angle-left"></span></a>
                                 <ul class="nav nav-second-level">
@@ -275,9 +281,6 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                                 </ul>
                                 <!-- /.nav-second-level -->
                             </li>
-							<li>
-								<a href="/pages/wait_ticket.php"><i class="fas fa-list-ol"></i> Wait Queue Ticket</a>
-							</li>
                             <li>
                                 <a href="/admin/error.php"><i class="fas fa-bolt"></i> Error</a>
                             </li>

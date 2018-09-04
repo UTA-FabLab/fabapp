@@ -140,23 +140,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <i class="fas fa-ticket-alt fa-lg"></i> Ticket # <b><?php echo $ticket->getTrans_id(); ?></b>
-                    <div class="pull-right">
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                                <span class="caret"></span>
-                            </button>
-                            <ul class="dropdown-menu pull-right" role="menu">
-                                <li>
-                                    <a href="javascript: printBtn();"/>Print</a>
-                                </li>
-                                <?php if ($staff && $staff->getRoleID() >= $sv['editTrans']){ ?>
+                    <?php if ($staff && $staff->getRoleID() >= $sv['LvlOfStaff']){ ?>
+                        <div class="pull-right">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                    <span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu pull-right" role="menu">
                                     <li>
-                                        <a href="javascript: editBtn()" class="bg-warning"/>Edit</a>
+                                        <a href="javascript: printBtn();"/>Print</a>
                                     </li>
-                                <?php }?>
-                            </ul>
+                                    <?php if ($staff->getRoleID() >= $sv['editTrans']){ ?>
+                                        <li>
+                                            <a href="javascript: editBtn()" class="bg-warning"/>Edit</a>
+                                        </li>
+                                    <?php }?>
+                                </ul>
+                            </div>
                         </div>
-                    </div>
+                    <?php }?>
                 </div>
                 <div class="panel-body">
                     <table class ="table table-bordered table-striped">
