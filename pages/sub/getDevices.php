@@ -1,4 +1,9 @@
 <?php
+/*
+ *   CC BY-NC-AS UTA FabLab 2016-2018
+ *   FabApp V 0.91
+ * 
+ */
  
 include_once ($_SERVER ['DOCUMENT_ROOT'] . '/connections/db_connect8.php');
 include_once ($_SERVER ['DOCUMENT_ROOT'] . '/class/all_classes.php');
@@ -42,7 +47,7 @@ if (!empty($_GET["val"])) {
             if (mysqli_num_rows($result) < 9) {
                 echo "<option disabled selected>"; echo "A Printer Is Available To Use"; echo "</option>";  
             } else {
-                echo "<option>"; echo "No Selection Needed"; echo "</option>";  
+                echo "<option value=''>"; echo "No Selection Needed"; echo "</option>";  
             }
         }
     
