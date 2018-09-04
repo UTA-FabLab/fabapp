@@ -90,7 +90,12 @@ function advanceNum($i, $str){
                                             <li class="<?php if ($count == 0) echo "active";?>">
                                                 <a <?php echo("href=\"#".$row["dg_id"]."\""); ?>  data-toggle="tab" aria-expanded="false"> <?php echo($row["dg_desc"]); ?> </a>
                                             </li>
-                                        <?php $count++; 
+                                        <?php 
+                                        if ($count == 0){
+                                            //create a way to display the first wait_queue table tab by saving which dg_id it is to variable 'first_dgid'
+                                            $first_dgid = $row["dg_id"];  
+                                        }   
+                                        $count++;                                                                  
                                         }
                                 } ?>
                             </ul>
@@ -100,7 +105,7 @@ function advanceNum($i, $str){
                                     while($tab = $Tabresult->fetch_assoc()){
                                         $number_of_queue_tables++;
                                         // Give all of the dynamic tables a name so they can be called when their tab is clicked ?>
-                                        <div class="tab-pane fade <?php if ($number_of_queue_tables++ == 1) echo "in active";?>" <?php echo("id=\"".$tab["dg_id"]."\"") ?> >
+                                        <div class="tab-pane fade <?php if ($first_dgid == $tab["dg_id"]) echo "in active";?>" <?php echo("id=\"".$tab["dg_id"]."\"") ?> >
                                             <table class="table table-striped table-bordered table-hover" <?php echo("id=\"waitTable_$number_of_queue_tables\"") ?>>
                                                 <thead>
                                                     <tr class="tablerow">
