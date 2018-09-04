@@ -17,8 +17,8 @@
     <link href="/vendor/bootstrap/css/bootstrap.css" rel="stylesheet">
     <link href="/vendor/bs-datetimepicker/css/bootstrap-datetimepicker.min.css" rel="stylesheet">
     <link href="/vendor/datatables/css/dataTables.bootstrap.css" rel="stylesheet" type="text/css">
-    <link href="/vendor/fabapp/fabapp.css?=v5" rel="stylesheet">
-    <link href="/vendor/fontawesome/css/fontawesome-all.css" rel="stylesheet">
+    <link href="/vendor/fabapp/fabapp.css" rel="stylesheet">
+    <link href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
     <link href="/vendor/metisMenu/metisMenu.min.css" rel="stylesheet">
     <link href="/vendor/morrisjs/morris.css" rel="stylesheet">
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
