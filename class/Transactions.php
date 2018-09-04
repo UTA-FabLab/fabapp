@@ -387,26 +387,38 @@ class Transactions {
             $printer -> feed();
             $printer -> text("Est. Cost:   ");
             $printer -> text("$ ".number_format($est_cost,2));
-            $printer -> feed();
-            $printer -> text("Est. Duration:   ".$ticket->getEst_time());
+            if ($ticket->getDuration() != ""){
+                $printer -> feed();
+                $printer -> text("Duration:   ".$ticket->getDuration());
+            } elseif($ticket->getEst_time() != "")  {
+                $printer -> feed();
+                $printer -> text("Est. Duration:   ".$ticket->getEst_time());
+            }
+            
             if ($filename){
                 $printer -> feed();
                 $printer -> text("File:   ".$filename);
             }
-            $printer -> feed(3);
-            $printer -> text("Address: ______________________");
-            $printer -> feed();
-            $printer -> text("Potential Problems?  ( Y )  ( N )");
-            $printer -> feed();
-            $printer -> text("NOTES: _________________________");
-            $printer -> feed(2);
-            $printer -> text("________________________________");
-            $printer -> feed(2);
-            $printer -> text("________________________________");
-            $printer -> feed(3);
-            $printer -> graphics(EscposImage::load($_SERVER['DOCUMENT_ROOT']."/images/sig.png", 0));
-            //EscposImage::load($_SERVER['DOCUMENT_ROOT']."/images/fablab2.png", 0);
-			
+            if ($ticket->getDevice()->getDg()->getStorable() == "Y"){
+                $objbox = ObjBox::byTrans($ticket->getTrans_id());
+                if ($objbox === false){
+                    $printer -> feed(3);
+                    $printer -> text("Address: ______________________");
+                } else {
+                    $printer -> feed(1);
+                    $printer -> text("Address: ________".$objbox->getAddress()."________");
+                }
+                $printer -> feed();
+                $printer -> text("Potential Problems?  ( Y )  ( N )");
+                $printer -> feed();
+                $printer -> text("NOTES: _________________________");
+                $printer -> feed(2);
+                $printer -> text("________________________________");
+                $printer -> feed(2);
+                $printer -> text("________________________________");
+                $printer -> feed(3);
+                $printer -> graphics(EscposImage::load($_SERVER['DOCUMENT_ROOT']."/images/sig.png", 0));
+            }
             $printer -> feed();
             $printer -> text("http://fablab.uta.edu/");
             $printer -> feed();

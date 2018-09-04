@@ -1,4 +1,9 @@
 <?php
+/*
+ *   CC BY-NC-AS UTA FabLab 2016-2018
+ *   FabApp V 0.91
+ * 
+ */
 
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
@@ -15,7 +20,7 @@ if (isset($_GET['q_id'])) {
         removeFromQueue($_REQUEST['q_id']);
     }
     
-        header("Location:/index.php");
+    header("Location:/index.php");
 }
 
 function removeFromQueue($q_id) {
@@ -23,7 +28,7 @@ function removeFromQueue($q_id) {
         $queueItem = new Wait_queue($q_id);
     } catch (Exception $e) {
         $errorMsg = $e->getMessage();
-        $_SESSION['type'] = "error";
+        $_SESSION['error_msg'] = $errorMsg;
     }
     
     // Delete the user from the waitlist

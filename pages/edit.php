@@ -539,7 +539,6 @@ function validateForm() {
     var id_array = ["operator", "staff_id"];
     <?php if ($objbox = ObjBox::byTrans($ticket->getTrans_id())) {
         echo("date_array.push('ob_start');");
-        echo("date_array.push('ob_end');");
     } ?>
     <?php foreach($ticket->getAc() as $ac) {
         $ac_id = $ac->getAc_id();
