@@ -289,20 +289,20 @@ class Wait_queue {
     
         // If they are not waiting for any other jobs, then delete their contact information
         if (!Wait_queue::isOperatorWaiting($operator)) {
-            Wait_queue::deleteContactInfo($operator);
+            Wait_queue::deleteContactInfo($q_id);
         }
 
         // Calculate new wait times based off a person leaving the wait queue
         Wait_queue::calculateWaitTimes();
     }
 
-    public static function deleteContactInfo($operator)
+    public static function deleteContactInfo($q_id)
     {
         global $mysqli;
         if ($mysqli->query("
             UPDATE `wait_queue`
             SET `Op_email`=NULL, `Op_phone`=NULL
-            WHERE `Operator` = $operator;
+            WHERE `Operator` = $q_id;
         "))
         {
             echo("\nSuccessfully deleted $operator contact info!");
@@ -311,43 +311,36 @@ class Wait_queue {
         }
     }
     
-    public static function updateContactInfo($operator, $phone, $email)
+    public static function updateContactInfo($q_id, $phone, $email)
     {
         global $mysqli;
         $status= 0;
         
         //Validate input variables
         if (!self::regexPhone($phone) && !empty($phone)) {
-            echo ("<div style='text-align: center'>
-                    <div class='alert alert-danger'>
-                        Bad Phone Number - $phone
-                    </div> </div>");
             $status = 1;
-            return $status;
+            return "Bad Phone Number - $phone";
         }
 
         if(!filter_var($email, FILTER_VALIDATE_EMAIL) && !empty($email)) {
-            echo ("<div style='text-align: center'>
-                    <div class='alert alert-danger'>
-                        Bad Email - $email
-                    </div> </div>");
             $status = 1;
-            return $status;
+            return "Bad Email - $email";
         }
         
         if ($status == 0){
             if ($mysqli->query("
                 UPDATE `wait_queue`
                 SET `Op_email` = '$email' , `Op_phone` = '$phone'
-                WHERE `Operator` = '$operator' AND valid='Y';
+                WHERE `Operator` = '$q_id' AND valid='Y';
             "))
             {
                 return $status;
             } else {
-                echo ("Error updating $operator contact info!");
+                echo ("Error updating $q_id contact infomation!");
             }
         }
     }
+    
     public static function calculateWaitTimes()
     {
         global $mysqli;
@@ -366,13 +359,13 @@ class Wait_queue {
                 if ($result2 = $mysqli->query("
                     SELECT `devices`.`d_id`, `t_start`, `est_time`, `t_end`
                     FROM `devices` JOIN `device_group` ON `devices`.`dg_id` = `device_group`.`dg_id`
-                    LEFT JOIN (SELECT `trans_id`, `t_start`, `t_end`, `est_time`, `d_id`, `operator`, `status_id` FROM `transactions` WHERE `status_id` < 12 ORDER BY `trans_id` DESC) as t 
+                    LEFT JOIN (SELECT `t_start`, `t_end`, `est_time`, `d_id`, `status_id` FROM `transactions` WHERE `status_id` < 12) as t 
                     ON `devices`.`d_id` = `t`.`d_id`
                     WHERE `public_view` = 'Y' AND `device_group`.`dg_id` = $device_group AND `devices`.`d_id` NOT IN (
                     
                         SELECT `d_id`
                         FROM `service_call`
-                        WHERE `solved` = 'N'
+                        WHERE `solved` = 'N' AND `sl_id` >= 7
                     )
                     ORDER BY `device_group`.`dg_id`, `device_desc`
                 ")) {
@@ -477,13 +470,13 @@ class Wait_queue {
                 if ($result2 = $mysqli->query("
                     SELECT `devices`.`d_id`, `t_start`, `est_time`, `t_end`
                     FROM `devices` JOIN `device_group` ON `devices`.`dg_id` = `device_group`.`dg_id`
-                        LEFT JOIN (SELECT `trans_id`, `t_start`, `t_end`, `est_time`, `d_id`, `operator`, `status_id` FROM `transactions` WHERE `status_id` < 12 ORDER BY `trans_id` DESC) as t 
+                        LEFT JOIN (SELECT `t_start`, `t_end`, `est_time`, `d_id`, `operator`, `status_id` FROM `transactions` WHERE `status_id` < 12) as t 
                         ON `devices`.`d_id` = `t`.`d_id`
                     WHERE `public_view` = 'Y' AND `devices`.`d_id` = $device_id AND `devices`.`d_id` NOT IN 
                     (
                         SELECT `d_id`
                         FROM `service_call`
-                        WHERE `solved` = 'N'
+                        WHERE `solved` = 'N' AND `sl_id` >= 7
                     )
                     ORDER BY `device_group`.`dg_id`, `device_desc`
                 ")) {
@@ -568,13 +561,13 @@ class Wait_queue {
         if ($result2 = $mysqli->query("
             SELECT `devices`.`d_id`, `t_start`, `est_time`, `t_end`
             FROM `devices` JOIN `device_group` ON `devices`.`dg_id` = `device_group`.`dg_id`
-            LEFT JOIN (SELECT `trans_id`, `t_start`, `t_end`, `est_time`, `d_id`, `operator`, `status_id` FROM `transactions` WHERE `status_id` < 12 ORDER BY `trans_id` DESC) as t 
+            LEFT JOIN (SELECT `t_start`, `t_end`, `est_time`, `d_id`, `operator`, `status_id` FROM `transactions` WHERE `status_id` < 12) as t 
             ON `devices`.`d_id` = `t`.`d_id`
             WHERE `public_view` = 'Y' AND `device_group`.`dg_id` = $dg_id AND `devices`.`d_id` NOT IN (
             
                 SELECT `d_id`
                 FROM `service_call`
-                WHERE `solved` = 'N'
+                WHERE `solved` = 'N' AND `sl_id` > 7
             )
             ORDER BY `device_group`.`dg_id`, `device_desc`
         ")) {
@@ -660,7 +653,7 @@ class Wait_queue {
     public static function getTabResult(){
         global $mysqli;
         if ($result = $mysqli->query("
-            SELECT `dg_id`, `device_group`.`dg_desc`
+            SELECT DISTINCT `dg_id`, `device_group`.`dg_desc`
             FROM `device_group`
             LEFT JOIN `wait_queue`
             ON `wait_queue`.`Devgr_id` = `device_group`.`dg_id`

@@ -73,25 +73,14 @@ function advanceNum($i, $str){
                         <div class="table-responsive">
                             <ul class="nav nav-tabs">
                                 <!-- Load all device groups as a tab that have at least one device in that group -->
-                                <?php if ($result = $mysqli->query("
-                                    SELECT dg_id, dg_desc
-                                    FROM device_group 
-                                    WHERE device_group.dg_id IN ( 
-                                            SELECT D.dg_id
-                                            FROM devices D, wait_queue WQ
-                                            WHERE D.dg_id=WQ.devgr_id AND WQ.valid='Y'
-                                            GROUP BY dg_id
-                                            HAVING COUNT(*) >= 1
-                                    )
-                                    ORDER BY dg_id;
-                                ")) {
-                                        $count = 0;
-                                        while ($row = $result->fetch_assoc()) { ?>
-                                            <li class="<?php if ($count == 0) echo "active";?>">
-                                                <a <?php echo("href=\"#".$row["dg_id"]."\""); ?>  data-toggle="tab" aria-expanded="false"> <?php echo($row["dg_desc"]); ?> </a>
-                                            </li>
-                                        <?php $count++; 
-                                        }
+                                <?php if ($result = Wait_queue::getTabResult()) {
+                                    $count = 0;
+                                    while ($row = $result->fetch_assoc()) { ?>
+                                        <li class="<?php if ($count == 0) echo "active";?>">
+                                            <a <?php echo("href=\"#".$row["dg_id"]."\""); ?>  data-toggle="tab" aria-expanded="false"> <?php echo($row["dg_desc"]); ?> </a>
+                                        </li>
+                                    <?php $count++; 
+                                    }
                                 } ?>
                             </ul>
                             <div class="tab-content">
@@ -100,11 +89,10 @@ function advanceNum($i, $str){
                                     while($tab = $Tabresult->fetch_assoc()){
                                         $number_of_queue_tables++;
                                         // Give all of the dynamic tables a name so they can be called when their tab is clicked ?>
-                                        <div class="tab-pane fade <?php if ($number_of_queue_tables++ == 1) echo "in active";?>" <?php echo("id=\"".$tab["dg_id"]."\"") ?> >
+                                        <div class="tab-pane fade <?php if ($number_of_queue_tables == 1) echo "in active";?>" <?php echo("id=\"".$tab["dg_id"]."\"") ?> >
                                             <table class="table table-striped table-bordered table-hover" <?php echo("id=\"waitTable_$number_of_queue_tables\"") ?>>
                                                 <thead>
                                                     <tr class="tablerow">
-                                                        <th><i class="fa fa-th-list"></i> Queue #<?php echo $number_of_queue_tables;?></th>
                                                         <th><i class="fa fa-th-list"></i> Priority</th>
                                                         <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?> <th><i class="far fa-user"></i> MavID</th><?php } ?>
                                                         <?php if ($tab["dg_id"]==2) { ?> <th><i class="far fa-flag"></i> Device Group</th><?php } ?>
@@ -126,12 +114,10 @@ function advanceNum($i, $str){
                                                             ORDER BY Q_id;
                                                     ")) {
                                                         $counter = 1;
-                                                            Wait_queue::calculateDeviceWaitTimes();      
+                                                        Wait_queue::calculateDeviceWaitTimes();      
 
                                                         while ($row = $result->fetch_assoc()) { ?>
                                                             <tr class="tablerow">
-                                                                <!-- Wait Queue Number -->
-                                                                <td align="center"><?php echo($row['Q_id']) ?></td>
 
                                                                 <!-- Wait Queue Number -->
                                                                 <td align="center"><?php echo($counter++) ?></td>
@@ -140,7 +126,7 @@ function advanceNum($i, $str){
                                                                 <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?>
                                                                     <td>
                                                                         <?php $user = Users::withID($row['Operator']);?>
-                                                                        <a class="<?php echo $user->getIcon()?> fa-lg" title="<?php echo($row['Operator']) ?>"  href="/pages/sub/updateContact.php?operator=<?php echo $row["Operator"]?>"></a>
+                                                                        <a class="<?php echo $user->getIcon()?> fa-lg" title="<?php echo($row['Operator']) ?>"  href="/pages/updateContact.php?q_id=<?php echo $row["Q_id"]?>"></a>
                                                                         <?php if (!empty($row['Op_phone'])) { ?> <i class="fas fa-mobile"   title="<?php echo ($row['Op_phone']) ?>"></i> <?php } ?>
                                                                         <?php if (!empty($row['Op_email'])) { ?> <i class="fas fa-envelope" title="<?php echo ($row['Op_email']) ?>"></i> <?php } ?>
                                                                     </td>
@@ -158,18 +144,18 @@ function advanceNum($i, $str){
                                                                     <i class="far fa-calendar-alt" align="center" title="Started @ <?php echo( date($sv['dateFormat'],strtotime($row['Start_date'])) ) ?>"></i>
                                                                 <?php } ?>
 
-                                                                    <!-- Estimated Time -->
-                                                                    <?php if (isset($row['estTime'])) {
-                                                                        echo("<span align=\"center\" id=\"est".$row["Q_id"]."\">"."  ".$row["estTime"]."  </span>" );
-                                                                        $str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $row["estTime"]);
-                                                                        sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
-                                                                        $time_seconds = $hours * 3600 + $minutes * 60 + $seconds + ($sv["grace_period"]);
-                                                                        $temp_time = $hours * 3600 + $minutes * 60 + $seconds;
-                                                                        if ($temp_time == "00:00:00"){
-                                                                                $time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - strtotime($row["Start_date"]) ) + $sv["grace_period"];
-                                                                        }
-                                                                        array_push($device_array, array($row["Q_id"], $time_seconds, 1));
-                                                                    } ?>
+                                                                <!-- Estimated Time -->
+                                                                <?php if (isset($row['estTime'])) {
+                                                                    echo("<span align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
+                                                                    $str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $row["estTime"]);
+                                                                    sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
+                                                                    $time_seconds = $hours * 3600 + $minutes * 60 + $seconds + ($sv["grace_period"]);
+                                                                    $temp_time = $hours * 3600 + $minutes * 60 + $seconds;
+                                                                    if ($temp_time == "00:00:00"){
+                                                                            $time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - strtotime($row["Start_date"]) ) + $sv["grace_period"];
+                                                                    }
+                                                                    array_push($device_array, array("q".$row["Q_id"], $time_seconds));
+                                                                } ?>
 
                                                                     <!-- Last Contact Time -->
                                                                 <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?>
@@ -330,11 +316,11 @@ function advanceNum($i, $str){
                                         if( $row["status_id"] == 11) {
                                             echo("<td align='center'>".$ticket->getStatus()->getMsg()."</td>");
                                         } elseif (isset($row["est_time"])) {
-                                            echo("<td align='center'><div id=\"est$row[trans_id]\">$row[est_time] </div></td>" );
+                                            echo("<td align='center'><div id=\"t$row[trans_id]\">$row[est_time] </div></td>" );
                                             $str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $row["est_time"]);
                                             sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
                                             $time_seconds = $hours * 3600 + $minutes * 60 + $seconds- (time() - strtotime($row["t_start"]) ) + $sv["grace_period"];
-                                            array_push($device_array, array($row["trans_id"], $time_seconds, $row["dg_parent"]));
+                                            array_push($device_array, array("t".$row["trans_id"], $time_seconds));
                                         } else 
                                             echo("<td align=\"center\">-</td>");
                                     } else { ?>
@@ -458,9 +444,8 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 <script>
 <?php foreach ($device_array as $da) { ?>
 	var time = <?php echo $da[1];?>;
-	var display = document.getElementById('est<?php echo $da[0];?>');
-	var dg_parent = <?php if ($da[2]) echo $da[2]; else echo "0";?>;
-	startTimer(time, display, dg_parent);
+	var display = document.getElementById('<?php echo $da[0];?>');
+	startTimer(time, display);
 	
 <?php } ?>
     $('#indexTable').DataTable({
@@ -594,9 +579,9 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
     var str;
     for(var i=1; i<= <?php echo $number_of_queue_tables;?>; i++){
         str = "#waitTable_"+i
-    $(str).DataTable({
-		"iDisplayLength": 10,
-		"order": []
-		});
+        $(str).DataTable({
+                    "iDisplayLength": 10,
+                    "order": []
+                    });
     }
 </script>
