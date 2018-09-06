@@ -7,7 +7,7 @@
 */
 
 //local function for testing & bypass
-function AuthenticateUser($netid, $password, $attribute) {
+function AuthenticateUser($netid, $password) {
     //return false;
 
     //switch case to return roles
