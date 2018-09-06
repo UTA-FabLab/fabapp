@@ -9,8 +9,8 @@ Desktop.ini
 $RECYCLE.BIN/
 
 # Prevent environment specific from update
-connections/
-nbproject/
+connections/*
+nbproject/*
 pages/emulate\.php
 class/example\.php
 /test.php
