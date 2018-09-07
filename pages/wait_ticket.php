@@ -6,17 +6,18 @@
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 $d_id = $dg_id = $operator = "";
 
-if (!$staff || $staff->getRoleID() < 7){
+if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
     //Not Authorized to see this Page
+    $_SESSION['error_msg'] = "You are unable to view this page.";
     header('Location: /index.php');
     exit();
 }
 ?>
-<title><?php echo $sv['site_name'];?> Create Wait Ticket</title>
+<title><?php echo $sv['site_name'];?> Wait Queue System</title>
 <div id="page-wrapper">
     <div class="row">
         <div class="col-lg-12">
-            <h1 class="page-header">Create Wait Ticket</h1>
+            <h1 class="page-header">Wait Queue System</h1>
         </div>
         <!-- /.col-lg-12 -->
     </div>
@@ -33,7 +34,7 @@ if (!$staff || $staff->getRoleID() < 7){
                             <tr>
                                 <td><a href="#" data-toggle="tooltip" data-placement="top" title="Which device does this wait ticket belong to?">Select Device Group</a></td>
                                 <td>
-                                    <select name="devGrp" id="devGrp" onChange="change_group()" >
+                                    <select name="dg_id" id="dg_id" onChange="change_dg()" >
                                         <option disabled hidden selected value="">Device Group</option>
                                         <?php if($result = $mysqli->query("
                                             SELECT DISTINCT `device_group`.`dg_id`, `device_group`.`dg_desc`
@@ -48,7 +49,7 @@ if (!$staff || $staff->getRoleID() < 7){
                                         }?>
                                     </select>
                                     &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;
-                                    <select name="deviceList" id="deviceList">
+                                    <select name="devices" id="devices">
                                         <option value =""> Select Group First</option>
                                     </select>   
                                 </td>
@@ -78,7 +79,7 @@ if (!$staff || $staff->getRoleID() < 7){
                                         </div>
                                         <?php
                                         if(isset($_POST['disclaimer'])) {
-                                            if(isset($_POST['deviceList'])){
+                                            if(isset($_POST['devices'])){
                                                 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
                                                     $operator = filter_input(INPUT_POST, 'operator');
                                                     /*if(isset($device)) {
@@ -86,8 +87,8 @@ if (!$staff || $staff->getRoleID() < 7){
                                                     } else if(isset($device, NULL, 2)) {
                                                         $wait_id = 
                                                     }*/
-                                                    $d_id = filter_input(INPUT_POST,'deviceList');
-                                                    $dg_id = filter_input(INPUT_POST,'devGrp');
+                                                    $d_id = filter_input(INPUT_POST,'devices');
+                                                    $dg_id = filter_input(INPUT_POST,'dg_id');
                                                     $em = filter_input(INPUT_POST,'op-email');
                                                     $ph = filter_input(INPUT_POST, 'op-phone');
                                                     $wait_id = Wait_queue::insertWaitQueue($operator, $d_id, $dg_id, $ph, $em);
@@ -123,18 +124,17 @@ if (!$staff || $staff->getRoleID() < 7){
                                                 }
                                             }
                                             else {
-                                            echo ("<div style='text-align: center'>
-                                                    <div class='alert alert-danger'>
-                                                        You Must Select A Device
-                                                    </div> </div>");
-                                        }
+                                                echo ("<div style='text-align: center'>
+                                                        <div class='alert alert-danger'>
+                                                            You Must Select A Device
+                                                        </div> </div>");
+                                            }
                                         } else {
                                             echo ("<div style='text-align: center'>
                                                     <div class='alert alert-danger'>
                                                         You must accept the disclaimer before creating a ticket.
                                                     </div> </div>");
-                                        }
-                                        ?>
+                                        } ?>
                                     </div>
                                 </td>
                             </tr>
@@ -184,36 +184,8 @@ if (!$staff || $staff->getRoleID() < 7){
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 ?>
 <script type="text/javascript">
-        var device = "";
-     
-    function newTicket(){
-        var device_id = document.getElementById("devGrp").value;
-        var o_id = document.getElementById("deviceList").value;
-        
-        if("D_" === device_id.substring(0,2)){
-            device_id = device_id.substring(2);
-        } else{
-            if("-" === device_id.substring(4,5)){
-            device_id = device_id.substring(5);
-            } else{
-            device_id = device_id.substring(6);
-            }
-        }
-        
-        device = "d_id=" + device_id + "&operator=" + o_id;
-
-        if (device  != ""){
-            var dest = "/pages/create.php?";
-            dest = dest.concat(device);
-            console.log(dest);
-            window.location.href = dest;
-        } else {
-            message = "Please select a device.";
-            var answer = alert(message);
-        }
-    }   
     
-    function change_group(){
+    function change_dg(){
         if (window.XMLHttpRequest) {
             // code for IE7+, Firefox, Chrome, Opera, Safari
             xmlhttp = new XMLHttpRequest();
@@ -223,11 +195,11 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         }
         xmlhttp.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
-                document.getElementById("deviceList").innerHTML = this.responseText;
+                document.getElementById("devices").innerHTML = this.responseText;
             }
         };
         
-        xmlhttp.open("GET","/pages/sub/getDevices.php?val="+ document.getElementById("devGrp").value, true);
+        xmlhttp.open("GET","/pages/sub/getDevices.php?val="+ document.getElementById("dg_id").value, true);
         xmlhttp.send();
     }
 

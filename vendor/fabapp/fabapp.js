@@ -53,7 +53,7 @@ function searchF(){
     }
 }
 
-function startTimer(duration, display, dg_parent) {
+function startTimer(duration, display) {
     var timer = duration, hours, minutes, seconds;
     setInterval(function () {
         if (timer > 0) {
