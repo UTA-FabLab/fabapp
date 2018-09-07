@@ -9,9 +9,10 @@ Desktop.ini
 $RECYCLE.BIN/
 
 # Prevent environment specific from update
-/connections/db_connect8.php
-/connections/ldap.php
-/connections/tp_connect.php
+connections/*
+nbproject/*
+pages/emulate\.php
+class/example\.php
 /test.php
 /api/ldap.php
 /api/powertails.php
@@ -55,11 +56,3 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
-
-connections/
-
-nbproject/private/
-
-pages/emulate\.php
-
-class/example\.php

@@ -112,7 +112,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } elseif (isset($_POST['newCharge'])){
         
     } elseif (isset($_POST['printForm'])){
-        echo "<script>console.log(\"lookup.php: print\");</script>";
+        $str = $ticket->printTicket($ticket->getTrans_id());
+        if (is_string($str)){
+            $_SESSION['error_msg'] = $str;
+        } else {
+            $_SESSION['success_msg'] = "Now Printing";
+        }
+        header("Location:/pages/lookup.php?trans_id=".$ticket->getTrans_id());
     }
 }
 ?>
@@ -134,23 +140,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <i class="fas fa-ticket-alt fa-lg"></i> Ticket # <b><?php echo $ticket->getTrans_id(); ?></b>
-                    <div class="pull-right">
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                                <span class="caret"></span>
-                            </button>
-                            <ul class="dropdown-menu pull-right" role="menu">
-                                <li>
-                                    <a href="javascript: printBtn();"/>Print</a>
-                                </li>
-                                <?php if ($staff && $staff->getRoleID() >= $sv['editTrans']){ ?>
+                    <?php if ($staff && $staff->getRoleID() >= $sv['LvlOfStaff']){ ?>
+                        <div class="pull-right">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                    <span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu pull-right" role="menu">
                                     <li>
-                                        <a href="javascript: editBtn()" class="bg-warning"/>Edit</a>
+                                        <a href="javascript: printBtn();"/>Print</a>
                                     </li>
-                                <?php }?>
-                            </ul>
+                                    <?php if ($staff->getRoleID() >= $sv['editTrans']){ ?>
+                                        <li>
+                                            <a href="javascript: editBtn()" class="bg-warning"/>Edit</a>
+                                        </li>
+                                    <?php }?>
+                                </ul>
+                            </div>
                         </div>
-                    </div>
+                    <?php }?>
                 </div>
                 <div class="panel-body">
                     <table class ="table table-bordered table-striped">
@@ -569,8 +577,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </div>
 <!-- Modal -->
 <!--Hidden Forms-->
-<form name="printForm" id="printForm" action="" method="post"></form>
-<form name="editForm" id="editForm" action="" method="post"></form>
+<form id="printForm" action="" method="post">
+    <input type="text" name="printForm" hidden/>   
+</form>
+<form id="editForm" action="" method="post">
+    <input type="text" name="editForm" hidden/>
+</form>
 <?php
 //Standard call for dependencies
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');

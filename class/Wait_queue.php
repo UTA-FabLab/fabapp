@@ -289,20 +289,20 @@ class Wait_queue {
     
         // If they are not waiting for any other jobs, then delete their contact information
         if (!Wait_queue::isOperatorWaiting($operator)) {
-            Wait_queue::deleteContactInfo($operator);
+            Wait_queue::deleteContactInfo($q_id);
         }
 
         // Calculate new wait times based off a person leaving the wait queue
         Wait_queue::calculateWaitTimes();
     }
 
-    public static function deleteContactInfo($operator)
+    public static function deleteContactInfo($q_id)
     {
         global $mysqli;
         if ($mysqli->query("
             UPDATE `wait_queue`
             SET `Op_email`=NULL, `Op_phone`=NULL
-            WHERE `Operator` = $operator;
+            WHERE `Operator` = $q_id;
         "))
         {
             echo("\nSuccessfully deleted $operator contact info!");
@@ -311,43 +311,36 @@ class Wait_queue {
         }
     }
     
-    public static function updateContactInfo($operator, $phone, $email)
+    public static function updateContactInfo($q_id, $phone, $email)
     {
         global $mysqli;
         $status= 0;
         
         //Validate input variables
         if (!self::regexPhone($phone) && !empty($phone)) {
-            echo ("<div style='text-align: center'>
-                    <div class='alert alert-danger'>
-                        Bad Phone Number - $phone
-                    </div> </div>");
             $status = 1;
-            return $status;
+            return "Bad Phone Number - $phone";
         }
 
         if(!filter_var($email, FILTER_VALIDATE_EMAIL) && !empty($email)) {
-            echo ("<div style='text-align: center'>
-                    <div class='alert alert-danger'>
-                        Bad Email - $email
-                    </div> </div>");
             $status = 1;
-            return $status;
+            return "Bad Email - $email";
         }
         
         if ($status == 0){
             if ($mysqli->query("
                 UPDATE `wait_queue`
                 SET `Op_email` = '$email' , `Op_phone` = '$phone'
-                WHERE `Operator` = '$operator' AND valid='Y';
+                WHERE `Operator` = '$q_id' AND valid='Y';
             "))
             {
                 return $status;
             } else {
-                echo ("Error updating $operator contact info!");
+                echo ("Error updating $q_id contact infomation!");
             }
         }
     }
+    
     public static function calculateWaitTimes()
     {
         global $mysqli;
@@ -366,13 +359,13 @@ class Wait_queue {
                 if ($result2 = $mysqli->query("
                     SELECT `devices`.`d_id`, `t_start`, `est_time`, `t_end`
                     FROM `devices` JOIN `device_group` ON `devices`.`dg_id` = `device_group`.`dg_id`
-                    LEFT JOIN (SELECT `trans_id`, `t_start`, `t_end`, `est_time`, `d_id`, `operator`, `status_id` FROM `transactions` WHERE `status_id` < 12 ORDER BY `trans_id` DESC) as t 
+                    LEFT JOIN (SELECT `t_start`, `t_end`, `est_time`, `d_id`, `status_id` FROM `transactions` WHERE `status_id` < 12) as t 
                     ON `devices`.`d_id` = `t`.`d_id`
                     WHERE `public_view` = 'Y' AND `device_group`.`dg_id` = $device_group AND `devices`.`d_id` NOT IN (
                     
                         SELECT `d_id`
                         FROM `service_call`
-                        WHERE `solved` = 'N'
+                        WHERE `solved` = 'N' AND `sl_id` >= 7
                     )
                     ORDER BY `device_group`.`dg_id`, `device_desc`
                 ")) {
@@ -477,13 +470,13 @@ class Wait_queue {
                 if ($result2 = $mysqli->query("
                     SELECT `devices`.`d_id`, `t_start`, `est_time`, `t_end`
                     FROM `devices` JOIN `device_group` ON `devices`.`dg_id` = `device_group`.`dg_id`
-                        LEFT JOIN (SELECT `trans_id`, `t_start`, `t_end`, `est_time`, `d_id`, `operator`, `status_id` FROM `transactions` WHERE `status_id` < 12 ORDER BY `trans_id` DESC) as t 
+                        LEFT JOIN (SELECT `t_start`, `t_end`, `est_time`, `d_id`, `operator`, `status_id` FROM `transactions` WHERE `status_id` < 12) as t 
                         ON `devices`.`d_id` = `t`.`d_id`
                     WHERE `public_view` = 'Y' AND `devices`.`d_id` = $device_id AND `devices`.`d_id` NOT IN 
                     (
                         SELECT `d_id`
                         FROM `service_call`
-                        WHERE `solved` = 'N'
+                        WHERE `solved` = 'N' AND `sl_id` >= 7
                     )
                     ORDER BY `device_group`.`dg_id`, `device_desc`
                 ")) {
@@ -560,6 +553,101 @@ class Wait_queue {
         }
     }
 
+<<<<<<< HEAD
+=======
+    public static function getWaitForGroup($dg_id) {
+
+        global $mysqli;
+               
+        // Get all of the wait times from the active tickets
+        if ($result2 = $mysqli->query("
+            SELECT `devices`.`d_id`, `t_start`, `est_time`, `t_end`
+            FROM `devices` JOIN `device_group` ON `devices`.`dg_id` = `device_group`.`dg_id`
+            LEFT JOIN (SELECT `t_start`, `t_end`, `est_time`, `d_id`, `operator`, `status_id` FROM `transactions` WHERE `status_id` < 12) as t 
+            ON `devices`.`d_id` = `t`.`d_id`
+            WHERE `public_view` = 'Y' AND `device_group`.`dg_id` = $dg_id AND `devices`.`d_id` NOT IN (
+            
+                SELECT `d_id`
+                FROM `service_call`
+                WHERE `solved` = 'N' AND `sl_id` > 7
+            )
+            ORDER BY `device_group`.`dg_id`, `device_desc`
+        ")) {
+            // Create an array with size equal to the number of devices in that group that holds the number of seconds to wait
+            $estTimes = array();
+
+            // Gather all of the times
+            while ($row2 = $result2->fetch_assoc()) {
+                if (!isset($row2['t_start'])) {
+                    // Free Device because the start time is not set
+                    array_push($estTimes, 0);
+                } elseif (isset($row2['t_start']) && isset($row2['est_time']) && !isset($row2['t_end'])) {
+                    list($hours, $minutes, $seconds) = explode(":", $row2['est_time']);
+                    $estSeconds = ($hours * 3600 + $minutes * 60 + $seconds);
+                    $timeLeft = strtotime($row2['t_start']) + $estSeconds - strtotime("now");
+
+                    // The estimated time has expired but the print has not been ended by the staff
+                    if ($timeLeft <= 0) {
+                        array_push($estTimes, 0);
+                    }
+
+                    // The print is ongoing so log the time
+                    else {
+                        array_push($estTimes, $timeLeft);
+                    }
+                }
+            }
+        }
+        // Sort the array
+        sort($estTimes);
+
+        //echo "<br/><br/><br/><br/><br/><br/><br/>";
+        //echo '<pre>'; print_r($estTimes); echo '</pre>';
+
+        // Assign estimated wait times to those in the wait queue
+        // if the number of devices in the queue is greater than the number of devices in the group, then do not estimate times for those customers
+        if ($result2 = $mysqli->query("
+            SELECT Q_id
+            FROM wait_queue WQ JOIN device_group DG ON WQ.devgr_id = DG.dg_id
+            WHERE valid = 'Y' AND WQ.Devgr_id = $device_group
+            ORDER BY Q_id;
+        ")) {
+
+            // For each device waiting in this device group
+            $count = 0;
+            while ($row2 = $result2->fetch_assoc())
+            {
+                // If their wait number is smaller than the number of devices in this device group then give them an estimated time
+                if ($count < count($estTimes)) {
+                    $rhours = floor($estTimes[$count] / 3600);
+                    $rmins = floor($estTimes[$count] / 60 % 60);
+                    $rsecs = floor($estTimes[$count] % 60);
+                    $timeFormat = sprintf('%02d:%02d:%02d', $rhours, $rmins, $rsecs);
+
+                    //echo ($timeFormat."<br/>");
+
+                    if ($result3 = $mysqli->query("
+                        UPDATE wait_queue
+                        SET estTime = '$timeFormat'
+                        WHERE Q_id = ".$row2['Q_id']."
+                    "));
+                }
+
+                // If their wait number is greater than the number of devices in this device group then do not estimate their time
+                else {
+                    if ($result3 = $mysqli->query("
+                        UPDATE wait_queue
+                        SET estTime = NULL
+                        WHERE Q_id = ".$row2['Q_id']."
+                    "));
+                }
+
+                $count++;
+            }
+        }
+    }
+
+>>>>>>> master
     public static function hasWait(){
         global $mysqli;
         return mysqli_num_rows($mysqli->query(" SELECT * FROM `wait_queue` WHERE `valid`='Y' "))>0;
@@ -568,7 +656,7 @@ class Wait_queue {
     public static function getTabResult(){
         global $mysqli;
         if ($result = $mysqli->query("
-            SELECT `dg_id`, `device_group`.`dg_desc`
+            SELECT DISTINCT `dg_id`, `device_group`.`dg_desc`
             FROM `device_group`
             LEFT JOIN `wait_queue`
             ON `wait_queue`.`Devgr_id` = `device_group`.`dg_id`

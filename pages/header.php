@@ -17,8 +17,8 @@
     <link href="/vendor/bootstrap/css/bootstrap.css" rel="stylesheet">
     <link href="/vendor/bs-datetimepicker/css/bootstrap-datetimepicker.min.css" rel="stylesheet">
     <link href="/vendor/datatables/css/dataTables.bootstrap.css" rel="stylesheet" type="text/css">
-    <link href="/vendor/fabapp/fabapp.css?=v5" rel="stylesheet">
-    <link href="/vendor/fontawesome/css/fontawesome-all.css" rel="stylesheet">
+    <link href="/vendor/fabapp/fabapp.css" rel="stylesheet">
+    <link href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
     <link href="/vendor/metisMenu/metisMenu.min.css" rel="stylesheet">
     <link href="/vendor/morrisjs/morris.css" rel="stylesheet">
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -223,9 +223,15 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                                 </form>
                                 </ul>
                             </li>
-                            <li>
-                                <a href="/admin/now_serving.php"><i class="fas fa-list-ol"></i> Now Serving</a>
-                            </li>
+                            <?php if ( $sv['wait_system'] == "new"){ ?>
+                                <li>
+                                    <a href="/pages/wait_ticket.php"><i class="fas fa-list-ol"></i> Wait Queue Ticket</a>
+                                </li>
+                            <?php } else { ?>
+                                <li>
+                                    <a href="/admin/now_serving.php"><i class="fas fa-list-ol"></i> Now Serving</a>
+                                </li>
+                            <?php } ?>
                             <li>
                                 <a href="#" id="pickLink"><i class="fas fa-gift"></i> Pick Up 3D Print<span class="fas fa-angle-left"></span></a>
                                 <ul class="nav nav-second-level">
@@ -275,9 +281,6 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                                 </ul>
                                 <!-- /.nav-second-level -->
                             </li>
-							<li>
-								<a href="/pages/wait_ticket.php"><i class="fas fa-list-ol"></i> Wait Queue Ticket</a>
-							</li>
                             <li>
                                 <a href="/admin/error.php"><i class="fas fa-bolt"></i> Error</a>
                             </li>
