@@ -382,7 +382,7 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
         <div class="col-md-4">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            <i class="fa fa-print fa-fw"></i>Remove All Wait-Queue Users
+                            <i class="fa fa-trash fa-fw"></i>Remove All Wait-Queue Users
                         </div>
                         <!-- /.panel-heading -->
                         <div class="panel-body">

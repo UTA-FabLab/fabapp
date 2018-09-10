@@ -47,7 +47,7 @@ function sendMessage($q_id, $message)
 function removeAllUsers()
 {
     Wait_queue::removeAllUsers(); 
-    header("Location:/pages/wait_ticket.php");
+    header("Location:/index.php");
 }
 
 ?>
