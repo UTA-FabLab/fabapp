@@ -378,6 +378,7 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
             <?php } ?>
         </div>
 
+    <?php if (Wait_queue::hasWait()) {?>
         <div class="col-md-4">
                     <div class="panel panel-default">
                         <div class="panel-heading">
@@ -395,6 +396,7 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
                     <!-- /.panel-body -->
                     </div>
         </div>
+        <?php } ?>
     </div>
     <!-- /.row -->
 </div>
