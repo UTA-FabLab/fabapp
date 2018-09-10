@@ -377,6 +377,24 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
                 <!-- /.panel -->
             <?php } ?>
         </div>
+
+        <div class="col-md-4">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <i class="fa fa-print fa-fw"></i>Remove All Wait-Queue Users
+                        </div>
+                        <!-- /.panel-heading -->
+                        <div class="panel-body">
+                            <div style="text-align: center">
+                                <button class="btn btn-danger" data-target="#removeModal" data-toggle="modal" 
+                                onclick="removeAllUsers()">
+                                    Remove All Users
+                                </button>
+                            </div>
+                        </div>
+                    <!-- /.panel-body -->
+                    </div>
+        </div>
     </div>
     <!-- /.row -->
 </div>
@@ -482,6 +500,13 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         }
      }
     
+     function removeAllUsers(){
+        
+        if (confirm("You are about to delete ALL wait queue users. Click OK to continue or CANCEL to quit.")){
+            
+        window.location.href = "/pages/sub/endWaitList.php";
+        }
+     }
     
     var str;
     for(var i=1; i<= <?php echo $number_of_queue_tables;?>; i++){

@@ -22,6 +22,9 @@ if (isset($_GET['q_id'])) {
     }
     
 }
+else{
+    removeAllUsers(); 
+}
 
 function removeFromQueue($q_id) {
     try {
@@ -41,5 +44,10 @@ function sendMessage($q_id, $message)
     Notifications::sendNotification($person->getOperator(), "Fabapp Notification", $message);
 }
 
+function removeAllUsers()
+{
+    Wait_queue::removeAllUsers(); 
+    header("Location:/pages/wait_ticket.php");
+}
 
 ?>
