@@ -73,7 +73,6 @@ function advanceNum($i, $str){
                         <div class="table-responsive">
                             <ul class="nav nav-tabs">
                                 <!-- Load all device groups as a tab that have at least one device in that group -->
-<<<<<<< HEAD
                                 <?php if ($result = $mysqli->query("
                                     SELECT dg_id, dg_desc
                                     FROM device_group 
@@ -86,6 +85,7 @@ function advanceNum($i, $str){
                                     )
                                     ORDER BY dg_id;
                                 ")) {
+                                 if ($result = Wait_queue::getTabResult()) {
                                         $count = 0;
                                         while ($row = $result->fetch_assoc()) { ?>
                                             <li class="<?php if ($count == 0) echo "active";?>">
@@ -98,16 +98,7 @@ function advanceNum($i, $str){
                                         }   
                                         $count++;                                                                  
                                         }
-=======
-                                <?php if ($result = Wait_queue::getTabResult()) {
-                                    $count = 0;
-                                    while ($row = $result->fetch_assoc()) { ?>
-                                        <li class="<?php if ($count == 0) echo "active";?>">
-                                            <a <?php echo("href=\"#".$row["dg_id"]."\""); ?>  data-toggle="tab" aria-expanded="false"> <?php echo($row["dg_desc"]); ?> </a>
-                                        </li>
-                                    <?php $count++; 
                                     }
->>>>>>> master
                                 } ?>
                             </ul>
                             <div class="tab-content">
@@ -116,22 +107,17 @@ function advanceNum($i, $str){
                                     while($tab = $Tabresult->fetch_assoc()){
                                         $number_of_queue_tables++;
                                         // Give all of the dynamic tables a name so they can be called when their tab is clicked ?>
-<<<<<<< HEAD
                                         <div class="tab-pane fade <?php if ($first_dgid == $tab["dg_id"]) echo "in active";?>" <?php echo("id=\"".$tab["dg_id"]."\"") ?> >
-=======
-                                        <div class="tab-pane fade <?php if ($number_of_queue_tables == 1) echo "in active";?>" <?php echo("id=\"".$tab["dg_id"]."\"") ?> >
->>>>>>> master
                                             <table class="table table-striped table-bordered table-hover" <?php echo("id=\"waitTable_$number_of_queue_tables\"") ?>>
                                                 <thead>
                                                     <tr class="tablerow">
-                                                        <th><i class="fa fa-th-list"></i> Priority</th>
+                                                        <th><i class="fa fa-th-list"></i> Queue Number</th>
                                                         <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?> <th><i class="far fa-user"></i> MavID</th><?php } ?>
                                                         <?php if ($tab["dg_id"]==2) { ?> <th><i class="far fa-flag"></i> Device Group</th><?php } ?>
                                                         <?php if ($tab["dg_id"]!=2) { ?> <th><i class="far fa-flag"></i> Device</th><?php } ?>
                                                         <th><i class="far fa-clock"></i> Time Left</th>
                                                         <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?> 
                                                             <th><i class="far fa-flag"></i> Alerts</th>
-                                                            <th><i class="fa fa-times"></i> Remove</th>
                                                         <?php } ?>
                                                     </tr>
                                                 </thead>
@@ -151,13 +137,13 @@ function advanceNum($i, $str){
                                                             <tr class="tablerow">
 
                                                                 <!-- Wait Queue Number -->
-                                                                <td align="center"><?php echo($counter++) ?></td>
+                                                                <td align="center"><?php echo($row['Q_id']) ?></td>
 
                                                                 <!-- Operator ID --> 
                                                                 <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?>
                                                                     <td>
                                                                         <?php $user = Users::withID($row['Operator']);?>
-                                                                        <a class="<?php echo $user->getIcon()?> fa-lg" title="<?php echo($row['Operator']) ?>"  href="/pages/updateContact.php?q_id=<?php echo $row["Q_id"]?>"></a>
+                                                                        <a class="<?php echo $user->getIcon()?> fa-lg" title="<?php echo($row['Operator']) ?>"  href="/pages/updateContact.php?operator=<?php echo $row["Operator"]?>&loc=0"></a>
                                                                         <?php if (!empty($row['Op_phone'])) { ?> <i class="fas fa-mobile"   title="<?php echo ($row['Op_phone']) ?>"></i> <?php } ?>
                                                                         <?php if (!empty($row['Op_email'])) { ?> <i class="fas fa-envelope" title="<?php echo ($row['Op_email']) ?>"></i> <?php } ?>
                                                                     </td>
@@ -209,18 +195,6 @@ function advanceNum($i, $str){
                                                                     <?php } ?>
                                                                 </td>
                                                                 <?php } ?>
-
-                                                                <!-- Remove From Wait Queue -->
-                                                                <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?>
-                                                                     <td> 
-                                                                         <div style="text-align: center">
-                                                                             <button class="btn btn-danger btn-xs btn-primary" data-target="#removeModal" data-toggle="modal" 
-                                                                                    onclick="removeFromWaitlist(<?php echo $row["Q_id"].", ".$row["Operator"].", undefined"?>)">
-                                                                                    Remove
-                                                                             </button>
-                                                                         </div>
-                                                                     </td>
-                                                                 <?php } ?>
                                                             </tr>
                                                         <?php }
                                                     } ?>
@@ -474,10 +448,10 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 ?>
 <script>
 <?php foreach ($device_array as $da) { ?>
-	var time = <?php echo $da[1];?>;
-	var display = document.getElementById('<?php echo $da[0];?>');
-	startTimer(time, display);
-	
+    var time = <?php echo $da[1];?>;
+    var display = document.getElementById('<?php echo $da[0];?>');
+    startTimer(time, display);
+    
 <?php } ?>
     $('#indexTable').DataTable({
         "iDisplayLength": 25,
@@ -595,15 +569,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         
         if (confirm("You are about to send a notification to a wait queue user. Click OK to continue or CANCEL to quit.")){
             
-        window.location.href = "/pages/sub/endWaitList.php?q_id=" + q_id + "&message=" + message;
-        }
-     }
-    
-     function removeFromWaitlist(q_id){
-        
-        if (confirm("You are about to delete a someone from the wait queue. Click OK to continue or CANCEL to quit.")){  
-        
-        window.location.href = "/pages/sub/endWaitList.php?q_id=" + q_id;
+        window.location.href = "/pages/sub/endWaitList.php?q_id=" + q_id + "&message=" + message + "&loc=0";
         }
      }
     
