@@ -496,7 +496,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
     
      function removeFromWaitlist(q_id){
         
-        if (confirm("You are about to delete a someone from the wait queue. Click OK to continue or CANCEL to quit.")){  
+        if (confirm("You are about to delete a user from the wait queue. Click OK to continue or CANCEL to quit.")){  
         
         window.location.href = "/pages/sub/endWaitList.php?q_id=" + q_id + "&loc=1";
         }
