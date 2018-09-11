@@ -290,14 +290,10 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
                             </tr>
                                     <div class="form-group">
                                         <?php
-                                            if(isset($_POST['devices'])){
                                                 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
+                                                    if(isset($_POST['devices']) && isset($_POST['dg_id'])){
+                                                        
                                                     $operator1 = filter_input(INPUT_POST, 'operator1');
-                                                    /*if(isset($device)) {
-                                                        $wait_id = Wait_queue::insertWaitQueue($operator, $device->getD_id(), $est_time, $p_id, $status_id, $staff);
-                                                    } else if(isset($device, NULL, 2)) {
-                                                        $wait_id = 
-                                                    }*/
                                                     $d_id1 = filter_input(INPUT_POST,'devices');
                                                     $dg_id1 = filter_input(INPUT_POST,'dg_id');
                                                     $em1 = filter_input(INPUT_POST,'op-email');
@@ -326,20 +322,16 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
                                                         }
                                                         if ($dg_id1 == "2"){
                                                             $device_desc1 = "PolyPrinter";
-                                                            
                                                         }
-
-                                                        
                                                         //Wait_queue::printTicket($q_id, $estTime, $device_desc);
                                                     }
-                                                }
-                                            }
-                                            else {
+                                                  } else {
                                                 echo ("<div style='text-align: center'>
                                                         <div class='alert alert-danger'>
                                                             You Must Select A Device
                                                         </div> </div>");
-                                            } ?>
+                                                    }
+                                                } ?>
                                     </div>
                             <tfoot>
                                 <tr>
