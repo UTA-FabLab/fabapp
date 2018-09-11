@@ -188,7 +188,7 @@ function advanceNum($i, $str){
                                                                     <?php if (!empty($row['Op_phone']) || !empty($row['Op_email'])) { ?> 
                                                                         <div style="text-align: center">
                                                                             <button class="btn btn-xs btn-primary" data-target="#removeModal" data-toggle="modal" 
-                                                                                    onclick="sendManualMessage(<?php echo $row["Q_id"]?>, 'The FabLab is waiting for you to start your print!')">
+                                                                                    onclick="sendManualMessage(<?php echo $row["Q_id"]?>, 'Your wait ticket is almost done, please make your way to the FabLab!')">
                                                                                     Send Alert
                                                                             </button>
                                                                         </div>
@@ -521,12 +521,4 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         }
      }
     
-    var str;
-    for(var i=1; i<= <?php echo $number_of_queue_tables;?>; i++){
-        str = "#waitTable_"+i
-        $(str).DataTable({
-                    "iDisplayLength": 10,
-                    "order": []
-                    });
-    }
 </script>
