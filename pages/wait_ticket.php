@@ -132,7 +132,11 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
                                                                     echo("<span align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
                                                                     $str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $row["estTime"]);
                                                                     sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
-                                                                    $time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - strtotime($row["Start_date"]) ) + ($sv["grace_period"]*3);
+                                                                    $time_seconds = $hours * 3600 + $minutes * 60 + $seconds + ($sv["grace_period"]) + ($sv["grace_period"]);
+                                                                    $temp_time = $hours * 3600 + $minutes * 60 + $seconds;
+                                                                    if ($temp_time == "00:00:00"){
+                                                                            $time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - strtotime($row["Start_date"]) ) + $sv["grace_period"];
+                                                                    }
                                                                     array_push($device_array, array("q".$row["Q_id"], $time_seconds));
                                                                 } ?>
 
