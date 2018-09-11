@@ -343,7 +343,7 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
                                     </div>
                             <tfoot>
                                 <tr>
-                                    <td colspan="2"><div class="pull-right"><input type="submit" name="submitBtn" value="Submit"></div></td>
+                                    <td colspan="2"><div class="pull-right"><input  class="btn btn-primary" type="submit" name="submitBtn" value="Submit"></div></td>
                                 </tr>
                             </tfoot>
                         </form>

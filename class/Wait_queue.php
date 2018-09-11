@@ -97,9 +97,9 @@ class Wait_queue {
 
             if ($mysqli->query("
                 INSERT INTO `wait_queue` 
-                  (`operator`,`dev_id`,`Devgr_id`,`start_date`, `Op_email`, `Op_phone`, `last_contact`) 
+                  (`operator`,`dev_id`,`Devgr_id`,`start_date`, `Op_email`, `Op_phone`) 
                 VALUES
-                    ('$operator','$d_id','$dg_id',CURRENT_TIMESTAMP, '$email', '$phone', CURRENT_TIMESTAMP);
+                    ('$operator','$d_id','$dg_id',CURRENT_TIMESTAMP, '$email', '$phone');
 
             ")){        
                 Notifications::sendNotification($operator, "Fabapp Notification", "You have signed up for fabapp notifications. Your ticket number is: ".$mysqli->insert_id."", 'From: Fabapp Notifications' . "\r\n" .'');
@@ -121,9 +121,9 @@ class Wait_queue {
         } else {
             if ($mysqli->query("
                 INSERT INTO wait_queue 
-                  (`operator`, `Devgr_id`,`start_date`, `Op_email`, `Op_phone`, `last_contact`) 
+                  (`operator`, `Devgr_id`,`start_date`, `Op_email`, `Op_phone`) 
                 VALUES
-                    ('$operator','$dg_id',CURRENT_TIMESTAMP, '$email', '$phone', CURRENT_TIMESTAMP);
+                    ('$operator','$dg_id',CURRENT_TIMESTAMP, '$email', '$phone');
             ")){        
                 Notifications::sendNotification($operator, "Fabapp Notification", "You have signed up for fabapp notifications. Your ticket number is: ".$mysqli->insert_id."", 'From: Fabapp Notifications' . "\r\n" .'');
                 Wait_queue::calculateWaitTimes();
@@ -347,6 +347,22 @@ class Wait_queue {
                 echo ("Error updating $operator contact info!");
             }
         }
+    }
+    
+    public static function removeAllUsers()
+     {
+        global $mysqli;
+        
+        if ($mysqli->query("
+                UPDATE `wait_queue`
+                SET `Op_email` = NULL, `Op_phone` = NULL, `End_date` = CURRENT_TIMESTAMP, valid='N'
+                WHERE valid='Y';
+            "))
+            {
+            } else {
+                echo ("Error deleting users!");
+            }
+        
     }
     
     public static function calculateWaitTimes()
