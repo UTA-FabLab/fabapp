@@ -66,7 +66,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
                             </tr>
                             <tfoot>
                                 <tr>
-                                    <td colspan="2"><div class="pull-right"><input type="submit" name="submitBtn" value="Submit"></div></td>
+                                    <td colspan="2"><div class="pull-right"><input class="btn btn-primary" type="submit" name="submitBtn" value="Submit"></div></td>
                                 </tr>
                             </tfoot>
                         </form>
