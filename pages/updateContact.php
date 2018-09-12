@@ -28,7 +28,8 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
                     <?php    if ($result = $mysqli->query("
                                 SELECT WQ.`Op_email` , WQ.`Op_phone`
                                 FROM `wait_queue` WQ
-                                WHERE WQ.`Operator`=$operator AND WQ.`valid`='Y';
+                                WHERE WQ.`Operator`=$operator AND WQ.`valid`='Y'
+                                LIMIT 1;
                                 ")) { 
                             while ($row = $result->fetch_assoc()) { ?>
                             <tr>
