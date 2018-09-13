@@ -140,7 +140,7 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
                         <div class="row">
                             <div class="col-lg-11">
                                 <tr>
-                                    <td>Device</td>
+                                    <td><b>Device:</b></td>
                                     <td>
                                         <select class="form-control" name="devGrp" id="devGrp" onChange="change_group()" >
                                             <option value="" selected hidden> Select Device</option>
@@ -164,13 +164,14 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>Operator</td>
+                                    <td><b>Operator:</b></td>
                                     <td>
                                         <select class="form-control" name="deviceList" id="deviceList">
                                             <option value ="" selected hidden> Select Device First</option>
                                         </select>
                                     </td>
                                 </tr>
+                                &emsp;
                             </div>
                             <!-- /.col-md-11 -->
                         </div>
