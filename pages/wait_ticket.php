@@ -71,51 +71,51 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
                             <td><a href="#" data-toggle="tooltip" data-placement="top" title="The person that you will issue a wait ticket for">Operator</a></td>
                             <td><input type="text" name="operator1" id="operator1" class="form-control" placeholder="1000000000" maxlength="10" size="10"/></td>
                         </tr>
-                                <div class="form-group">
-                                    <?php
-                                            if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
-                                                if(isset($_POST['devices']) && isset($_POST['dg_id'])){
+                        <div class="form-group">
+                            <?php
+                                    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
+                                        if(isset($_POST['devices']) && isset($_POST['dg_id'])){
 
-                                                $operator1 = filter_input(INPUT_POST, 'operator1');
-                                                $d_id1 = filter_input(INPUT_POST,'devices');
-                                                $dg_id1 = filter_input(INPUT_POST,'dg_id');
-                                                $em1 = filter_input(INPUT_POST,'op-email');
-                                                $ph1 = filter_input(INPUT_POST, 'op-phone');
-                                                $wait_id1 = Wait_queue::insertWaitQueue($operator1, $d_id1, $dg_id1, $ph1, $em1);
+                                        $operator1 = filter_input(INPUT_POST, 'operator1');
+                                        $d_id1 = filter_input(INPUT_POST,'devices');
+                                        $dg_id1 = filter_input(INPUT_POST,'dg_id');
+                                        $em1 = filter_input(INPUT_POST,'op-email');
+                                        $ph1 = filter_input(INPUT_POST, 'op-phone');
+                                        $wait_id1 = Wait_queue::insertWaitQueue($operator1, $d_id1, $dg_id1, $ph1, $em1);
 
-                                                if (is_int($wait_id1)){
-                                                    if($result = $mysqli->query("
-                                                        SELECT `wait_queue`.`q_id`, `wait_queue`.`estTime`, `wait_queue`.`Dev_id`, `wait_queue`.`Devgr_id`
-                                                        FROM `wait_queue`
-                                                        WHERE `wait_queue`.`Devgr_id`=$dg_id AND `wait_queue`.`Operator`=$operator 
-                                                    ")){
-                                                            while($row = $result->fetch_assoc()){
-                                                            $q_id1=$row["q_id"];
-                                                            $estTime1=$row["estTime"];
-                                                        }
-                                                    }
-                                                    if($result = $mysqli->query("
-                                                        SELECT `devices`.`device_desc`
-                                                        FROM `devices`
-                                                        WHERE `devices`.`d_id`=$d_id1
-                                                    ")){
-                                                            while($row = $result->fetch_assoc()){
-                                                            $device_desc1=$row["device_desc"];
-                                                        }
-                                                    }
-                                                    if ($dg_id1 == "2"){
-                                                        $device_desc1 = "PolyPrinter";
-                                                    }
-                                                    //Wait_queue::printTicket($q_id, $estTime, $device_desc);
+                                        if (is_int($wait_id1)){
+                                            if($result = $mysqli->query("
+                                                SELECT `wait_queue`.`q_id`, `wait_queue`.`estTime`, `wait_queue`.`Dev_id`, `wait_queue`.`Devgr_id`
+                                                FROM `wait_queue`
+                                                WHERE `wait_queue`.`Devgr_id`=$dg_id1 AND `wait_queue`.`Operator`=$operator1 
+                                            ")){
+                                                    while($row = $result->fetch_assoc()){
+                                                    $q_id1=$row["q_id"];
+                                                    $estTime1=$row["estTime"];
                                                 }
-                                              } else {
-                                            echo ("<div style='text-align: center'>
-                                                    <div class='alert alert-danger'>
-                                                        You Must Select A Device
-                                                    </div> </div>");
+                                            }
+                                            if($result = $mysqli->query("
+                                                SELECT `devices`.`device_desc`
+                                                FROM `devices`
+                                                WHERE `devices`.`d_id`=$d_id1
+                                            ")){
+                                                    while($row = $result->fetch_assoc()){
+                                                    $device_desc1=$row["device_desc"];
                                                 }
-                                            } ?>
-                                </div>
+                                            }
+                                            if ($dg_id1 == "2"){
+                                                $device_desc1 = "PolyPrinter";
+                                            }
+                                            //Wait_queue::printTicket($q_id, $estTime, $device_desc);
+                                        }
+                                      } else {
+                                    echo ("<div style='text-align: center'>
+                                            <div class='alert alert-danger'>
+                                                You Must Select A Device
+                                            </div> </div>");
+                                        }
+                                    } ?>
+                        </div>
                         <tfoot>
                             <tr>
                                 <td colspan="2"><div class="pull-right"><input  class="btn btn-primary" type="submit" name="submitBtn" value="Submit"></div></td>
@@ -199,31 +199,18 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
                     <div class="table-responsive">
                         <ul class="nav nav-tabs">
                             <!-- Load all device groups as a tab that have at least one device in that group -->
-                            <?php if ($result = $mysqli->query("
-                                SELECT dg_id, dg_desc
-                                FROM device_group 
-                                WHERE device_group.dg_id IN ( 
-                                        SELECT D.dg_id
-                                        FROM devices D, wait_queue WQ
-                                        WHERE D.dg_id=WQ.devgr_id AND WQ.valid='Y'
-                                        GROUP BY dg_id
-                                        HAVING COUNT(*) >= 1
-                                )
-                                ORDER BY dg_id;
-                            ")) {
-                                if ($result = Wait_queue::getTabResult()) {
-                                    $count = 0;
-                                    while ($row = $result->fetch_assoc()) { ?>
-                                        <li class="<?php if ($count == 0) echo "active";?>">
-                                            <a <?php echo("href=\"#".$row["dg_id"]."\""); ?>  data-toggle="tab" aria-expanded="false"> <?php echo($row["dg_desc"]); ?> </a>
-                                        </li>
-                                    <?php 
-                                    if ($count == 0){
-                                        //create a way to display the first wait_queue table tab by saving which dg_id it is to variable 'first_dgid'
-                                        $first_dgid = $row["dg_id"];  
-                                    }   
-                                    $count++;                                                                  
-                                    }
+                            <?php if ($result = Wait_queue::getTabResult()) {
+                                $count = 0;
+                                while ($row = $result->fetch_assoc()) { ?>
+                                    <li class="<?php if ($count == 0) echo "active";?>">
+                                        <a <?php echo("href=\"#".$row["dg_id"]."\""); ?>  data-toggle="tab" aria-expanded="false"> <?php echo($row["dg_desc"]); ?> </a>
+                                    </li>
+                                <?php 
+                                if ($count == 0){
+                                    //create a way to display the first wait_queue table tab by saving which dg_id it is to variable 'first_dgid'
+                                    $first_dgid = $row["dg_id"];  
+                                }   
+                                $count++;                                                                  
                                 }
                             } ?>
                         </ul>
@@ -267,14 +254,12 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
                                                             <td align="center"><?php echo($row['Q_id']) ?></td>
 
                                                             <!-- Operator ID --> 
-                                                            <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?>
-                                                                <td>
-                                                                    <?php $user = Users::withID($row['Operator']);?>
-                                                                    <a class="<?php echo $user->getIcon()?> fa-lg" title="<?php echo($row['Operator']) ?>"  href="/pages/updateContact.php?operator=<?php echo $row["Operator"]?>&queue_id=<?php echo $row["Q_id"]?>&loc=1"></a>
-                                                                    <?php if (!empty($row['Op_phone'])) { ?> <i class="fas fa-mobile"   title="<?php echo ($row['Op_phone']) ?>"></i> <?php } ?>
-                                                                    <?php if (!empty($row['Op_email'])) { ?> <i class="fas fa-envelope" title="<?php echo ($row['Op_email']) ?>"></i> <?php } ?>
-                                                                </td>
-                                                            <?php } ?>
+                                                            <td>
+                                                                <?php $user = Users::withID($row['Operator']);?>
+                                                                <a class="<?php echo $user->getIcon()?> fa-lg" title="<?php echo($row['Operator']) ?>"  href="/pages/updateContact.php?operator=<?php echo $row["Operator"]?>&queue_id=<?php echo $row["Q_id"]?>&loc=1"></a>
+                                                                <?php if (!empty($row['Op_phone'])) { ?> <i class="fas fa-mobile"   title="<?php echo ($row['Op_phone']) ?>"></i> <?php } ?>
+                                                                <?php if (!empty($row['Op_email'])) { ?> <i class="fas fa-envelope" title="<?php echo ($row['Op_email']) ?>"></i> <?php } ?>
+                                                            </td>
 
                                                             <!-- Device Group Name -->
                                                             <?php if ($tab["dg_id"]==2) { ?> <td align="center"><?php echo($row['dg_desc']) ?></td><?php } ?>
@@ -284,9 +269,7 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
                                                             <!-- Start Time, Estimated Time, Last Contact Time -->
                                                             <td>
                                                                 <!-- Start Time -->
-                                                            <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?>
                                                                 <i class="far fa-calendar-alt" align="center" title="Started @ <?php echo( date($sv['dateFormat'],strtotime($row['Start_date'])) ) ?>"></i>
-                                                            <?php } ?>
 
                                                             <!-- Estimated Time -->
                                                             <?php if (isset($row['estTime'])) {
@@ -302,15 +285,13 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
                                                             } ?>
 
                                                                 <!-- Last Contact Time -->
-                                                            <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?>
                                                                 <?php if (isset($row['last_contact'])) { ?> 
                                                                     <i class="far fa-bell" align="center" title="Last Alerted @ <?php echo(date($sv['dateFormat'], strtotime($row['last_contact']))) ?>"></i> <?php
                                                                 } ?>
-                                                            <?php } ?>
                                                             </td>
 
                                                             <!-- Send an Alert -->
-                                                            <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?>
+                                                            
                                                             <td> 
                                                                 <?php if (!empty($row['Op_phone']) || !empty($row['Op_email'])) { ?> 
                                                                     <div style="text-align: center">
@@ -321,19 +302,16 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
                                                                     </div>
                                                                 <?php } ?>
                                                             </td>
-                                                            <?php } ?>
 
                                                             <!-- Remove From Wait Queue -->
-                                                            <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?>
-                                                                    <td> 
-                                                                        <div style="text-align: center">
-                                                                            <button class="btn btn-danger btn-xs btn-primary" data-target="#removeModal" data-toggle="modal" 
-                                                                                    onclick="removeFromWaitlist(<?php echo $row["Q_id"].", ".$row["Operator"].", undefined"?>)">
-                                                                                    Remove
-                                                                            </button>
-                                                                        </div>
-                                                                    </td>
-                                                                <?php } ?>
+                                                            <td> 
+                                                                <div style="text-align: center">
+                                                                    <button class="btn btn-danger btn-xs btn-primary" data-target="#removeModal" data-toggle="modal" 
+                                                                            onclick="removeFromWaitlist(<?php echo $row["Q_id"].", ".$row["Operator"].", undefined"?>)">
+                                                                            Remove
+                                                                    </button>
+                                                                </div>
+                                                            </td>
                                                         </tr>
                                                     <?php }
                                                 } ?>
