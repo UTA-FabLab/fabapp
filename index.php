@@ -66,7 +66,7 @@ function advanceNum($i, $str){
             <div class="col-md-8">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fas fa-ticket-alt fa-fw"></i>  Wait Queue
+                        <i class="fas fa-list-ol"></i>  Wait Queue
                     </div>
                     <!-- /.panel-heading -->
                     <div class="panel-body">
@@ -143,7 +143,7 @@ function advanceNum($i, $str){
                                                                 <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?>
                                                                     <td>
                                                                         <?php $user = Users::withID($row['Operator']);?>
-                                                                        <a class="<?php echo $user->getIcon()?> fa-lg" title="<?php echo($row['Operator']) ?>"  href="/pages/updateContact.php?operator=<?php echo $row["Operator"]?>&loc=0"></a>
+                                                                        <a class="<?php echo $user->getIcon()?> fa-lg" title="<?php echo($row['Operator']) ?>"  href="/pages/updateContact.php?operator=<?php echo $row["Operator"]?>&queue_id=<?php echo $row["Q_id"]?>&loc=0"></a>
                                                                         <?php if (!empty($row['Op_phone'])) { ?> <i class="fas fa-mobile"   title="<?php echo ($row['Op_phone']) ?>"></i> <?php } ?>
                                                                         <?php if (!empty($row['Op_email'])) { ?> <i class="fas fa-envelope" title="<?php echo ($row['Op_email']) ?>"></i> <?php } ?>
                                                                     </td>

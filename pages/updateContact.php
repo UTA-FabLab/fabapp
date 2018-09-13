@@ -10,6 +10,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 <title><?php echo $sv['site_name'];?> Update Contact Info</title>
 <div id="page-wrapper">
     <?php $operator = ($_REQUEST['operator']); ?>
+    <?php $queue_id = ($_REQUEST['queue_id']); ?>
     <div class="row">
         <div class="col-lg-12">
             <h1 class="page-header">Update Contact Info</h1>
@@ -21,7 +22,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
         <div class="col-md-8">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="far fa-bell" aria-hidden="true"></i> Update Contact Info : <?php echo $operator?>
+                        <i class="fas fa-bell" aria-hidden="true"></i> Update Contact Info for Queue Number: <b><?php echo $queue_id?></b>
                     </div>
                     <div class="panel-body">
                         <table class="table table-bordered table-striped table-hover"><form name="wqform" id="wqform" autocomplete="off" method="POST" action="">
