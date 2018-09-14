@@ -278,6 +278,9 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                                             </li>
                                         </ul>
                                     </li>
+                                    <li>
+                                        <a href="/admin/sv.php"><i class="fas fa-sliders-h"></i> Site Variables</a>
+                                    </li>
                                 </ul>
                                 <!-- /.nav-second-level -->
                             </li>
