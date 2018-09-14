@@ -3,11 +3,11 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST");
 header("Access-Control-Allow-Headers: Cache-Control, Origin, X-Requested-With, Content-Type, Accept, Key, X-Api-Key, Authorization");
 /*
- *  CC BY-NC-AS UTA FabLab 2016-2017
+ *  CC BY-NC-AS UTA FabLab 2016-2018
  * 
  *  Suleiman Barakat & Jon Le
  *  FabLab @ University of Texas at Arlington
- *  version: 0.9 beta (2018-03-14)
+ *  version: 0.91
  */
 require_once ($_SERVER['DOCUMENT_ROOT']."/connections/db_connect8.php");
 include_once ($_SERVER['DOCUMENT_ROOT'].'/class/all_classes.php');
@@ -223,7 +223,8 @@ function end_transaction( $dev_id ){
 
 	// Check for deviceID value
     if (! (preg_match("/^\d*$/", $dev_id))) {
-        $json_out["ERROR"] = "Invalid transaction number";
+        $json_out["ERROR"] = "Invalid device number";
+		Error::insertError($_SERVER['PHP_SELF'],  $json_out["ERROR"], "");
         ErrorExit(1);
     }
 	if ($result = $mysqli->query("
