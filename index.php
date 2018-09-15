@@ -130,8 +130,12 @@ function advanceNum($i, $str){
                                                             WHERE valid = 'Y' and WQ.devgr_id=$tab[dg_id]
                                                             ORDER BY Q_id;
                                                     ")) {
-                                                        $counter = 1;
-                                                        Wait_queue::calculateDeviceWaitTimes();      
+                                                        if ($tab[dg_id] != 'N'){
+                                                            Wait_queue::calculateDeviceWaitTimes(); 
+                                                        } else {
+                                                            Wait_queue::calculateWaitTimes();
+                                                        }  
+   
 
                                                         while ($row = $result->fetch_assoc()) { ?>
                                                             <tr class="tablerow">
@@ -169,9 +173,12 @@ function advanceNum($i, $str){
                                                                     $time_seconds = $hours * 3600 + $minutes * 60 + $seconds + ($sv["grace_period"]) + ($sv["grace_period"]);
                                                                     $temp_time = $hours * 3600 + $minutes * 60 + $seconds;
                                                                     if ($temp_time == "00:00:00"){
-                                                                            $time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - strtotime($row["Start_date"]) ) + $sv["grace_period"];
+                                                                        //$time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - //strtotime($row["Start_date"]) ) + $sv["grace_period"];
+
+                                                                        //do nothing keeping time at 00:00:00
+                                                                    } else {
+                                                                        array_push($device_array, array("q".$row["Q_id"], $time_seconds));
                                                                     }
-                                                                    array_push($device_array, array("q".$row["Q_id"], $time_seconds));
                                                                 } ?>
 
                                                                     <!-- Last Contact Time -->
@@ -232,7 +239,11 @@ function advanceNum($i, $str){
                                                             JOIN `wait_queue` WQ on D.`dg_id` = WQ.`Devgr_id`
                                                             LEFT JOIN (SELECT trans_id, t_start, t_end, d_id, operator, status_id FROM transactions WHERE status_id < 12  ORDER BY trans_id DESC) as t
                                                             ON D.`d_id` = t.`d_id`
-                                                            WHERE WQ.`valid`='Y' AND (WQ.`Devgr_id` = 2 OR D.`d_id` = WQ.`Dev_id`) AND t.`trans_id` IS NULL
+                                                            WHERE WQ.`valid`='Y' AND (WQ.`Devgr_id` = 2 OR D.`d_id` = WQ.`Dev_id`) AND t.`trans_id` IS NULL AND D.`d_id` NOT IN (
+                                                                SELECT `d_id`
+                                                                FROM `service_call`
+                                                                WHERE `solved` = 'N' AND `sl_id` >= 7
+                                                            )
                                                     ")) {
                                                         while ( $rows = mysqli_fetch_array ( $result ) ) {
                                                             // Create value in the form of DG_dgID-dID
@@ -244,15 +255,10 @@ function advanceNum($i, $str){
                                             </select>
                                         </td>
                                     </tr>
-                                    <tr>
-                                        <td><b>Operator:</b></td>
-                                        <td>
-                                            <select class="form-control" name="deviceList" id="deviceList">
-                                                <option value ="" selected hidden> Select Device First</option>
-                                            </select>
-                                        </td>
-                                    </tr>
-                                    &emsp;
+                                    <tr> <br>
+                                        <td><p><b>Operator: </b><span type="password" id="deviceList"></span></p></td>
+                                        <td><input type="text" name="operator_ticket" id="operator_ticket" class="form-control" placeholder="1000000000" maxlength="10" size="10"/></td>
+                                    </tr><br>
                                 </div>
                                 <!-- /.col-md-11 -->
                             </div>
@@ -516,7 +522,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
     var device = "";
     function newTicket(){
         var device_id = document.getElementById("devGrp").value;
-        var o_id = document.getElementById("deviceList").value;
+        var o_id = document.getElementById("operator_ticket").value;
         
         if("D_" === device_id.substring(0,2)){
             device_id = device_id.substring(2);
@@ -574,5 +580,14 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         window.location.href = "/pages/sub/endWaitList.php?q_id=" + q_id + "&message=" + message + "&loc=0";
         }
      }
+    
+    var str;
+    for(var i=1; i<= <?php echo $number_of_queue_tables;?>; i++){
+        str = "#waitTable_"+i
+        $(str).DataTable({
+                    "iDisplayLength": 10,
+                    "order": []
+                    });
+    }
     
 </script>
