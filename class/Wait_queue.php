@@ -585,7 +585,7 @@ class Wait_queue {
     public static function getTabResult(){
         global $mysqli;
         if ($result = $mysqli->query("
-            SELECT DISTINCT `dg_id`, `device_group`.`dg_desc`
+            SELECT DISTINCT `device_group`.`dg_id`, `device_group`.`dg_desc`, `device_group`.`granular_wait`
             FROM `device_group`
             LEFT JOIN `wait_queue`
             ON `wait_queue`.`Devgr_id` = `device_group`.`dg_id`
