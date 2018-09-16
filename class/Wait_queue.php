@@ -175,7 +175,7 @@ class Wait_queue {
         if ($result = $mysqli->query("
             SELECT `Op_email`, `Op_phone`, `last_contact`
             FROM `wait_queue`
-            WHERE `Operator` = $queueItem->operator AND valid = 'Y'
+            WHERE `Q_id` = $queueItem->Q_id
             LIMIT 1;
         ")) {
             $row = $result->fetch_assoc();
@@ -202,7 +202,7 @@ class Wait_queue {
     
         // If they are not waiting for any other jobs, then delete their contact information
         if (!Wait_queue::isOperatorWaiting($queueItem->operator)) {
-            Wait_queue::deleteContactInfo($queueItem->operator);
+            Wait_queue::deleteContactInfo($queueItem->q_id);
         }
 
         // Calculate new wait times based off a person leaving the wait queue
@@ -311,40 +311,31 @@ class Wait_queue {
         }
     }
     
-    public static function updateContactInfo($operator, $phone, $email)
-     {
+    public static function updateContactInfo($q_id, $phone, $email)
+    {
         global $mysqli;
         $status= 0;
         
         //Validate input variables
         if (!self::regexPhone($phone) && !empty($phone)) {
-            echo ("<div style='text-align: center'>
-                    <div class='alert alert-danger'>
-                        Bad Phone Number - $phone
-                    </div> </div>");
             $status = 1;
-            return $status;
+            return "Bad Phone Number - $phone";
         }
-
         if(!filter_var($email, FILTER_VALIDATE_EMAIL) && !empty($email)) {
-            echo ("<div style='text-align: center'>
-                    <div class='alert alert-danger'>
-                        Bad Email - $email
-                    </div> </div>");
             $status = 1;
-            return $status;
+            return "Bad Email - $email";
         }
         
         if ($status == 0){
             if ($mysqli->query("
                 UPDATE `wait_queue`
                 SET `Op_email` = '$email' , `Op_phone` = '$phone'
-                WHERE `Operator` = '$operator' AND valid='Y';
+                WHERE `Operator` = '$q_id' AND valid='Y';
             "))
             {
                 return $status;
             } else {
-                echo ("Error updating $operator contact info!");
+                echo ("Error updating $q_id contact infomation!");
             }
         }
     }
@@ -354,14 +345,14 @@ class Wait_queue {
         global $mysqli;
         
         if ($mysqli->query("
-                UPDATE `wait_queue`
-                SET `Op_email` = NULL, `Op_phone` = NULL, `End_date` = CURRENT_TIMESTAMP, valid='N'
-                WHERE valid='Y';
-            "))
-            {
-            } else {
-                echo ("Error deleting users!");
-            }
+            UPDATE `wait_queue`
+            SET `Op_email` = NULL, `Op_phone` = NULL, `End_date` = CURRENT_TIMESTAMP, valid='N'
+            WHERE valid='Y';
+        ")){
+            return true;
+        } else {
+            echo ("Error deleting users!");
+        }
         
     }
     
