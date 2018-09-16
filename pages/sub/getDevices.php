@@ -61,9 +61,7 @@ if (!empty($_GET["val"])) {
             //}
         }
     
-}
-
-?>
+} ?>
 
 <?php
 // Standard call for dependencies

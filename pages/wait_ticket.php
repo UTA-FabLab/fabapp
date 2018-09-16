@@ -14,6 +14,14 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
     header('Location: /index.php');
     exit();
 }
+if (!array_key_exists("clear_queue",$sv)){
+    $mysqli->query("INSERT INTO `site_variables` (`id`, `name`, `value`, `notes`) VALUES (NULL, 'clear_queue', '9', 'Minimum Lvl Required to clear the Wait Queue')");
+}
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
+    Wait_queue::removeAllUsers();
+    $_SESSION['success_msg'] = "Wait Queue has been cleared";
+    header("Location:/index.php");
+}
 ?>
 <title><?php echo $sv['site_name'];?> Wait Queue System</title>
 <div id="page-wrapper">
@@ -73,9 +81,8 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
                         </tr>
                         <div class="form-group">
                             <?php
-                                    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
-                                        if(isset($_POST['devices']) && isset($_POST['dg_id'])){
-
+                                if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
+                                    if(isset($_POST['devices']) && isset($_POST['dg_id'])){
                                         $operator1 = filter_input(INPUT_POST, 'operator1');
                                         $d_id1 = filter_input(INPUT_POST,'devices');
                                         $dg_id1 = filter_input(INPUT_POST,'dg_id');
@@ -97,7 +104,7 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
                                             if($result = $mysqli->query("
                                                 SELECT `devices`.`device_desc`
                                                 FROM `devices`
-                                                WHERE `devices`.`d_id`=$d_id1
+                                                WHERE `devices`.`d_id`= $d_id1
                                             ")){
                                                     while($row = $result->fetch_assoc()){
                                                     $device_desc1=$row["device_desc"];
@@ -108,13 +115,13 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
                                             }
                                             //Wait_queue::printTicket($q_id, $estTime, $device_desc);
                                         }
-                                      } else {
-                                    echo ("<div style='text-align: center'>
-                                            <div class='alert alert-danger'>
-                                                You Must Select A Device
-                                            </div> </div>");
-                                        }
-                                    } ?>
+                                    } else {
+                                        echo ("<div style='text-align: center'>
+                                                <div class='alert alert-danger'>
+                                                    You Must Select A Device
+                                                </div> </div>");
+                                    }
+                                } ?>
                         </div>
                         <tfoot>
                             <tr>
@@ -243,7 +250,7 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
                                                         WHERE valid = 'Y' and WQ.devgr_id=$tab[dg_id]
                                                         ORDER BY Q_id;
                                                 ")) {
-                                                    if ($tab[dg_id] != 'N'){
+                                                    if ($tab["dg_id"] != 'N'){
                                                         Wait_queue::calculateDeviceWaitTimes(); 
                                                     } else {
                                                         Wait_queue::calculateWaitTimes();
@@ -259,7 +266,7 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
                                                             <!-- Operator ID --> 
                                                             <td>
                                                                 <?php $user = Users::withID($row['Operator']);?>
-                                                                <a class="<?php echo $user->getIcon()?> fa-lg" title="<?php echo($row['Operator']) ?>"  href="/pages/updateContact.php?operator=<?php echo $row["Operator"]?>&queue_id=<?php echo $row["Q_id"]?>&loc=1"></a>
+                                                                <a class="<?php echo $user->getIcon()?> fa-lg" title="<?php echo($row['Operator']) ?>"  href="/pages/updateContact.php?q_id=<?php echo $row["Q_id"]?>&loc=1"></a>
                                                                 <?php if (!empty($row['Op_phone'])) { ?> <i class="fas fa-mobile"   title="<?php echo ($row['Op_phone']) ?>"></i> <?php } ?>
                                                                 <?php if (!empty($row['Op_email'])) { ?> <i class="fas fa-envelope" title="<?php echo ($row['Op_email']) ?>"></i> <?php } ?>
                                                             </td>
@@ -341,10 +348,11 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
                 <!-- /.panel-heading -->
                 <div class="panel-body">
                     <div style="text-align: center">
-                        <button class="btn btn-danger" data-target="#removeModal" data-toggle="modal" 
-                        onclick="removeAllUsers()">
+                        <form method="post" action="" onsubmit="return removeAllUsers()" >
+                        <button class="btn btn-danger" name="removeBtn">
                             Remove All Users
                         </button>
+                        </form>
                     </div>
                 </div>
             <!-- /.panel-body -->
@@ -461,10 +469,10 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
      function removeAllUsers(){
         
         if (confirm("You are about to delete ALL wait queue users. Click OK to continue or CANCEL to quit.")){
-            
-        window.location.href = "/pages/sub/endWaitList.php";
+            return true;
         }
-     }
+        return false;
+    }
     
     var str;
     for(var i=1; i<= <?php echo $number_of_queue_tables;?>; i++){

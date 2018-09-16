@@ -73,33 +73,20 @@ function advanceNum($i, $str){
                         <div class="table-responsive">
                             <ul class="nav nav-tabs">
                                 <!-- Load all device groups as a tab that have at least one device in that group -->
-                                <?php if ($result = $mysqli->query("
-                                    SELECT dg_id, dg_desc
-                                    FROM device_group 
-                                    WHERE device_group.dg_id IN ( 
-                                            SELECT D.dg_id
-                                            FROM devices D, wait_queue WQ
-                                            WHERE D.dg_id=WQ.devgr_id AND WQ.valid='Y'
-                                            GROUP BY dg_id
-                                            HAVING COUNT(*) >= 1
-                                    )
-                                    ORDER BY dg_id;
-                                ")) {
-                                 if ($result = Wait_queue::getTabResult()) {
+                                <?php if ($result = Wait_queue::getTabResult()) {
                                         $count = 0;
                                         while ($row = $result->fetch_assoc()) { ?>
                                             <li class="<?php if ($count == 0) echo "active";?>">
                                                 <a <?php echo("href=\"#".$row["dg_id"]."\""); ?>  data-toggle="tab" aria-expanded="false"> <?php echo($row["dg_desc"]); ?> </a>
                                             </li>
-                                        <?php 
-                                        if ($count == 0){
-                                            //create a way to display the first wait_queue table tab by saving which dg_id it is to variable 'first_dgid'
-                                            $first_dgid = $row["dg_id"];  
-                                        }   
-                                        $count++;                                                                  
+                                            <?php //create a way to display the first wait_queue table tab by saving which dg_id it is to variable 'first_dgid'
+                                            if ($count == 0){
+                                                $first_dgid = $row["dg_id"];  
+                                            }   
+                                            $count++;                                                                  
                                         }
                                     }
-                                } ?>
+                                ?>
                             </ul>
                             <div class="tab-content">
                                 <?php
@@ -130,7 +117,7 @@ function advanceNum($i, $str){
                                                             WHERE valid = 'Y' and WQ.devgr_id=$tab[dg_id]
                                                             ORDER BY Q_id;
                                                     ")) {
-                                                        if ($tab[dg_id] != 'N'){
+                                                        if ($tab["dg_id"] != 'N'){
                                                             Wait_queue::calculateDeviceWaitTimes(); 
                                                         } else {
                                                             Wait_queue::calculateWaitTimes();
@@ -147,7 +134,7 @@ function advanceNum($i, $str){
                                                                 <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?>
                                                                     <td>
                                                                         <?php $user = Users::withID($row['Operator']);?>
-                                                                        <a class="<?php echo $user->getIcon()?> fa-lg" title="<?php echo($row['Operator']) ?>"  href="/pages/updateContact.php?operator=<?php echo $row["Operator"]?>&queue_id=<?php echo $row["Q_id"]?>&loc=0"></a>
+                                                                        <a class="<?php echo $user->getIcon()?> fa-lg" title="<?php echo($row['Operator']) ?>"  href="/pages/updateContact.php?q_id=<?php echo $row["Q_id"]?>&loc=0"></a>
                                                                         <?php if (!empty($row['Op_phone'])) { ?> <i class="fas fa-mobile"   title="<?php echo ($row['Op_phone']) ?>"></i> <?php } ?>
                                                                         <?php if (!empty($row['Op_email'])) { ?> <i class="fas fa-envelope" title="<?php echo ($row['Op_email']) ?>"></i> <?php } ?>
                                                                     </td>
