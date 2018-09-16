@@ -330,7 +330,7 @@ class Wait_queue {
             if ($mysqli->query("
                 UPDATE `wait_queue`
                 SET `Op_email` = '$email' , `Op_phone` = '$phone'
-                WHERE `Operator` = '$q_id' AND valid='Y';
+                WHERE `Q_id` = '$q_id' AND valid='Y';
             "))
             {
                 return $status;

@@ -6,6 +6,13 @@
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 $error_msg = "";
 
+if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
+    //Not Authorized to see this Page
+    $_SESSION['error_msg'] = "You are unable to view this page.";
+    header('Location: /index.php');
+    exit();
+}
+
 if (isset($staff) && $staff->getRoleID() >= $sv['LvlOfStaff']){
     $q_id = filter_input(INPUT_GET , 'q_id', FILTER_VALIDATE_INT, false);
     if (is_int($q_id) && $result = $mysqli->query("
@@ -38,7 +45,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
             header("Location:/pages/wait_ticket.php");
         }
         $_SESSION['success_msg'] = "Contact Information Updated";
-        header("Location:/index.php");
     } else {
         $_SESSION['error_msg'] = $status;
         header("Location:/pages/updateContact.php?q_id=$q_id");
