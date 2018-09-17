@@ -1,7 +1,7 @@
 <?php
 /*
- *   CC BY-NC-AS UTA FabLab 2016-2017
- *   FabApp V 0.9
+ *   CC BY-NC-AS UTA FabLab 2016-2018
+ *   FabApp V 0.91
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 if (!$staff || $staff->getRoleID() < $sv['sv_edit']){
