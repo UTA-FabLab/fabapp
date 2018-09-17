@@ -223,7 +223,7 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                                 </form>
                                 </ul>
                             </li>
-                            <?php if ( $sv['wait_system'] == "new"){ ?>
+                            <?php if ($sv['wait_system'] == "new"){ ?>
                                 <li>
                                     <a href="/pages/wait_ticket.php"><i class="fas fa-list-ol"></i> Wait Queue Ticket</a>
                                 </li>

@@ -66,22 +66,30 @@ function advanceNum($i, $str){
             <div class="col-md-8">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fas fa-ticket-alt fa-fw"></i>  Wait Queue
+                        <i class="fas fa-list-ol"></i>  Wait Queue
+                        <div class="pull-right">
+                            <button  class="btn btn-xs" data-toggle="collapse" data-target="#waitPanel"><i class="fas fa-bars"></i></button>
+                        </div>
                     </div>
                     <!-- /.panel-heading -->
-                    <div class="panel-body">
+                    <div class="panel-body collapse in" id="waitPanel">
                         <div class="table-responsive">
                             <ul class="nav nav-tabs">
                                 <!-- Load all device groups as a tab that have at least one device in that group -->
                                 <?php if ($result = Wait_queue::getTabResult()) {
-                                    $count = 0;
-                                    while ($row = $result->fetch_assoc()) { ?>
-                                        <li class="<?php if ($count == 0) echo "active";?>">
-                                            <a <?php echo("href=\"#".$row["dg_id"]."\""); ?>  data-toggle="tab" aria-expanded="false"> <?php echo($row["dg_desc"]); ?> </a>
-                                        </li>
-                                    <?php $count++; 
+                                        $count = 0;
+                                        while ($row = $result->fetch_assoc()) { ?>
+                                            <li class="<?php if ($count == 0) echo "active";?>">
+                                                <a <?php echo("href=\"#".$row["dg_id"]."\""); ?>  data-toggle="tab" aria-expanded="false"> <?php echo($row["dg_desc"]); ?> </a>
+                                            </li>
+                                            <?php //create a way to display the first wait_queue table tab by saving which dg_id it is to variable 'first_dgid'
+                                            if ($count == 0){
+                                                $first_dgid = $row["dg_id"];  
+                                            }   
+                                            $count++;                                                                  
+                                        }
                                     }
-                                } ?>
+                                ?>
                             </ul>
                             <div class="tab-content">
                                 <?php
@@ -89,18 +97,17 @@ function advanceNum($i, $str){
                                     while($tab = $Tabresult->fetch_assoc()){
                                         $number_of_queue_tables++;
                                         // Give all of the dynamic tables a name so they can be called when their tab is clicked ?>
-                                        <div class="tab-pane fade <?php if ($number_of_queue_tables == 1) echo "in active";?>" <?php echo("id=\"".$tab["dg_id"]."\"") ?> >
+                                        <div class="tab-pane fade <?php if ($first_dgid == $tab["dg_id"]) echo "in active";?>" <?php echo("id=\"".$tab["dg_id"]."\"") ?> >
                                             <table class="table table-striped table-bordered table-hover" <?php echo("id=\"waitTable_$number_of_queue_tables\"") ?>>
                                                 <thead>
                                                     <tr class="tablerow">
-                                                        <th><i class="fa fa-th-list"></i> Priority</th>
+                                                        <th><i class="fa fa-th-list"></i> Queue Number</th>
                                                         <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?> <th><i class="far fa-user"></i> MavID</th><?php } ?>
                                                         <?php if ($tab["dg_id"]==2) { ?> <th><i class="far fa-flag"></i> Device Group</th><?php } ?>
                                                         <?php if ($tab["dg_id"]!=2) { ?> <th><i class="far fa-flag"></i> Device</th><?php } ?>
                                                         <th><i class="far fa-clock"></i> Time Left</th>
                                                         <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?> 
                                                             <th><i class="far fa-flag"></i> Alerts</th>
-                                                            <th><i class="fa fa-times"></i> Remove</th>
                                                         <?php } ?>
                                                     </tr>
                                                 </thead>
@@ -113,20 +120,24 @@ function advanceNum($i, $str){
                                                             WHERE valid = 'Y' and WQ.devgr_id=$tab[dg_id]
                                                             ORDER BY Q_id;
                                                     ")) {
-                                                        $counter = 1;
-                                                        Wait_queue::calculateDeviceWaitTimes();      
+                                                        if ($tab["dg_id"] != 'N'){
+                                                            Wait_queue::calculateDeviceWaitTimes(); 
+                                                        } else {
+                                                            Wait_queue::calculateWaitTimes();
+                                                        }  
+   
 
                                                         while ($row = $result->fetch_assoc()) { ?>
                                                             <tr class="tablerow">
 
                                                                 <!-- Wait Queue Number -->
-                                                                <td align="center"><?php echo($counter++) ?></td>
+                                                                <td align="center"><?php echo($row['Q_id']) ?></td>
 
                                                                 <!-- Operator ID --> 
                                                                 <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?>
                                                                     <td>
                                                                         <?php $user = Users::withID($row['Operator']);?>
-                                                                        <a class="<?php echo $user->getIcon()?> fa-lg" title="<?php echo($row['Operator']) ?>"  href="/pages/updateContact.php?q_id=<?php echo $row["Q_id"]?>"></a>
+                                                                        <a class="<?php echo $user->getIcon()?> fa-lg" title="<?php echo($row['Operator']) ?>"  href="/pages/updateContact.php?q_id=<?php echo $row["Q_id"]?>&loc=0"></a>
                                                                         <?php if (!empty($row['Op_phone'])) { ?> <i class="fas fa-mobile"   title="<?php echo ($row['Op_phone']) ?>"></i> <?php } ?>
                                                                         <?php if (!empty($row['Op_email'])) { ?> <i class="fas fa-envelope" title="<?php echo ($row['Op_email']) ?>"></i> <?php } ?>
                                                                     </td>
@@ -149,12 +160,15 @@ function advanceNum($i, $str){
                                                                     echo("<span align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
                                                                     $str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $row["estTime"]);
                                                                     sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
-                                                                    $time_seconds = $hours * 3600 + $minutes * 60 + $seconds + ($sv["grace_period"]);
+                                                                    $time_seconds = $hours * 3600 + $minutes * 60 + $seconds + ($sv["grace_period"]) + ($sv["grace_period"]);
                                                                     $temp_time = $hours * 3600 + $minutes * 60 + $seconds;
                                                                     if ($temp_time == "00:00:00"){
-                                                                            $time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - strtotime($row["Start_date"]) ) + $sv["grace_period"];
+                                                                        //$time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - //strtotime($row["Start_date"]) ) + $sv["grace_period"];
+
+                                                                        //do nothing keeping time at 00:00:00
+                                                                    } else {
+                                                                        array_push($device_array, array("q".$row["Q_id"], $time_seconds));
                                                                     }
-                                                                    array_push($device_array, array("q".$row["Q_id"], $time_seconds));
                                                                 } ?>
 
                                                                     <!-- Last Contact Time -->
@@ -171,25 +185,13 @@ function advanceNum($i, $str){
                                                                     <?php if (!empty($row['Op_phone']) || !empty($row['Op_email'])) { ?> 
                                                                         <div style="text-align: center">
                                                                             <button class="btn btn-xs btn-primary" data-target="#removeModal" data-toggle="modal" 
-                                                                                    onclick="sendManualMessage(<?php echo $row["Q_id"]?>, 'The FabLab is waiting for you to start your print!')">
+                                                                                    onclick="sendManualMessage(<?php echo $row["Q_id"]?>, 'Your wait ticket is almost done, please make your way to the FabLab!')">
                                                                                     Send Alert
                                                                             </button>
                                                                         </div>
                                                                     <?php } ?>
                                                                 </td>
                                                                 <?php } ?>
-
-                                                                <!-- Remove From Wait Queue -->
-                                                                <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?>
-                                                                     <td> 
-                                                                         <div style="text-align: center">
-                                                                             <button class="btn btn-danger btn-xs btn-primary" data-target="#removeModal" data-toggle="modal" 
-                                                                                    onclick="removeFromWaitlist(<?php echo $row["Q_id"].", ".$row["Operator"].", undefined"?>)">
-                                                                                    Remove
-                                                                             </button>
-                                                                         </div>
-                                                                     </td>
-                                                                 <?php } ?>
                                                             </tr>
                                                         <?php }
                                                     } ?>
@@ -216,7 +218,7 @@ function advanceNum($i, $str){
                             <div class="row">
                                 <div class="col-lg-11">
                                     <tr>
-                                        <td>Device</td>
+                                        <td><b>Device:</b></td>
                                         <td>
                                             <select class="form-control" name="devGrp" id="devGrp" onChange="change_group()" >
                                                 <option value="" selected hidden> Select Device</option>
@@ -227,7 +229,11 @@ function advanceNum($i, $str){
                                                             JOIN `wait_queue` WQ on D.`dg_id` = WQ.`Devgr_id`
                                                             LEFT JOIN (SELECT trans_id, t_start, t_end, d_id, operator, status_id FROM transactions WHERE status_id < 12  ORDER BY trans_id DESC) as t
                                                             ON D.`d_id` = t.`d_id`
-                                                            WHERE WQ.`valid`='Y' AND (WQ.`Devgr_id` = 2 OR D.`d_id` = WQ.`Dev_id`) AND t.`trans_id` IS NULL
+                                                            WHERE WQ.`valid`='Y' AND (WQ.`Devgr_id` = 2 OR D.`d_id` = WQ.`Dev_id`) AND t.`trans_id` IS NULL AND D.`d_id` NOT IN (
+                                                                SELECT `d_id`
+                                                                FROM `service_call`
+                                                                WHERE `solved` = 'N' AND `sl_id` >= 7
+                                                            )
                                                     ")) {
                                                         while ( $rows = mysqli_fetch_array ( $result ) ) {
                                                             // Create value in the form of DG_dgID-dID
@@ -239,14 +245,10 @@ function advanceNum($i, $str){
                                             </select>
                                         </td>
                                     </tr>
-                                    <tr>
-                                        <td>Operator</td>
-                                        <td>
-                                            <select class="form-control" name="deviceList" id="deviceList">
-                                                <option value ="" selected hidden> Select Device First</option>
-                                            </select>
-                                        </td>
-                                    </tr>
+                                    <tr> <br>
+                                        <td><p><b>Operator: </b><span type="password" id="deviceList"></span></p></td>
+                                        <td><input type="text" name="operator_ticket" id="operator_ticket" class="form-control" placeholder="1000000000" maxlength="10" size="10"/></td>
+                                    </tr><br>
                                 </div>
                                 <!-- /.col-md-11 -->
                             </div>
@@ -256,6 +258,7 @@ function advanceNum($i, $str){
                         <!-- /.panel-body -->
                     </div>
                 </div>
+                <!-- /.col-md-4 -->
             <?php } ?>
         </div>
         <!-- /.row -->
@@ -443,10 +446,10 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 ?>
 <script>
 <?php foreach ($device_array as $da) { ?>
-	var time = <?php echo $da[1];?>;
-	var display = document.getElementById('<?php echo $da[0];?>');
-	startTimer(time, display);
-	
+    var time = <?php echo $da[1];?>;
+    var display = document.getElementById('<?php echo $da[0];?>');
+    startTimer(time, display);
+    
 <?php } ?>
     $('#indexTable').DataTable({
         "iDisplayLength": 25,
@@ -509,7 +512,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
     var device = "";
     function newTicket(){
         var device_id = document.getElementById("devGrp").value;
-        var o_id = document.getElementById("deviceList").value;
+        var o_id = document.getElementById("operator_ticket").value;
         
         if("D_" === device_id.substring(0,2)){
             device_id = device_id.substring(2);
@@ -564,15 +567,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         
         if (confirm("You are about to send a notification to a wait queue user. Click OK to continue or CANCEL to quit.")){
             
-        window.location.href = "/pages/sub/endWaitList.php?q_id=" + q_id + "&message=" + message;
-        }
-     }
-    
-     function removeFromWaitlist(q_id){
-        
-        if (confirm("You are about to delete a someone from the wait queue. Click OK to continue or CANCEL to quit.")){  
-        
-        window.location.href = "/pages/sub/endWaitList.php?q_id=" + q_id;
+        window.location.href = "/pages/sub/endWaitList.php?q_id=" + q_id + "&message=" + message + "&loc=0";
         }
      }
     
@@ -584,4 +579,5 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
                     "order": []
                     });
     }
+    
 </script>
