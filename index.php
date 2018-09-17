@@ -67,9 +67,12 @@ function advanceNum($i, $str){
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <i class="fas fa-list-ol"></i>  Wait Queue
+                        <div class="pull-right">
+                            <button  class="btn btn-xs" data-toggle="collapse" data-target="#waitPanel"><i class="fas fa-bars"></i></button>
+                        </div>
                     </div>
                     <!-- /.panel-heading -->
-                    <div class="panel-body">
+                    <div class="panel-body collapse in" id="waitPanel">
                         <div class="table-responsive">
                             <ul class="nav nav-tabs">
                                 <!-- Load all device groups as a tab that have at least one device in that group -->
