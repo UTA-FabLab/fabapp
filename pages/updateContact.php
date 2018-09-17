@@ -6,6 +6,13 @@
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 $error_msg = "";
 
+if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
+    //Not Authorized to see this Page
+    $_SESSION['error_msg'] = "You are unable to view this page.";
+    header('Location: /index.php');
+    exit();
+}
+
 if (isset($staff) && $staff->getRoleID() >= $sv['LvlOfStaff']){
     $q_id = filter_input(INPUT_GET , 'q_id', FILTER_VALIDATE_INT, false);
     if (is_int($q_id) && $result = $mysqli->query("
@@ -32,8 +39,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
     $ph = filter_input(INPUT_POST, 'op-phone');
     $status = Wait_queue::updateContactInfo($q_id, $ph, $em);
     if ($status === 0) {
+        if ($_REQUEST['loc'] == 0) {
+            header("Location:/index.php");
+        } elseif ($_REQUEST['loc'] == 1) {
+            header("Location:/pages/wait_ticket.php");
+        }
         $_SESSION['success_msg'] = "Contact Information Updated";
-        header("Location:/index.php");
     } else {
         $_SESSION['error_msg'] = $status;
         header("Location:/pages/updateContact.php?q_id=$q_id");
@@ -66,16 +77,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
             <?php } else { ?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="far fa-bell" aria-hidden="true"></i> Update Contact Info : <?php echo "Q_ID $q_id - $operator"?>
+                        <i class="far fa-bell" aria-hidden="true"></i> Update Contact Info : <?php echo "Queue ID $q_id"?>
                     </div>
                     <div class="panel-body">
                         <table class="table table-bordered table-striped table-hover"><form name="wqform" id="wqform" autocomplete="off" method="POST" action="">
                             <tr>
-                                <td><b href="#" data-toggle="tooltip" data-placement="top" title="email contact information">Email Address: </b></td>
+                                <td><b data-toggle="tooltip" data-placement="top" title="email contact information">Operator: </b></td>
+                                <td><?php echo $operator?></td>
+                            </tr><tr>
+                                <td><b data-toggle="tooltip" data-placement="top" title="email contact information">Email Address: </b></td>
                                 <td><input type="text" name="op-email" id="op-email" class="form-control" value="<?php echo $Op_email?>" placeholder="example@mail.com" maxlength="100" size="10"/></td>
                             </tr>
                             <tr>
-                                <td><b href="#" data-toggle="tooltip" data-placement="top" title="phone contact information">Phone Number: </b></td>
+                                <td><b data-toggle="tooltip" data-placement="top" title="phone contact information">Phone Number: </b></td>
                                 <td><input type="text" name="op-phone" id="op-phone" class="form-control" value="<?php echo $Op_phone?>" placeholder="1234567890" maxlength="10" size="10"/></td>
                             </tr>
                             <tfoot>
@@ -98,5 +112,5 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
 
 <?php
 //Standard call for dependencies
-include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
+include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php'); 
 ?>

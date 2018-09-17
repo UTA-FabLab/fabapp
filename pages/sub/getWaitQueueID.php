@@ -13,36 +13,37 @@ if (!empty($_GET["val"])) {
 
     if (strpos($value, 'DG') !== false) {
         sscanf($value, "DG_%d-%d", $dg_id, $d_id);
+        
+        $polyprinters="2";
 
-        //echo ("dg_id = $dg_id");
-        //echo ("d_id = $d_id");
-
-        if ($dg_id !="" && $dg_id != "2" && DeviceGroup::regexDgID($dg_id)) {
+        if ($dg_id !="" && $dg_id != $polyprinters && DeviceGroup::regexDgID($dg_id)) {
             // Select all of the MAV IDs that are waiting for this device group
             $result = $mysqli->query ( "               
                 SELECT `Operator`, `Q_id`
                 FROM `wait_queue`
                 WHERE `Dev_id` = $d_id AND `Valid` = 'Y'
                 ORDER BY `Q_id` ASC
+                LIMIT 1
             " );
             while($row = mysqli_fetch_array($result)) {
-                echo "<option value='$row[Operator]'>$row[Operator]</option>";
+                $op_id = substr($row["Operator"], -4);
+                echo "******".$op_id;
             }
         
-        }
-        
-        if ($dg_id !="" && $dg_id == "2" && DeviceGroup::regexDgID($dg_id)) {
+        } 
+        if ($dg_id !="" && $dg_id == $polyprinters && DeviceGroup::regexDgID($dg_id)) {
             // Select all of the MAV IDs that are waiting for this device group
             $result = $mysqli->query ( "                
                 SELECT `Operator`, `Q_id`
                 FROM `wait_queue`
                 WHERE `Devgr_id` = $dg_id AND `Valid` = 'Y'
                 ORDER BY `Q_id` ASC
-                
+                LIMIT 1
             " );
-	
+    
             while($row = mysqli_fetch_array($result)) {
-                echo '<option value="'.$row["Operator"].'">'; echo $row["Operator"]; echo "</option>";
+                $op_id = substr($row["Operator"], -4);
+                echo "******".$op_id;
             }
         }
     }

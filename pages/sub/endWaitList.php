@@ -1,11 +1,13 @@
 <?php
-/*
- *   CC BY-NC-AS UTA FabLab 2016-2018
- *   FabApp V 0.91
- * 
- */
 
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
+
+if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
+    //Not Authorized to see this Page
+    $_SESSION['error_msg'] = "You are unable to view this page.";
+    header('Location: /index.php');
+    exit();
+}
 
 // Checks
 if (isset($_GET['q_id'])) {
@@ -19,8 +21,13 @@ if (isset($_GET['q_id'])) {
     else {
         removeFromQueue($_REQUEST['q_id']);
     }
+    if ($_REQUEST['loc'] == 0) {
+        header("Location:/index.php");
+    }
+    if ($_REQUEST['loc'] == 1) {
+        header("Location:/pages/wait_ticket.php");
+    }
     
-    header("Location:/index.php");
 }
 
 function removeFromQueue($q_id) {
@@ -28,7 +35,7 @@ function removeFromQueue($q_id) {
         $queueItem = new Wait_queue($q_id);
     } catch (Exception $e) {
         $errorMsg = $e->getMessage();
-        $_SESSION['error_msg'] = $errorMsg;
+        $_SESSION['type'] = "error";
     }
     
     // Delete the user from the waitlist
@@ -40,6 +47,5 @@ function sendMessage($q_id, $message)
     $person = new Wait_queue($q_id);
     Notifications::sendNotification($person->getOperator(), "Fabapp Notification", $message);
 }
-
 
 ?>
