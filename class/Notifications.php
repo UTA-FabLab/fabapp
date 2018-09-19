@@ -5,7 +5,7 @@ class Notifications {
     private $email;
     private $last_contacted;
 
-    public static function sendNotification($operator, $subject, $message) {
+    public static function sendNotification($operator, $subject, $message, $status) {
         global $mysqli;
         $hasbeenContacted = false;
         // This function queries the carrier table and sends an email to all combinations
@@ -29,8 +29,14 @@ class Notifications {
                 ")) {
                     while ($row = $result->fetch_assoc()) {
                         list($a, $b) = explode('number', $row['email']);
-                        if (self::SendMail("".$phone."".$b."", $subject, $message)){
-                            $hasbeenContacted = true;
+                        if ($status==1)
+                        {
+                            if (self::SendMail("".$phone."".$b."", $subject, $message)){
+                                $hasbeenContacted = true;
+                            }
+                        }
+                        else {
+                            self::SendMail("".$phone."".$b."", $subject, $message);
                         }
                     }
                 } else {
@@ -40,7 +46,15 @@ class Notifications {
             
             if (!empty($email)) {
                 if (self::SendMail($email, $subject, $message)){
-                    $hasbeenContacted = true;
+                }
+                if ($status==1)
+                {
+                    if (self::SendMail($email, $subject, $message)){
+                        $hasbeenContacted = true;
+                    }
+                }
+                else {
+                    self::SendMail($email, $subject, $message);
                 }
             }
     
@@ -53,7 +67,7 @@ class Notifications {
                 ")) {
                 }
             }
-			return $hasbeenContacted;
+            return $hasbeenContacted;
         }
     }
     
