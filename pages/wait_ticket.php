@@ -308,9 +308,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
                                                             <td> 
                                                                 <?php if (!empty($row['Op_phone']) || !empty($row['Op_email'])) { ?> 
                                                                     <div style="text-align: center">
-                                                                        <button class="<?php if (isset($row['last_contact'])){echo "btn btn-xs btn-warning";} else{echo "btn btn-xs btn-primary";}?>" data-target="#removeModal" data-toggle="modal" 
-                                                                                onclick="sendManualMessage(<?php echo $row["Q_id"]?>, 'Your wait ticket is almost done, please make your way to the FabLab!')">
-                                                                                Send Alert
+                                                                        <button class="btn btn-xs btn-primary" data-target="#removeModal" data-toggle="modal" 
+                                                                                    onclick="sendManualMessage(<?php echo $row["Q_id"]?>, 'Your wait ticket is almost done, please make your way to the FabLab!')">
+                                                                                    Send Alert
                                                                         </button>
                                                                     </div>
                                                                 <?php } ?>
