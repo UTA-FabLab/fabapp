@@ -184,7 +184,7 @@ function advanceNum($i, $str){
                                                                 <td> 
                                                                     <?php if (!empty($row['Op_phone']) || !empty($row['Op_email'])) { ?> 
                                                                         <div style="text-align: center">
-                                                                            <button class="btn btn-xs btn-primary" data-target="#removeModal" data-toggle="modal" 
+                                                                            <button class="<?php if (isset($row['last_contact'])){echo "btn btn-xs btn-warning";} else{echo "btn btn-xs btn-primary";}?>" data-target="#removeModal" data-toggle="modal" 
                                                                                     onclick="sendManualMessage(<?php echo $row["Q_id"]?>, 'Your wait ticket is almost done, please make your way to the FabLab!')">
                                                                                     Send Alert
                                                                             </button>
@@ -212,9 +212,12 @@ function advanceNum($i, $str){
                     <div class="panel panel-default">
                         <div class="panel-heading">
                             <i class="fa fa-print fa-fw"></i>Process Ticket
+                            <div class="pull-right">
+                                <button  class="btn btn-xs" data-toggle="collapse" data-target="#processPanel"><i class="fas fa-bars"></i></button>
+                            </div>
                         </div>
                         <!-- /.panel-heading -->
-                        <div class="panel-body">
+                        <div class="panel-body collapse in" id="processPanel">
                             <div class="row">
                                 <div class="col-lg-11">
                                     <tr>
