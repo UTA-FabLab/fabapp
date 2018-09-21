@@ -1,8 +1,8 @@
 <?php
 
 /*
- * License - FabApp V 0.9
- * 2016-2017 CC BY-NC-AS UTA FabLab
+ * License - FabApp V 0.91
+ * 2016-2018 CC BY-NC-AS UTA FabLab
  */
 
 /**
@@ -15,6 +15,7 @@ class DeviceGroup {
     private $dg_name;
     private $dg_parent;
     private $dg_desc;
+    private $granular_wait;
     private $juiceboxManaged;
     private $payFirst;
     private $selectMatsFirst;
@@ -36,6 +37,7 @@ class DeviceGroup {
                 $this->setDg_parent($row['dg_parent']);
                 $this->setDg_desc($row['dg_desc']);
                 $this->setJuiceboxManaged($row['juiceboxManaged']);
+                $this->setGranular_wait($row['granular_wait']);
                 $this->setPayFirst($row['payFirst']);
                 $this->setSelectMatsFirst($row['selectMatsFirst']);
                 $this->setStorable($row['storable']);
@@ -85,6 +87,10 @@ class DeviceGroup {
         return $this->dg_desc;
     }
 
+    public function getGranular_wait(){
+        return $this->granular_wait;
+    }
+
     public function getJuiceboxManaged(){
         return $this->JuiceboxManaged;
     }
@@ -105,7 +111,6 @@ class DeviceGroup {
         return $this->thermalPrinterNum;
     }
     
-
     public function setDg_id($dg_id) {
         $this->dg_id = $dg_id;
     }
@@ -120,6 +125,10 @@ class DeviceGroup {
 
     public function setDg_desc($dg_desc) {
         $this->dg_desc = $dg_desc;
+    }
+    
+    public function setGranular_wait($granular_wait) {
+        $this->granular_wait = $granular_wait;
     }
 
     public function setJuiceboxManaged($juiceboxManaged){
