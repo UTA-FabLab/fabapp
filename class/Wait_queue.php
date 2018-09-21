@@ -69,27 +69,15 @@ class Wait_queue {
         
         //Validate input variables
         if (!self::regexPhone($phone) && !empty($phone)) {
-            echo ("<div style='text-align: center'>
-                    <div class='alert alert-danger'>
-                        Bad Phone Number - $phone
-                    </div> </div>");
-            return "Bad phone number";
+            return ("<div class='alert alert-danger'>Bad Phone Number - $phone</div>");
         }
         
         if (!self::regexOperator($operator)) {
-            echo ("<div style='text-align: center'>
-                    <div class='alert alert-danger'>
-                        Bad Operator Number - $operator
-                    </div> </div>");
-            return "Bad operator number";
+            return ("<div class='alert alert-danger'>Bad Operator Number - $operator</div>");
         }
         
         if(!filter_var($email, FILTER_VALIDATE_EMAIL) && !empty($email)) {
-            echo ("<div style='text-align: center'>
-                    <div class='alert alert-danger'>
-                        Bad Email - $email
-                    </div> </div>");
-            return "Bad email";
+            return ("<div class='alert alert-danger'>Bad Email - $email</div>");
         }
         
         
@@ -104,18 +92,10 @@ class Wait_queue {
             ")){        
                 Notifications::sendNotification($operator, "Fabapp Notification", "You have signed up for fabapp notifications. Your ticket number is: ".$mysqli->insert_id."", 'From: Fabapp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateDeviceWaitTimes();
-                echo ("<div style='text-align: center'>
-                    <div class='alert alert-success'>
-                        Successfully added to wait queue and updated contact info!
-                    </div> </div>");
-
                 return $mysqli->insert_id;
+                
             } else {
-                echo ("<div style='text-align: center'>
-                    <div class='alert alert-danger'>
-                        ".$mysqli->error."
-                    </div> </div>");
-                return $mysqli->error;
+                return ("<div class='alert alert-danger'>".$mysqli->error."</div>");
             }
 
         } else {
@@ -127,18 +107,12 @@ class Wait_queue {
             ")){        
                 Notifications::sendNotification($operator, "Fabapp Notification", "You have signed up for fabapp notifications. Your ticket number is: ".$mysqli->insert_id."", 'From: Fabapp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateWaitTimes();
-                echo ("<div style='text-align: center'>
-                    <div class='alert alert-success'>
-                        Successfully added to wait queue and updated contact info!
-                    </div> </div>");
-
-                return $mysqli->insert_id;
+                $q_id = $mysqli->insert_id;
+                //Disabled for Dev Purposes
+                //Wait_queue::printTicket($q_id);
+                return $q_id;
             } else {
-                echo ("<div style='text-align: center'>
-                    <div class='alert alert-danger'>
-                        Error2 updating contact info!
-                    </div> </div>");
-                return $mysqli->error;
+                return ("<div class='alert alert-danger'>Error2 updating contact info!</div>");
             }
         }
     }
@@ -623,13 +597,22 @@ class Wait_queue {
     }
     
     
-    public static function printTicket($q_id, $timeLeft, $device){
+    public static function printTicket($q_id){
         global $mysqli;
         global $sv;
         $est_cost = 0;
-
-        //Pull Ticket Related Information
-        $ticket = new self($q_id);
+        
+        if($result = $mysqli->query("
+            SELECT `wait_queue`.`estTime`, `devices`.`device_desc`
+            FROM `wait_queue`
+            LEFT JOIN `devices`
+            ON `wait_queue`.`Dev_id` = `devices`.`d_id`
+            WHERE `wait_queue`.`q_id` = $q_id
+        ")){
+            $row = $result->fetch_assoc();
+            $timeLeft = $row["estTime"];
+            $device = $row["device_desc"];
+        }
 
         // Set up Printer Connection
         $tp_array = explode("|", $sv['thermalPrinter1']);
@@ -655,7 +638,7 @@ class Wait_queue {
 
             //Wait Tab Number
             $printer -> setTextSize(4, 4);
-            $printer -> text($ticket->getQ_ID());
+            $printer -> text($q_id);
             $printer -> setTextSize(1, 1);
             $printer -> feed();
             $printer -> text("Device:   ".$device);

@@ -1,10 +1,10 @@
 <?php
 /*
- *   CC BY-NC-AS UTA FabLab 2016-2017
- *   FabApp V 0.9
+ *   CC BY-NC-AS UTA FabLab 2016-2018
+ *   FabApp V 0.91
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
-$d_id1 = $dg_id1 = $operator1 = "";
+$d_id1 = $dg_id1 = $ph1 = $em1 = $operator1 = $wt_msg = "";
 $number_of_queue_tables = 0;
 $device_array = array();
 
@@ -14,6 +14,13 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
     header('Location: /index.php');
     exit();
 }
+if (isset($_SESSION['wt_msg']) && $_SESSION['wt_msg'] == 'success'){
+    $wt_msg = ("<div style='text-align: center'>
+            <div class='alert alert-success'>
+                Successfully added to wait queue and updated contact info!
+            </div> </div>");
+    unset($_SESSION['wt_msg']);
+}
 if (!array_key_exists("clear_queue",$sv)){
     $mysqli->query("INSERT INTO `site_variables` (`id`, `name`, `value`, `notes`) VALUES (NULL, 'clear_queue', '9', 'Minimum Lvl Required to clear the Wait Queue')");
 }
@@ -21,6 +28,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
     Wait_queue::removeAllUsers();
     $_SESSION['success_msg'] = "Wait Queue has been cleared";
     header("Location:/index.php");
+} elseif ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
+    $operator1 = filter_input(INPUT_POST, 'operator1');
+    $em1 = filter_input(INPUT_POST,'op-email');
+    $ph1 = filter_input(INPUT_POST, 'op-phone');
+    
+    if(isset($_POST['devices']) && isset($_POST['dg_id'])){
+        $d_id1 = filter_input(INPUT_POST,'devices');
+        $dg_id1 = filter_input(INPUT_POST,'dg_id');
+        $wait_id1 = Wait_queue::insertWaitQueue($operator1, $d_id1, $dg_id1, $ph1, $em1);
+
+        if (is_int($wait_id1)){
+            $_SESSION['wt_msg'] = "success";
+            header("Location:wait_ticket.php");
+            
+        } else {
+            $wt_msg = $wait_id1;
+        }
+    } else {
+        $wt_msg = ("<div style='text-align: center'>
+                <div class='alert alert-danger'>
+                    You Must Select A Device
+                </div> </div>");
+    }
 }
 ?>
 <title><?php echo $sv['site_name'];?> Wait Queue System</title>
@@ -43,15 +73,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
                     <i class="fas fa-ticket-alt" aria-hidden="true"></i> Create New Wait Ticket
                 </div>
                 <div class="panel-body">
-                    <table class="table table-bordered table-striped table-hover"><form name="wqform" id="wqform" autocomplete="off" method="POST" action="">
+                    <?php if($wt_msg != "") { ?>
+                        <div style='text-align: center'>
+                            <?php echo $wt_msg; ?>
+                        </div>
+                    <?php } ?>
+                    <table class="table table-bordered table-striped table-hover"><form name="wqform" id="wqform" autocomplete="off" method="POST" action="" onsubmit="return inUseForm()">
                         <tr>
                             <td><a href="#" data-toggle="tooltip" data-placement="top" title="Which device does this wait ticket belong to?">Select Device Group</a></td>
                             <td>
-                                <select name="dg_id" id="dg_id" onChange="change_dg()" >
+                                <select name="dg_id" id="dg_id" onChange="change_dg()" tabindex="1">
                                     <option disabled hidden selected value="">Device Group</option>
                                     <?php if($result = $mysqli->query("
                                         SELECT DISTINCT `device_group`.`dg_id`, `device_group`.`dg_desc`
-                                        FROM `device_group`
+                                        FROM `devices`
+                                        LEFT JOIN `device_group`
+                                        ON `device_group`.`dg_id` = `devices`.`dg_id`
                                         ORDER BY `dg_desc`
                                     ")){
                                             while($row = $result->fetch_assoc()){
@@ -62,67 +99,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
                                     }?>
                                 </select>
                                 &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;
-                                <select name="devices" id="devices">
+                                <select name="devices" id="devices" tabindex="1">
                                     <option value =""> Select Group First</option>
                                 </select>   
                             </td>
                         </tr>
                         <tr>
                             <td><a href="#" data-toggle="tooltip" data-placement="top" title="The email of the person that you will issue a wait ticket for">(Optional) Email</a></td>
-                            <td><input type="text" name="op-email" id="op-email" class="form-control" placeholder="email address" maxlength="100" size="10"/></td>
+                            <td><input type="text" name="op-email" id="op-email" class="form-control" placeholder="email address" maxlength="100" size="10" value="<?php echo $em1;?>" tabindex="1"/></td>
                         </tr>
                         <tr>
                             <td><a href="#" data-toggle="tooltip" data-placement="top" title="The phone number of person that you will issue a wait ticket for">(Optional) Phone</a></td>
-                            <td><input type="text" name="op-phone" id="op-phone" class="form-control" placeholder="phone number" maxlength="10" size="10"/></td>
+                            <td><input type="text" name="op-phone" id="op-phone" class="form-control" placeholder="phone number" maxlength="10" size="10" value="<?php echo $ph1;?>" tabindex="1"/></td>
                         </tr>
                         <tr>
                             <td><a href="#" data-toggle="tooltip" data-placement="top" title="The person that you will issue a wait ticket for">Operator</a></td>
-                            <td><input type="text" name="operator1" id="operator1" class="form-control" placeholder="1000000000" maxlength="10" size="10"/></td>
+                            <td><input type="text" name="operator1" id="operator1" class="form-control" placeholder="1000000000" maxlength="10" size="10" value="<?php echo $operator1;?>" tabindex="1"/></td>
                         </tr>
-                        <div class="form-group">
-                            <?php
-                                if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
-                                    if(isset($_POST['devices']) && isset($_POST['dg_id'])){
-                                        $operator1 = filter_input(INPUT_POST, 'operator1');
-                                        $d_id1 = filter_input(INPUT_POST,'devices');
-                                        $dg_id1 = filter_input(INPUT_POST,'dg_id');
-                                        $em1 = filter_input(INPUT_POST,'op-email');
-                                        $ph1 = filter_input(INPUT_POST, 'op-phone');
-                                        $wait_id1 = Wait_queue::insertWaitQueue($operator1, $d_id1, $dg_id1, $ph1, $em1);
-
-                                        if (is_int($wait_id1)){
-                                            if($result = $mysqli->query("
-                                                SELECT `wait_queue`.`q_id`, `wait_queue`.`estTime`, `wait_queue`.`Dev_id`, `wait_queue`.`Devgr_id`
-                                                FROM `wait_queue`
-                                                WHERE `wait_queue`.`Devgr_id`=$dg_id1 AND `wait_queue`.`Operator`=$operator1 
-                                            ")){
-                                                    while($row = $result->fetch_assoc()){
-                                                    $q_id1=$row["q_id"];
-                                                    $estTime1=$row["estTime"];
-                                                }
-                                            }
-                                            if($result = $mysqli->query("
-                                                SELECT `devices`.`device_desc`
-                                                FROM `devices`
-                                                WHERE `devices`.`d_id`= $d_id1
-                                            ")){
-                                                    while($row = $result->fetch_assoc()){
-                                                    $device_desc1=$row["device_desc"];
-                                                }
-                                            }
-                                            if ($dg_id1 == "2"){
-                                                $device_desc1 = "PolyPrinter";
-                                            }
-                                            //Wait_queue::printTicket($q_id, $estTime, $device_desc);
-                                        }
-                                    } else {
-                                        echo ("<div style='text-align: center'>
-                                                <div class='alert alert-danger'>
-                                                    You Must Select A Device
-                                                </div> </div>");
-                                    }
-                                } ?>
-                        </div>
                         <tfoot>
                             <tr>
                                 <td colspan="2"><div class="pull-right"><input  class="btn btn-primary" type="submit" name="submitBtn" value="Submit"></div></td>
@@ -319,7 +312,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
                                                             <!-- Remove From Wait Queue -->
                                                             <td> 
                                                                 <div style="text-align: center">
-                                                                    <button class="btn btn-danger btn-xs btn-primary" data-target="#removeModal" data-toggle="modal" 
+                                                                    <button class="btn btn-xs" data-target="#removeModal" data-toggle="modal" 
                                                                             onclick="removeFromWaitlist(<?php echo $row["Q_id"].", ".$row["Operator"].", undefined"?>)">
                                                                             Remove
                                                                     </button>
