@@ -102,7 +102,7 @@ function advanceNum($i, $str){
                                                 <thead>
                                                     <tr class="tablerow">
                                                         <th><i class="fa fa-th-list"></i> Queue Number</th>
-                                                        <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?> <th><i class="far fa-user"></i> MavID</th><?php } ?>
+                                                        <th><i class="far fa-user"></i> Operator</th>
                                                         <?php if ($tab["dg_id"]==2) { ?> <th><i class="far fa-flag"></i> Device Group</th><?php } ?>
                                                         <?php if ($tab["dg_id"]!=2) { ?> <th><i class="far fa-flag"></i> Device</th><?php } ?>
                                                         <th><i class="far fa-clock"></i> Time Left</th>
@@ -127,7 +127,8 @@ function advanceNum($i, $str){
                                                         }  
    
 
-                                                        while ($row = $result->fetch_assoc()) { ?>
+                                                        while ($row = $result->fetch_assoc()) {
+                                                            $user = Users::withID($row['Operator']);?>
                                                             <tr class="tablerow">
 
                                                                 <!-- Wait Queue Number -->
@@ -136,10 +137,13 @@ function advanceNum($i, $str){
                                                                 <!-- Operator ID --> 
                                                                 <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?>
                                                                     <td>
-                                                                        <?php $user = Users::withID($row['Operator']);?>
                                                                         <a class="<?php echo $user->getIcon()?> fa-lg" title="<?php echo($row['Operator']) ?>"  href="/pages/updateContact.php?q_id=<?php echo $row["Q_id"]?>&loc=0"></a>
                                                                         <?php if (!empty($row['Op_phone'])) { ?> <i class="fas fa-mobile"   title="<?php echo ($row['Op_phone']) ?>"></i> <?php } ?>
                                                                         <?php if (!empty($row['Op_email'])) { ?> <i class="fas fa-envelope" title="<?php echo ($row['Op_email']) ?>"></i> <?php } ?>
+                                                                    </td>
+                                                                <?php } else { ?>
+                                                                    <td>
+                                                                        <i class="<?php echo $user->getIcon()?> fa-lg"/>
                                                                     </td>
                                                                 <?php } ?>
 
@@ -284,11 +288,11 @@ function advanceNum($i, $str){
                             </tr>
                         </thead>
                         <?php if ($result = $mysqli->query("
-                            SELECT trans_id, device_desc, t_start, est_time, dg_parent, devices.d_id, url, operator, status_id
+                            SELECT trans_id, device_desc, t_start, est_time, devices.d_id, url, status_id
                             FROM `devices`
                             JOIN `device_group`
                             ON `devices`.`dg_id` = `device_group`.`dg_id`
-                            LEFT JOIN (SELECT trans_id, t_start, t_end, est_time, d_id, operator, status_id FROM transactions WHERE status_id < 12 ORDER BY trans_id DESC) as t 
+                            LEFT JOIN (SELECT trans_id, t_start, est_time, d_id, status_id FROM transactions WHERE status_id < 12 ORDER BY trans_id DESC) as t 
                             ON `devices`.`d_id` = `t`.`d_id`
                             WHERE public_view = 'Y'
                             ORDER BY `trans_id` DESC, `device_desc` ASC
