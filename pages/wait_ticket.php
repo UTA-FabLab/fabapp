@@ -70,15 +70,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
         <div class="col-md-8">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fas fa-ticket-alt" aria-hidden="true"></i> Create New Wait Ticket
+                    <i class="fas fa-ticket-alt" aria-hidden="true"></i> Create Wait Queue Ticket
                 </div>
+                <form name="wqform" id="wqform" autocomplete="off" method="POST" action="">
                 <div class="panel-body">
                     <?php if($wt_msg != "") { ?>
                         <div style='text-align: center'>
                             <?php echo $wt_msg; ?>
                         </div>
                     <?php } ?>
-                    <table class="table table-bordered table-striped table-hover"><form name="wqform" id="wqform" autocomplete="off" method="POST" action="" onsubmit="return inUseForm()">
+                    <table class="table table-bordered table-striped table-hover">
                         <tr>
                             <td><a href="#" data-toggle="tooltip" data-placement="top" title="Which device does this wait ticket belong to?">Select Device Group</a></td>
                             <td>
@@ -114,17 +115,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
                         </tr>
                         <tr>
                             <td><a href="#" data-toggle="tooltip" data-placement="top" title="The person that you will issue a wait ticket for">Operator</a></td>
-                            <td><input type="text" name="operator1" id="operator1" class="form-control" placeholder="1000000000" maxlength="10" size="10" value="<?php echo $operator1;?>" tabindex="1"/></td>
+                            <td><input type="text" name="operator1" id="operator1" class="form-control" placeholder="1000000000" maxlength="10" size="10" value="<?php echo $operator1;?>" tabindex="1" oninput="inUseCheck()"/></td>
                         </tr>
-                        <tfoot>
-                            <tr>
-                                <td colspan="2"><div class="pull-right"><input  class="btn btn-primary" type="submit" name="submitBtn" value="Submit"></div></td>
-                            </tr>
-                        </tfoot>
-                    </form>
+                        <tr id="tr_verify" hidden>
+                            <td colspan="2">
+                                <label for="warnCB">Opererator has an active Ticket, please inform user of policy.</label>
+                                <input type="checkbox" id="warnCB" onchange="warnedCB()"/>
+                            </td>
+                        </tr>
                     </table>
                 </div>
                 <!-- /.panel-body -->
+                <div class="panel-footer clearfix">
+                    <div class="pull-right"><input class="btn" type="submit" name="submitBtn" id="submitBtn" value="Submit" disabled></div>
+                </div>
+                </form>
             </div>
             <!-- /.panel -->
         </div>
@@ -167,17 +172,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
                                         </select>
                                     </td>
                                 </tr>
-                                <tr> <br>
+                                <tr>
                                     <td><p><b>Operator: </b><span type="password" id="deviceList"></span></p></td>
                                     <td><input type="text" name="operator_ticket" id="operator_ticket" class="form-control" placeholder="1000000000" maxlength="10" size="10"/></td>
-                                </tr><br>
+                                </tr>
                             </div>
                             <!-- /.col-md-11 -->
                         </div>
 
-                        <button class="btn btn-primary" type="button" id="addBtn" onclick="newTicket()">Create Ticket</button>
+                        
                     </div>
                     <!-- /.panel-body -->
+                    <div class="panel-footer clearfix">
+                        <button class="btn btn-primary" type="button" id="addBtn" onclick="newTicket()">Create Ticket</button>
+                    </div>
                 </div>
             </div>
             <!-- /.col-md-4 -->
@@ -326,7 +334,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
                                     </div>
                                 <?php }
                             } ?>
-                            </div>
+                        </div>
                     </div>
                     <!-- /.table-responsive -->
                 </div>
@@ -358,6 +366,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
     
 </div>
 <!-- /#page-wrapper -->
+
 
 <?php
 //Standard call for dependencies
@@ -423,6 +432,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         
         xmlhttp.open("GET","/pages/sub/getDevices.php?val="+ document.getElementById("dg_id").value, true);
         xmlhttp.send();
+        inUseCheck();
     }
     
     function change_group(){
@@ -465,6 +475,56 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
             return true;
         }
         return false;
+    }
+    
+    function inUseCheck(){
+        var operator = document.getElementById("operator1").value;
+        var dg_id = document.getElementById("dg_id").value;
+        var sBtn = document.getElementById("submitBtn");
+        var trV = document.getElementById("tr_verify");
+        
+        if (operator.length == 10 && dg_id){
+            if (window.XMLHttpRequest) {
+                // code for IE7+, Firefox, Chrome, Opera, Safari
+                xmlhttp = new XMLHttpRequest();
+            }
+            xmlhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    console.log("response"+this.responseText);
+                    if (this.responseText == " warn"){
+                        console.log("Warning, Learner has on going print");
+                        sBtn.disabled = true;
+                        sBtn.classList.remove("btn-primary");
+                        trV.hidden = false;
+                    } else if(this.responseText == " no_need") {
+                        sBtn.disabled = false;
+                        sBtn.classList.add("btn-primary");
+                        trV.hidden  = true;
+                    } else {
+                        console.log("Invalid Search Criteria");
+                        sBtn.disabled = true;
+                        sBtn.classList.remove("btn-primary");
+                    }
+                }
+            };
+
+            xmlhttp.open("GET","/pages/sub/isInUse.php?dg_id="+ dg_id +"&operator="+ operator, true);
+            xmlhttp.send();
+        }
+    }
+    
+    function warnedCB(){
+        var sBtn = document.getElementById("submitBtn");
+        var warnCB = document.getElementById("warnCB");
+        if (warnCB.checked == true){
+            sBtn.disabled = false;
+            sBtn.classList.add("btn-primary");
+            trV.hidden  = true;
+        } else {
+            sBtn.disabled = true;
+            sBtn.classList.remove("btn-primary");
+            trV.hidden = false;
+        }
     }
     
     var str;

@@ -20,16 +20,4 @@ if($dg_id !="" && DeviceGroup::regexDgID($dg_id)){
 	echo "</select>";
 	
 }
-
-
-
-?>
-
-
-
-
-
-<?php
-// Standard call for dependencies
-include_once ($_SERVER ['DOCUMENT_ROOT'] . '/pages/footer.php');
 ?>
