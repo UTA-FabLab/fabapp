@@ -310,7 +310,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
                                                                 <?php if (!empty($row['Op_phone']) || !empty($row['Op_email'])) { ?> 
                                                                     <div style="text-align: center">
                                                                         <button class="<?php if (isset($row['last_contact'])){echo "btn btn-xs btn-warning";} else{echo "btn btn-xs btn-primary";}?>" data-target="#removeModal" data-toggle="modal" 
-                                                                                onclick="sendManualMessage(<?php echo $row["Q_id"]?>, 'Your wait ticket is almost done, please make your way to the FabLab!')">
+                                                                                onclick="sendManualMessage(<?php echo $row["Q_id"]?>, 'Your wait ticket is almost done, please make your way to the FabLab')">  <!-- make note that adding explanation points may cause errors with notifications -->
                                                                                 Send Alert
                                                                         </button>
                                                                     </div>
@@ -396,7 +396,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         
         device = "d_id=" + device_id + "&operator=" + o_id;
         var dest = "";
-        if (device  != ""){
+        if (device  != "" && o_id.length==10){
             if (device_id.substring(0,1) == "2"){
                 dest = "http://polyprinter-"+device_id.substring(1)+".uta.edu";
                 window.open(dest,"_self")
@@ -410,8 +410,14 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         } 
 
         else {
-            message = "Please select a device.";
-            var answer = alert(message);
+            if (o_id.length!=10){
+                message = "Bad Operator Number: "+o_id;
+                var answer = alert(message);
+                }
+            else{
+                message = "Please select a device.";
+                var answer = alert(message);
+            }
         }
     } 
     
