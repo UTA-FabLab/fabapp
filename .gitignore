@@ -10,6 +10,9 @@ $RECYCLE.BIN/
 
 # Prevent environment specific from update
 connections/*
+connections/db_connect8.php
+connections/ldap.php
+connections/tp_connect.php
 nbproject/*
 pages/emulate\.php
 class/example\.php
