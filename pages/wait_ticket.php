@@ -320,7 +320,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
                                                             <!-- Remove From Wait Queue -->
                                                             <td> 
                                                                 <div style="text-align: center">
-                                                                    <button class="btn btn-xs" data-target="#removeModal" data-toggle="modal" 
+                                                                    <button class="<?php if ($temp_time == "00:00:00"){echo "btn btn-xs btn-danger";} else{echo "btn btn-xs";}?>" data-target="#removeModal" data-toggle="modal" 
                                                                             onclick="removeFromWaitlist(<?php echo $row["Q_id"].", ".$row["Operator"].", undefined"?>)">
                                                                             Remove
                                                                     </button>
