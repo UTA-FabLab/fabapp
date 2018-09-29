@@ -196,12 +196,16 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                         <li>
                             <a href="/index.php"><i class="fas fa-ticket-alt"></i> FabApp</a>
                         </li>
+                        <?php if ($staff && $staff->getRoleID() >=  $sv['LvlOfStaff']) { ?>
+                            <li>
+                                <a href="/admin/error.php"><i class="fas fa-bolt"></i> Error</a>
+                            </li>
+                        <?php } ?>
                         <li>
                             <a href="/pages/inventory.php"><i class="fas fa-warehouse"></i> Inventory</a>
                         </li>
                         <!-- if role > 6 {show} -->
                         <?php if ($staff && $staff->getRoleID() >=  $sv['LvlOfStaff']) { ?>
-                            
                             <li>
                                 <a href="#" id="searchLink"><i class="fas fa-search fa-fw"></i> Look-Up By<span class="fas fa-angle-left"></span></a>
                                 <ul class="nav nav-second-level">
@@ -223,11 +227,7 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                                 </form>
                                 </ul>
                             </li>
-                            <?php if ($sv['wait_system'] == "new"){ ?>
-                                <li>
-                                    <a href="/pages/wait_ticket.php"><i class="fas fa-list-ol"></i> Wait Queue Ticket</a>
-                                </li>
-                            <?php } else { ?>
+                            <?php if ( $sv['wait_system'] != "new") { ?>
                                 <li>
                                     <a href="/admin/now_serving.php"><i class="fas fa-list-ol"></i> Now Serving</a>
                                 </li>
@@ -249,7 +249,16 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                                 </form>
                                 </ul>
                             </li>
-                        <?php } if (is_object($staff) && $staff->getRoleID() >= $sv['LvlOfStaff']) { ?>
+                        <?php } ?>
+                        <li>
+                            <a href="/pages/tools.php"><i class="fas fa-toolbox"></i> Tools</a>
+                        </li>
+                        <?php if ($staff && $staff->getRoleID() >=  $sv['LvlOfStaff']) { ?>
+                            <?php if ( $sv['wait_system'] == "new"){ ?>
+                                <li>
+                                    <a href="/pages/wait_ticket.php"><i class="fas fa-list-ol"></i> Wait Queue Ticket</a>
+                                </li>
+                            <?php } ?>
                             <li>
                                 <a href="#"><i class="fas fa-sitemap"></i> Admin<span class="fas fa-angle-left"></span></a>
                                 <ul class="nav nav-second-level">
@@ -278,11 +287,11 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                                             </li>
                                         </ul>
                                     </li>
+                                    <li>
+                                        <a href="/admin/sv.php"><i class="fas fa-sliders-h"></i> Site Variables</a>
+                                    </li>
                                 </ul>
                                 <!-- /.nav-second-level -->
-                            </li>
-                            <li>
-                                <a href="/admin/error.php"><i class="fas fa-bolt"></i> Error</a>
                             </li>
                         <?php } ?>
                     </ul>
