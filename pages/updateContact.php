@@ -16,15 +16,16 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
 if (isset($staff) && $staff->getRoleID() >= $sv['LvlOfStaff']){
     $q_id = filter_input(INPUT_GET , 'q_id', FILTER_VALIDATE_INT, false);
     if (is_int($q_id) && $result = $mysqli->query("
-        SELECT `Op_email` , `Op_phone`, `operator`
+        SELECT `Op_email` , `Op_phone`, `Operator` , `Devgr_id`
         FROM `wait_queue`
         WHERE `Q_id`= $q_id AND `valid`='Y';
     ")) {
         if ($result->num_rows == 1){
             $row = $result->fetch_assoc();
-            $operator = $row['operator'];
+            $old_operator = $row['Operator'];
             $Op_email = $row['Op_email'];
             $Op_phone = $row['Op_phone'];
+            $devgr_id = $row['Devgr_id'];
         } else {
             $error_msg = "Unable to find Queue ID.";
         }
@@ -37,7 +38,8 @@ if (isset($staff) && $staff->getRoleID() >= $sv['LvlOfStaff']){
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
     $em = filter_input(INPUT_POST,'op-email');
     $ph = filter_input(INPUT_POST, 'op-phone');
-    $status = Wait_queue::updateContactInfo($q_id, $ph, $em);
+    $new_operator = filter_input(INPUT_POST,'operator');
+    $status = Wait_queue::updateContactInfo($q_id, $ph, $em, $old_operator, $new_operator, $devgr_id);
     if ($status === 0) {
         if ($_REQUEST['loc'] == 0) {
             header("Location:/index.php");
@@ -82,8 +84,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
                     <div class="panel-body">
                         <table class="table table-bordered table-striped table-hover"><form name="wqform" id="wqform" autocomplete="off" method="POST" action="">
                             <tr>
-                                <td><b data-toggle="tooltip" data-placement="top" title="email contact information">Operator: </b></td>
-                                <td><?php echo $operator?></td>
+                                <td><b data-toggle="tooltip" data-placement="top" title="Operator ID">Operator: </b></td>
+                                <td><input type="text" name="operator" id="operator" class="form-control" value="<?php echo $old_operator?>" placeholder="1000000000" maxlength="10" size="10"/></td>
                             </tr><tr>
                                 <td><b data-toggle="tooltip" data-placement="top" title="email contact information">Email Address: </b></td>
                                 <td><input type="text" name="op-email" id="op-email" class="form-control" value="<?php echo $Op_email?>" placeholder="example@mail.com" maxlength="100" size="10"/></td>
