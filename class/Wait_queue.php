@@ -90,7 +90,7 @@ class Wait_queue {
                     ('$operator','$d_id','$dg_id',CURRENT_TIMESTAMP, '$email', '$phone');
 
             ")){        
-                Notifications::sendNotification($mysqli->insert_id, "Fabapp Notification", "You have signed up for fabapp notifications. Your ticket number is: ".$mysqli->insert_id."", 'From: Fabapp Notifications' . "\r\n" .'', 0);
+                Notifications::sendNotification($mysqli->insert_id, "FabApp Notification", "You have signed up for FabApp notifications. Your ticket number is: ".$mysqli->insert_id."", 'From: Fabapp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateDeviceWaitTimes();
                 return $mysqli->insert_id;
                 
@@ -105,7 +105,7 @@ class Wait_queue {
                 VALUES
                     ('$operator','$dg_id',CURRENT_TIMESTAMP, '$email', '$phone');
             ")){        
-                Notifications::sendNotification($mysqli->insert_id, "Fabapp Notification", "You have signed up for fabapp notifications. Your ticket number is: ".$mysqli->insert_id."", 'From: Fabapp Notifications' . "\r\n" .'', 0);
+                Notifications::sendNotification($mysqli->insert_id, "FabApp Notification", "You have signed up for FabApp notifications. Your ticket number is: ".$mysqli->insert_id."", 'From: Fabapp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateWaitTimes();
                 $q_id = $mysqli->insert_id;
                 //Disabled for Dev Purposes
@@ -155,7 +155,7 @@ class Wait_queue {
             $row = $result->fetch_assoc();
             if (isset($row['Op_phone'])) {
                 // Send a notification that they have canceled their wait queue ticket
-                Notifications::sendNotification($queueItem->q_id, "Fabapp Notification", "Your Wait Ticket has been cancelled", 'From: Fabapp Notifications' . "\r\n" .'', 0);
+                Notifications::sendNotification($queueItem->q_id, "FabApp Notification", "Your Wait Ticket has been cancelled", 'From: FabApp Notifications' . "\r\n" .'', 0);
             }                 
         }
         else {
@@ -243,7 +243,7 @@ class Wait_queue {
             $row = $result->fetch_assoc();
             if (isset($row['Op_phone'])) {
                 // Send a notification that they have canceled their wait queue ticket
-                Notifications::sendNotification($q_id, "Fabapp Notification", "Your Wait Ticket has been completed.", 'From: Fabapp Notifications' . "\r\n" .'', 0);
+                Notifications::sendNotification($q_id, "FabApp Notification", "Your Wait Ticket has been completed.", 'From: FabApp Notifications' . "\r\n" .'', 0);
             }                 
         }
         else {

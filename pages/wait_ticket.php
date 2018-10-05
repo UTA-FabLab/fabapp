@@ -287,7 +287,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
                                                                 echo("<span align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
                                                                 $str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $row["estTime"]);
                                                                 sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
-                                                                $time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - strtotime($row["Start_date"]) ) + $sv["grace_period"];
+                                                                $time_seconds = $hours * 3600 + $minutes * 60 + $seconds + $sv["grace_period"];
                                                                 $temp_time = $hours * 3600 + $minutes * 60 + $seconds;
                                                                 if ($temp_time == "00:00:00"){
                                                                     //$time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - //strtotime($row["Start_date"]) ) + $sv["grace_period"];
@@ -378,49 +378,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
     var display = document.getElementById('<?php echo $da[0];?>');
     startTimer(time, display);
     
-<?php } ?>
-    var device = "";
-    function newTicket(){
-        var device_id = document.getElementById("devGrp").value;
-        var o_id = document.getElementById("operator_ticket").value;
-        
-        if("D_" === device_id.substring(0,2)){
-            device_id = device_id.substring(2);
-        } else{
-            if("-" === device_id.substring(4,5)){
-            device_id = device_id.substring(5);
-            } else{
-            device_id = device_id.substring(6);
-            }
-        }
-        
-        device = "d_id=" + device_id + "&operator=" + o_id;
-        var dest = "";
-        if (device  != "" && o_id.length==10){
-            if (device_id.substring(0,1) == "2"){
-                dest = "http://polyprinter-"+device_id.substring(1)+".uta.edu";
-                window.open(dest,"_self")
-            }
-            else {
-                var dest = "/pages/create.php?";
-                dest = dest.concat(device);
-                console.log(dest);
-                window.location.href = dest;
-            } 
-        } 
-
-        else {
-            if (o_id.length!=10){
-                message = "Bad Operator Number: "+o_id;
-                var answer = alert(message);
-                }
-            else{
-                message = "Please select a device.";
-                var answer = alert(message);
-            }
-        }
-    } 
-    
+<?php } ?>    
     
     function change_dg(){
         if (window.XMLHttpRequest) {
@@ -458,14 +416,6 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         xmlhttp.open("GET","/pages/sub/getWaitQueueID.php?val="+ document.getElementById("devGrp").value, true);
         xmlhttp.send();
     }
-    
-     function sendManualMessage(q_id, message){
-        
-        if (confirm("You are about to send a notification to a wait queue user. Click OK to continue or CANCEL to quit.")){
-            
-        window.location.href = "/pages/sub/endWaitList.php?q_id=" + q_id + "&message=" + message + "&loc=1";
-        }
-     }
     
      function removeFromWaitlist(q_id){
         
