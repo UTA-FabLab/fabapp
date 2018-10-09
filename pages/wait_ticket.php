@@ -179,13 +179,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
                             </div>
                             <!-- /.col-md-11 -->
                         </div>
-
-                        
+                        <br>
+                        <button align="pull-right" class="btn btn-primary" type="button" id="addBtn" onclick="newTicket()">Create Ticket</button>
                     </div>
                     <!-- /.panel-body -->
-                    <div class="panel-footer clearfix">
-                        <button class="btn btn-primary" type="button" id="addBtn" onclick="newTicket()">Create Ticket</button>
-                    </div>
                 </div>
             </div>
             <!-- /.col-md-4 -->
