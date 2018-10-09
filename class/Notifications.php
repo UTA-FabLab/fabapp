@@ -74,5 +74,16 @@ class Notifications {
             return false;
         }
     }
+    
+    public static function setLastNotified($q_id){
+        global $mysqli;
+        if ($mysqli->query("
+            UPDATE `wait_queue`
+            SET `last_contact` = CURRENT_TIMESTAMP
+            WHERE `Q_id` = $q_id AND valid='Y'
+        ")) {
+        }
+    }
+    
 }
 ?>
