@@ -172,7 +172,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
                                         </select>
                                     </td>
                                 </tr>
-                                <tr>
+                                <tr> <br>
                                     <td><p><b>Operator: </b><span type="password" id="deviceList"></span></p></td>
                                     <td><input type="text" name="operator_ticket" id="operator_ticket" class="form-control" placeholder="1000000000" maxlength="10" size="10"/></td>
                                 </tr>
