@@ -95,10 +95,14 @@ function searchF(){
     }
 }
 
-function sendManualMessage(q_id, message){  
+function sendManualMessage(q_id, message, loc){  
     if (confirm("You are about to send a notification to a wait queue user. Click OK to continue or CANCEL to quit.")){
-        
-    window.location.href = "/pages/sub/endWaitList.php?q_id=" + q_id + "&message=" + message + "&loc=0";
+        if (loc == 0){
+            window.location.href = "/pages/sub/endWaitList.php?q_id=" + q_id + "&message=" + message + "&loc=0";
+        }
+        else if (loc == 1){
+            window.location.href = "/pages/sub/endWaitList.php?q_id=" + q_id + "&message=" + message + "&loc=1";
+        }
     }
 }
 
