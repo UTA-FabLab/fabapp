@@ -137,7 +137,7 @@ function advanceNum($i, $str){
                                                                 <!-- Operator ID --> 
                                                                 <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?>
                                                                     <td>
-                                                                        <a class="<?php echo $user->getIcon()?> fa-lg" title="<?php echo($row['Operator']) ?>"  href="/pages/updateContact.php?q_id=<?php echo $row["Q_id"]?>&loc=0"></a>
+                                                                        <a class="<?php echo $user->getIcon()?> fa-lg" title="<?php echo($row['Operator']) ?>"  href="/pages/waitUserInfo.php?q_id=<?php echo $row["Q_id"]?>&loc=0"></a>
                                                                         <?php if (!empty($row['Op_phone'])) { ?> <i class="fas fa-mobile"   title="<?php echo ($row['Op_phone']) ?>"></i> <?php } ?>
                                                                         <?php if (!empty($row['Op_email'])) { ?> <i class="fas fa-envelope" title="<?php echo ($row['Op_email']) ?>"></i> <?php } ?>
                                                                     </td>
@@ -161,16 +161,26 @@ function advanceNum($i, $str){
 
                                                                 <!-- Estimated Time -->
                                                                 <?php if (isset($row['estTime'])) {
-                                                                    echo("<span align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
                                                                     $str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $row["estTime"]);
                                                                     sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
                                                                     $time_seconds = $hours * 3600 + $minutes * 60 + $seconds + $sv["grace_period"];
                                                                     $temp_time = $hours * 3600 + $minutes * 60 + $seconds;
-                                                                    if ($temp_time == "00:00:00"){
+                                                                    if ($temp_time == "00:00:00" && isset($row['last_contact'])){
+                                                                        $time_seconds = $sv["grace_period"] - (time() - strtotime($row['last_contact']) );
+                                                                        if ($time_seconds <= 0 ){
+                                                                            echo("<span style=\"color:red\" align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
+                                                                            array_push($device_array, array("q".$row["Q_id"], $time_seconds));
+                                                                        } else {
+                                                                            echo("<span style=\"color:orange\" align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
+                                                                            array_push($device_array, array("q".$row["Q_id"], $time_seconds));
+                                                                        }
+                                                                        array_push($device_array, array("q".$row["Q_id"], $time_seconds));
+                                                                    } elseif ($temp_time == "00:00:00") {
                                                                         //$time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - //strtotime($row["Start_date"]) ) + $sv["grace_period"];
-
+                                                                        echo("<span align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
                                                                         //do nothing keeping time at 00:00:00
                                                                     } else {
+                                                                        echo("<span align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
                                                                         array_push($device_array, array("q".$row["Q_id"], $time_seconds));
                                                                     }
                                                                 } ?>

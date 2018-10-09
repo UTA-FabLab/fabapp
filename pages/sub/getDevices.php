@@ -39,7 +39,7 @@ if (!empty($_GET["val"])) {
             }
             if (mysqli_num_rows($result)==0) {
                 echo ("<script>document.getElementById(\"deviceList\").disabled = true;</script>");
-                echo "<option selected disabled hidden>"; echo "A Device Is Available To Use"; echo "</option>";
+                echo "<option disabled selected>"; echo "A Device Is Available To Use"; echo "</option>";
             }
             
         
