@@ -248,8 +248,8 @@
             if ($result->num_rows == 0){
                 //Define User in table and assign default Role
                 if ($stmt = $mysqli->prepare("
-                    INSERT INTO `users` (`operator`, `r_id`, `adj_date`, `notes`) 
-                    VALUES (?, ?, CURRENT_TIME(), ?);
+                    INSERT INTO `users` (`operator`, `r_id`, `adj_date`, `notes`, `long_close`) 
+                    VALUES (?, ?, CURRENT_TIME(), ?, 'N');
                 ")){
                     $stmt->bind_param("sss", $this->operator, $role_id, $staff_id);
                     if ($stmt->execute() === true ){
