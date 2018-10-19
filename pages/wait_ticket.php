@@ -36,14 +36,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
     if(isset($_POST['devices']) && isset($_POST['dg_id'])){
         $d_id1 = filter_input(INPUT_POST,'devices');
         $dg_id1 = filter_input(INPUT_POST,'dg_id');
-        $wait_id1 = Wait_queue::insertWaitQueue($operator1, $d_id1, $dg_id1, $ph1, $em1);
-
-        if (is_int($wait_id1)){
-            $_SESSION['wt_msg'] = "success";
-            header("Location:wait_ticket.php");
-            
+        $status = Wait_queue::hasDGWait($operator1 , $dg_id1);
+        if ($status)
+        {
+            $wt_msg = ("<div style='text-align: center'>
+                    <div class='alert alert-danger'>
+                        Operator is already in this Wait Queue.
+                    </div> </div>");
         } else {
-            $wt_msg = $wait_id1;
+            $wait_id1 = Wait_queue::insertWaitQueue($operator1, $d_id1, $dg_id1, $ph1, $em1);
+
+            if (is_int($wait_id1)){
+                $_SESSION['wt_msg'] = "success";
+                header("Location:wait_ticket.php");
+
+            } else {
+                $wt_msg = $wait_id1;
+            }
         }
     } else {
         $wt_msg = ("<div style='text-align: center'>
@@ -283,7 +292,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
                                                             <?php if (isset($row['estTime'])) {
                                                                 $str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $row["estTime"]);
                                                                 sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
-                                                                $time_seconds = $hours * 3600 + $minutes * 60 + $seconds + $sv["grace_period"];
+                                                                $time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - strtotime($row["Start_date"]) ) + $sv["grace_period"];
                                                                 $temp_time = $hours * 3600 + $minutes * 60 + $seconds;
                                                                 if ($temp_time == "00:00:00" && isset($row['last_contact'])){
                                                                     $time_seconds = $sv["grace_period"] - (time() - strtotime($row['last_contact']) );
@@ -369,8 +378,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
         <!-- /.col-md-4 -->
     <?php } ?>
     </div>
-    <!-- /.row -->
-    
+    <!-- /.row -->    
 </div>
 <!-- /#page-wrapper -->
 

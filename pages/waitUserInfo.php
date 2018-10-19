@@ -60,7 +60,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
         $_SESSION['success_msg'] = "Contact Information Updated";
     } else {
         $_SESSION['error_msg'] = $status;
-        header("Location:/pages/waitUserInfo.php?q_id=$q_id");
+        header("Location:/pages/waitUserInfo.php?q_id=$q_id&loc=$_REQUEST[loc]");
         
     }
 }

@@ -546,6 +546,14 @@ class Wait_queue {
         global $mysqli;
         return mysqli_num_rows($mysqli->query(" SELECT * FROM `wait_queue` WHERE `valid`='Y' "))>0;
     }
+
+    public static function hasDGWait($operator , $dg_id){
+        global $mysqli;
+        return mysqli_num_rows($mysqli->query(" 
+                                SELECT * 
+                                FROM `wait_queue` 
+                                WHERE `Operator`=$operator AND `devgr_id`=$dg_id"))>0;
+    }
     
     public static function getTabResult(){
         global $mysqli;
