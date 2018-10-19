@@ -163,7 +163,7 @@ function advanceNum($i, $str){
                                                                 <?php if (isset($row['estTime'])) {
                                                                     $str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $row["estTime"]);
                                                                     sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
-                                                                    $time_seconds = $hours * 3600 + $minutes * 60 + $seconds + $sv["grace_period"];
+                                                                    $time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - strtotime($row["Start_date"]) ) + $sv["grace_period"];
                                                                     $temp_time = $hours * 3600 + $minutes * 60 + $seconds;
                                                                     if ($temp_time == "00:00:00" && isset($row['last_contact'])){
                                                                         $time_seconds = $sv["grace_period"] - (time() - strtotime($row['last_contact']) );
@@ -269,8 +269,7 @@ function advanceNum($i, $str){
                                 </div>
                                 <!-- /.col-md-11 -->
                             </div>
-
-                            <button class="btn btn-primary" type="button" id="addBtn" onclick="newTicket()">Create Ticket</button>
+                            <button align="pull-right" class="btn btn-primary" type="button" id="addBtn" onclick="newTicket()">Create Ticket</button>
                         </div>
                         <!-- /.panel-body -->
                     </div>
