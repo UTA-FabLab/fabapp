@@ -240,7 +240,7 @@ class Devices {
     	$dot = 0;
     	$color = "white";
     	$symbol = "circle";
-    	$lookup = "SELECT * FROM `service_call` WHERE `d_id` = '$d_id' AND solved = 'N' ORDER BY sc_time DESC";
+    	$lookup = "SELECT * FROM `service_call` WHERE `d_id` = '$d_id' AND `solved` = 'N' ORDER BY `sl_id` DESC";
     	if($status = $mysqli->query($lookup)){
             while ($ticket = $status->fetch_assoc()){
                 if($ticket['sl_id'] > $dot)
@@ -257,8 +257,8 @@ class Devices {
     	}
         
     	if($staff){
-            if($staff->getRoleID() > 7)
-                echo "<a href = '/service/sortableHistory.php?d_id=$d_id'><i class='fas fa-$symbol fa-lg' style='color:$color'></i></a>&nbsp;";
+            if($staff->getRoleID() >= 7)
+                echo "<a href = '/pages/sr_history.php?d_id=$d_id'><i class='fas fa-$symbol fa-lg' style='color:$color'></i></a>&nbsp;";
             else
                 echo "<i class='fas fa-$symbol fa-lg' style='color:".$color."'></i>&nbsp;";
     	} else {

@@ -22,9 +22,9 @@ if (isset($_SESSION['wt_msg']) && $_SESSION['wt_msg'] == 'success'){
     unset($_SESSION['wt_msg']);
 }
 if (!array_key_exists("clear_queue",$sv)){
-    $mysqli->query("INSERT INTO `site_variables` (`id`, `name`, `value`, `notes`) VALUES (NULL, 'clear_queue', '9', 'Minimum Lvl Required to clear the Wait Queue')");
+    $mysqli->query("INSERT INTO `site_variables` (`id`, `name`, `value`, `notes`) VALUES (NULL, 'clear_queue', '8', 'Minimum Lvl Required to clear the Wait Queue')");
 }
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff->getRoleID() >= $sv['clear_queue']) {
     Wait_queue::removeAllUsers();
     $_SESSION['success_msg'] = "Wait Queue has been cleared";
     header("Location:/index.php");
@@ -92,20 +92,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
                         <tr>
                             <td><a href="#" data-toggle="tooltip" data-placement="top" title="Which device does this wait ticket belong to?">Select Device Group</a></td>
                             <td>
-                                <select name="dg_id" id="dg_id" onChange="change_dg()" tabindex="1">
+                                <select name="dg_id" id="dg_id" onchange="change_dg()" tabindex="1">
                                     <option disabled hidden selected value="">Device Group</option>
-                                    <?php if($result = $mysqli->query("
-                                        SELECT DISTINCT `device_group`.`dg_id`, `device_group`.`dg_desc`
-                                        FROM `devices`
-                                        LEFT JOIN `device_group`
-                                        ON `device_group`.`dg_id` = `devices`.`dg_id`
-                                        ORDER BY `dg_desc`
-                                    ")){
-                                            while($row = $result->fetch_assoc()){
+                                    <?php if($result = DeviceGroup::popDGs()){
+                                        while($row = $result->fetch_assoc()){
                                             echo("<option value='$row[dg_id]'>$row[dg_desc]</option>");
                                         }
                                     } else {
-                                        echo ("Device list Error - SQL ERROR");
+                                        echo("<option value=''>Device list Error - SQL ERROR</option>");
                                     }?>
                                 </select>
                                 &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;
@@ -357,25 +351,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
             </div>
         </div>
         <!-- /.col-md-8 -->
-        <div class="col-md-4">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <i class="fa fa-trash fa-fw"></i>Remove All Wait-Queue Users
-                </div>
-                <!-- /.panel-heading -->
-                <div class="panel-body">
-                    <div style="text-align: center">
-                        <form method="post" action="" onsubmit="return removeAllUsers()" >
-                        <button class="btn btn-danger" name="removeBtn">
-                            Remove All Users
-                        </button>
-                        </form>
+        <?php if ($staff->getRoleID() >= $sv['clear_queue']){ ?>
+            <div class="col-md-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="fa fa-trash fa-fw"></i>Remove All Wait-Queue Users
                     </div>
+                    <!-- /.panel-heading -->
+                    <div class="panel-body">
+                        <div style="text-align: center">
+                            <form method="post" action="" onsubmit="return removeAllUsers()" >
+                            <button class="btn btn-danger" name="removeBtn">
+                                Remove All Users
+                            </button>
+                            </form>
+                        </div>
+                    </div>
+                <!-- /.panel-body -->
                 </div>
-            <!-- /.panel-body -->
             </div>
-        </div>
-        <!-- /.col-md-4 -->
+            <!-- /.col-md-4 -->
+        <?php } ?>
     <?php } ?>
     </div>
     <!-- /.row -->    
@@ -409,7 +405,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
             }
         };
         
-        xmlhttp.open("GET","/pages/sub/getDevices.php?val="+ document.getElementById("dg_id").value, true);
+        xmlhttp.open("GET","/pages/sub/wq_getDevices.php?val="+ document.getElementById("dg_id").value, true);
         xmlhttp.send();
         inUseCheck();
     }
@@ -432,7 +428,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         xmlhttp.send();
     }
     
-     function removeFromWaitlist(q_id){
+    function removeFromWaitlist(q_id){
         
         if (confirm("You are about to delete a user from the wait queue. Click OK to continue or CANCEL to quit.")){  
         
@@ -440,13 +436,15 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         }
      }
     
-     function removeAllUsers(){
-        
-        if (confirm("You are about to delete ALL wait queue users. Click OK to continue or CANCEL to quit.")){
-            return true;
+    <?php if ($staff->getRoleID() < $sv['clear_queue']){ ?>
+        function removeAllUsers(){
+
+            if (confirm("You are about to delete ALL wait queue users. Click OK to continue or CANCEL to quit.")){
+                return true;
+            }
+            return false;
         }
-        return false;
-    }
+    <?php } ?>
     
     function inUseCheck(){
         var operator = document.getElementById("operator1").value;
@@ -490,11 +488,9 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         if (warnCB.checked == true){
             sBtn.disabled = false;
             sBtn.classList.add("btn-primary");
-            trV.hidden  = true;
         } else {
             sBtn.disabled = true;
             sBtn.classList.remove("btn-primary");
-            trV.hidden = false;
         }
     }
     

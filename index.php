@@ -132,7 +132,9 @@ function advanceNum($i, $str){
                                                             <tr class="tablerow">
 
                                                                 <!-- Wait Queue Number -->
-                                                                <td align="center"><?php echo($row['Q_id']) ?></td>
+                                                                <td align="center">
+                                                                    <?php echo($row['Q_id']) ?>
+                                                                </td>
 
                                                                 <!-- Operator ID --> 
                                                                 <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?>
@@ -155,10 +157,7 @@ function advanceNum($i, $str){
                                                                 <!-- Start Time, Estimated Time, Last Contact Time -->
                                                                 <td>
                                                                     <!-- Start Time -->
-                                                                <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?>
                                                                     <i class="far fa-calendar-alt" align="center" title="Started @ <?php echo( date($sv['dateFormat'],strtotime($row['Start_date'])) ) ?>"></i>
-                                                                <?php } ?>
-
                                                                 <!-- Estimated Time -->
                                                                 <?php if (isset($row['estTime'])) {
                                                                     $str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $row["estTime"]);
@@ -313,7 +312,7 @@ function advanceNum($i, $str){
                                         <td align="right"><?php echo ("<a href=\"pages/lookup.php?trans_id=$row[trans_id]\">$row[trans_id]</a>"); ?></td>
                                         <td>
                                             <?php if($ticket->getDevice()->getUrl() && (preg_match($sv['ip_range_1'],getenv('REMOTE_ADDR')) || preg_match($sv['ip_range_2'],getenv('REMOTE_ADDR'))) ){
-                                                Devices::printDot($staff, $row['d_id'], $ticket->getDevice()->getD_id());
+                                                Devices::printDot($staff, $ticket->getDevice()->getD_id());
                                                 echo ("<a href=\"http://".$ticket->getDevice()->getUrl()."\">".$ticket->getDevice()->getDevice_desc()."</a>");
                                             } else {
                                                 Devices::printDot($staff, $ticket->getDevice()->getD_id());
