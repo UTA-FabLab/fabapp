@@ -36,14 +36,16 @@
 <div class="col-sm-12">
     <?php echo "IP addy - ".getenv('REMOTE_ADDR');?>
     <?php if(!empty($_SESSION['type'])) {echo "\n<br>type - ".$_SESSION['type'];}?>
+    <?php echo ("<br>".$_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'])?>
 </div>
 
 <script type="text/javascript">
 <?php if (isset($staff)){?>
     setTimeout(function(){window.location.href = "<?php echo $_SESSION['loc']?>"}, <?php echo (1+$_SESSION["timeOut"]-time())*1000; ?>);
-<?php } else { ?>
-    //setTimeout(function(){window.location.href = "<?php if (isset($_SESSION['loc'])){echo $_SESSION['loc'];} else {echo "/index.php";}?>"}, 301000);
-	setTimeout(function(){window.location.href = "/index.php"}, 301000);
+<?php } elseif (isset($auto_off)) { ?>
+    //no auto refresh timer
+<?php } else {?>
+    setTimeout(function(){window.location.href = "/index.php"}, 301000);
 <?php } ?>
 </script>
     <script type="text/javascript" src="/vendor/jquery/jquery.min.js"></script>
