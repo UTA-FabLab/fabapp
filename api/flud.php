@@ -9,7 +9,7 @@
  *
  *  Jonathan Le & Arun Kalahasti
  *  FabLab @ University of Texas at Arlington
- *  version: 0.9 beta (2018-03-14)
+ *  version: 0.91
  *
 */
 
@@ -30,18 +30,17 @@ $json_out = array();
 /*
 //Test Data
 $input_data["type"] = "print";
-$input_data["uta_id"] = "1000000000";
+$input_data["uta_id"] = "1000000016";
 $input_data["device_id"] = "0021";
-$input_data["m_id"] = "29";
+$input_data["m_id"] = "63";
 $input_data["est_filament_used"] = "1";
-$input_data["est_build_time"] = "01:01:00";
-$input_data["filename"] = "Jon Le's Test";
+$input_data["est_build_time"] = "04:01:00";
+$input_data["filename"] = "Medium_Test_1.000@13_2.25@63_3@16_colorSwap.gcode";
 $input_data["p_id"] = "3";
 
 //Test End
-$input_data["type"] = "update_end_time";
-$input_data["device_id"] = 21;
-
+//$input_data["type"] = "update_end_time";
+//$input_data["device_id"] = 21;
 */
 //Compare Header API Key with site variable's API Key
 $headers = apache_request_headers();
@@ -69,6 +68,7 @@ if (! ($input_data)) {
     $json_out["ERROR"] = "Unable to decode JSON message - check syntax";
     ErrorExit(1);
 }
+
 // Extract message type from incoming JSON
 $type = $input_data["type"];
 
@@ -128,8 +128,7 @@ function PrintTransaction ($operator, $device_id) {
         $row = $device_name_result->fetch_array();
         if (!is_null($row)){
             $d_id = $row["d_id"];
-        }
-        else{
+        } else {
             $json_out["device_name"] = "Not found";
         }
         $device_name_result->close();
@@ -143,15 +142,8 @@ function PrintTransaction ($operator, $device_id) {
             WHERE `materials`.`m_id` = '$m_id'
             LIMIT 1;
         ");
-
+        
         $row = $material_name_result->fetch_array();
-        //Deny if material selected is Generic
-        if (!(strpos($row['m_name'], "Generic") === false)){
-            $json_out["ERROR"] = "Please Select Material";
-            $json_out["authorized"] = "N";
-            return;
-        }
-		
         if (!is_null($row["m_name"])){
             $json_out["m_name"] = $print_json["m_name"] = $row["m_name"];
         } else {
@@ -171,9 +163,16 @@ function PrintTransaction ($operator, $device_id) {
     if ($input_data["p_id"]){
         $p_id = $input_data["p_id"];
     }
+	
+    //Deny if they are not the next person in line to use this device
+    $msg = Wait_queue::transferFromWaitQueue($operator, $d_id);
+    if (is_string($msg)){
+        $json_out["ERROR"] = $msg;
+        return;
+    }
 
     if ($insert_result = $mysqli->query("
-        INSERT INTO transactions 
+        INSERT INTO transactions
             (`operator`,`d_id`,`t_start`,`status_id`,`p_id`,`est_time`) 
         VALUES
             ('$operator','$d_id',CURRENT_TIMESTAMP,'$auth_status','$p_id','$est_build_time');
@@ -181,13 +180,11 @@ function PrintTransaction ($operator, $device_id) {
         $trans_id = $json_out["trans_id"] = $mysqli->insert_id;
         $print_json["trans_id"] = $trans_id;
         
-        Wait_queue::transferFromWaitQueue($operator, $d_id);
-        
         if ($stmt = $mysqli->prepare("
             INSERT INTO mats_used
                 (`trans_id`,`m_id`, `unit_used`, `status_id`, `mu_notes`, `mu_date`) 
             VALUES
-                (?, ?, ?, ?, CURRENT_TIMESTAMP);
+                (?, ?, ?, ?, ?, CURRENT_TIMESTAMP);
         ")){
             $bind_param = $stmt->bind_param("iidis", $trans_id, $m_id, $input_data["est_filament_used"], $auth_status, $filename);
             $stmt->execute();

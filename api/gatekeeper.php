@@ -88,6 +88,26 @@ function gatekeeper ($operator, $d_id) {
     
     ////////////////////////////////////////////////////////
     //
+    //  Deny if Device has a Service Ticket
+    //
+    if($result = $mysqli->query("
+        SELECT *
+        FROM `service_call`
+        WHERE `d_id` = $d_id AND `solved` = 'N' AND `sl_id` >=7;
+    ")){
+        if ($result->num_rows > 0){
+            if ($user->getRoleID() == 7 ||  $user->getRoleID() >= 10){
+                //No Problems Keep Working
+            } else {
+                //role id != 7 or r_id < 10
+                return array ("status_id" => 1, "ERROR" => "This device is Out of Service",  "authorized" => "N", "role" => $user->getRoleID());
+            }
+        }
+    }
+    
+    
+    ////////////////////////////////////////////////////////
+    //
     //   User has an outstanding charge
     //
     $ac_owed = Acct_charge::checkOutstanding($user->getOperator());

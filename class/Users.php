@@ -1,6 +1,7 @@
 <?php
 /*
- *   CC BY-NC-AS UTA FabLab 2015-2017
+ *   CC BY-NC-AS UTA FabLab 2016-2018
+ *   FabApp V 0.91
  */
 
 /**
@@ -401,20 +402,6 @@
             //echo $mysqli->error;
             return false;
         }
-        
-        //See if operator can use any default accounts
-        //Based on $sv attributes for acct1, acct3, & acct4
-        /*
-        if ($sv['acct1'] <= $this->roleID){
-            array_push($accounts, new Accounts(1));
-        }
-        if ($sv['acct3'] <= $this->roleID){
-            array_push($accounts, new Accounts(3));
-        }
-        if ($sv['acct4'] <= $this->roleID){
-            array_push($accounts, new Accounts(4));
-        }
-        */
         
         $this->accounts = $accounts;
     }

@@ -190,11 +190,11 @@ class Transactions {
         } else {
             $this->setStatus_id(14);
         }
-		$msg = $this->writeAttr();
-		if (is_string($msg)){						 
-			return $msg;
-		}
-		return true;
+        $msg = $this->writeAttr();
+        if (is_string($msg)){						 
+            return $msg;
+        }
+        return true;
     }
     
     public function end_octopuppet(){
@@ -228,7 +228,10 @@ class Transactions {
         if (!Purpose::regexID($p_id)) return "Invalid Purpose";
         if (!Status::regexID($status_id)) return "Invalid Status";
         
-        Wait_queue::transferFromWaitQueue($operator->getOperator(), $d_id);
+        $msg = Wait_queue::transferFromWaitQueue($operator->getOperator(), $d_id);
+        if (is_string($msg)){
+            return $msg;
+        }
         
         if ($mysqli->query("
             INSERT INTO transactions 
@@ -410,7 +413,21 @@ class Transactions {
                 }
                 $printer -> feed();
                 $printer -> text("Potential Problems?  ( Y )  ( N )");
+                //Print Color Swap Instructions
                 $printer -> feed();
+                $colorswap = explode("_", $filename);
+                $i = 1;
+                foreach ($colorswap as $cs){
+                    if (preg_match("/^\d{1,}\.\d{3}-\d{1,}/", $cs)){
+                        list($loc, $m_id) = explode("-", $cs);
+                        $end = strpos($m_id, "]");
+                        $mat = new Materials(substr($m_id, 0, $end));
+                        $printer -> feed();
+                        $printer -> text("Swap $i Z=$loc w/ ".$mat->getM_name());
+                        $i++;
+                    }
+                }
+                $printer -> feed(2);
                 $printer -> text("NOTES: _________________________");
                 $printer -> feed(2);
                 $printer -> text("________________________________");

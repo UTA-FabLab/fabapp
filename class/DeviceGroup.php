@@ -71,6 +71,22 @@ class DeviceGroup {
         }
     }
     
+    //List all DGs that have devices within their group.
+    public static function popDGs(){
+        global $mysqli;
+        if($result = $mysqli->query("
+            SELECT DISTINCT `device_group`.`dg_id`, `device_group`.`dg_desc`
+            FROM `devices`
+            LEFT JOIN `device_group`
+            ON `device_group`.`dg_id` = `devices`.`dg_id`
+            ORDER BY `dg_desc`
+        ")){
+            return $result;
+        } else {
+            return false;
+        }
+    }
+    
     public function getDg_id() {
         return $this->dg_id;
     }
