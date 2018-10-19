@@ -16,17 +16,17 @@ include_once 'gatekeeper.php';
 
 
 // RFID to Role ID
-//$test_input = json_encode(array("type" => "check_status_rfid", "number" => "1415435517", "device" => "0021"));
+//$test_input = array("type" => "check_status_rfid", "number" => "1415435517", "device" => "0021");
 //Test Turn On Using Operator IDs
-//$test_input = json_encode(array("type" => "utaid_double", "device" => "2", "number" => "1000000003", "number_employee" => "1000000008"));
+//$test_input = array("type" => "utaid_double", "device" => "0007", "number" => "1000000010", "number_employee" => "1000000010"))
 //Test End
-//$test_input = json_encode(array("type" => "end_transaction", "trans_id" => "26619"));
-//$input_data = json_decode($test_input, true);
+//$test_input = array("type" => "end_transaction", "device" => "0007"))
 
 //Compare Header API Key with site variable's API Key
 $headers = apache_request_headers();
 if ($sv['api_key'] == "") {
-    $json_out["api_key"] = "Not Set";
+    $json_out["ERROR"] = "API Not Set, Unable to authenticate Device";
+    //ErrorExit(1);
 } elseif(isset($headers['authorization'])){
     if ($sv['api_key'] != $headers['authorization'] ){
         $json_out["ERROR"] = "Unable to authenticate Device";
@@ -62,24 +62,43 @@ if (strtolower($type) == "utaid_double"){
     // added this part to support user + learner transaction with utaid
     $user = Users::withID($input_data["number"]);
     $staff = Users::withID($input_data["number_employee"]);
-    $device_id = $input_data["device"];
+    if(array_key_exists("dev_id", $input_data)){
+        $device_id = $input_data["dev_id"];
+    } elseif(array_key_exists("device_id", $input_data)) {
+        $device_id = $input_data["device_id"];
+    } else {
+        $device_id = $input_data["device"];
+    }
     OnTransaction_double($user, $staff, $device_id);
 
 } elseif(strtolower($type) == "rfid_double"){
     // added this part to support user + learner transac 
     $user = RFIDtoUTAID($input_data["number"]);
     $staff = RFIDtoUTAID($input_data["number_employee"]);
-    $device_id = $input_data["device"];
+    if(array_key_exists("dev_id", $input_data)){
+        $device_id = $input_data["dev_id"];
+    } elseif(array_key_exists("device_id", $input_data)) {
+        $device_id = $input_data["device_id"];
+    } else {
+        $device_id = $input_data["device"];
+    }
+    
     OnTransaction_double($user, $staff, $device_id);
 
-} elseif(strtolower($type) == "check_status_utaid"){
+} elseif(strtolower($type) == "check_status_utaid") {
     check_user_status( Users::withID($input_data["number"]) );
 	
-} elseif(strtolower($type) == "check_status_rfid"){
+} elseif(strtolower($type) == "check_status_rfid") {
     check_user_status( RFIDtoUTAID($input_data["number"]) );
 
-}elseif( strtolower($type) == "end_transaction" ){
-    end_transaction( $input_data["dev_id"] );
+} elseif( strtolower($type) == "end_transaction" ) {
+    if(array_key_exists("dev_id", $input_data)){
+        end_transaction( $input_data["dev_id"] );
+    } elseif(array_key_exists("device_id", $input_data)) {
+        end_transaction( $input_data["device_id"] );
+    } else {
+        end_transaction( $input_data["device"] );
+    }
     
 } else {
     $json_out["ERROR"] = "Unknown type: $type";
@@ -153,6 +172,13 @@ function CreateTransaction_double ($user, $staff, $device_id, $status_id) {
         $user = $staff;
         $staff = $temp;
     }
+    
+    //Deny if they are not the next person in line to use this device
+    $msg = Wait_queue::transferFromWaitQueue($user->getOperator(), $device_id);
+    if (is_string($msg)){
+        $json_out["ERROR"] = $msg;
+        return;
+    }
 	
     $insert_result = mysqli_query($mysqli, "
       INSERT INTO transactions 
@@ -218,22 +244,27 @@ function RFIDtoUTAID ($rfid_no) {
 }
 
 
-function end_transaction( $dev_id ){
+function end_transaction( $d_id ){
+    global $mysqli;
     global $json_out;
 
 	// Check for deviceID value
-    if (! (preg_match("/^\d*$/", $dev_id))) {
+    if (! (preg_match("/^\d*$/", $d_id))) {
         $json_out["ERROR"] = "Invalid device number";
-		Error::insertError($_SERVER['PHP_SELF'],  $json_out["ERROR"], "");
+        Error::insertError($_SERVER['PHP_SELF'],  $json_out["ERROR"], "");
         ErrorExit(1);
     }
+    
+    //Remove Leading Zeros
+    $d_id = ltrim($d_id, '0');
+    
 	if ($result = $mysqli->query("
 		SELECT *
 		FROM `transactions`
-		WHERE `d_id` = '$dev_id' AND `t_end` is NULL
+		WHERE `d_id` = '$d_id' AND `t_end` is NULL
 	")){
-		$row = $result->fetch_assoc();
-		$ticket = new Transactions($row['trans_id']);
+            $row = $result->fetch_assoc();
+            $ticket = new Transactions($row['trans_id']);
 	}
 	
     $msg = $ticket->end_juicebox();
@@ -243,7 +274,7 @@ function end_transaction( $dev_id ){
         $json_out["success"] = "Y";
     } else {
         $json_out["success"] = "N";
-		Error::insertError($_SERVER['PHP_SELF'],  $msg, "");
+        Error::insertError($_SERVER['PHP_SELF'],  $msg, "");
         ErrorExit(1);
     }
 }

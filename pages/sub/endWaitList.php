@@ -44,8 +44,7 @@ function removeFromQueue($q_id) {
  
 function sendMessage($q_id, $message)
 {
-    $person = new Wait_queue($q_id);
-    Notifications::sendNotification($person->getOperator(), "Fabapp Notification", $message, 1);
+    Notifications::sendNotification($q_id, "FabApp Notification", $message, 1);
 }
 
 ?>

@@ -250,10 +250,25 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                                 </ul>
                             </li>
                         <?php } ?>
-                        <li>
-                            <a href="/pages/tools.php"><i class="fas fa-toolbox"></i> Tools</a>
-                        </li>
+                            <li>
+                                <a href="/pages/tools.php"><i class="fas fa-toolbox"></i> Tools</a>
+                            </li>
                         <?php if ($staff && $staff->getRoleID() >=  $sv['LvlOfStaff']) { ?>
+                            <li>
+                                <a href="#"><i class="fa fa-wrench fa-fw"></i> Service<span class="fa arrow"></span></a>
+                                <ul class="nav nav-second-level">
+                                    <li>
+                                        <a href="/pages/sr_history.php"><i class="fas fa-history fa-fw"></i> Device History</a>
+                                    </li>
+                                    <li>
+                                        <a href='/pages/open_sr.php'><i class='far fa-comment fa-fw'></i> Open Service Issues</a>
+                                    </li>
+                                    <li>
+                                        <a href="/pages/sr_issue.php"><i class="fas fa-fire fa-fw"></i> Report Issue</a>
+                                    </li>
+                                </ul>
+                                <!-- /.nav-second-level -->
+                            </li>
                             <?php if ( $sv['wait_system'] == "new"){ ?>
                                 <li>
                                     <a href="/pages/wait_ticket.php"><i class="fas fa-list-ol"></i> Wait Queue Ticket</a>

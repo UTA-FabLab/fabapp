@@ -5,7 +5,7 @@ class Notifications {
     private $email;
     private $last_contacted;
 
-    public static function sendNotification($operator, $subject, $message, $status) {
+    public static function sendNotification($q_id, $subject, $message, $status) {
         global $mysqli;
         $hasbeenContacted = false;
         // This function queries the carrier table and sends an email to all combinations
@@ -14,7 +14,7 @@ class Notifications {
         if ($result = $mysqli->query("
             SELECT `Op_phone` AS `Phone`, `Op_email` AS `Email`
             FROM `wait_queue`
-            WHERE `Operator` = $operator AND valid='Y'
+            WHERE `Q_id` = $q_id AND valid='Y'
         ")) 
         {
             $row = $result->fetch_assoc();
@@ -29,14 +29,12 @@ class Notifications {
                 ")) {
                     while ($row = $result->fetch_assoc()) {
                         list($a, $b) = explode('number', $row['email']);
+
+                        self::SendMail("".$phone."".$b."", $subject, $message);
+                        
                         if ($status==1)
                         {
-                            if (self::SendMail("".$phone."".$b."", $subject, $message)){
-                                $hasbeenContacted = true;
-                            }
-                        }
-                        else {
-                            self::SendMail("".$phone."".$b."", $subject, $message);
+                            $hasbeenContacted = true;
                         }
                     }
                 } else {
@@ -45,16 +43,11 @@ class Notifications {
             }
             
             if (!empty($email)) {
-                if (self::SendMail($email, $subject, $message)){
-                }
+                self::SendMail($email, $subject, $message);
+
                 if ($status==1)
                 {
-                    if (self::SendMail($email, $subject, $message)){
-                        $hasbeenContacted = true;
-                    }
-                }
-                else {
-                    self::SendMail($email, $subject, $message);
+                    $hasbeenContacted = true;
                 }
             }
     
@@ -63,7 +56,7 @@ class Notifications {
                 if ($mysqli->query("
                     UPDATE `wait_queue`
                     SET `last_contact` = CURRENT_TIMESTAMP
-                    WHERE `Operator` = $operator
+                    WHERE `Q_id` = $q_id AND valid='Y'
                 ")) {
                 }
             }
@@ -81,5 +74,16 @@ class Notifications {
             return false;
         }
     }
+    
+    public static function setLastNotified($q_id){
+        global $mysqli;
+        if ($mysqli->query("
+            UPDATE `wait_queue`
+            SET `last_contact` = CURRENT_TIMESTAMP
+            WHERE `Q_id` = $q_id AND valid='Y'
+        ")) {
+        }
+    }
+    
 }
 ?>

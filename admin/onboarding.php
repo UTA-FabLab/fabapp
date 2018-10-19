@@ -83,6 +83,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             echo "<script>window.onload = function(){goModal('Error',\"Invalid Role\", false)}</script>";
         }
         
+    } elseif(isset($_POST['fillBtn'])){
+        $pp = array(21,22,23,24,25,26,27,28,29);
+        foreach($pp as $p){
+            $mysqli->query("INSERT INTO `transactions` (`d_id`, `operator`, `est_time`, `t_start`, `t_end`, `duration`, `status_id`, `p_id`, `staff_id`)
+                        VALUES ('$p', '20000000$p', '".rand(1,10).":$p:00', CURRENT_TIMESTAMP, NULL, NULL, '10', '1', '10000000$p');");
+            $ins_id = $mysqli->insert_id;
+            $mysqli->query("INSERT INTO `mats_used` (`trans_id`, `m_id`, `unit_used`, `mu_date`, `status_id`, `staff_id`, `mu_notes`)
+                            VALUES ('$ins_id', '14', '-4', CURRENT_TIMESTAMP, '10', '1000000010', 'Filled for Testing');");
+            $resultStr .= ", Live Ticket: ".$ins_id."</br></br></br>";
+        }
     }
 }
 ?>
@@ -147,6 +157,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <input type="text" name="op2" id="op2" maxlength="10" size="10" placeholder="Enter ID #" />
                         <br/>
                         <button type="submit" name="addBtn" class="btn btn-primary">Add Staff</button>
+                    </form>
+                </div>
+            </div>
+            <!-- /.panel -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fas fa-gas-pump fa-fw"></i> Fill PolyPrinters
+                </div>
+                <div class="panel-body">
+                    <form method="POST" action="" autocomplete='off'>
+                        <button type="submit" name="fillBtn" class="btn btn-primary">Fill All PolyPrinters</button>
                     </form>
                 </div>
             </div>
