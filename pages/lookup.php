@@ -109,8 +109,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         echo "<script>console.log(\"lookup.php: goto edit.php\");</script>";
         $_SESSION["edit_trans"] = $trans_id;
         header("Location:/pages/edit.php");
-    } elseif (isset($_POST['newCharge'])){
-        
     } elseif (isset($_POST['printForm'])){
         $str = $ticket->printTicket($ticket->getTrans_id());
         if (is_string($str)){
@@ -119,6 +117,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['success_msg'] = "Now Printing";
         }
         header("Location:/pages/lookup.php?trans_id=".$ticket->getTrans_id());
+    } elseif (isset($_POST['newBtn'])){
+        if ($ticket->getDevice()->getUrl() == ""){
+            header("Location:/pages/create.php?d_id=".$ticket->getDevice()->getD_id());
+        } else {
+            header("Location: https://".$ticket->getDevice()->getUrl());
+        }
     }
 }
 ?>
@@ -129,7 +133,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <?php if ( isset($objbox) && $objbox->getO_end() == "") { ?>
                 <h1 class="page-header"><i class="fas fa-map-marker fa-lg"></i> <?php echo $objbox->getAddress(); $_SESSION['type'] = "lookup"; ?></h1>
             <?php } else {?>
-                <h1 class="page-header">Details</h1>
+                
+                <?php if ($ticket->getStatus()->getStatus_id() >= 12){ ?>
+                    <h1 class="page-header">Ticket Details<form method="post" action="">
+                        <input type="submit" name="newBtn" class="btn" value="New <?php echo $ticket->getDevice()->getDevice_desc(); ?> Ticket"/>
+                    </form></h1>
+                <?php } else { ?>
+                    <h1 class="page-header">Ticket Details</h1>
+                <?php } ?>
             <?php } ?>
         </div>
         <!-- /.col-lg-12 -->
@@ -353,7 +364,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         Did you accidentally close the wrong ticket?
                         <i class="fas fa-info-circle" title="The previous state of this ticket is stored in memory."></i>
                         <form name="undoForm" method="post" action="">
-                            <input type="submit" name="undoBtn" value="Unend this Ticket"/>
+                            <input type="submit" name="undoBtn" class="btn" value="Unend this Ticket"/>
+                        </form>
+                    </div>
+                    <!-- /.panel-body -->
+                </div>
+                <!-- /.panel -->
+            <?php } ?>
+            <?php if ($staff && $ticket->getStatus()->getStatus_id() == 12){ ?>
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="fas fa-wrench fa-lg" title="Undo"></i> Service Ticket
+                    </div>
+                    <div class="panel-body">
+                        Since it failed, should we Report an Issue with <?php echo $ticket->getDevice()->getDevice_desc(); ?>
+                        <form name="undoForm" method="post" action="/pages/sr_issue.php?d_id=<?php echo $ticket->getDevice()->getD_id(); ?>">
+                            <input type="submit" name="issueBtn" class="btn btn-warning" value="Report Issue"/>
                         </form>
                     </div>
                     <!-- /.panel-body -->

@@ -1,28 +1,20 @@
 <?php
 /*
- *   CC BY-NC-AS UTA FabLab 2016-2017
- *   FabApp V 0.9
- */
-
-/**
- * Description of Service Call
- *
- * @author Jon Le
- * @author Christopher Raymond - christopher.raymond@mavs.uta.edu
- * @author Abdul Mannan - abdul.mannan@mavs.uta.edu
- * @author Liam O'Donnell - liam.odonnell@mavs.uta.edu
+ *   Jon Le 2016-2018
+ *   FabApp V 0.91
  */
 
 
 class Service_call {
     private $sc_id;
-    private $d_id;
-    private $staff_id;
-    private $sl_id;
     private $solved;
     private $sc_notes;
     private $sc_time;
-    private $user;
+    //Objects
+    private $device;
+    private $staff;
+    private $sl;
+    private $sr;
     
     public function __construct($sc_id) {
         global $mysqli;
@@ -34,150 +26,194 @@ class Service_call {
              WHERE `sc_id` = '$sc_id';
         ")){
             $row = $result->fetch_assoc();
-            
-            $this->setD_id($row['d_id']);
-            $this->setStaff_id($row['staff_id']);
-            $this->setSl_id($row['sl_id']);
+            $this->setDevice($row['d_id']);
+            $this->setSc_id($sc_id);
+            $this->setSc_notes($row['sc_notes']);
+            $this->setSc_time($row['sc_time']);
+            $this->setSl($row['sl_id']);
             $this->setSolved($row['solved']);
-            $this->setNotes($row['sc_notes']);
-            $this->setTime($row['sc_time']);
-            $this->setUser($row['staff_id']);
+            $this->setSr($sc_id);
+            $this->setStaff($row['staff_id']);
             $result->close();
         } else
             throw new Exception("Invalid Service Call ID");
     }
     
-    public static function is_solved($sc_id){
+    public static function byDevice($device){
         global $mysqli;
         
-        if($result = $mysqli->query("
-            SELECT solved
+        if ($result = $mysqli->query("
+            SELECT `service_call`.`sc_id`, `staff_id`, `service_call`.`d_id`, `sl_id`, `sc_time`, `sc_notes`, `solved`, `device_desc`
             FROM `service_call`
-            WHERE sc_id = '$sc_id'
+            LEFT JOIN `devices`
+            ON `service_call`.`d_id` = `devices`.`d_id`
+            WHERE `service_call`.`d_id` = '".$device->getD_id()."' ORDER BY `sc_id` ASC
         ")){
-            if ($result->fetch_assoc()->solved == 'Y')
-                return true;
-            return false;
+            return $result;
+        } else {
+            return "";
         }
-        return false;
+    }
+    
+    public static function call($staff, $device, $sl_id, $sc_notes){
+        global $mysqli;
+        
+        $staff_id = $staff->getOperator();
+        if (is_object($device)){
+            $d_id = $device->getD_id();
+        } elseif (is_string($device)) {
+            return $device;
+        } else {
+            $d_id = $device;
+        }
+        $sc_notes = htmlspecialchars_decode($sc_notes);
+        
+        if ($sl_id == 1){
+            //By default issues are marked complete, as they do not need require additional attention.
+            $query = "INSERT INTO `service_call` (`staff_id`, `d_id`, `sl_id`, `solved`, `sc_notes`, `sc_time`)
+                VALUES (?, ?, ?, 'Y', ?, CURRENT_TIMESTAMP);";
+        } else {
+            $query = "INSERT INTO `service_call` (`staff_id`, `d_id`, `sl_id`, `solved`, `sc_notes`, `sc_time`)
+                VALUES (?, ?, ?, 'N', ?, CURRENT_TIMESTAMP);";
+        }
+        
+        if ( $stmt = $mysqli->prepare($query)){
+            if (!$stmt->bind_param("siis", $staff_id, $d_id, $sl_id, $sc_notes))
+                    return "Bind Error 76";
+            if ($stmt->execute()){
+                return true;
+            } else {
+                return "SC Execute Error 80";
+            }
+        } else {
+            return "SC Prep Error 83";
+        }
+    }
+    
+    private function changeStatus($status){
+        global $mysqli;
+        
+        if ( $stmt = $mysqli->prepare("
+            UPDATE `service_call`
+            SET `solved` = 'Y'
+            WHERE `sc_id` = ?
+        ")){
+            if (!$stmt->bind_param("i", $this->sc_id))
+                return "Bind Error 94";
+            if ($stmt->execute()){
+                return true;
+            } else {
+                return "SC Execute Error 100";
+            }
+        } else {
+            return "SC Prep Error 103";
+        }
     }
 
     public function getSc_id() {
-        return $this->d_id;
+        return $this->sc_id;
     }
 
-    public function getD_id() {
-        return $this->d_id;
+    public function getDevice() {
+        return $this->device;
     }
 
-    public function getStaff_id() {
-        return $this->staff_id;
+    public function getStaff() {
+        return $this->staff;
     }
 
-    public function getSl_id() {
-        return $this->sl_id;
+    public function getSl() {
+        return $this->sl;
     }
 
     public function getSolved() {
         return $this->solved;
     }
 
-    public function getNotes() {
+    public function getSc_notes() {
         return $this->sc_notes;
     }
     
-    public function getTime() {
-    	return $this->sc_time;
+    public function getSc_time() {
+        global $sv;
+        return date($sv['dateFormat'],strtotime($this->sc_time));
     }
     
-    public function getDevice_desc(){
+    public function getSR(){
+        return $this->sr;
+    }
+    
+    public function insert_reply($staff, $status, $sl_id, $sr_notes){
         global $mysqli;
         
-        if($result = $mysqli->query("
-            SELECT device_desc
-            FROM `devices`
-            WHERE d_id = ".$this->d_id."
-            LIMIT 1;
-        ")){
-            $row = $result->fetch_assoc();
-            return $row['device_desc'];
+        if ($status == "complete"){
+            $query = "  UPDATE `service_call` 
+                        SET `solved` = 'Y'
+                        WHERE `service_call`.`sc_id` = ".$this->getSc_id().";";
+        } else {
+            $query = "  UPDATE `service_call` 
+                        SET `sl_id` = '$sl_id', `solved` = 'N'
+                        WHERE `service_call`.`sc_id` = ".$this->getSc_id().";";
         }
-        return "Not Found";
-    }
-    
-    public function getService_lvl(){
-        global $mysqli;
         
-        if($result = $mysqli->query("
-            SELECT msg
-            FROM service_lvl
-            WHERE sl_id = " . $this->sl_id . "
-            LIMIT 1;
-        ")){
-            $row = $result->fetch_assoc();
-            return $row['msg'];
+        $msg = Service_reply::insert_reply($staff, $this->getSc_id(), $sr_notes);
+        if (is_string($msg)){
+            //display error message
+            return $msg;
         }
-        return false;
-    }
-
-    public function getUser() {
-        return $this->user;
-    }
-    
-    public static function regexTime($duration) {
-        if ( preg_match("/^\d{1,3}:\d{2}:\d{2}$/", $duration) == 1 )
+        if ($result = $mysqli->query($query)){
             return true;
-        return false;
-    }
-
-    public function setD_id($d_id) {
-        if (preg_match("/^\d+$/",$device_id) == 0)
-            return false;
-        $this->d_id = $d_id;
-    }
-
-    public function setD_duration($d_duration) {
-        if(self::regexTime($d_duration)){
-            $this->d_duration = $d_duration;
         } else {
-            echo ("Invalid time $d_duration. ");
-            return false;
+            return "SC Error 167";
         }
     }
     
-    public function setDevice_desc($device_desc) {
-        $this->device_desc = $device_desc;
-    }
-
-    public function setDevice_id($device_id) {
-        if (preg_match("/^\d{4}$/",$device_id)){
-            $this->device_id = $device_id;
+    public static function openSC(){
+        global $mysqli;
+        
+        if ($result = $mysqli->query("
+            SELECT `device_desc`, `sl_id`, `sc_id`, `staff_id`, `sc_time`, `sc_notes`, `solved`
+            FROM `service_call`
+            LEFT JOIN `devices`
+            ON `service_call`.`d_id` = `devices`.`d_id`
+            WHERE `solved` = 'N'
+            ORDER BY `sc_id` ASC
+        ")){
+            return $result;
         } else {
-            echo("Invalid Device ID - $device_id. ");
-            return false;
+            return "";
         }
     }
 
-    public function setPublic_view($public_view) {
-        if (preg_match("/^[YN]{1}$/",$public_view))
-            $this->public_view = $public_view;
-        else 
-            echo "Invalid Public View";
+    public function setDevice($d_id) {
+        $this->device = new Devices($d_id);
+    }
+    function setSc_id($sc_id) {
+        $this->sc_id = $sc_id;
     }
 
-    public function setBase_price($base_price) {
-        $this->base_price = $base_price;
+    function setStaff($staff) {
+        $this->staff = Staff::withID($staff);
     }
 
-    public function setDg_id($dg_id) {
-        $this->dg_id = $dg_id;
+    function setSl($sl_id) {
+        $this->sl = new Service_lvl($sl_id);
     }
 
-    public function setUrl($url) {
-        $this->url = $url;
+    function setSolved($solved) {
+        $this->solved = $solved;
     }
 
-    public function setDevice_key($device_key) {
-        $this->device_key = $device_key;
+    function setSc_notes($sc_notes) {
+        $this->sc_notes = htmlspecialchars_decode($sc_notes);
     }
+    
+    function setSr($sc_id){
+        $this->sr = Service_reply::bySc_id($sc_id);
+    }
+
+    function setSc_time($sc_time) {
+        $this->sc_time = $sc_time;
+    }
+
 }

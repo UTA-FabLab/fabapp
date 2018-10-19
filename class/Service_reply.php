@@ -1,16 +1,13 @@
 <?php
 /*
- *   CC BY-NC-AS UTA FabLab 2016-2017
- *   FabApp V 0.9
+ *   Jon Le 2016-2018
+ *   FabApp V 0.91
  */
 
 /**
  * Description of Service Reply
- *
+ * Provides updates on to service calls
  * @author Jon Le
- * @author Christopher Raymond - christopher.raymond@mavs.uta.edu
- * @author Abdul Mannan - abdul.mannan@mavs.uta.edu
- * @author Liam O'Donnell - liam.odonnell@mavs.uta.edu
  */
 
 
@@ -23,207 +20,104 @@ class Service_reply {
     
     public function __construct($sr_id) {
         global $mysqli;
-        $this->d_id = $d_id;
-        
         
         if ($result = $mysqli->query("
-             SELECT *
-             FROM `Devices`
-             WHERE `d_id` = '$d_id';
-        ")){
-            $row = $result->fetch_assoc();
-            
-            $this->setDevice_id($row['device_id']);
-            $this->setDevice_desc($row['device_desc']);
-            $this->setPublic_view($row['public_view']);
-            $this->setD_duration($row['d_duration']);
-            $this->setBase_price($row['base_price']);
-            $this->setDg_id($row['dg_id']);
-            $this->setUrl($row['url']);
-            $this->setDevice_key($row['device_key']);
-            $result->close();
-        } else
-            throw new Exception("Invalid Device ID");
-    }
-    
-    public static function is_open($d_id){
-        global $mysqli;
-        
-        if($result = $mysqli->query("
             SELECT * 
-            FROM `transactions`
-            WHERE d_id = '$d_id' AND `status_id` < 12
-        ")){
-            if ($result->num_rows > 0)
-                return true;
-            return false;
-        }
-        return false;
-    }
-
-    public static function regexDID($d_id){
-		global $mysqli;
-        if (preg_match("/^\d+$/", $d_id) == 0){
-            echo "Invalid D ID.";
-            return false;
-        }
-        
-        //Check to see if device exists
-        if ($result = $mysqli->query("
-            SELECT *
-            FROM `devices`
-            WHERE `d_id` = '$d_id'
+            FROM `service_reply` 
+            WHERE `sr_id` = $sr_id
             LIMIT 1;
         ")){
-            if ($result->num_rows == 1)
-                return true;
-            return false;
-        } else {
-            return false;
+            if( $result->num_rows == 1){
+                $row = $result->fetch_assoc();
+                $this->setSr_id($row['sr_id']);
+                $this->setSc_id($row['sc_id']);
+                $this->setStaff_id($row['staff_id']);
+                $this->setSr_notes($row['sr_notes']);
+                $this->setSr_time($row['sr_time']);
+            }
         }
     }
     
-    public static function regexDeviceID($device_id){
-        if (preg_match("/^\d{4}$/", $d_id) == 0){
-            echo "Invalid Device ID. ";
-            return false;
-            
-        }//Check to see if device exists
-        if ($result = $mysqli->query("
-            SELECT *
-            FROM `devices`
-            WHERE `device_id` = '$device_id'
-            LIMIT 1;
-        ")){
-            if ($result->num_rows == 1)
-                return true;
-            return false;
-        } else {
-            return false;
-        }
-    }
-    
-    public function getD_id() {
-        return $this->d_id;
-    }
-
-    public function getDevice_id() {
-        return $this->device_id;
-    }
-
-    public function getPublic_view() {
-        return $this->public_view;
-    }
-
-    public function getD_duration() {
-        return $this->d_duration;
-    }
-
-    public function getBase_price() {
-        return $this->base_price;
-    }
-
-    public function getDg_id() {
-        return $this->dg_id;
-    }
-    
-    public function getDg_Name(){
+    public static function bySc_id($sc_id){
         global $mysqli;
+        $sr_array = array();
         
         if($result = $mysqli->query("
-            SELECT `dg_name`
-            FROM `device_group`
-            WHERE `dg_id` = '".$this->dg_id."'
-            LIMIT 1;
+            SELECT `sr_id`
+            FROM `service_reply`
+            WHERE `sc_id` = '$sc_id'
         ")){
-            $row = $result->fetch_assoc();
-            return $row['dg_name'];
+            while($row = $result->fetch_assoc()){
+                array_push( $sr_array, new self($row['sr_id']) );
+            }
         }
-        return "Not Found";
+        
+        return $sr_array;
     }
     
-    public function getDg_Parent(){
+    function getSr_id() {
+        return $this->sr_id;
+    }
+
+    function getSc_id() {
+        return $this->sc_id;
+    }
+
+    function getStaff_id() {
+        return $this->staff_id;
+    }
+
+    function getSr_notes() {
+        return $this->sr_notes;
+    }
+
+    function getSr_time() {
+        global $sv;
+        
+        return date($sv['dateFormat'],strtotime($this->sr_time));
+    }
+    
+    public static function insert_reply($staff, $sc_id, $sr_notes){
         global $mysqli;
         
-        if($result = $mysqli->query("
-            SELECT `dg_parent`
-            FROM `device_group`
-            WHERE `dg_id` = '".$this->dg_id."'
-            LIMIT 1;
+        $staff_id = $staff->getOperator();
+        $sr_notes = htmlspecialchars_decode($sr_notes);
+        
+        if ( $stmt = $mysqli->prepare("
+            INSERT INTO `service_reply` (`sc_id`, `staff_id`, `sr_notes`, `sr_time`)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP);
         ")){
-            $row = $result->fetch_assoc();
-            return $row['dg_parent'];
-        }
-        return false;
-    }
-
-    public function getUrl() {
-        return $this->url;
-    }
-
-    public function getDevice_key() {
-        return $this->device_key;
-    }
-    
-    public function getDevice_desc() {
-        return $this->device_desc;
-    }
-    
-    public static function regexTime($duration) {
-        if ( preg_match("/^\d{1,3}:\d{2}:\d{2}$/", $duration) == 1 )
-            return true;
-        return false;
-    }
-
-
-    public function setD_id($d_id) {
-        if (preg_match("/^\d+$/",$device_id) == 0)
-            return false;
-        $this->d_id = $d_id;
-    }
-
-    public function setD_duration($d_duration) {
-        if(self::regexTime($d_duration)){
-            $this->d_duration = $d_duration;
+            if (!$stmt->bind_param("iss", $sc_id, $staff_id, $sr_notes))
+                    return "Bind Error 88";
+            if ($stmt->execute()){
+                return true;
+            } else {
+                return "SR Execute Error 95";
+            }
         } else {
-            echo ("Invalid time $d_duration. ");
-            return false;
+            return "SR Prep Error 98";
         }
-    }
-    
-    public function setDevice_desc($device_desc) {
-        $this->device_desc = $device_desc;
+        
+        return true;
     }
 
-    public function setDevice_id($device_id) {
-        if (preg_match("/^\d{4}$/",$device_id)){
-            $this->device_id = $device_id;
-        } else {
-            echo("Invalid Device ID - $device_id. ");
-            return false;
-        }
+    function setSr_id($sr_id) {
+        $this->sr_id = $sr_id;
     }
 
-    public function setPublic_view($public_view) {
-        if (preg_match("/^[YN]{1}$/",$public_view))
-            $this->public_view = $public_view;
-        else 
-            echo "Invalid Public View";
+    function setSc_id($sc_id) {
+        $this->sc_id = $sc_id;
     }
 
-    public function setBase_price($base_price) {
-        $this->base_price = $base_price;
+    function setStaff_id($staff_id) {
+        $this->staff_id = $staff_id;
     }
 
-    public function setDg_id($dg_id) {
-        $this->dg_id = $dg_id;
+    function setSr_notes($sr_notes) {
+        $this->sr_notes = htmlspecialchars_decode($sr_notes);
     }
 
-    public function setUrl($url) {
-        $this->url = $url;
-    }
-
-    public function setDevice_key($device_key) {
-        $this->device_key = $device_key;
+    function setSr_time($sr_time) {
+        $this->sr_time = $sr_time;
     }
 }

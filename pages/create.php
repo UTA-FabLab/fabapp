@@ -29,7 +29,7 @@ if (empty($_GET["d_id"])){
         }
     }
 }
-if (!empty($_GET["operator"])) {
+if (array_key_exists("operator", $_GET) && Users::regexUser($_GET["operator"])) {
     $operator = Users::withID($_GET['operator']);
 }
 

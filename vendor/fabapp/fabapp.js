@@ -3,6 +3,25 @@
  *   FabApp V 0.9
  */
 
+    
+function change_dot(){
+    if (window.XMLHttpRequest) {
+        // code for IE7+, Firefox, Chrome, Opera, Safari
+        xmlhttp = new XMLHttpRequest();
+    } else {
+        // code for IE6, IE5
+        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+    }
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            document.getElementById("dot_span").innerHTML = this.responseText;
+        }
+    };
+
+    xmlhttp.open("GET","/pages/sub/getDot.php?d_id="+ document.getElementById("devices").value, true);
+    xmlhttp.send();
+}
+
 function endTicket(trans_id, device_desc, lc) {
     if (lc == "N"){
         var dest = "/pages/end.php?trans_id=";
@@ -36,6 +55,48 @@ function loadingModal(){
     $('#loadingModal').modal('show');
 }
 
+function newTicket(){
+    var device = "";
+    var device_id = document.getElementById("devGrp").value;
+    var o_id = document.getElementById("operator_ticket").value;
+    
+    if("D_" === device_id.substring(0,2)){
+        device_id = device_id.substring(2);
+    } else{
+        if("-" === device_id.substring(4,5)){
+        device_id = device_id.substring(5);
+        } else{
+        device_id = device_id.substring(6);
+        }
+    }
+    
+    device = "d_id=" + device_id + "&operator=" + o_id;
+    var dest = "";
+    if (device  != "" && o_id.length==10){
+        if (device_id.substring(0,1) == "2"){
+            dest = "http://polyprinter-"+device_id.substring(1)+".uta.edu";
+            window.open(dest,"_self")
+        }
+        else {
+            var dest = "/pages/create.php?";
+            dest = dest.concat(device);
+            console.log(dest);
+            window.location.href = dest;
+        } 
+    } 
+
+    else {
+        if (o_id.length!=10){
+            message = "Bad Operator Number: "+o_id;
+            var answer = alert(message);
+            }
+        else{
+            message = "Please select a device.";
+            var answer = alert(message);
+        }
+    }
+} 
+
 function searchF(){
     var sForm = document.forms['searchForm'];
     if (sForm.searchType[0].checked == true) {
@@ -50,6 +111,17 @@ function searchF(){
         sForm.searchField.maxLength = 10;
         sForm.searchField.size="10";
         sForm.searchField.autofocus=true;
+    }
+}
+
+function sendManualMessage(q_id, message, loc){  
+    if (confirm("You are about to send a notification to a wait queue user. Click OK to continue or CANCEL to quit.")){
+        if (loc == 0){
+            window.location.href = "/pages/sub/endWaitList.php?q_id=" + q_id + "&message=" + message + "&loc=0";
+        }
+        else if (loc == 1){
+            window.location.href = "/pages/sub/endWaitList.php?q_id=" + q_id + "&message=" + message + "&loc=1";
+        }
     }
 }
 
@@ -77,7 +149,7 @@ function startTimer(duration, display) {
             display.textContent = "- "+ hours + ":" + minutes + ":" + seconds;
             display.className="message";
             --timer;
-        }	
+        }   
     }, 1000);
 }
 

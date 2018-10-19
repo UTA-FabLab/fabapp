@@ -90,7 +90,7 @@ class Wait_queue {
                     ('$operator','$d_id','$dg_id',CURRENT_TIMESTAMP, '$email', '$phone');
 
             ")){        
-                Notifications::sendNotification($operator, "Fabapp Notification", "You have signed up for fabapp notifications. Your ticket number is: ".$mysqli->insert_id."", 'From: Fabapp Notifications' . "\r\n" .'', 0);
+                Notifications::sendNotification($mysqli->insert_id, "FabApp Notification", "You have signed up for FabApp notifications. Your ticket number is: ".$mysqli->insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateDeviceWaitTimes();
                 return $mysqli->insert_id;
                 
@@ -105,7 +105,7 @@ class Wait_queue {
                 VALUES
                     ('$operator','$dg_id',CURRENT_TIMESTAMP, '$email', '$phone');
             ")){        
-                Notifications::sendNotification($operator, "Fabapp Notification", "You have signed up for fabapp notifications. Your ticket number is: ".$mysqli->insert_id."", 'From: Fabapp Notifications' . "\r\n" .'', 0);
+                Notifications::sendNotification($mysqli->insert_id, "FabApp Notification", "You have signed up for FabApp notifications. Your ticket number is: ".$mysqli->insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateWaitTimes();
                 $q_id = $mysqli->insert_id;
                 //Disabled for Dev Purposes
@@ -155,7 +155,7 @@ class Wait_queue {
             $row = $result->fetch_assoc();
             if (isset($row['Op_phone'])) {
                 // Send a notification that they have canceled their wait queue ticket
-                Notifications::sendNotification($queueItem->operator, "Fabapp Notification", "Your Wait Ticket has been cancelled", 'From: Fabapp Notifications' . "\r\n" .'', 0);
+                Notifications::sendNotification($queueItem->q_id, "FabApp Notification", "Your Wait Ticket has been cancelled", 'From: FabApp Notifications' . "\r\n" .'', 0);
             }                 
         }
         else {
@@ -167,7 +167,7 @@ class Wait_queue {
                 SET `valid` = 'N', `End_date` = CURRENT_TIMESTAMP
                 WHERE `Q_id` = $queueItem->q_id;
             ")) {
-                echo("\nSuccessfully changed valid bit to 'N'!");
+                //echo("\nSuccessfully changed valid bit to 'N'!");
             }
             else {
                 return $mysqli->error;
@@ -197,37 +197,27 @@ class Wait_queue {
             if($result->num_rows == 1) {
                 $row = $result->fetch_assoc();
                 $q_id = $row['Q_id'];
-            } else if($result->num_rows == 0) {
+            } elseif($result->num_rows == 0) {
                 // The operator + d_id combination does not exist, lets try to get the device group number and check if that combination is present in wait queue
-                // First, get the dg_id associated with the device
+                // check if the user has a valid wait ticket for that device group
                 if ($result = $mysqli->query("
-                        SELECT `dg_id`
-                        FROM `devices`
-                        WHERE `d_id` = '$d_id';
+                    SELECT `Q_id`
+                    FROM `wait_queue`
+                    LEFT JOIN `devices`
+                    ON `devices`.`dg_id` = `wait_queue`.`Devgr_id`
+                    WHERE `Operator` = '$operator' AND `valid` = 'Y' AND `devices`.`d_id` = '$d_id';
                 ")){
-                    // fetch and store dg-id
-                    $row = $result->fetch_assoc();
-                    $dg_id = $row['dg_id'];
-                    // check if the user has a valid wait ticket for that device group
-                    if ($result = $mysqli->query("
-                            SELECT `Q_id`
-                            FROM `wait_queue`
-                            WHERE `Operator` = '$operator' AND `valid` = 'Y' AND `Devgr_id` = '$dg_id';
-                    ")){
-                        if($result->num_rows == 1) {
-                            $row = $result->fetch_assoc();
-                            $q_id = $row['Q_id'];
-                        } else {
-                            return;
-                        }
+                    if($result->num_rows == 1) {
+                        $row = $result->fetch_assoc();
+                        $q_id = $row['Q_id'];
                     } else {
-                        return $mysqli->error;
+                        return;
                     }
                 } else {
                     return $mysqli->error;
                 }
             } else {
-                return;
+                return "WQ Error 220 : Unstable Query Result";
             }
         } else {
             return $mysqli->error;
@@ -241,29 +231,13 @@ class Wait_queue {
             LIMIT 1;
         ")) {
             $row = $result->fetch_assoc();
-            if (isset($row['Op_phone'])) {
-                // Send a notification that they have canceled their wait queue ticket
-                Notifications::sendNotification($operator, "Fabapp Notification", "Your Wait Ticket has been completed.", 'From: Fabapp Notifications' . "\r\n" .'', 0);
-            }                 
-        }
-        else {
-            echo ("Could not retrieve phone number of customer ID #$operator");
-        }
-
-        if ($mysqli->query("
-            UPDATE `wait_queue`
-            SET `valid` = 'N', `End_date` = CURRENT_TIMESTAMP
-            WHERE `Q_id` = $q_id;
-        ")) {
-            echo("\nSuccessfully changed valid bit to 'N'!");
-        } else {
-            return $mysqli->error;
+            Notifications::sendNotification($q_id, "FabApp Notification", "Your Wait Ticket has been completed.", 'From: FabApp Notifications' . "\r\n" .'', 0);
         }
         
-    
-        // If they are not waiting for any other jobs, then delete their contact information
-        if (!Wait_queue::isOperatorWaiting($operator)) {
-            Wait_queue::deleteContactInfo($q_id);
+
+        $msg = Wait_queue::deleteContactInfo($q_id);
+        if (is_string($msg)) {
+            return $msg;
         }
 
         // Calculate new wait times based off a person leaving the wait queue
@@ -275,13 +249,12 @@ class Wait_queue {
         global $mysqli;
         if ($mysqli->query("
             UPDATE `wait_queue`
-            SET `Op_email`=NULL, `Op_phone`=NULL
-            WHERE `Operator` = $q_id;
-        "))
-        {
-            echo("\nSuccessfully deleted $operator contact info!");
+            SET `Op_email`=NULL, `Op_phone`=NULL, `valid` = 'N', `End_date` = CURRENT_TIMESTAMP
+            WHERE `Q_id` = $q_id;
+        ")) {
+            //echo("\nSuccessfully deleted $q_id contact info!");
         } else {
-            echo ("Error deleting $operator contact info!");
+            return ("Error deleting $q_id contact info!");
         }
     }
     
@@ -545,6 +518,14 @@ class Wait_queue {
     public static function hasWait(){
         global $mysqli;
         return mysqli_num_rows($mysqli->query(" SELECT * FROM `wait_queue` WHERE `valid`='Y' "))>0;
+    }
+
+    public static function hasDGWait($operator , $dg_id){
+        global $mysqli;
+        return mysqli_num_rows($mysqli->query(" 
+                                SELECT * 
+                                FROM `wait_queue` 
+                                WHERE `Operator`=$operator AND `devgr_id`=$dg_id AND `valid` = 'Y'"))>0;
     }
     
     public static function getTabResult(){
