@@ -258,7 +258,7 @@ class Wait_queue {
         }
     }
     
-    public static function updateContactInfo($q_id, $phone, $email)
+    public static function updateContactInfo($q_id, $ph, $em, $old_operator, $new_operator, $devgr_id)
     {
         global $mysqli;
         $status= 0;
@@ -275,13 +275,17 @@ class Wait_queue {
                 return "Operator is already in this Wait Queue - $new_operator";
             }
         }
+        if ($old_operator == $new_operator){
+            $new_operator = $old_operator;
+        }
+        
         if (!self::regexPhone($ph) && !empty($ph)) {
             $status = 1;
-            return "Bad Phone Number - $phone";
+            return "Bad Phone Number - $ph";
         }
         if(!filter_var($em, FILTER_VALIDATE_EMAIL) && !empty($em)) {
             $status = 1;
-            return "Bad Email - $email";
+            return "Bad Email - $em";
         }
         
         if ($status == 0){
