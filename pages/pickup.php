@@ -9,7 +9,7 @@ unset($_SESSION['pickupUser']);
 
 if($staff){
     //Staff members or Higher may use this process
-    if($staff->getRoleID() <= 7){
+    if($staff->getRoleID() < $sv['LvlOfStaff']){
         $errorMsg = "Only staff members may use this process";
     } else {
         $user = Users::withID(filter_input(INPUT_GET, "operator"));
@@ -29,7 +29,6 @@ if($staff){
 //We have an error, display the Issue
 if ($errorMsg != ""){
     echo "<script> window.onload = function(){goModal('Error', \"$errorMsg\", false)}; //window.location.href='/index.php';}</script>";
-    
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && $errorMsg == "") {
@@ -200,7 +199,7 @@ if ($staff) {
                     </div>
                 </div>
                 </form>
-            <?php }} else { ?>
+            <?php }} elseif(is_object($user)) { ?>
                 <div class="panel panel-default">
                     <div class="panel-heading" style="color:Tomato">
                         <i class="fas fa-exclamation-triangle" ></i> No Objects in Storage
@@ -210,6 +209,15 @@ if ($staff) {
                     </div>
                 </div>
                     
+            <?php } else { ?>
+                <div class="panel panel-default">
+                    <div class="panel-heading" style="color:Tomato">
+                        <i class="fas fa-exclamation-triangle" ></i> No Objects in Storage
+                    </div>
+                    <div class="panel-body">
+                        Look Up Their ID.
+                    </div>
+                </div>
             <?php } ?>
         </div>
         <!-- /.col-lg-7 -->

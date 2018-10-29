@@ -1,8 +1,8 @@
 <?php
 
 /*
- * License - FabApp V 0.9
- * 2016-2017 CC BY-NC-AS UTA FabLab
+ * License - FabApp V 0.91
+ * 2016-2018 CC BY-NC-AS UTA FabLab
  */
 
 /**
@@ -331,7 +331,7 @@ class Acct_charge {
     }
 
     public function setAc_notes($ac_notes) {
-        $ac_notes = htmlspecialchars_decode($ac_notes);
+        $ac_notes = htmlspecialchars($ac_notes);
         $this->ac_notes = $ac_notes;
     }
     

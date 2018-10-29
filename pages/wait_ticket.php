@@ -109,16 +109,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                             </td>
                         </tr>
                         <tr>
+                            <td><a href="#" data-toggle="tooltip" data-placement="top" title="The person that you will issue a wait ticket for">Operator</a></td>
+                            <td><input type="text" name="operator1" id="operator1" class="form-control" placeholder="1000000000" maxlength="10" size="10" value="<?php echo $operator1;?>" tabindex="1" oninput="inUseCheck()"/></td>
+                        </tr>
+                        <tr>
                             <td><a href="#" data-toggle="tooltip" data-placement="top" title="The email of the person that you will issue a wait ticket for">(Optional) Email</a></td>
                             <td><input type="text" name="op-email" id="op-email" class="form-control" placeholder="email address" maxlength="100" size="10" value="<?php echo $em1;?>" tabindex="1"/></td>
                         </tr>
                         <tr>
-                            <td><a href="#" data-toggle="tooltip" data-placement="top" title="The phone number of person that you will issue a wait ticket for">(Optional) Phone</a></td>
+                            <td>
+                                <a href="#" data-toggle="tooltip" data-placement="top" title="The phone number of person that you will issue a wait ticket for">(Optional) Phone</a>
+                                <button type="button" class="btn fas fa-broadcast-tower" onclick="listCarriers()"></button>
+                            </td>
                             <td><input type="text" name="op-phone" id="op-phone" class="form-control" placeholder="phone number" maxlength="10" size="10" value="<?php echo $ph1;?>" tabindex="1"/></td>
-                        </tr>
-                        <tr>
-                            <td><a href="#" data-toggle="tooltip" data-placement="top" title="The person that you will issue a wait ticket for">Operator</a></td>
-                            <td><input type="text" name="operator1" id="operator1" class="form-control" placeholder="1000000000" maxlength="10" size="10" value="<?php echo $operator1;?>" tabindex="1" oninput="inUseCheck()"/></td>
                         </tr>
                         <tr id="tr_verify" hidden>
                             <td colspan="2">
@@ -137,8 +140,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
             <!-- /.panel -->
         </div>
         <!-- /.col-md-8 -->
-        <?php if (Wait_queue::hasWait()) {?>
-            <div class="col-md-4">
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="far fa-clock fa-fw"></i>Period of Wait
+                    </div>
+                    <!-- /.panel-heading -->
+                    <div class="panel-body">
+                        <?php $m = floor($sv['wait_period']/60);
+                        $s = $sv['wait_period'] % 60;
+                            echo "$m minutes"; 
+                            if ($s != 0) echo " & $s seconds";?>
+                    </div>
+            </div>
+            <?php if (Wait_queue::hasWait()) {?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <i class="fa fa-print fa-fw"></i>Process Ticket
@@ -187,9 +202,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                     </div>
                     <!-- /.panel-body -->
                 </div>
-            </div>
-            <!-- /.col-md-4 -->
-        <?php } ?>
+            <?php } ?>
+        </div>
+        <!-- /.col-md-4 -->
     </div>
     <!-- /.row -->
     
@@ -286,10 +301,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                                             <?php if (isset($row['estTime'])) {
                                                                 $str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $row["estTime"]);
                                                                 sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
-                                                                $time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - strtotime($row["Start_date"]) ) + $sv["grace_period"];
+                                                                $time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - strtotime($row["Start_date"]) ) + $sv["wait_period"];
                                                                 $temp_time = $hours * 3600 + $minutes * 60 + $seconds;
-                                                                if ($temp_time == "00:00:00" && isset($row['last_contact'])){
-                                                                    $time_seconds = $sv["grace_period"] - (time() - strtotime($row['last_contact']) );
+                                                                if (isset($row['last_contact'])){
+                                                                    $time_seconds = $sv["wait_period"] - (time() - strtotime($row['last_contact']) );
                                                                     if ($time_seconds <= 0 ){
                                                                         echo("<span style=\"color:red\" align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
                                                                         array_push($device_array, array("q".$row["Q_id"], $time_seconds));
@@ -319,8 +334,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                                             <td> 
                                                                 <?php if (!empty($row['Op_phone']) || !empty($row['Op_email'])) { ?> 
                                                                     <div style="text-align: center">
+                                                                        <?php //prepare message
+                                                                        if ( $row['device_desc'] == ""){
+                                                                            //datetime is added within the AJAX file endWaitList
+                                                                            $msg = "A $row[dg_desc] is now available. Please make your way to the FabLab. You have until ";
+                                                                        } else {
+                                                                            //datetime is added within the AJAX file endWaitList
+                                                                            $msg = "$row[device_desc] is now available. Please make your way to the FabLab. You have until ";
+                                                                        }
+                                                                        ?>
                                                                         <button class="<?php if (isset($row['last_contact'])){echo "btn btn-xs btn-warning";} else{echo "btn btn-xs btn-primary";}?>" data-target="#removeModal" data-toggle="modal" 
-                                                                                onclick="sendManualMessage(<?php echo $row["Q_id"]?>, 'Your wait ticket is almost done, please make your way to the FabLab', 1)">  <!-- make note that adding explanation points may cause errors with notifications -->
+                                                                                onclick="sendManualMessage(<?php echo $row["Q_id"]?>, '<?php echo $msg;?>', 1)">
+                                                                            <!-- make note that adding explanation points may cause errors with notifications -->
                                                                                 Send Alert
                                                                         </button>
                                                                     </div>
@@ -330,7 +355,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                                             <!-- Remove From Wait Queue -->
                                                             <td> 
                                                                 <div style="text-align: center">
-                                                                    <button class="<?php if ($temp_time == "00:00:00"){echo "btn btn-xs btn-danger";} else{echo "btn btn-xs";}?>" data-target="#removeModal" data-toggle="modal" 
+                                                                    <button class="<?php if (isset($row['last_contact']) && $time_seconds <= 0){echo "btn btn-xs btn-danger";} else{echo "btn btn-xs";}?>" data-target="#removeModal" data-toggle="modal" 
                                                                             onclick="removeFromWaitlist(<?php echo $row["Q_id"].", ".$row["Operator"].", undefined"?>)">
                                                                             Remove
                                                                     </button>
@@ -426,6 +451,12 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         
         xmlhttp.open("GET","/pages/sub/getWaitQueueID.php?val="+ document.getElementById("devGrp").value, true);
         xmlhttp.send();
+    }
+    
+    function listCarriers(){
+        $("#popModal").modal();
+        document.getElementById("modal-title").innerHTML = "Supported Carriers";
+        document.getElementById("modal-body").innerHTML = "<?php echo Notifications::listCarriers(); ?>";
     }
     
     function removeFromWaitlist(q_id){

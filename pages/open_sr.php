@@ -5,7 +5,7 @@
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
-if (isset($staff) && $staff->getRoleID() < $sv['LvlOfStaff']){
+if (!isset($staff) || ($staff->getRoleID() < $sv['LvlOfStaff'] && $staff->getRoleID() != $sv['serviceTechnican'])) {
     //Not Authorized to see this Page
     $_SESSION['error_msg'] = "Not Authorized to view this page";
     header('Location: /index.php');
@@ -13,7 +13,7 @@ if (isset($staff) && $staff->getRoleID() < $sv['LvlOfStaff']){
 if (!empty($_GET["d_id"]) && Devices::regexDID($_GET["d_id"])) {
     $device = new Devices(filter_input(INPUT_GET, 'd_id'));
 }
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['btnHistory']) ){
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['btnHistory'])){
     $d_id = filter_input(INPUT_POST, 'devices');
     if (Devices::regexDID($d_id)){
         header("Location:/pages/sr_issue.php?d_id=$d_id");
@@ -53,18 +53,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['btnHistory']) ){
                             <?php $staff = Staff::withID($row['staff_id']); ?>
                             <div class="btn-group">
                                 <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-                                    <i class="<?php echo $staff->getIcon();?> fa-lg" title="<?php echo $staff->getOperator();?>"></i>
-                                </button>
-                                <ul class="dropdown-menu" role="menu">
-                                    <li style="padding-left: 5px;"><?php echo $staff->getOperator();?></li>
-                                </ul>
-                            </div>
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
                                     <i class='far fa-calendar-alt' title="<?php echo date($sv['dateFormat'], strtotime($row["sc_time"])); ?>"></i>
                                 </button>
                                 <ul class="dropdown-menu" role="menu">
                                     <li style="padding-left: 5px;"><?php echo date($sv['dateFormat'], strtotime($row["sc_time"])); ?></li>
+                                </ul>
+                            </div>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                                    <i class="<?php echo $staff->getIcon();?> fa-lg" title="<?php echo $staff->getOperator();?>"></i>
+                                </button>
+                                <ul class="dropdown-menu" role="menu">
+                                    <li style="padding-left: 5px;"><?php echo $staff->getOperator();?></li>
                                 </ul>
                             </div>
                         </td>
@@ -147,7 +147,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['btnHistory']) ){
 <script type="text/javascript" charset="utf-8">
     window.onload = function() {
         $('#historyTable').DataTable({
-            "order": [0, "desc"]
+            "order": [1, "desc"]
         });
     };
     

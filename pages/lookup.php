@@ -61,7 +61,60 @@ if ($errorMsg != ""){
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    if (isset($_POST['undoBtn'])){
+    if (isset($_POST['aarBtn'])){
+        //Insert AAR function
+        $msg = AuthRecipients::add($ticket, filter_input(INPUT_POST, "operator"));
+        if (is_string($msg)){
+            $_SESSION['error_msg'] = $msg;
+            header("Location:/pages/lookup.php?trans_id=".$ticket->getTrans_id());
+        } elseif($msg === true){
+            
+            $_SESSION['success_msg'] = "ID has been added.";
+            header("Location:/pages/lookup.php?trans_id=".$ticket->getTrans_id());
+        }
+        
+    } elseif (isset($_POST['editForm'])){
+        echo "<script>console.log(\"lookup.php: goto edit.php\");</script>";
+        $_SESSION["edit_trans"] = $trans_id;
+        header("Location:/pages/edit.php");
+        
+    } elseif (isset($_POST['endBtn'])){
+        header("Location:/pages/end.php?trans_id=".$ticket->getTrans_id());
+        
+    } elseif (isset($_POST['newBtn'])){
+        if ($ticket->getDevice()->getUrl() == ""){
+            header("Location:/pages/create.php?d_id=".$ticket->getDevice()->getD_id());
+        } else {
+            header("Location: https://".$ticket->getDevice()->getUrl());
+        }
+        
+    } elseif (isset($_POST['newHome'])){
+        $box = filter_input(INPUT_POST, "box");
+        $letter = filter_input(INPUT_POST, "letter");
+        $objbox->setAddress($box.$letter);
+        $objbox->writeAttr();
+        header("Location:/pages/lookup.php?trans_id=".$ticket->getTrans_id());
+        
+    } elseif (isset($_POST['payBtn'])){
+        if (isset($objbox) && $objbox->getO_end() == ""){ //ob
+            echo "<script>console.log(\"lookup.php: goto Pickup.php\");</script>";
+            header("Location:/pages/pickup.php?operator=".$ticket->getUser()->getOperator());
+        } else {
+            echo "<script>console.log(\"lookup.php: goto pages/pay.php\");</script>";
+            $_SESSION['ticket'] = serialize($ticket);
+            header("Location:/pages/pay.php");
+        }
+        
+    } elseif (isset($_POST['printForm'])){
+        $str = $ticket->printTicket($ticket->getTrans_id());
+        if (is_string($str)){
+            $_SESSION['error_msg'] = $str;
+        } else {
+            $_SESSION['success_msg'] = "Now Printing";
+        }
+        header("Location:/pages/lookup.php?trans_id=".$ticket->getTrans_id());
+        
+    } elseif (isset($_POST['undoBtn'])){
         if ($t_backup->writeAttr() === true) {
 
             if (isset($_SESSION['ac_id'])){
@@ -86,43 +139,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             echo "<script>console.log(\"lookup.php: Unable to WriteAttr to Ticket\");</script>";
         }
         header("Location:/pages/lookup.php?trans_id=".$t_backup->getTrans_id());
-        
-    } elseif (isset($_POST['payBtn'])){
-        
-        if (isset($objbox) && $objbox->getO_end() == ""){ //ob
-            echo "<script>console.log(\"lookup.php: goto Pickup.php\");</script>";
-            header("Location:/pages/pickup.php?operator=".$ticket->getUser()->getOperator());
-        } else {
-            echo "<script>console.log(\"lookup.php: goto pages/pay.php\");</script>";
-            $_SESSION['ticket'] = serialize($ticket);
-            header("Location:/pages/pay.php");
-        }
-    } elseif (isset($_POST['newHome'])){
-        $box = filter_input(INPUT_POST, "box");
-        $letter = filter_input(INPUT_POST, "letter");
-        $objbox->setAddress($box.$letter);
-        $objbox->writeAttr();
-        header("Location:/pages/lookup.php?trans_id=".$ticket->getTrans_id());
-    } elseif (isset($_POST['endBtn'])){
-        header("Location:/pages/end.php?trans_id=".$ticket->getTrans_id());
-    } elseif (isset($_POST['editForm'])){
-        echo "<script>console.log(\"lookup.php: goto edit.php\");</script>";
-        $_SESSION["edit_trans"] = $trans_id;
-        header("Location:/pages/edit.php");
-    } elseif (isset($_POST['printForm'])){
-        $str = $ticket->printTicket($ticket->getTrans_id());
-        if (is_string($str)){
-            $_SESSION['error_msg'] = $str;
-        } else {
-            $_SESSION['success_msg'] = "Now Printing";
-        }
-        header("Location:/pages/lookup.php?trans_id=".$ticket->getTrans_id());
-    } elseif (isset($_POST['newBtn'])){
-        if ($ticket->getDevice()->getUrl() == ""){
-            header("Location:/pages/create.php?d_id=".$ticket->getDevice()->getD_id());
-        } else {
-            header("Location: https://".$ticket->getDevice()->getUrl());
-        }
     }
 }
 ?>
@@ -149,23 +165,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <div class="row">
         <div class="col-lg-5">
             <div class="panel panel-default">
-                <div class="panel-heading">
+                <div class="panel-heading clearfix">
                     <i class="fas fa-ticket-alt fa-lg"></i> Ticket # <b><?php echo $ticket->getTrans_id(); ?></b>
-                    <?php if ($staff && $staff->getRoleID() >= $sv['LvlOfStaff']){ ?>
+                    <?php if (isset($staff)){ ?>
                         <div class="pull-right">
                             <div class="btn-group">
-                                <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                <button type="button" class="btn btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
                                     <span class="caret"></span>
                                 </button>
                                 <ul class="dropdown-menu pull-right" role="menu">
                                     <li>
-                                        <a href="javascript: printBtn();"/>Print</a>
+                                        <a href="javascript: addBtn()" />Add Authorized Recipient</a>
                                     </li>
                                     <?php if ($staff->getRoleID() >= $sv['editTrans']){ ?>
                                         <li>
                                             <a href="javascript: editBtn()" class="bg-warning"/>Edit</a>
                                         </li>
                                     <?php }?>
+                                    <?php if ($staff->getRoleID() >= $sv['LvlOfStaff']) { ?>
+                                        <li>
+                                            <a href="javascript: printBtn();"/>Print</a>
+                                        </li>
+                                    <?php } ?>
                                 </ul>
                             </div>
                         </div>
@@ -386,6 +407,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </div>
                 <!-- /.panel -->
             <?php } ?>
+            <?php if ($ars = AuthRecipients::listArs($ticket)) { ?>
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="far fa-address-book fa-lg"></i> Authorized Recipients
+                    </div>
+                    <div class="panel-body">
+                        <?php echo $ars; ?>
+                    </div>
+                </div>
+            <?php } ?>
             <?php if ($objbox = ObjBox::byTrans($ticket->getTrans_id())) { ?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
@@ -602,6 +633,45 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </div>
 </div>
 <!-- Modal -->
+
+<div id="AARModal" class="modal">
+    <div class="modal-dialog">
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Add Authorized Recipient</h4>
+            </div>
+            <?php if ($staff->getOperator() == $ticket->getUser()->getOperator()) { ?>
+                <form name="aarForm" method="post" action="" onsubmit="return validateAAR()">
+                <div class="modal-body">
+                    <p>Authorized the following recipient to pick up and pay for this ticket.
+                    At the time of pickup, only the person & ID present can pay.</p>
+                    <input type="text" name="operator" id="operator" placeholder="1000000000"
+                                maxlength="10" size="10" tabindex="1">
+                </div>
+                <div class="modal-footer">
+                      <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-primary" name="aarBtn">Add</button>
+                </div> 
+                </form>
+            <?php } else { ?>
+                <div class="modal-body">
+                    <p>Authorized the following recipient to pick up and pay for this ticket.
+                    At the time of pickup, only the person & ID present can pay.</p>
+                    <input type="text" name="operator" id="operator" placeholder="1000000000"
+                                maxlength="10" size="10" tabindex="1" disabled>
+                    <div class='alert-warning'>Only the ticket owner may add a recipient.</div>
+                </div>
+                <div class="modal-footer">
+                      <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-primary" name="noBtn" disabled>Add</button>
+                </div> 
+            <?php } ?>
+        </div>
+    </div>
+</div>
+<!-- Modal -->
 <!--Hidden Forms-->
 <form id="printForm" action="" method="post">
     <input type="text" name="printForm" hidden/>   
@@ -614,6 +684,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 ?>
 <script type="text/javascript">
+
+function validateAAR(){
+    if (!stdRegEx("operator", /^\d{10}/, "Invalid Operator ID")){
+        return false;
+    }
+    return true;
+}
+
 function verifyMove(){
     //Box Check
     var b = document.forms["moveForm"]["box"].value;
@@ -631,10 +709,16 @@ function verifyMove(){
     }
 }
 
-function printBtn(){
-    document.getElementById("printForm").submit();
-}
 function editBtn(){
     document.getElementById("editForm").submit();
+}
+function addBtn(){
+    //toggle modal
+    $("#AARModal").modal();
+}
+function printBtn(){
+    if (confirm("Print?")){
+        document.getElementById("printForm").submit();
+    }
 }
 </script>

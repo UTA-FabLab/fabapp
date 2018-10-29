@@ -4,8 +4,27 @@ class Notifications {
     private $phone_num;
     private $email;
     private $last_contacted;
+    
+    public static function listCarriers(){
+        global $mysqli;
+        $list = "";
+        
+        if ($result = $mysqli->query("
+            SELECT `provider`
+            FROM `carrier`
+            WHERE 1;
+        ")){
+            while($row = $result->fetch_assoc()){
+                $list .= "$row[provider], ";
+            }
+            return substr($list, 0, -2);
+        } else {
+            return "Error Listing Providers";
+        }
+        
+    }
 
-    public static function sendNotification($q_id, $subject, $message, $status) {
+    public static function sendNotification($q_id, $subject, $message, $markContact) {
         global $mysqli;
         $hasbeenContacted = false;
         // This function queries the carrier table and sends an email to all combinations
@@ -23,18 +42,17 @@ class Notifications {
 
             if (!empty($phone)) {
                 if ($result = $mysqli->query("
-                    SELECT email
-                    FROM carrier
+                    SELECT `email`
+                    FROM `carrier`
                     WHERE 1;
                 ")) {
                     while ($row = $result->fetch_assoc()) {
                         list($a, $b) = explode('number', $row['email']);
 
-                        self::SendMail("".$phone."".$b."", $subject, $message);
+                        $hasbeenContacted = self::SendMail("".$phone."".$b."", $subject, $message);
                         
-                        if ($status==1)
-                        {
-                            $hasbeenContacted = true;
+                        if ($markContact == 1) {
+                            $setLastContacted = true;
                         }
                     }
                 } else {
@@ -43,15 +61,14 @@ class Notifications {
             }
             
             if (!empty($email)) {
-                self::SendMail($email, $subject, $message);
+                $hasbeenContacted = self::SendMail($email, $subject, $message);
 
-                if ($status==1)
-                {
-                    $hasbeenContacted = true;
+                if ($markContact == 1) {
+                    $setLastContacted = true;
                 }
             }
     
-            if ($hasbeenContacted == true) {
+            if ($setLastContacted == true) {
                 // Update the database to display that the student has been contacted
                 if ($mysqli->query("
                     UPDATE `wait_queue`
