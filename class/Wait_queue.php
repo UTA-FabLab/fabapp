@@ -258,25 +258,40 @@ class Wait_queue {
         }
     }
     
-    public static function updateContactInfo($q_id, $phone, $email)
+    public static function updateContactInfo($q_id, $ph, $em, $old_operator, $new_operator, $devgr_id)
     {
         global $mysqli;
         $status= 0;
         
         //Validate input variables
-        if (!self::regexPhone($phone) && !empty($phone)) {
-            $status = 1;
-            return "Bad Phone Number - $phone";
+        if($old_operator != $new_operator){
+            if (!self::regexOperator($new_operator)) {
+                $status = 1;
+                return "Bad Operator - $new_operator";
+            }
+            $status1 = Wait_queue::hasDGWait($new_operator , $devgr_id);
+            if($status1){
+                $status = 1;
+                return "Operator is already in this Wait Queue - $new_operator";
+            }
         }
-        if(!filter_var($email, FILTER_VALIDATE_EMAIL) && !empty($email)) {
+        if ($old_operator == $new_operator){
+            $new_operator = $old_operator;
+        }
+        
+        if (!self::regexPhone($ph) && !empty($ph)) {
             $status = 1;
-            return "Bad Email - $email";
+            return "Bad Phone Number - $ph";
+        }
+        if(!filter_var($em, FILTER_VALIDATE_EMAIL) && !empty($em)) {
+            $status = 1;
+            return "Bad Email - $em";
         }
         
         if ($status == 0){
             if ($mysqli->query("
                 UPDATE `wait_queue`
-                SET `Op_email` = '$email' , `Op_phone` = '$phone'
+                SET `Op_email` = '$em' , `Op_phone` = '$ph' , `Operator` = '$new_operator'
                 WHERE `Q_id` = '$q_id' AND valid='Y';
             "))
             {
