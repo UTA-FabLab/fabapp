@@ -96,7 +96,7 @@ function gatekeeper ($operator, $d_id) {
         WHERE `d_id` = $d_id AND `solved` = 'N' AND `sl_id` >=7;
     ")){
         if ($result->num_rows > 0){
-            if ($user->getRoleID() == 7 ||  $user->getRoleID() >= 10){
+            if ($user->getRoleID() == $sv['serviceTechnican'] || $user->getRoleID() >= $sv['staffTechnican']){
                 //No Problems Keep Working
             } else {
                 //role id != 7 or r_id < 10

@@ -25,7 +25,7 @@ if (!empty($_GET["val"])) {
             $result = $mysqli->query ( "
                 SELECT DISTINCT D.`device_desc`, D.`d_id`
                 FROM `devices` D, `device_group` DG, `transactions` T
-                WHERE D.`dg_id`=$dg_id AND D.`dg_id`=DG.`dg_id` AND T.`d_id`=D.`d_id` AND T.`t_end` IS NULL AND DG.`granular_wait`='Y' AND D.`d_id` NOT IN (
+                WHERE D.`dg_id`=$dg_id AND D.`dg_id`=DG.`dg_id` AND T.`d_id`=D.`d_id` AND T.`status_id` <= 11 AND DG.`granular_wait`='Y' AND D.`d_id` NOT IN (
                     SELECT `d_id`
                     FROM `service_call`
                     WHERE `solved` = 'N' AND `sl_id` >= 7
@@ -46,7 +46,7 @@ if (!empty($_GET["val"])) {
             $result = $mysqli->query ( "
                 SELECT DISTINCT D.`device_desc`, D.`d_id`
                 FROM `devices` D, `device_group` DG, `transactions` T
-                WHERE D.`dg_id`=$dg_id AND D.`dg_id`=DG.`dg_id` AND T.`d_id`=D.`d_id` AND T.`t_end` IS NULL AND DG.`granular_wait`='N'
+                WHERE D.`dg_id`=$dg_id AND D.`dg_id`=DG.`dg_id` AND T.`d_id`=D.`d_id` AND T.`status_id` <= 11 AND DG.`granular_wait`='N'
                 ORDER BY D.`device_desc`
             " );
             $result1 = $mysqli->query ( "

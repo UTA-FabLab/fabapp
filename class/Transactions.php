@@ -415,7 +415,7 @@ class Transactions {
                 $printer -> text("Potential Problems?  ( Y )  ( N )");
                 //Print Color Swap Instructions
                 $printer -> feed();
-                $colorswap = explode("_", $filename);
+                $colorswap = explode("[", $filename);
                 $i = 1;
                 foreach ($colorswap as $cs){
                     if (preg_match("/^\d{1,}\.\d{3}-\d{1,}/", $cs)){

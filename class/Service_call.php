@@ -66,7 +66,7 @@ class Service_call {
         } else {
             $d_id = $device;
         }
-        $sc_notes = htmlspecialchars_decode($sc_notes);
+        $sc_notes = htmlspecialchars($sc_notes);
         
         if ($sl_id == 1){
             //By default issues are marked complete, as they do not need require additional attention.
@@ -87,26 +87,6 @@ class Service_call {
             }
         } else {
             return "SC Prep Error 83";
-        }
-    }
-    
-    private function changeStatus($status){
-        global $mysqli;
-        
-        if ( $stmt = $mysqli->prepare("
-            UPDATE `service_call`
-            SET `solved` = 'Y'
-            WHERE `sc_id` = ?
-        ")){
-            if (!$stmt->bind_param("i", $this->sc_id))
-                return "Bind Error 94";
-            if ($stmt->execute()){
-                return true;
-            } else {
-                return "SC Execute Error 100";
-            }
-        } else {
-            return "SC Prep Error 103";
         }
     }
 
@@ -146,14 +126,8 @@ class Service_call {
     public function insert_reply($staff, $status, $sl_id, $sr_notes){
         global $mysqli;
         
-        if ($status == "complete"){
-            $query = "  UPDATE `service_call` 
-                        SET `solved` = 'Y'
-                        WHERE `service_call`.`sc_id` = ".$this->getSc_id().";";
-        } else {
-            $query = "  UPDATE `service_call` 
-                        SET `sl_id` = '$sl_id', `solved` = 'N'
-                        WHERE `service_call`.`sc_id` = ".$this->getSc_id().";";
+        if (!Service_lvl::regexID($sl_id)){
+            return "Invalid Service Level Value";
         }
         
         $msg = Service_reply::insert_reply($staff, $this->getSc_id(), $sr_notes);
@@ -161,13 +135,28 @@ class Service_call {
             //display error message
             return $msg;
         }
-        if ($result = $mysqli->query($query)){
-            return true;
-        } else {
-            return "SC Error 167";
+        if ($sl_id != $this->getSl()->getSl_id() || $status == "complete"){
+            //Either you can mark a ticket as complete or you can leave it incomplete and change the severity of the issue
+            if ($status == "complete"){
+                $query = "  UPDATE `service_call` 
+                            SET `solved` = 'Y'
+                            WHERE `service_call`.`sc_id` = ".$this->getSc_id().";";
+            } else {
+                $query = "  UPDATE `service_call` 
+                            SET `sl_id` = '$sl_id', `solved` = 'N'
+                            WHERE `service_call`.`sc_id` = ".$this->getSc_id().";";
+            }
+            
+            //Run query to update status
+            if ($result = $mysqli->query($query)){
+                return true;
+            } else {
+                return "SC Error 167";
+            }
         }
     }
     
+    //Returns results of open Service Calls
     public static function openSC(){
         global $mysqli;
         
@@ -205,7 +194,7 @@ class Service_call {
     }
 
     function setSc_notes($sc_notes) {
-        $this->sc_notes = htmlspecialchars_decode($sc_notes);
+        $this->sc_notes = ($sc_notes);
     }
     
     function setSr($sc_id){
@@ -214,6 +203,29 @@ class Service_call {
 
     function setSc_time($sc_time) {
         $this->sc_time = $sc_time;
+    }
+    
+    function updateNotes($notes){
+        global $mysqli;
+        
+        //Prevent script injections
+        $notes = htmlspecialchars($notes);
+        
+        if ( $stmt = $mysqli->prepare("
+            UPDATE `service_call` 
+            SET `sc_notes` = ?
+            WHERE `service_call`.`sc_id` = ?
+        ")){
+            if (!$stmt->bind_param("si", $notes, $this->sc_id))
+                    return "Bind Error 76";
+            if ($stmt->execute()){
+                return true;
+            } else {
+                return "SC Execute Error 80";
+            }
+        } else {
+            return "SC Prep Error 83";
+        }
     }
 
 }

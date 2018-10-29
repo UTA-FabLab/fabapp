@@ -4,12 +4,14 @@
  *   FabApp V 0.91
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
-$sl_id = $sr_notes = "";
-if (!isset($staff) || $staff->getRoleID() < $sv['LvlOfStaff']){
+$sl_id = $sr_notes = $notes = "";
+
+if (!isset($staff) || ($staff->getRoleID() < $sv['LvlOfStaff'] && $staff->getRoleID() != $sv['serviceTechnican'])) {
     //Not Authorized to see this Page
     $_SESSION['error_msg'] = "Not Authorized to view this page";
     header('Location: /index.php');
 }
+
 if ( !empty(filter_input(INPUT_GET, "sc_id")) ) {
     $sc = new Service_call(filter_input(INPUT_GET, 'sc_id'));
     $sl_id = $sc->getSl()->getSl_id();
@@ -17,7 +19,9 @@ if ( !empty(filter_input(INPUT_GET, "sc_id")) ) {
     $_SESSION['error_msg'] = "Invalid Service Issue Number";
     header('Location: /index.php');
 }
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn'])){
+
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn']) && 
+        ($staff->getRoleID() >= $sv['staffTechnican'] || $staff->getRoleID() == $sv['serviceTechnican'])){
     $status = filter_input(INPUT_POST, 'status');
     $sl_id = filter_input(INPUT_POST, 'sl_id');
     $sr_notes = filter_input(INPUT_POST, 'sr_notes');
@@ -28,6 +32,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn'])){
     } else {
         header("Location:sr_log.php?sc_id=".$sc->getSc_id());
     }
+} elseif ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['editSC']) && 
+        $sc->getStaff()->getOperator() == $staff->getOperator()) {
+    $notes = filter_input(INPUT_POST, 'notes');
+    $sc->updateNotes($notes);
+    header("Location:sr_log.php?sc_id=".$sc->getSc_id());
 }
 ?>
 <title><?php echo $sv['site_name'];?> Service Replies</title>
@@ -83,76 +92,82 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn'])){
                             <td><?php echo $sc->getSc_notes(); ?></td>
                         </tr>
                     </table>
-                    
                 </div>
+                <?php if ($sc->getStaff()->getOperator() == $staff->getOperator()) { ?>
+                <div class='panel-footer clearfix'>
+                    <button class='btn btn-primary pull-right' onclick='editSR()'>Edit</button>
+                </div>
+                <?php } ?>
             </div>
         </div>
         <!-- /.col-md-5 -->
         <div class="col-md-6">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <i class="far fa-comment fa-fw"></i> Reply to Issue
-                </div>
-                <div class="panel-body">
-                    <form name="reply" method= "POST" action="" onsubmit="return validateReply();">
-                    <table class="table table-striped table-bordered">
-                        <tr>
-                            <td class="col-sm-3">
-                                Issue Status
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-                                        <i class="fas fa-info fa-lg" title="Read Me"></i>
-                                    </button>
-                                    <ul class="dropdown-menu" role="menu">
-                                        <li style="padding-left: 5px;">Mark Complete if the reported issue has been resolved.</li>
-                                    </ul>
-                                </div>
-                            </td>
-                            <td class="col-sm-9">
-                                <input type="radio" name="status" value="complete" id="complete" onchange="radioBtn(this)"><label for="complete">&ensp; Complete</label><br>
-                                <input type="radio" name="status" value="incomplete" id="incomplete" onchange="radioBtn(this)"><label for="incomplete">&ensp; Incomplete</label>
-                            </td>
-                        <tr>
-                            <td>
-                                Change Service Level
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-                                        <i class="fas fa-info fa-lg" title="Read Me"></i>
-                                    </button>
-                                    <ul class="dropdown-menu" role="menu">
-                                        <li style="padding-left: 5px;">Increase or decrease the severity of the issue.</li>
-                                    </ul>
-                                </div>
-                            </td>
-                            <td>
-                                <select class="form-control" name="sl_id" id="sl_id" onchange="change_sldot()" disabled>
-                                    <option value = "" hidden> <i class="fas fa-fire"/>Select</option>
-                                    <?php //List available Service Levels
-                                    $slArray = Service_lvl::getList();
-                                    foreach ($slArray as $sl){
-                                        if ($sl_id == $sl->getSl_id()){
-                                            echo("<option value='".$sl->getSl_id()."' selected>".$sl->getMsg()."</option>");
-                                        } else {
-                                            echo("<option value='".$sl->getSl_id()."'>".$sl->getMsg()."</option>");
+            <?php if ($staff->getRoleID() >= $sv['staffTechnican'] || $staff->getRoleID() == $sv['serviceTechnican']){ ?>
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="far fa-comment fa-fw"></i> Reply to Issue
+                    </div>
+                    <div class="panel-body">
+                        <form name="reply" method= "POST" action="" onsubmit="return validateReply();">
+                        <table class="table table-striped table-bordered">
+                            <tr>
+                                <td class="col-sm-3">
+                                    Issue Status
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                                            <i class="fas fa-info fa-lg" title="Read Me"></i>
+                                        </button>
+                                        <ul class="dropdown-menu" role="menu">
+                                            <li style="padding-left: 5px;">Mark Complete if the reported issue has been resolved.</li>
+                                        </ul>
+                                    </div>
+                                </td>
+                                <td class="col-sm-9">
+                                    <input type="radio" name="status" value="complete" id="complete" onchange="radioBtn(this)"><label for="complete">&ensp; Complete</label><br>
+                                    <input type="radio" name="status" value="incomplete" id="incomplete" onchange="radioBtn(this)"><label for="incomplete">&ensp; Incomplete</label>
+                                </td>
+                            <tr>
+                                <td>
+                                    Change Service Level
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                                            <i class="fas fa-info fa-lg" title="Read Me"></i>
+                                        </button>
+                                        <ul class="dropdown-menu" role="menu">
+                                            <li style="padding-left: 5px;">Increase or decrease the severity of the issue.</li>
+                                        </ul>
+                                    </div>
+                                </td>
+                                <td>
+                                    <select class="form-control" name="sl_id" id="sl_id" onchange="change_sldot()" disabled>
+                                        <option value = "" hidden> <i class="fas fa-fire"/>Select</option>
+                                        <?php //List available Service Levels
+                                        $slArray = Service_lvl::getList();
+                                        foreach ($slArray as $sl){
+                                            if ($sl_id == $sl->getSl_id()){
+                                                echo("<option value='".$sl->getSl_id()."' selected>".$sl->getMsg()."</option>");
+                                            } else {
+                                                echo("<option value='".$sl->getSl_id()."'>".$sl->getMsg()."</option>");
+                                            }
                                         }
-                                    }
-                                    ?>
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Notes:</td>
-                            <td><div class="form-group">
-                            <textarea class="form-control" rows="5" name="sr_notes"  id="sr_notes" style="resize: none"><?php echo $sr_notes; ?></textarea>
-                            </div></td>
-                        </tr>
-                    </table>
+                                        ?>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Notes:</td>
+                                <td><div class="form-group">
+                                <textarea class="form-control" rows="5" name="sr_notes"  id="sr_notes" style="resize: none"><?php echo $sr_notes; ?></textarea>
+                                </div></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="panel-footer clearfix">
+                        <div class="pull-right"><input class="btn btn-primary" type="submit" name="srBtn" value="Submit"></div>
+                    </div></form>
                 </div>
-                <div class="panel-footer clearfix">
-                    <div class="pull-right"><input class="btn btn-primary" type="submit" name="srBtn" value="Submit"></div>
-                </div></form>
-            </div>
-            <!-- /.panel -->
+                <!-- /.panel -->
+            <?php } ?>
         </div>
         <!-- /.col-md-6 -->
     </div>
@@ -198,7 +213,28 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn'])){
     <?php } ?>
 </div>
 <!-- /#page-wrapper -->
-
+<div id="editModal" class="modal">
+    <div class="modal-dialog">
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Edit Notes of the Issue</h4>
+            </div>
+            <form name="aaaForm" method="post" action="" onsubmit="return validateEdit()">
+            <div class="modal-body">
+                <textarea class="form-control" id="notes" rows="5" name="notes"
+                    style="resize: none"><?php if ($notes == "") {echo $sc->getSc_notes();} else {echo $notes;} ?></textarea>
+            </div>
+            <div class="modal-footer">
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                  <button type="submit" class="btn btn-primary" name="editSC">Save</button>
+            </div> 
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Modal -->
 <script type="text/javascript">
 function change_sldot(){
     var sl_id = document.getElementById("sl_id").value;
@@ -216,6 +252,11 @@ function change_sldot(){
         sl_dot.style.color = "red";
         sl_dot.classList.add("fa-times");
     }
+}
+
+function editSR(){
+    //toggle modal
+    $("#editModal").modal();
 }
 
 function radioBtn(ele) {
@@ -252,6 +293,12 @@ function validateReply(){
     }
     //remove disabled to allow submission
     document.getElementById("sl_id").disabled = false;
+}
+
+function validateEdit(){
+    if (!stdRegEx("notes", /^.{10,}/, "Please describe the issue with this device.")){
+        return false;
+    }
 }
 
 window.onload = function() {

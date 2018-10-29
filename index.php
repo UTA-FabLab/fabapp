@@ -162,10 +162,10 @@ function advanceNum($i, $str){
                                                                 <?php if (isset($row['estTime'])) {
                                                                     $str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $row["estTime"]);
                                                                     sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
-                                                                    $time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - strtotime($row["Start_date"]) ) + $sv["grace_period"];
+                                                                    $time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - strtotime($row["Start_date"]) ) + $sv["wait_period"];
                                                                     $temp_time = $hours * 3600 + $minutes * 60 + $seconds;
-                                                                    if ($temp_time == "00:00:00" && isset($row['last_contact'])){
-                                                                        $time_seconds = $sv["grace_period"] - (time() - strtotime($row['last_contact']) );
+                                                                    if (isset($row['last_contact'])){
+                                                                        $time_seconds = $sv["wait_period"] - (time() - strtotime($row['last_contact']) );
                                                                         if ($time_seconds <= 0 ){
                                                                             echo("<span style=\"color:red\" align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
                                                                             array_push($device_array, array("q".$row["Q_id"], $time_seconds));
@@ -175,7 +175,7 @@ function advanceNum($i, $str){
                                                                         }
                                                                         array_push($device_array, array("q".$row["Q_id"], $time_seconds));
                                                                     } elseif ($temp_time == "00:00:00") {
-                                                                        //$time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - //strtotime($row["Start_date"]) ) + $sv["grace_period"];
+                                                                        //$time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - //strtotime($row["Start_date"]) ) + $sv["wait_period"];
                                                                         echo("<span align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
                                                                         //do nothing keeping time at 00:00:00
                                                                     } else {
@@ -197,8 +197,18 @@ function advanceNum($i, $str){
                                                                 <td> 
                                                                     <?php if (!empty($row['Op_phone']) || !empty($row['Op_email'])) { ?> 
                                                                         <div style="text-align: center">
+                                                                            <?php //prepare message
+                                                                            if ( $row['device_desc'] == ""){
+                                                                                //datetime is added within the AJAX file endWaitList
+                                                                                $msg = "A $row[dg_desc] is now available. Please make your way to the FabLab. You have until ";
+                                                                            } else {
+                                                                                //datetime is added within the AJAX file endWaitList
+                                                                                $msg = "$row[device_desc] is now available. Please make your way to the FabLab. You have until ";
+                                                                            }
+                                                                            ?>
                                                                             <button class="<?php if (isset($row['last_contact'])){echo "btn btn-xs btn-warning";} else{echo "btn btn-xs btn-primary";}?>" data-target="#removeModal" data-toggle="modal" 
-                                                                                    onclick="sendManualMessage(<?php echo $row["Q_id"]?>, 'Your wait ticket is almost done, please make your way to the FabLab', 0)">  <!-- make note that adding explanation points may cause errors with notifications -->
+                                                                                    onclick="sendManualMessage(<?php echo $row["Q_id"]?>, '<?php echo $msg;?>', 0)">
+                                                                                <!-- make note that adding explanation points may cause errors with notifications -->
                                                                                     Send Alert
                                                                             </button>
                                                                         </div>
@@ -583,14 +593,6 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         xmlhttp.open("GET","/pages/sub/getWaitQueueID.php?val="+ document.getElementById("devGrp").value, true);
         xmlhttp.send();
     }
-    
-     function sendManualMessage(q_id, message){
-        
-        if (confirm("You are about to send a notification to a wait queue user. Click OK to continue or CANCEL to quit.")){
-            
-        window.location.href = "/pages/sub/endWaitList.php?q_id=" + q_id + "&message=" + message + "&loc=0";
-        }
-     }
     
     var str;
     for(var i=1; i<= <?php echo $number_of_queue_tables;?>; i++){

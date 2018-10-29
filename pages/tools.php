@@ -35,6 +35,7 @@ $device_mats = Materials::getDeviceMats(2);
                                 <img src="../images/colorswap.JPG" alt="" class="img-responsive"/>
                             </td>
                             <td class="col-md-5">
+                                <b>*Not intended for sequential printing*</b>
                                 <p>After the stl has been sliced and the gcode has been saved, view the “Models and Paths” and 
                                     determine which layer you want to pause the printer on. The layer is displayed in KISSlicer as </p>
                                 <p>z value = z height in mm</p>
@@ -49,14 +50,38 @@ $device_mats = Materials::getDeviceMats(2);
                         </tr>
                         <tr>
                             <td>
-                                <p>gcode Example</p>
-                                <i>G28 X<br>G1 Z20.000<br>M117<br>M0<br>G1 Z10.2497<br>G28 X Y</i>
+                                <table class="table table-hover">
+                                    <tr>
+                                        <td>gcode Example</td>
+                                        <td>Explanation</td>
+                                    </tr>
+                                    <tr>
+                                        <td><i>G28 X</i></td>
+                                        <td><i>Zero X-axis</i></td>
+                                    </tr>
+                                    <tr>
+                                        <td><i>G1 Z20.000</i></td>
+                                        <td><i>Move Z height to 20.000mm</i></td>
+                                    </tr>
+                                    <tr>
+                                        <td><i>M117</i></td>
+                                        <td><i>Print coordinates to console</i></td>
+                                    </tr>
+                                    <tr>
+                                        <td><i>M0</i></td>
+                                        <td><i>Pause Printer</i></td>
+                                    </tr>
+                                    <tr>
+                                        <td><i>G1 Z10.2497</i></td>
+                                        <td><i>Move Z height to correct height</i></td>
+                                    </tr>
+                                    <tr>
+                                        <td><i>G28 X Y</i></td>
+                                        <td><i>Zero X & Y axis</i></td>
+                                    </tr>
+                                </table>
                             </td>
-                            <td>
-                                <p>Explanation</p>
-                                <p>Zero X-axis<br>Move Z height to 20.000mm<br>Print coordinates to console<br>Pause Printer
-                                    <br>Move Z height to correct height<br>Zero X & Y axis</p>
-                            </td>
+                            <td></td>
                         </tr>
                     </table>
                 </div>
@@ -184,7 +209,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         for(var i=0; i < locs.length; i++){
             loc = parseFloat(locs[i].value).toFixed(3);
             dm = dm_selects[i].value;
-            if (loc != "" && dm != ""){
+            if (!isNaN(loc) && dm != ""){
                 //Convert to float w/ 3 Decimals
                 loc_array.push(loc);
                 mats_array.push(dm);
