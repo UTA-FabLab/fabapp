@@ -42,8 +42,8 @@ function removeFromQueue($q_id) {
     Wait_queue::deleteFromWaitQueue($queueItem);
 }
  
-function sendMessage($q_id, $message)
-{
+function sendMessage($q_id, $message) {
+    $message = $message.date($sv['dateFormat'], strtotime("now")+$sv["wait_period"]);
     Notifications::sendNotification($q_id, "FabApp Notification", $message, 1);
 }
 

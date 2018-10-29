@@ -5,10 +5,10 @@
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
-if (isset($staff) && $staff->getRoleID() < $sv['LvlOfStaff']){
-    //Not Authorized to see this Page
-    $_SESSION['error_msg'] = "Not Authorized to view this page";
-    header('Location: /index.php');
+if (!isset($staff) || ($staff->getRoleID() < $sv['LvlOfStaff'] && $staff->getRoleID() != $sv['serviceTechnican'])) {
+    // Not Authorized to see this Page
+    $_SESSION['error_msg'] = "You must be logged in to report an issue.";
+    header ( 'Location: /index.php' );
 }
 if (!empty(filter_input(INPUT_GET, "d_id")) && Devices::regexDID($_GET["d_id"])) {
     $device = new Devices(filter_input(INPUT_GET, 'd_id'));
@@ -18,7 +18,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && filter_has_var(INPUT_POST, 'btnHist
     if (Devices::regexDID($d_id[0])){
         $device = new Devices($d_id[0]);
     }
-} elseif($_SERVER["REQUEST_METHOD"] === "POST" && filter_has_var(INPUT_POST, 'issueBtn') ) {
+} elseif($_SERVER["REQUEST_METHOD"] === "POST" && filter_has_var(INPUT_POST, 'issueBtn')) {
     //issueBtn
     $d_id = filter_input(INPUT_POST, 'd_id');
     header("Location:/pages/sr_issue.php?d_id=$d_id");

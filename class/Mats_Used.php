@@ -1,7 +1,7 @@
 <?php
 /*
- * License - FabApp V 0.9
- * 2016-2017 CC BY-NC-AS UTA FabLab
+ *   Jon Le 2016-2018
+ *   FabApp V 0.91
  */
 
 /**
@@ -141,7 +141,7 @@ class Mats_Used {
         $unit_used = -$unit_used;
         
         //scrub $mu_notes
-        $mu_notes = htmlspecialchars_decode($mu_notes);
+        $mu_notes = htmlspecialchars($mu_notes);
         
         if ($stmt = $mysqli->prepare("
             INSERT INTO mats_used
@@ -253,7 +253,7 @@ class Mats_Used {
     }
 
     public function setMu_notes($mu_notes) {
-        $mu_notes = htmlspecialchars_decode($mu_notes);
+        $mu_notes = htmlspecialchars($mu_notes);
         $this->mu_notes = str_replace("|", "l", $mu_notes);
     }
 

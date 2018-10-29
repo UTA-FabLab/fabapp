@@ -81,7 +81,7 @@ class Service_reply {
         global $mysqli;
         
         $staff_id = $staff->getOperator();
-        $sr_notes = htmlspecialchars_decode($sr_notes);
+        $sr_notes = htmlspecialchars($sr_notes);
         
         if ( $stmt = $mysqli->prepare("
             INSERT INTO `service_reply` (`sc_id`, `staff_id`, `sr_notes`, `sr_time`)
@@ -114,7 +114,7 @@ class Service_reply {
     }
 
     function setSr_notes($sr_notes) {
-        $this->sr_notes = htmlspecialchars_decode($sr_notes);
+        $this->sr_notes = $sr_notes;
     }
 
     function setSr_time($sr_time) {

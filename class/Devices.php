@@ -235,6 +235,7 @@ class Devices {
     
     public static function printDot($staff, $d_id){
     	global $mysqli;
+        global $sv;
         
     	//look up current device status
     	$dot = 0;
@@ -257,12 +258,13 @@ class Devices {
     	}
         
     	if($staff){
-            if($staff->getRoleID() >= 7)
+            if($staff->getRoleID() >= $sv['LvlOfStaff'])
                 echo "<a href = '/pages/sr_history.php?d_id=$d_id'><i class='fas fa-$symbol fa-lg' style='color:$color'></i></a>&nbsp;";
             else
                 echo "<i class='fas fa-$symbol fa-lg' style='color:".$color."'></i>&nbsp;";
     	} else {
             echo "<i class='fas fa-$symbol fa-lg' style='color:".$color."'></i>&nbsp;";
     	}
+         
     }
 }
