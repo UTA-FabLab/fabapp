@@ -6,13 +6,14 @@
 include_once ($_SERVER ['DOCUMENT_ROOT'] . '/pages/header.php');
 $device = $sl_id = $notes = "";
 
-if ($staff && $staff->getRoleID () < $sv['LvlOfStaff']) {
+if (!isset($staff) || ($staff->getRoleID() < $sv['LvlOfStaff'] && $staff->getRoleID() != $sv['serviceTechnican'])) {
     // Not Authorized to see this Page
     $_SESSION['error_msg'] = "You must be logged in to report an issue.";
     header ( 'Location: /index.php' );
 } elseif (filter_has_var(INPUT_GET, 'd_id') && Devices::regexDID(filter_has_var(INPUT_GET, 'd_id'))) {
     $device = new Devices(filter_input(INPUT_GET, 'd_id'));
 }
+
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn'])){
     //device, sl_id, notes
     $devices = new Devices(filter_input(INPUT_POST, 'devices'));
@@ -126,10 +127,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn'])){
                                 <tr>
                                     <td>Notes:</td>
                                     <td>
-                                        <div class="form-group">
-                                            <textarea class="form-control" id="notes" rows="5" name="notes"
-                                                style="resize: none"><?php echo $notes; ?></textarea>
-                                        </div>
+                                        <textarea class="form-control" id="notes" rows="5" name="notes"
+                                            style="resize: none"><?php echo $notes; ?></textarea>
                                     </td>
                                 </tr>
                             </table>

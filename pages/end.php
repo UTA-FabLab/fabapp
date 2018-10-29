@@ -217,7 +217,7 @@ if ($errorMsg != ""){
 <div id="page-wrapper">
     <div class="row">
         <div class="col-lg-12">
-            <?php  if (strcmp($staff->getOperator(), $ticket->getUser()->getOperator()) == 0) {
+            <?php  if (strcmp($staff->getOperator(), $ticket->getUser()->getOperator()) == 0 && $staff->getRoleID() < $sv['editTrans']) {
                 echo "<h1 class='page-header'>Not Authorized To End Ticket</h1> You must be either staff or closing your own ticket.";
             } elseif ($baseCost) {
                 echo "<h1 class='page-header'>Ticket Not Closed Yet</h1> This ticket may require payment.";
