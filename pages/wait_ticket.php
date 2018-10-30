@@ -191,7 +191,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                     </td>
                                 </tr>
                                 <tr> <br>
-                                    <td><p><b>Operator: </b><span type="password" id="deviceList"></span></p></td>
+                                    <td><p><b>Operator: </b><span type="password" id="processOperator"></span></p></td>
                                     <td><input type="text" name="operator_ticket" id="operator_ticket" class="form-control" placeholder="1000000000" maxlength="10" size="10"/></td>
                                 </tr>
                             </div>
@@ -445,7 +445,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         }
         xmlhttp.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
-                document.getElementById("deviceList").innerHTML = this.responseText;
+                document.getElementById("processOperator").innerHTML = this.responseText;
             }
         };
         
