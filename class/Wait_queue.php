@@ -607,7 +607,10 @@ class Wait_queue {
             WHERE `wait_queue`.`Operator` = $operator AND `wait_queue`.`Devgr_id` = $dg_id AND `wait_queue`.`valid` = 'Y'
         ")){
             $row = $result->fetch_assoc();
-            $timeLeft = date('H:i:s',strtotime('+5 minutes',strtotime($row["estTime"])));
+            $timeLeft = $row["estTime"];
+            if (isset($timeLeft)){
+                $timeLeft = date('H:i:s',strtotime('+5 minutes',strtotime($row["estTime"])));
+            }
             $device = $row["device_desc"];
             $q_id = $row["Q_id"];
         }
