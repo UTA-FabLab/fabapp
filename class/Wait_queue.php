@@ -604,7 +604,7 @@ class Wait_queue {
             FROM `wait_queue`
             LEFT JOIN `devices`
             ON `wait_queue`.`Dev_id` = `devices`.`d_id`
-            WHERE `wait_queue`.`Operator` = $operator AND `wait_queue`.`Devgr_id` = $dg_id
+            WHERE `wait_queue`.`Operator` = $operator AND `wait_queue`.`Devgr_id` = $dg_id AND `wait_queue`.`valid` = 'Y'
         ")){
             $row = $result->fetch_assoc();
             $timeLeft = $row["estTime"];
