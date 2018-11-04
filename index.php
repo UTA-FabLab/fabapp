@@ -120,7 +120,7 @@ function advanceNum($i, $str){
                                                             WHERE valid = 'Y' and WQ.devgr_id=$tab[dg_id]
                                                             ORDER BY Q_id;
                                                     ")) {
-                                                        if ($tab["dg_id"] != 'N'){
+                                                        if ($tab["granular_wait"] == 'Y'){
                                                             Wait_queue::calculateDeviceWaitTimes(); 
                                                         } else {
                                                             Wait_queue::calculateWaitTimes();
