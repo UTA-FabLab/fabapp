@@ -92,6 +92,8 @@ class Wait_queue {
             ")){        
                 Notifications::sendNotification($mysqli->insert_id, "FabApp Notification", "You have signed up for FabApp notifications. Your Wait Ticket number is: ".$mysqli->insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateDeviceWaitTimes();
+                //Commented out for Dev purposes
+                //Wait_queue::printTicket($operator, $dg_id);
                 return $mysqli->insert_id;
                 
             } else {
@@ -107,10 +109,9 @@ class Wait_queue {
             ")){        
                 Notifications::sendNotification($mysqli->insert_id, "FabApp Notification", "You have signed up for FabApp notifications. Your Wait Ticket number is: ".$mysqli->insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateWaitTimes();
-                $q_id = $mysqli->insert_id;
-                //Disabled for Dev Purposes
-                //Wait_queue::printTicket($q_id);
-                return $q_id;
+                //Commented out for Dev purposes
+                //Wait_queue::printTicket($operator, $dg_id);
+                return $mysqli->insert_id;
             } else {
                 return ("<div class='alert alert-danger'>Error2 updating contact info!</div>");
             }
@@ -374,22 +375,17 @@ class Wait_queue {
                             }
                         }
                     }
-
-
-                    
                     // Sort the array
                     sort($estTimes);
-
-                    //echo "<br/><br/><br/><br/><br/><br/><br/>";
-                    //echo '<pre>'; print_r($estTimes); echo '</pre>';
 
                     // Assign estimated wait times to those in the wait queue
                     // if the number of devices in the queue is greater than the number of devices in the group, then do not estimate times for those customers
                     if ($result2 = $mysqli->query("
-                        SELECT Q_id
-                        FROM wait_queue WQ JOIN device_group DG ON WQ.devgr_id = DG.dg_id
-                        WHERE valid = 'Y' AND WQ.Devgr_id = $device_group
-                        ORDER BY Q_id;
+                        SELECT `WQ`.`Q_id`, `WQ`.`Start_date`
+                        FROM `wait_queue` `WQ`
+                        JOIN `device_group` `DG` ON `WQ`.`devgr_id` = `DG`.`dg_id`
+                        WHERE `valid` = 'Y' AND `WQ`.`Devgr_id` = $device_group
+                        ORDER BY `Q_id`;
                     ")) {
                         
                         // For each device waiting in this device group
@@ -593,29 +589,35 @@ class Wait_queue {
     }
     
     
-    public static function printTicket($q_id){
+    public static function printTicket($operator, $dg_id){
         global $mysqli;
-        global $sv;
+        global $tp;
         $est_cost = 0;
-        
+
         if($result = $mysqli->query("
-            SELECT `wait_queue`.`estTime`, `devices`.`device_desc`
+            SELECT `wait_queue`.`estTime`, `wait_queue`.`Q_id`, `devices`.`device_desc`
             FROM `wait_queue`
             LEFT JOIN `devices`
             ON `wait_queue`.`Dev_id` = `devices`.`d_id`
-            WHERE `wait_queue`.`q_id` = $q_id
+            WHERE `wait_queue`.`Operator` = $operator AND `wait_queue`.`Devgr_id` = $dg_id AND `wait_queue`.`valid` = 'Y'
         ")){
             $row = $result->fetch_assoc();
             $timeLeft = $row["estTime"];
+            if (isset($timeLeft)){
+                $timeLeft = date('H:i:s',strtotime('+5 minutes',strtotime($row["estTime"])));
+            }
             $device = $row["device_desc"];
+            $q_id = $row["Q_id"];
+        }
+
+        if (empty($device)){
+            $device = "PolyPrinter";
         }
 
         // Set up Printer Connection
-        $tp_array = explode("|", $sv['thermalPrinter1']);
-        $tpHost = $tp_array[0];
-        $tpPort = $tp_array[1];
+        $tp_number = 0;
         try {
-            $connector = new NetworkPrintConnector( $tpHost, $tpPort);
+            $connector = new NetworkPrintConnector( $tp[$tp_number][0], $tp[$tp_number][1]);
             $printer = new Printer($connector);
         } catch (Exception $e) {
             return "Couldn't print to this printer: " . $e -> getMessage() . "\n";

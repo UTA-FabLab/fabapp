@@ -118,24 +118,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
                 <!-- /.panel -->
             <?php } ?>
         </div>
-        <div class="col-md-4">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <i class="fa fa-clock fa-fw"></i> Start Secondary Timer
-                </div>
-                <!-- /.panel-heading -->
-                <div class="panel-body">
-                    <div style="text-align: center">
-                        <form method="post" action="" onsubmit="return startSecondaryTimer()" >
-                        <button class="btn btn-warning" name="timerBtn">
-                            Start Timer
-                        </button>
-                        </form>
+        <?php if (empty($Op_phone) && empty($Op_email)) { ?>
+            <div class="col-md-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="fa fa-clock fa-fw"></i> Start Secondary Timer
                     </div>
+                    <!-- /.panel-heading -->
+                    <div class="panel-body">
+                        <div style="text-align: center">
+                            <form method="post" action="" onsubmit="return startSecondaryTimer()" >
+                            <button class="btn btn-warning" name="timerBtn">
+                                Start Timer
+                            </button>
+                            </form>
+                        </div>
+                    </div>
+                <!-- /.panel-body -->
                 </div>
-            <!-- /.panel-body -->
             </div>
-        </div>
+        <?php } ?>
     </div>
     <!-- /.row -->
 </div>
@@ -148,7 +150,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 
 <script type="text/javascript">
     function startSecondaryTimer(){
-        if (confirm("You are about to start this user's secondary timer. Click OK to continue or CANCEL to quit.")){
+        if (confirm("You are about to start this user's secondary timer, please make sure to contact the user by calling out their wait queue number at the FabLab. Click OK to continue or CANCEL to quit.")){
             return true;
         }
         return false;

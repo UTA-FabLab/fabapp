@@ -94,9 +94,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                             <td>
                                 <select name="dg_id" id="dg_id" onchange="change_dg()" tabindex="1">
                                     <option disabled hidden selected value="">Device Group</option>
-                                    <?php if($result = DeviceGroup::popDGs()){
-                                        while($row = $result->fetch_assoc()){
-                                            echo("<option value='$row[dg_id]'>$row[dg_desc]</option>");
+                                    <?php if($dgs = DeviceGroup::popDG_WQ()){
+                                        foreach($dgs as $dg_id => $dg_desc){
+                                            echo("<option value='$dg_id'>$dg_desc</option>");
                                         }
                                     } else {
                                         echo("<option value=''>Device list Error - SQL ERROR</option>");
@@ -143,7 +143,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
         <div class="col-md-4">
             <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="far fa-clock fa-fw"></i>Period of Wait
+                        <i class="far fa-clock fa-fw"></i>Secondary Timer Length of Wait
                     </div>
                     <!-- /.panel-heading -->
                     <div class="panel-body">
@@ -191,7 +191,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                     </td>
                                 </tr>
                                 <tr> <br>
-                                    <td><p><b>Operator: </b><span type="password" id="deviceList"></span></p></td>
+                                    <td><p><b>Operator: </b><span type="password" id="processOperator"></span></p></td>
                                     <td><input type="text" name="operator_ticket" id="operator_ticket" class="form-control" placeholder="1000000000" maxlength="10" size="10"/></td>
                                 </tr>
                             </div>
@@ -210,7 +210,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
     
     <!-- Wait Queue -->
     <div class="row">
-    <?php if (Wait_queue::hasWait()) {?>
+    <?php if (Wait_queue::hasWait()) {
+        //refresh all counters
+        Wait_queue::calculateDeviceWaitTimes(); 
+        Wait_queue::calculateWaitTimes();?>
         <div class="col-md-8">
             <div class="panel panel-default">
                 <div class="panel-heading">
@@ -266,13 +269,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                                         WHERE valid = 'Y' and WQ.devgr_id=$tab[dg_id]
                                                         ORDER BY Q_id;
                                                 ")) {
-                                                    if ($tab["dg_id"] != 'N'){
-                                                        Wait_queue::calculateDeviceWaitTimes(); 
-                                                    } else {
-                                                        Wait_queue::calculateWaitTimes();
-                                                    }  
- 
-
                                                     while ($row = $result->fetch_assoc()) { ?>
                                                         <tr class="tablerow">
 
@@ -301,20 +297,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                                             <?php if (isset($row['estTime'])) {
                                                                 $str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $row["estTime"]);
                                                                 sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
-                                                                $time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - strtotime($row["Start_date"]) ) + $sv["wait_period"];
+                                                                $time_seconds = $hours * 3600 + $minutes * 60 + $seconds + $sv["wait_period"];
                                                                 $temp_time = $hours * 3600 + $minutes * 60 + $seconds;
                                                                 if (isset($row['last_contact'])){
                                                                     $time_seconds = $sv["wait_period"] - (time() - strtotime($row['last_contact']) );
                                                                     if ($time_seconds <= 0 ){
                                                                         echo("<span style=\"color:red\" align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
-                                                                        array_push($device_array, array("q".$row["Q_id"], $time_seconds));
                                                                     } else {
                                                                         echo("<span style=\"color:orange\" align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
-                                                                        array_push($device_array, array("q".$row["Q_id"], $time_seconds));
                                                                     }
                                                                     array_push($device_array, array("q".$row["Q_id"], $time_seconds));
                                                                 } elseif ($temp_time == "00:00:00") {
-                                                                    //$time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - //strtotime($row["Start_date"]) ) + $sv["grace_period"];
                                                                     echo("<span align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
                                                                     //do nothing keeping time at 00:00:00
                                                                 } else {
@@ -445,7 +438,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         }
         xmlhttp.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
-                document.getElementById("deviceList").innerHTML = this.responseText;
+                document.getElementById("processOperator").innerHTML = this.responseText;
             }
         };
         

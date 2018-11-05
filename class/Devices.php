@@ -258,10 +258,11 @@ class Devices {
     	}
         
     	if($staff){
-            if($staff->getRoleID() >= $sv['LvlOfStaff'])
+            if($staff->getRoleID() >= $sv['LvlOfStaff'] || $staff->getRoleID() == $sv['serviceTechnican']) {
                 echo "<a href = '/pages/sr_history.php?d_id=$d_id'><i class='fas fa-$symbol fa-lg' style='color:$color'></i></a>&nbsp;";
-            else
+            } else {
                 echo "<i class='fas fa-$symbol fa-lg' style='color:".$color."'></i>&nbsp;";
+            }
     	} else {
             echo "<i class='fas fa-$symbol fa-lg' style='color:".$color."'></i>&nbsp;";
     	}
