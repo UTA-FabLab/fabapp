@@ -61,7 +61,10 @@ function advanceNum($i, $str){
         <!-- /.col-md-12 -->
     </div>
     <!-- Wait Queue -->
-    <?php if (Wait_queue::hasWait()) {?>
+    <?php if (Wait_queue::hasWait()) {
+        //refresh all counters
+        Wait_queue::calculateDeviceWaitTimes(); 
+        Wait_queue::calculateWaitTimes();?>
         <div class="row">
             <div class="col-md-8">
                 <div class="panel panel-default">
@@ -77,19 +80,18 @@ function advanceNum($i, $str){
                             <ul class="nav nav-tabs">
                                 <!-- Load all device groups as a tab that have at least one device in that group -->
                                 <?php if ($result = Wait_queue::getTabResult()) {
-                                        $count = 0;
-                                        while ($row = $result->fetch_assoc()) { ?>
-                                            <li class="<?php if ($count == 0) echo "active";?>">
-                                                <a <?php echo("href=\"#".$row["dg_id"]."\""); ?>  data-toggle="tab" aria-expanded="false"> <?php echo($row["dg_desc"]); ?> </a>
-                                            </li>
-                                            <?php //create a way to display the first wait_queue table tab by saving which dg_id it is to variable 'first_dgid'
-                                            if ($count == 0){
-                                                $first_dgid = $row["dg_id"];  
-                                            }   
-                                            $count++;                                                                  
-                                        }
+                                    $count = 0;
+                                    while ($row = $result->fetch_assoc()) { ?>
+                                        <li class="<?php if ($count == 0) echo "active";?>">
+                                            <a <?php echo("href=\"#".$row["dg_id"]."\""); ?>  data-toggle="tab" aria-expanded="false"> <?php echo($row["dg_desc"]); ?> </a>
+                                        </li>
+                                        <?php //create a way to display the first wait_queue table tab by saving which dg_id it is to variable 'first_dgid'
+                                        if ($count == 0){
+                                            $first_dgid = $row["dg_id"];  
+                                        }   
+                                        $count++;                                                                  
                                     }
-                                ?>
+                                } ?>
                             </ul>
                             <div class="tab-content">
                                 <?php
@@ -120,11 +122,6 @@ function advanceNum($i, $str){
                                                             WHERE valid = 'Y' and WQ.devgr_id=$tab[dg_id]
                                                             ORDER BY Q_id;
                                                     ")) {
-                                                        if ($tab["granular_wait"] == 'Y'){
-                                                            Wait_queue::calculateDeviceWaitTimes(); 
-                                                        } else {
-                                                            Wait_queue::calculateWaitTimes();
-                                                        }  
    
 
                                                         while ($row = $result->fetch_assoc()) {
@@ -162,20 +159,17 @@ function advanceNum($i, $str){
                                                                 <?php if (isset($row['estTime'])) {
                                                                     $str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $row["estTime"]);
                                                                     sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
-                                                                    $time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - strtotime($row["Start_date"]) ) + $sv["wait_period"];
+                                                                    $time_seconds = $hours * 3600 + $minutes * 60 + $seconds + $sv["grace_period"];
                                                                     $temp_time = $hours * 3600 + $minutes * 60 + $seconds;
                                                                     if (isset($row['last_contact'])){
                                                                         $time_seconds = $sv["wait_period"] - (time() - strtotime($row['last_contact']) );
                                                                         if ($time_seconds <= 0 ){
                                                                             echo("<span style=\"color:red\" align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
-                                                                            array_push($device_array, array("q".$row["Q_id"], $time_seconds));
                                                                         } else {
                                                                             echo("<span style=\"color:orange\" align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
-                                                                            array_push($device_array, array("q".$row["Q_id"], $time_seconds));
                                                                         }
                                                                         array_push($device_array, array("q".$row["Q_id"], $time_seconds));
                                                                     } elseif ($temp_time == "00:00:00") {
-                                                                        //$time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - //strtotime($row["Start_date"]) ) + $sv["wait_period"];
                                                                         echo("<span align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
                                                                         //do nothing keeping time at 00:00:00
                                                                     } else {
