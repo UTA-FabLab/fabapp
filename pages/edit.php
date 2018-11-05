@@ -81,7 +81,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['success_msg'] = "No Changes Made.";
             header("Location:/pages/lookup.php?trans_id=".$ticket->getTrans_id());
         } elseif($err_catch == true) {
-            $_SESSION['success_msg'] = "Ticket has been updated. Code $err_catch";
+            $_SESSION['success_msg'] = "Ticket has been updated.";
             header("Location:/pages/lookup.php?trans_id=".$ticket->getTrans_id());
         } else {
             $_SESSION['error_msg'] = $err_catch;

@@ -26,7 +26,7 @@ class Notifications {
 
     public static function sendNotification($q_id, $subject, $message, $markContact) {
         global $mysqli;
-        $hasbeenContacted = false;
+        $hasbeenContacted = $setLastContated = false;
         // This function queries the carrier table and sends an email to all combinations
 
             //Query the phone number and email
