@@ -94,9 +94,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                             <td>
                                 <select name="dg_id" id="dg_id" onchange="change_dg()" tabindex="1">
                                     <option disabled hidden selected value="">Device Group</option>
-                                    <?php if($result = DeviceGroup::popDGs()){
-                                        while($row = $result->fetch_assoc()){
-                                            echo("<option value='$row[dg_id]'>$row[dg_desc]</option>");
+                                    <?php if($dgs = DeviceGroup::popDG_WQ()){
+                                        foreach($dgs as $dg_id => $dg_desc){
+                                            echo("<option value='$dg_id'>$dg_desc</option>");
                                         }
                                     } else {
                                         echo("<option value=''>Device list Error - SQL ERROR</option>");
@@ -143,7 +143,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
         <div class="col-md-4">
             <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="far fa-clock fa-fw"></i>Period of Wait
+                        <i class="far fa-clock fa-fw"></i>Secondary Timer Length of Wait
                     </div>
                     <!-- /.panel-heading -->
                     <div class="panel-body">
