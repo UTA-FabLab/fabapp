@@ -375,22 +375,17 @@ class Wait_queue {
                             }
                         }
                     }
-
-
-                    
                     // Sort the array
                     sort($estTimes);
-
-                    //echo "<br/><br/><br/><br/><br/><br/><br/>";
-                    //echo '<pre>'; print_r($estTimes); echo '</pre>';
 
                     // Assign estimated wait times to those in the wait queue
                     // if the number of devices in the queue is greater than the number of devices in the group, then do not estimate times for those customers
                     if ($result2 = $mysqli->query("
-                        SELECT Q_id
-                        FROM wait_queue WQ JOIN device_group DG ON WQ.devgr_id = DG.dg_id
-                        WHERE valid = 'Y' AND WQ.Devgr_id = $device_group
-                        ORDER BY Q_id;
+                        SELECT `WQ`.`Q_id`, `WQ`.`Start_date`
+                        FROM `wait_queue` `WQ`
+                        JOIN `device_group` `DG` ON `WQ`.`devgr_id` = `DG`.`dg_id`
+                        WHERE `valid` = 'Y' AND `WQ`.`Devgr_id` = $device_group
+                        ORDER BY `Q_id`;
                     ")) {
                         
                         // For each device waiting in this device group

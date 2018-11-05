@@ -210,7 +210,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
     
     <!-- Wait Queue -->
     <div class="row">
-    <?php if (Wait_queue::hasWait()) {?>
+    <?php if (Wait_queue::hasWait()) {
+        //refresh all counters
+        Wait_queue::calculateDeviceWaitTimes(); 
+        Wait_queue::calculateWaitTimes();?>
         <div class="col-md-8">
             <div class="panel panel-default">
                 <div class="panel-heading">
@@ -266,13 +269,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                                         WHERE valid = 'Y' and WQ.devgr_id=$tab[dg_id]
                                                         ORDER BY Q_id;
                                                 ")) {
-                                                    if ($tab["granular_wait"] == 'Y'){
-                                                        Wait_queue::calculateDeviceWaitTimes(); 
-                                                    } else {
-                                                        Wait_queue::calculateWaitTimes();
-                                                    }  
- 
-
                                                     while ($row = $result->fetch_assoc()) { ?>
                                                         <tr class="tablerow">
 
@@ -301,20 +297,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                                             <?php if (isset($row['estTime'])) {
                                                                 $str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $row["estTime"]);
                                                                 sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
-                                                                $time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - strtotime($row["Start_date"]) ) + $sv["wait_period"];
+                                                                $time_seconds = $hours * 3600 + $minutes * 60 + $seconds + $sv["wait_period"];
                                                                 $temp_time = $hours * 3600 + $minutes * 60 + $seconds;
                                                                 if (isset($row['last_contact'])){
                                                                     $time_seconds = $sv["wait_period"] - (time() - strtotime($row['last_contact']) );
                                                                     if ($time_seconds <= 0 ){
                                                                         echo("<span style=\"color:red\" align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
-                                                                        array_push($device_array, array("q".$row["Q_id"], $time_seconds));
                                                                     } else {
                                                                         echo("<span style=\"color:orange\" align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
-                                                                        array_push($device_array, array("q".$row["Q_id"], $time_seconds));
                                                                     }
                                                                     array_push($device_array, array("q".$row["Q_id"], $time_seconds));
                                                                 } elseif ($temp_time == "00:00:00") {
-                                                                    //$time_seconds = $hours * 3600 + $minutes * 60 + $seconds - (time() - //strtotime($row["Start_date"]) ) + $sv["grace_period"];
                                                                     echo("<span align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
                                                                     //do nothing keeping time at 00:00:00
                                                                 } else {
