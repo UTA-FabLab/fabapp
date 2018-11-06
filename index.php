@@ -61,10 +61,7 @@ function advanceNum($i, $str){
         <!-- /.col-md-12 -->
     </div>
     <!-- Wait Queue -->
-    <?php if (Wait_queue::hasWait()) {
-        //refresh all counters
-        Wait_queue::calculateDeviceWaitTimes(); 
-        Wait_queue::calculateWaitTimes();?>
+    <?php if (Wait_queue::hasWait()) { ?>
         <div class="row">
             <div class="col-md-8">
                 <div class="panel panel-default">
@@ -98,6 +95,14 @@ function advanceNum($i, $str){
                                 if ($Tabresult = Wait_queue::getTabResult()) {
                                     while($tab = $Tabresult->fetch_assoc()){
                                         $number_of_queue_tables++;
+                                        
+                                        // Calculate the wait queue timer by granular wait of a device group
+                                        if ($tab["granular_wait"] == 'Y'){
+                                            Wait_queue::calculateDeviceWaitTimes(); 
+                                        } else {
+                                            Wait_queue::calculateWaitTimes();
+                                        } 
+                                        
                                         // Give all of the dynamic tables a name so they can be called when their tab is clicked ?>
                                         <div class="tab-pane fade <?php if ($first_dgid == $tab["dg_id"]) echo "in active";?>" <?php echo("id=\"".$tab["dg_id"]."\"") ?> >
                                             <table class="table table-striped table-bordered table-hover" <?php echo("id=\"waitTable_$number_of_queue_tables\"") ?>>
