@@ -24,11 +24,15 @@ if (!empty($_GET["val"])) {
             // Select all of the MAV IDs that are waiting for this device group
             $result = $mysqli->query ( "
                 SELECT DISTINCT D.`device_desc`, D.`d_id`
-                FROM `devices` D, `device_group` DG, `transactions` T
-                WHERE D.`dg_id`=$dg_id AND D.`dg_id`=DG.`dg_id` AND T.`d_id`=D.`d_id` AND T.`status_id` <= 11 AND DG.`granular_wait`='Y' AND D.`d_id` NOT IN (
+                FROM `devices` D, `device_group` DG, `transactions` T , `wait_queue` WQ
+                WHERE (D.`dg_id`=$dg_id AND D.`dg_id`=DG.`dg_id` AND T.`d_id`=D.`d_id` AND T.`status_id` <= 11 AND DG.`granular_wait`='Y' AND D.`d_id` NOT IN (
                     SELECT `d_id`
                     FROM `service_call`
                     WHERE `solved` = 'N' AND `sl_id` >= 7
+                )) OR D.`d_id` IN (
+                    SELECT WQ.`Dev_id`
+                    FROM `wait_queue` WQ, `devices` D, `device_group` DG
+                    WHERE D.`dg_id`=$dg_id AND WQ.`Dev_id`=D.`d_id` AND DG.`granular_wait`='Y' AND WQ.`valid` = 'Y' 
                 )
                 ORDER BY D.`device_desc`
             " );
@@ -45,18 +49,20 @@ if (!empty($_GET["val"])) {
         } elseif ($dg_id == $polyprinters && DeviceGroup::regexDgID($dg_id)) {
             $result = $mysqli->query ( "
                 SELECT DISTINCT D.`device_desc`, D.`d_id`
-                FROM `devices` D, `device_group` DG, `transactions` T
-                WHERE D.`dg_id`=$dg_id AND D.`dg_id`=DG.`dg_id` AND T.`d_id`=D.`d_id` AND T.`status_id` <= 11 AND DG.`granular_wait`='N'
+                FROM `devices` D, `device_group` DG, `transactions` T , `wait_queue` WQ
+                WHERE (D.`dg_id`=$dg_id AND D.`dg_id`=DG.`dg_id` AND T.`d_id`=D.`d_id` AND T.`status_id` <= 11 AND DG.`granular_wait`='N' AND D.`d_id` NOT IN (
+                    SELECT `d_id`
+                    FROM `service_call`
+                    WHERE `solved` = 'N' AND `sl_id` >= 7
+                )) OR D.`d_id` IN (
+                    SELECT WQ.`Dev_id`
+                    FROM `wait_queue` WQ, `devices` D, `device_group` DG
+                    WHERE D.`dg_id`=$dg_id AND WQ.`Dev_id`=D.`d_id` AND DG.`granular_wait`='N' AND WQ.`valid` = 'Y' 
+                )
                 ORDER BY D.`device_desc`
             " );
-            $result1 = $mysqli->query ( "
-                SELECT *
-                FROM `service_call`
-                WHERE `solved` = 'N' AND `sl_id` >= 7 AND `d_id` LIKE '2_'
-            " );
-            $num_dev = 9 - mysqli_num_rows($result1); //number of active polyprinters
             
-            if (mysqli_num_rows($result) < $num_dev) {
+            if (mysqli_num_rows($result)==0) {
                 echo "<option disabled selected>"; echo "A Printer Is Available To Use"; echo "</option>";  
             } else {
                 echo "<option value=''>"; echo "No Selection Needed"; echo "</option>";
