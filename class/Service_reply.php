@@ -14,9 +14,10 @@
 class Service_reply {
     private $sr_id;
     private $sc_id;
-    private $staff_id;
     private $sr_notes;
     private $sr_time;
+    //objects
+    private $staff;
     
     public function __construct($sr_id) {
         global $mysqli;
@@ -31,7 +32,7 @@ class Service_reply {
                 $row = $result->fetch_assoc();
                 $this->setSr_id($row['sr_id']);
                 $this->setSc_id($row['sc_id']);
-                $this->setStaff_id($row['staff_id']);
+                $this->setStaff($row['staff_id']);
                 $this->setSr_notes($row['sr_notes']);
                 $this->setSr_time($row['sr_time']);
             }
@@ -63,8 +64,8 @@ class Service_reply {
         return $this->sc_id;
     }
 
-    function getStaff_id() {
-        return $this->staff_id;
+    function getStaff() {
+        return $this->staff;
     }
 
     function getSr_notes() {
@@ -109,8 +110,12 @@ class Service_reply {
         $this->sc_id = $sc_id;
     }
 
-    function setStaff_id($staff_id) {
-        $this->staff_id = $staff_id;
+    function setStaff($staff) {
+        if (is_object($staff)){
+            $this->staff = $staff;
+        } else {
+            $this->staff = Users::withID($staff);
+        }
     }
 
     function setSr_notes($sr_notes) {

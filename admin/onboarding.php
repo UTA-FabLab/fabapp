@@ -1,7 +1,7 @@
 <?php
 /*
- *   CC BY-NC-AS UTA FabLab 2016-2017
- *   FabApp V 0.9
+ *   CC BY-NC-AS UTA FabLab 2016-2018
+ *   FabApp V 0.91
  */
  //This will import all of the CSS and HTML code necessary to build the basic page
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');

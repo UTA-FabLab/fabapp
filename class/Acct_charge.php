@@ -112,9 +112,14 @@ class Acct_charge {
                     }
                 }
             }
-            return $ac_owed;
+            
+            if ($any_outstanding){
+                return $ac_owed;
+            } else {
+                //No Balance Owed
+                return false;
+            }
         }
-        //No Balance Owed
     }
     
     public function edit($err_check, $ac_operator, $ac_amount, $ac_date, $ac_acct, $ac_staff_id, $ac_note){
@@ -180,7 +185,9 @@ class Acct_charge {
                         (`a_id`, `trans_id`, `ac_date`, `operator`, `staff_id`, `amount`, `ac_notes`) 
                     VALUES
                         ('1', '$trans_id', CURRENT_TIME(), '$payee','".$staff->getOperator()."', '".-1.0 * $amount."', \"Credit Charge\");
-                ")){ } else {
+                ")){
+                    //No return, all for the following query to return the proper insert id
+                } else {
                     return $mysqli->error;
                 }
             }

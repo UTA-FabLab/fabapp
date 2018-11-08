@@ -29,7 +29,7 @@ class AuthRecipients {
         if ($result = $mysqli->query("
             SELECT *
             FROM `authrecipients`
-            WHERE `authrecipients`.`operator` = '$operator'
+            WHERE `authrecipients`.`operator` = '$operator' AND `authrecipients`.`trans_id`= $trans_id
             LIMIT 1;
         ")){
             if(($result->num_rows) == 1){

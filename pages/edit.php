@@ -408,7 +408,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                                 <div class="form-group">
                                                     <div class="input-group">
                                                         <span class="input-group-addon">$</span>
-                                                        <input type="number" name="ac_amount_<?php echo $ac_id;?>" value="<?php echo $ac->getAmount();?>" min="0" step="0.01" class="form-control" tabindex="4"/>
+                                                        <input type="number" name="ac_amount_<?php echo $ac_id;?>" value="<?php echo $ac->getAmount();?>" step="0.01" class="form-control" tabindex="4"/>
                                                     </div>
                                                 </div>
                                             </td>
@@ -571,6 +571,14 @@ function validateForm() {
             //Msg has been set, send alert and stop form from sending
             alert(msg);
             document.getElementById('mu_notes_<?php echo $mu_id;?>').focus();
+            return false;
+        }
+        
+        //check MU Selection
+        var mu = document.getElementById('mu_mat_<?php echo $mu_id;?>');
+        if (!mu.value) {
+            alert('Please Select a Material.');
+            mu.focus();
             return false;
         }
     <?php } ?>

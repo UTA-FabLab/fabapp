@@ -192,7 +192,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn']) &&
                                     <td>
                                         <div class="btn-group">
                                             <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-                                                <i class="<?php echo $staff->getIcon();?> fa-lg" title="<?php echo $staff->getOperator();?>"></i>
+                                                <i class="<?php echo $sr->getStaff()->getIcon();?> fa-lg" title="<?php echo $sr->getStaff()->getOperator();?>"></i>
                                             </button>
                                             <ul class="dropdown-menu" role="menu">
                                                 <li style="padding-left: 5px;"><?php echo $staff->getOperator();?></li>

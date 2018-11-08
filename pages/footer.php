@@ -35,8 +35,6 @@
 <!-- dev details -->
 <div class="col-sm-12">
     <?php echo "IP addy - ".getenv('REMOTE_ADDR');?>
-    <?php if(!empty($_SESSION['type'])) {echo "\n<br>type - ".$_SESSION['type'];}?>
-    <?php echo ("<br>".$_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'])?>
 </div>
 
 <script type="text/javascript">
