@@ -120,8 +120,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if (isset($_SESSION['ac_id'])){
                 $ac = new Acct_charge($_SESSION['ac_id']);
                 if ($ac->getTrans_id() == $t_backup->getTrans_id()){
-                    $ac->voidPayment($staff);
+                    $str = $ac->voidPayment($staff);
                     unset($_SESSION['ac_id']);
+                }
+                if (is_string($str)){
+                    $_SESSION['error_msg'] = $str;
                 }
             } else{
                 echo "<script>console.log(\"lookup.php: Unable Void Payment\");</script>";
@@ -436,9 +439,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <tr>
                                     <td>Picked Up By</td>
                                     <td><?php 
-                                    if ( $objbox->getUser() !== NULL ) {
+                                    if ( is_object($objbox->getUser()) ) {
                                         echo "<i class='".$objbox->getUser()->getIcon()." fa-lg'></i> ".$objbox->getUser()->getOperator();
-                                    }?></td>
+                                    } ?></td>
                                 </tr>
                                 <tr>
                                     <td>Address</td>

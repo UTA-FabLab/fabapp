@@ -37,17 +37,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['payBtn']) && $errorMs
         if (is_object($ob)){
             $msg = $ob->pickedUpBy($user, $staff);
             if (is_string($msg)){
-                $_SESSION['errorMsg'] = $msg;
+                $errorMsg = $msg;
             }
         }
         
-        //all good goto lookup
-        unset($_SESSION['ticket']);
-        if ( isset($_SESSION['pickupUser']) ){
-            unset($_SESSION['pickupUser']);
+        if($errorMsg == ""){
+            //all good goto lookup
+            unset($_SESSION['ticket']);
+            if ( isset($_SESSION['pickupUser']) ){
+                unset($_SESSION['pickupUser']);
+            }
+            $_SESSION['ac_id'] = $result;
+            header("Location:lookup.php?trans_id=".$ticket->getTrans_id());
         }
-        $_SESSION['ac_id'] = $result;
-        header("Location:lookup.php?trans_id=".$ticket->getTrans_id());
     } else {
         //Must be error
         $errorMsg = $result;
@@ -55,9 +57,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['payBtn']) && $errorMs
 }
 
 if ($errorMsg != ""){
-    echo "<script> console.log('Error P70: $errorMsg'); </script>";
-    echo "<script> window.onload = function(){goModal(\"Error\", \"$errorMsg\", false);}</script>";
     $_SESSION['errorMsg'] = $errorMsg;
+    header("Location:error.php");
 }
 ?>
 <title><?php echo $sv['site_name'];?> Pay</title>

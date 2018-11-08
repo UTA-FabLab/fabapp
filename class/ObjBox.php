@@ -73,10 +73,14 @@ class ObjBox {
         }
         if (strtotime($this->getO_end()) != strtotime($ob_end)){
             $diff = true;
-            $this->setO_end(date("Y-m-d H:i:s",strtotime($ob_end)));
+            if ($ob_end == "") {
+                $this->setO_end("");
+            } else {
+                $this->setO_end(date("Y-m-d H:i:s",strtotime($ob_end)));
+            }
         }
         if( true != $ob_operator){
-			//is_object($this->getUser()->getOperator()) 
+            //is_object($this->getUser()->getOperator()) 
             $diff = true;
             $this->setUser($ob_operator);
         }
@@ -202,7 +206,7 @@ class ObjBox {
         if (is_object($this->user)){
             return $this->user;
         } else {
-            return new Users();
+            return null;
         }
     }
 
@@ -324,7 +328,7 @@ class ObjBox {
                 return "You seem to be full on Objects, please contact Admin to empty your ObjectBox Storage.";
             
             //sentinel loop - suggest check suggest
-            $address = rand(1,$sv["box_number"]).$letter[rand(0,$sv["letter"])];
+            $address = rand(1,$sv["box_number"]).$letter[rand(0,$sv["letter"]-1)];
             //Assume there will be a match
             $match = TRUE;
             $i=0;
@@ -358,12 +362,13 @@ class ObjBox {
             return $msg;
         }
         
-        
+        /*  This Check May not be necessary
         $quote = $this->transaction->quote("mats");
         $ac_owed = Acct_charge::checkOutstanding($user->getOperator());
         if ($quote > .005 && isset($ac_owed[$this->transaction->getTrans_id()])){
-            return "Error OB319 : Ticket has a Balance";
+            //return "Error OB365 : Ticket has a Balance";
         }
+         */
         
         //Update ObjBox Table
         if ($mysqli->query("
@@ -396,10 +401,11 @@ class ObjBox {
     public function setUser($operator) {
         if( is_object($operator)){
             $this->user = $operator;
-        } elseif (Users::regexUser($operator))
+        } elseif (Users::regexUser($operator)) {
             $this->user = Users::withID($operator);
-        else 
+        } else {
             $this->user = null;
+        }
     }
 
     public function setTrans_id($trans_id) {
