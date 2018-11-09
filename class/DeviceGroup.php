@@ -102,7 +102,7 @@ class DeviceGroup {
             WHERE `devices`.`d_id` NOT IN (
                     SELECT `d_id`
                     FROM `service_call`
-                    WHERE `solved` = 'N' AND `sl_id` >= 5
+                    WHERE `solved` = 'N' AND `sl_id` >= 7
                 )
             GROUP BY `device_group`.`dg_desc`, `device_group`.`dg_id`
             ORDER BY `dg_desc`
@@ -141,7 +141,7 @@ class DeviceGroup {
                     WHERE `transactions`.`status_id` <= 11 AND `devices`.`dg_id` = $dg_id AND `devices`.`d_id` NOT IN (
                         SELECT `d_id`
                         FROM `service_call`
-                        WHERE `solved` = 'N' AND `sl_id` >= 5
+                        WHERE `solved` = 'N' AND `sl_id` >= 7
                     )
                 ")){
                     $row = $result->fetch_assoc();

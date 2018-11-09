@@ -21,7 +21,7 @@ if ( !empty($_GET["val"]) && DeviceGroup::regexDgID( filter_input(INPUT_GET, "va
                     AND `devices`.`d_id` NOT IN (
                     SELECT `d_id`
                     FROM `service_call`
-                    WHERE `solved` = 'N' AND `sl_id` >= 5
+                    WHERE `solved` = 'N' AND `sl_id` >= 7
                 )
             ORDER BY `device_desc` ASC
         ")){
