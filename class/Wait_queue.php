@@ -343,7 +343,7 @@ class Wait_queue {
                     
                         SELECT `d_id`
                         FROM `service_call`
-                        WHERE `solved` = 'N' AND `sl_id` >= 7
+                        WHERE `solved` = 'N' AND `sl_id` >= 5
                     )
                     ORDER BY `device_group`.`dg_id`, `device_desc`
                 ")) {
@@ -449,7 +449,7 @@ class Wait_queue {
                     (
                         SELECT `d_id`
                         FROM `service_call`
-                        WHERE `solved` = 'N' AND `sl_id` >= 7
+                        WHERE `solved` = 'N' AND `sl_id` >= 5
                     )
                     ORDER BY `device_group`.`dg_id`, `device_desc`
                 ")) {
