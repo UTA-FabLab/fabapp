@@ -147,7 +147,17 @@ function advanceNum($i, $str){
                                                                     </td>
                                                                 <?php } else { ?>
                                                                     <td>
-                                                                        <i class="<?php echo $user->getIcon()?> fa-lg"/>
+                                                                        <?php if (isset($staff)) { ?>
+                                                                            <?php if ($staff->getOperator() == $row['Operator']) { ?>
+                                                                                <a class="<?php echo $user->getIcon()?> fa-lg" title="<?php echo($row['Operator']) ?>"  href="/pages/waitUserInfo.php?q_id=<?php echo $row["Q_id"]?>&loc=0"></a>
+                                                                                <?php if (!empty($row['Op_phone'])) { ?> <i class="fas fa-mobile"   title="<?php echo ($row['Op_phone']) ?>"></i> <?php } ?>
+                                                                                <?php if (!empty($row['Op_email'])) { ?> <i class="fas fa-envelope" title="<?php echo ($row['Op_email']) ?>"></i> <?php } ?>
+                                                                            <?php } else { ?>
+                                                                                <i class="<?php echo $user->getIcon()?> fa-lg"/>
+                                                                            <?php } ?>
+                                                                        <?php } else { ?>
+                                                                            <i class="<?php echo $user->getIcon()?> fa-lg"/>
+                                                                        <?php } ?>
                                                                     </td>
                                                                 <?php } ?>
 
