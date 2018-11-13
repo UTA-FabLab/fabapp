@@ -91,7 +91,6 @@ class DeviceGroup {
     public static function popDG_WQ(){
         global $mysqli;
         $all_dgs = array();
-        $wq_dg = array(); //return this list to display selectable DGs
         
         //list all DGs = $all_dgs
         if($result = $mysqli->query("
@@ -108,73 +107,14 @@ class DeviceGroup {
             ORDER BY `dg_desc`
         ")){
             while ($row = $result->fetch_assoc()){
-                $all_dgs[$row['dg_id']] = array('dg_desc' => $row['dg_desc'], 'dg_qty' => $row['dg_qty'], 'granular_wait' => $row['granular_wait']);
-            }
-        } else {
-            return false;
-        }
-        
-        //list all Distinct DGs in WQ
-        if($result = $mysqli->query("
-            SELECT DISTINCT `wait_queue`.`Devgr_id`
-            FROM `wait_queue`
-            WHERE `valid` = 'Y'
-        ")){
-            while ($row = $result->fetch_assoc()){
-                //pop matching DG from $all_dgs & add DG to $wq_dg
-                if (array_key_exists($row['Devgr_id'], $all_dgs)){
-                    $wq_dg[$row['Devgr_id']] = $all_dgs[$row['Devgr_id']]['dg_desc'];
-                    unset($all_dgs[$row['Devgr_id']]);
-                }
+                $all_dgs[$row['dg_id']] = $row['dg_desc'];
             }
         } else {
             return false;
         }
             
-        foreach($all_dgs as $dg_id => $values) {
-            if($values['granular_wait'] == 'N'){
-                if($result = $mysqli->query("
-                    SELECT count(*) as 'dg_busy'
-                    FROM `transactions`
-                    LEFT JOIN `devices`
-                    ON `transactions`.`d_id` = `devices`.`d_id`
-                    WHERE `transactions`.`status_id` <= 11 AND `devices`.`dg_id` = $dg_id AND `devices`.`d_id` NOT IN (
-                        SELECT `d_id`
-                        FROM `service_call`
-                        WHERE `solved` = 'N' AND `sl_id` >= 7
-                    )
-                ")){
-                    $row = $result->fetch_assoc();
-                    //all devices are busy, add DG to list
-                    if($values['dg_qty'] == $row['dg_busy']){
-                        $wq_dg[$dg_id] = $values['dg_desc'];
-                    }
-                } else {
-                    return false;
-                }
-            //Granular_wait == Yes, people can get inline of a specific device.
-            } else {
-                if($result = $mysqli->query("
-                    SELECT `devices`.`dg_id`
-                    FROM `transactions`
-                    LEFT JOIN `devices`
-                    ON `transactions`.`d_id` = `devices`.`d_id`
-                    WHERE `transactions`.`status_id` <= 11 AND `devices`.`dg_id` = $dg_id
-                ")){
-                    //devices is busy, add DG to list
-                    if($result->num_rows >= 1){
-                        $wq_dg[$dg_id] = $values['dg_desc'];
-                    } else {
-                        //Device is not busy
-                    }
-                } else {
-                    return false;
-                }
-            }
-        }
-               
-        ksort($wq_dg);
-        return $wq_dg;
+        ksort($all_dgs);
+        return $all_dgs;
     }
     
     public function getDg_id() {
