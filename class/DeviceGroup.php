@@ -94,7 +94,7 @@ class DeviceGroup {
         
         //list all DGs = $all_dgs
         if($result = $mysqli->query("
-            SELECT `device_group`.`dg_id`, `device_group`.`dg_desc`, count(`devices`.`d_id`) as 'dg_qty', `device_group`.`granular_wait`
+            SELECT `device_group`.`dg_id`, `device_group`.`dg_desc`
             FROM `devices`
             JOIN `device_group`
             ON `device_group`.`dg_id` = `devices`.`dg_id`
