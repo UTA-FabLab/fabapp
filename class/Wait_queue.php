@@ -660,7 +660,8 @@ class Wait_queue {
             $printer -> setEmphasis(false);
             $printer -> text("Check http://fabapp.uta.edu for the\n");
             $printer -> text("lastest status on who's being called and\n");
-            $printer -> text("get an alert.\n\n");
+            $printer -> text("get an alert.\n");
+            $printer -> feed();
 
             $printer -> setEmphasis(true);
             $printer -> text("2. ");
