@@ -113,7 +113,6 @@ class DeviceGroup {
             return false;
         }
             
-        ksort($all_dgs);
         return $all_dgs;
     }
     
