@@ -281,7 +281,7 @@ function advanceNum($i, $str){
                                         </td>
                                     </tr>
                                     <tr> <br>
-                                        <td><p><b>Operator: </b><span type="password" id="processOperator"></span></p></td>
+                                        <td><p><b>Operator: </b><span id="processOperator"></span></p></td>
                                         <td><input type="text" name="operator_ticket" id="operator_ticket" class="form-control" placeholder="1000000000" maxlength="10" size="10"/></td>
                                     </tr><br>
                                 </div>
@@ -542,66 +542,6 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         <?php } ?>
     }, 5000);
 <?php } ?>
-
-    var device = "";
-    function newTicket(){
-        var device_id = document.getElementById("devGrp").value;
-        var o_id = document.getElementById("operator_ticket").value;
-        
-        if("D_" === device_id.substring(0,2)){
-            device_id = device_id.substring(2);
-        } else{
-            if("-" === device_id.substring(4,5)){
-            device_id = device_id.substring(5);
-            } else{
-            device_id = device_id.substring(6);
-            }
-        }
-        
-        device = "d_id=" + device_id + "&operator=" + o_id;
-        var dest = "";
-        if (device  != "" && o_id.length==10){
-            if (device_id.substring(0,1) == "2"){
-                dest = "http://polyprinter-"+device_id.substring(1)+".uta.edu";
-                window.open(dest,"_self")
-            }
-            else {
-                var dest = "/pages/create.php?";
-                dest = dest.concat(device);
-                console.log(dest);
-                window.location.href = dest;
-            } 
-        } 
-
-        else {
-            if (o_id.length!=10){
-                message = "Bad Operator Number: "+o_id;
-                var answer = alert(message);
-                }
-            else{
-                message = "Please select a device.";
-                var answer = alert(message);
-            }
-        }
-    } 
-    
-    function change_group(){
-        if (window.XMLHttpRequest) {
-            // code for IE7+, Firefox, Chrome, Opera, Safari
-            xmlhttp = new XMLHttpRequest();
-        } else {
-            // code for IE6, IE5
-            xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-        }
-        xmlhttp.onreadystatechange = function() {
-            if (this.readyState == 4 && this.status == 200) {
-                document.getElementById("processOperator").innerHTML = this.responseText;
-            }
-        };
-        
-        xmlhttp.open("GET","/pages/sub/getWaitQueueID.php?val="+ document.getElementById("devGrp").value, true);
-        xmlhttp.send();
-    }
     
     var str;
     for(var i=1; i<= <?php echo $number_of_queue_tables;?>; i++){
