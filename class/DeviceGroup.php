@@ -98,7 +98,7 @@ class DeviceGroup {
             FROM `devices`
             JOIN `device_group`
             ON `device_group`.`dg_id` = `devices`.`dg_id`
-            WHERE `devices`.`d_id` NOT IN (
+            WHERE `devices`.`public_view`='Y' AND `devices`.`d_id` NOT IN (
                     SELECT `d_id`
                     FROM `service_call`
                     WHERE `solved` = 'N' AND `sl_id` >= 7
