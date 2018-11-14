@@ -303,18 +303,24 @@ class Wait_queue {
         }
     }
     
-    public static function removeAllUsers()
+    public static function removeAllUsers($staff)
      {
         global $mysqli;
+        global $sv;
         
-        if ($mysqli->query("
-            UPDATE `wait_queue`
-            SET `Op_email` = NULL, `Op_phone` = NULL, `End_date` = CURRENT_TIMESTAMP, valid='N'
-            WHERE valid='Y';
-        ")){
-            return true;
+
+        if ($staff->getRoleID() >= $sv['clear_queue']){
+            if ($mysqli->query("
+                UPDATE `wait_queue`
+                SET `Op_email` = NULL, `Op_phone` = NULL, `End_date` = CURRENT_TIMESTAMP, valid='N'
+                WHERE valid='Y';
+            ")){
+                return true;
+            } else {
+                return false;
+            }
         } else {
-            echo ("Error deleting users!");
+            return false;
         }
         
     }
@@ -654,11 +660,20 @@ class Wait_queue {
             $printer -> setEmphasis(false);
             $printer -> text("Check http://fabapp.uta.edu for the\n");
             $printer -> text("lastest status on who's being called and\n");
-            $printer -> text("get an alert.\n");
-            $printer -> feed();
+            $printer -> text("get an alert.\n\n");
 
             $printer -> setEmphasis(true);
             $printer -> text("2. ");
+            $printer -> setEmphasis(false);
+            $printer -> text("You may remove yourself from the\n");
+            $printer -> text("wait queue and/or change your contact\n");
+            $printer -> text("information by logging into FabApp\n");
+            $printer -> text("and clicking your icon in the\n");
+            $printer -> text("wait queue table.\n");
+            $printer -> feed();
+
+            $printer -> setEmphasis(true);
+            $printer -> text("3. ");
             $printer -> setEmphasis(false);
             $printer -> text("FabApp only gives estimates & more\n");
             $printer -> text("than one machine may become available\n");
@@ -667,7 +682,7 @@ class Wait_queue {
             $printer -> feed();
 
             $printer -> setEmphasis(true);
-            $printer -> text("3. ");
+            $printer -> text("4. ");
             $printer -> setEmphasis(false);
             $printer -> text("Prep your files while you wait to\n");
             $printer -> text("reduce lag time.\n");

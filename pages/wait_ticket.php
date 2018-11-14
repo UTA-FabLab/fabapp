@@ -24,10 +24,13 @@ if (isset($_SESSION['wt_msg']) && $_SESSION['wt_msg'] == 'success'){
 if (!array_key_exists("clear_queue",$sv)){
     $mysqli->query("INSERT INTO `site_variables` (`id`, `name`, `value`, `notes`) VALUES (NULL, 'clear_queue', '8', 'Minimum Lvl Required to clear the Wait Queue')");
 }
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff->getRoleID() >= $sv['clear_queue']) {
-    Wait_queue::removeAllUsers();
-    $_SESSION['success_msg'] = "Wait Queue has been cleared";
-    header("Location:/index.php");
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
+    if(Wait_queue::removeAllUsers($staff)){
+        $_SESSION['success_msg'] = "Wait Queue has been cleared";
+        header("Location:/index.php");
+    } else {
+        $_SESSION['error_msg'] = "Error removing all users from wait queue.";
+    }
 } elseif ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
     $operator1 = filter_input(INPUT_POST, 'operator1');
     $em1 = filter_input(INPUT_POST,'op-email');
@@ -447,7 +450,6 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         }
      }
     
-    <?php if ($staff->getRoleID() < $sv['clear_queue']){ ?>
         function removeAllUsers(){
 
             if (confirm("You are about to delete ALL wait queue users. Click OK to continue or CANCEL to quit.")){
@@ -455,7 +457,6 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
             }
             return false;
         }
-    <?php } ?>
     
     function inUseCheck(){
         var operator = document.getElementById("operator1").value;
