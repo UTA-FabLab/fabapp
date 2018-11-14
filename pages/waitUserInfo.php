@@ -132,11 +132,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
                             </tfoot>
                         </form>
                         </table>
-                        <form method="post" action="" onsubmit="return removeUser()" >
-                            <button class="btn btn-danger pull-right" name="removeBtn">
-                                Remove From Queue
-                            </button>
-                        </form>
+                        <?php if ($staff->getRoleID() < $sv['LvlOfStaff']){ ?>
+                            <form method="post" action="" onsubmit="return removeUser()" >
+                                <button class="btn btn-danger pull-right" name="removeBtn">
+                                    Remove From Queue
+                                </button>
+                            </form>
+                        <?php } ?>
                     </div>
                     <!-- /.panel-body -->
                 </div>
@@ -183,7 +185,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         return false;
     } 
     function removeUser(){
-        if (confirm("You are about to delete this user from the Wait Queue. Click OK to continue or CANCEL to quit.")){
+        if (confirm("You are about to delete yourself from the Wait Queue. Click OK to continue or CANCEL to quit.")){
             return true;
         }
         return false;
