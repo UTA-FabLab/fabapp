@@ -168,7 +168,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
                                 <tr>
                                     <td><b>Device:</b></td>
                                     <td>
-                                        <select class="form-control" name="devGrp" id="devGrp" onChange="change_group()" >
+                                        <select class="form-control" name="devGrp" id="devGrp" onChange="change_group_wq()" >
                                             <option value="" selected hidden> Select Device</option>
                                             <?php // Load all of the device groups that are being waited for - signified with a 'DG' in front of the value attribute
                                                 if ($result = $mysqli->query("

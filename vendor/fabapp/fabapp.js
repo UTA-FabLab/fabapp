@@ -22,7 +22,7 @@ function change_dot(){
     xmlhttp.send();
 }
 
-function change_group(){
+function change_group_wq(){
     if (window.XMLHttpRequest) {
         // code for IE7+, Firefox, Chrome, Opera, Safari
         xmlhttp = new XMLHttpRequest();
