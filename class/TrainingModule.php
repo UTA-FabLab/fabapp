@@ -49,6 +49,19 @@ class TrainingModule {
             $this->setTm_stamp($row['tm_stamp']);
         }
     }
+
+    public static function get_all_certificates() {
+        global $mysqli;
+        $result = $mysqli->query("SELECT * FROM `tm_enroll`
+                                     LEFT JOIN `trainingmodule`
+                                     ON `tm_enroll`.`tm_id` = `trainingmodule`.`tm_id`
+                                     ORDER BY `tme_key` DESC;");
+        while($row = $result->fetch_array(MYSQLI_ASSOC)) {
+            $trainings[] = $row;
+        }
+        return $trainings;
+    }
+
     
     public function cert($operator, $staff){
         global $mysqli;

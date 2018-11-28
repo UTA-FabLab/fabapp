@@ -42,12 +42,15 @@ class IndividualsCertificates {
 	}
 
 
-	public static function revoke_training($expiration, $reason, $staff_id, $tme_key) {
+	public static function revoke_training($expiration, $reason, $staff, $tme_key) {
+		global $sv;
 		global $mysqli;
-		// regex $reason
+
+		if($sv['minRoleTrainer'] < $staff->getRoleID()) return false;
+ 		// regex $reason
 		$prior_revoke_reason = $mysqli->query("SELECT `altered_notes` FROM `tm_enroll`
 											   WHERE `tme_key` = ".$tme_key.";")->fetch_object()->altered_notes;
-		if($prior_revoke_reason !== NULL) $reason = "PRIOR REASON: ".$prior_revoke_reason."\nCURRENT: ".$reason;
+		if($prior_revoke_reason !== NULL || $prior_revoke_reason != "") $reason = $prior_revoke_reason."\n".$reason;
 
 		if($mysqli->query("UPDATE `tm_enroll`
 						   SET `expiration_date` = '".$expiration."', `altered_by` = '".$staff_id."', 
@@ -69,6 +72,10 @@ class IndividualsCertificates {
 			return true;
 		}
 		return false;
+	}
+
+	private function check_result($result) {
+
 	}
 
 }
