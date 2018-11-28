@@ -292,7 +292,7 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                                                 <a href="/admin/training_certificate.php"><i class="far fa-check-circle"></i> Issue Certificate</a>
                                             </li>
                                             <li>
-                                                <a href="/admin/training_revoke.php"><i class="fas fa-search"></i> Issue Certificate</a>
+                                                <a href="/admin/training_revoke.php"><i class="fas fa-search"></i> Issued Trainings</a>
                                             </li>
                                             <li>
                                                 <a href="/admin/manage_trainings.php"><i class="fas fa-edit"></i> Manage Trainings</a>
