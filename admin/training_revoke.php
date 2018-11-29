@@ -14,6 +14,12 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
     $_SESSION['error_msg'] = "Insufficient role level to access, You must be a Trainer.";
 }
 
+if (filter_input(INPUT_GET, 'operator')){
+    //regex operator
+    $trainee_ID = filter_input(INPUT_GET, 'operator');
+   $trainings = IndividualsCertificates::get_individuals_trainings ($trainee_ID);
+}
+
 // fire off modal & timer
 if($_SESSION['type'] == 'success'){
     echo "<script type='text/javascript'> window.onload = function(){success()}</script>";
@@ -22,8 +28,7 @@ if($_SESSION['type'] == 'success'){
 // find trainings for individual
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['search_button'])) {
     $trainee_ID = filter_input(INPUT_POST, 'get_trainee_ID');  // regex'd in input
-    $_SESSION['trainee_ID'] = $trainee_ID;
-    $trainings = IndividualsCertificates::get_individuals_trainings($trainee_ID);
+    header("Location:training_revoke.php?operator=$trainee_ID");
 } 
 // browse all
 elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['browse_all'])) {
@@ -35,11 +40,11 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_revoke'])) {
 	$reason = filter_input(INPUT_POST, 'reason');
 	$tme_key = filter_input(INPUT_POST, 'tme_key');
 	if(IndividualsCertificates::revoke_training($expiration, $reason, $staff, $tme_key)) {
-        $_SESSION['type'] = 'training_success';
-        $_SESSION['previous_session'] = 'Revoked';  //TODO: check if overrides something
-        header("Location:training_revoke.php");
+        $_SESSION['success_msg'] = 'Training Revoked';
+        header("Location:training_revoke.php?operator=$trainee_ID");
     } else {
-        echo "<script type='text/javascript'> window.onload = function(){goModal('Error',\"Unable to revoke training\", false)}</script>";
+        $_SESSION['error_msg'] = "Unable to revoke training";
+        header("Location:training_revoke.php?operator=$trainee_ID");
 	}
 } 
 // restore
@@ -47,23 +52,14 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['restore_training'])
 	$tme_key = filter_input(INPUT_POST, 'restore_training');
 	$staff_id = $staff->getOperator();
 	if(IndividualsCertificates::restore_training($staff_id, $tme_key)) {
-        $_SESSION['type'] = 'training_success';
-        $_SESSION['previous_session'] = 'Restored';
-        header("Location:training_revoke.php");
+        $_SESSION['success_msg'] = 'Training Restored';
+        header("Location:training_revoke.php?operator=$trainee_ID");
     } else {
-        echo "<script type='text/javascript'> window.onload = function(){goModal('Error',\"Unable to restore training\", false)}</script>";
+        $_SESSION['error_msg'] = "Unable to restore training";
+        header("Location:training_revoke.php?operator=$trainee_ID");
 	}
-} 
-
-// get individual trainings on revoke/restore completion
-if ($_SESSION['type'] && $_SESSION['type'] == 'training_success' && $_SERVER["REQUEST_METHOD"] != "POST"){
-    echo "<script type='text/javascript'> window.onload = function(){goModal('Success','Training ".$_SESSION['previous_session']."', true)}</script>";
-    if(isset($_SESSION['trainee_ID'])) {
-        $trainings = IndividualsCertificates::get_individuals_trainings($_SESSION['trainee_ID']);
-        // unset($_SESSION['trainee_ID']);  //CHECK: should I do this or not?
-    }
-    $_SESSION['type'] = '';  // clear type to prevent refresh
-} ?>
+}
+?>
 
 
 <!-- create page -->
