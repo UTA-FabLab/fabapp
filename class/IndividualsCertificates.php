@@ -47,24 +47,42 @@ class IndividualsCertificates {
 		global $mysqli;
 
 		if($sv['minRoleTrainer'] < $staff->getRoleID()) return false;
- 		// regex $reason
+		$tme_key = preg_match( '/^\d+$/', $tme_key);
+ 		$reason = htmlspecialchars($reason);
+
+		// update reason if reason; check if primary key exists
 		$prior_revoke_reason = $mysqli->query("SELECT `altered_notes` FROM `tm_enroll`
-											   WHERE `tme_key` = ".$tme_key.";")->fetch_object()->altered_notes;
+											   WHERE `tme_key` = ".$tme_key.";");
+		if(!$prior_revoke_reason) return false;
+		$prior_revoke_reason = $prior_revoke_reason->fetch_object()->altered_notes;
 		if($prior_revoke_reason !== NULL || $prior_revoke_reason != "") $reason = $prior_revoke_reason."\n".$reason;
 
-		if($mysqli->query("UPDATE `tm_enroll`
-						   SET `expiration_date` = '".$expiration."', `altered_by` = '".$staff_id."', 
-						   	   `altered_notes` = '".$reason."', `current` = 'N', `altered_date` = now()
-						   WHERE `tme_key` = ".$tme_key.";")) 
+
+		if ($stmt = $mysqli->prepare(" UPDATE `tm_enroll`
+					                   SET `altered_by` = ?, `altered_date` = now(), `altered_notes`= ?, `current` = 'N', `expiration_date`= ?
+					                   WHERE `tme_key` = ?;"))
 		{
-			return true;
-		}
+	        $stmt->bind_param("sssi", $staff->getOperator(), $reason, $expiration, $tme_key);
+	        if ($stmt->execute() === true ){
+	            $row = $stmt->affected_rows;
+	            //Success, only one row was updated
+	            if ($row == 1){
+	                $mysqli->commit();
+	                return true;
+	            //Error More then one row was affected
+	            } elseif ($row > 1) {
+	                $mysqli->rollback();
+	            }
+	        }
+	    }
 		return false;
 	}
 
 
 	public static function restore_training($staff_id, $tme_key) {
 		global $mysqli;
+
+		$tme_key = preg_match( '/^\d+$/', $tme_key);
 		if($mysqli->query("UPDATE `tm_enroll`
 						   SET `current` = 'Y', `altered_by` = '".$staff_id."'
 						   WHERE `tme_key` = ".$tme_key.";")) 
@@ -72,10 +90,6 @@ class IndividualsCertificates {
 			return true;
 		}
 		return false;
-	}
-
-	private function check_result($result) {
-
 	}
 
 }
