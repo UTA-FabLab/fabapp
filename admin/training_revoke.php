@@ -117,12 +117,13 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['restore_training'])
                         echo "<tr";
                         	if($row['current'] == 'N') echo " style='background-color:#ffcccc;'";  // highlight if revoked; '>' in next line is very important
 							echo ">";
+							$operator = Users::withID($row['operator']);
 							$issuer = Users::withID($row['staff_id']);
 							?>
 							<td>
                                 <div class="btn-group">
                                    <button type="button" class="btn btn-default btn-s dropdown-toggle" data-toggle="dropdown">
-                                        <?php echo "<i class='fas fa-user fa-lg' title='".date($sv['dateFormat'], strtotime($row['completed']))."'></i>"; ?>
+                                        <?php echo "<i class='".$operator->getIcon()." fa-lg' title='".date($sv['dateFormat'], strtotime($row['completed']))."'></i>"; ?>
                                     </button>
                                     <ul class="dropdown-menu pull-right" role="menu">
                                         <li style="padding-left: 5px;"> <?php echo $row['operator']; ?> </li>
