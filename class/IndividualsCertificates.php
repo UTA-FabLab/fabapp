@@ -47,7 +47,7 @@ class IndividualsCertificates {
 		global $mysqli;
 
 		if($sv['minRoleTrainer'] < $staff->getRoleID()) return false;
-		$tme_key = preg_match( '/^\d+$/', $tme_key);
+		if(!preg_match( '/^\d+$/', $tme_key)) return false;
  		$reason = htmlspecialchars($reason);
 
 		// update reason if reason; check if primary key exists
@@ -82,7 +82,7 @@ class IndividualsCertificates {
 	public static function restore_training($staff_id, $tme_key) {
 		global $mysqli;
 
-		$tme_key = preg_match( '/^\d+$/', $tme_key);
+		if(!preg_match( '/^\d+$/', $tme_key)) return false;
 		if($mysqli->query("UPDATE `tm_enroll`
 						   SET `current` = 'Y', `altered_by` = '".$staff_id."'
 						   WHERE `tme_key` = ".$tme_key.";")) 
