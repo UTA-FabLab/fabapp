@@ -49,15 +49,15 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_revoke'])) {
 } 
 // restore
 elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['restore_training'])) {
-	$tme_key = filter_input(INPUT_POST, 'restore_training');
-	$staff_id = $staff->getOperator();
-	if(IndividualsCertificates::restore_training($staff_id, $tme_key)) {
+    $tme_key = filter_input(INPUT_POST, 'restore_training');
+    $staff_id = $staff->getOperator();
+    if(IndividualsCertificates::restore_training($staff_id, $tme_key)) {
         $_SESSION['success_msg'] = 'Training Restored';
         header("Location:training_revoke.php?operator=$trainee_ID");
     } else {
         $_SESSION['error_msg'] = "Unable to restore training";
         header("Location:training_revoke.php?operator=$trainee_ID");
-	}
+    }
 }
 ?>
 
@@ -84,7 +84,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['restore_training'])
                     <form name="teForm" method="POST" action="" autocomplete="off" onsubmit="return stdRegEx('get_trainee_ID', /^\d{10}$/, 'Please enter ID #2')">
                         <div class="input-group custom-search-form">
                             <input type="text" name="get_trainee_ID" id="get_trainee_ID" class="form-control" placeholder="Enter ID #" maxlength="10" size="10"
-                                   value="<?php if (isset($id)) echo $id; ?>">
+                                   value="<?php if (isset($trainee_ID)) echo $trainee_ID; ?>">
                             <span class="input-group-btn">
                             <button class="btn btn-default" type="submit" name="search_button">
                                 <i class="fas fa-search"></i>
@@ -104,26 +104,26 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['restore_training'])
                 <table id="teTable" class="table table-striped">
                     <thead>
                         <tr>
-							<th class='col-md-1' align='center'>ID</th>
+                            <th class='col-md-1' align='center'>Operator</th>
                             <th class='col-md-1' align='center'>Completed</th>
-							<th class='col-md-2' align='center'>Staff Approval</th>
-							<th class='col-md-3'>Training Module</th>
-                  			<th class='col-md-5'>Validity</th>
+                            <th class='col-md-2' align='center'>Staff Approval</th>
+                            <th class='col-md-3'>Training Module</th>
+                            <th class='col-md-5'>Validity</th>
                         </tr>
                     </thead>
                     <?php
                     for ($x = 0; $x < count($trainings); $x++){
                         $row = $trainings[$x];
                         echo "<tr";
-                        	if($row['current'] == 'N') echo " style='background-color:#ffcccc;'";  // highlight if revoked; '>' in next line is very important
-							echo ">";
-							$operator = Users::withID($row['operator']);
-							$issuer = Users::withID($row['staff_id']);
-							?>
-							<td>
+                            if($row['current'] == 'N') echo " style='background-color:#ffcccc;'";  // highlight if revoked; '>' in next line is very important
+                        echo ">";
+                            $operator = Users::withID($row['operator']);
+                            $issuer = Users::withID($row['staff_id']);
+                            ?>
+                            <td>
                                 <div class="btn-group">
                                    <button type="button" class="btn btn-default btn-s dropdown-toggle" data-toggle="dropdown">
-                                        <?php echo "<i class='".$operator->getIcon()." fa-lg' title='".date($sv['dateFormat'], strtotime($row['completed']))."'></i>"; ?>
+                                        <?php echo "<i class='".$operator->getIcon()." fa-lg' title='".$operator->getOperator()."'></i>"; ?>
                                     </button>
                                     <ul class="dropdown-menu pull-right" role="menu">
                                         <li style="padding-left: 5px;"> <?php echo $row['operator']; ?> </li>
@@ -131,34 +131,34 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['restore_training'])
                                 </div>
                             </td>
                             <td style="padding-left: 15px;">  <!-- date completed -->
-								<div class="btn-group">
-								   <button type="button" class="btn btn-default btn-s dropdown-toggle" data-toggle="dropdown">
-										<?php echo "<i class='far fa-clock fa-lg' title='".date($sv['dateFormat'], strtotime($row['completed']))."'></i>"; ?>
-	                                </button>
-	                                <ul class="dropdown-menu pull-right" role="menu">
-										<li style="padding-left: 5px;"> <?php echo date($sv['dateFormat'], strtotime($row['completed'])); ?> </li>
-	                                </ul>
-	                            </div>
+                                <div class="btn-group">
+                                   <button type="button" class="btn btn-default btn-s dropdown-toggle" data-toggle="dropdown">
+                                        <?php echo "<i class='far fa-clock fa-lg' title='".date($sv['dateFormat'], strtotime($row['completed']))."'></i>"; ?>
+                                    </button>
+                                    <ul class="dropdown-menu pull-right" role="menu">
+                                         <li style="padding-left: 5px;"> <?php echo date($sv['dateFormat'], strtotime($row['completed'])); ?> </li>
+                                    </ul>
+                                </div>
                             </td>
 	                        <td style="padding-left: 15px;">  <!-- approved by -->
 	                            <div class="btn-group">
 	                                <button type="button" class="btn btn-default btn-s dropdown-toggle" data-toggle="dropdown">
-										<?php echo "<i class='".$issuer->getIcon()." fa-lg' title='".$issuer->getOperator()."'></i>"; ?>
+                                            <?php echo "<i class='".$issuer->getIcon()." fa-lg' title='".$issuer->getOperator()."'></i>"; ?>
 	                                </button>
 	                                <ul class="dropdown-menu pull-right" role="menu">
-										<li style="padding-left: 5px;"><?php echo $issuer->getOperator();?></li>
+                                            <li style="padding-left: 5px;"><?php echo $issuer->getOperator();?></li>
 	                                </ul>
 	                            </div>
                             </td>
                             <td>  <!-- training module description -->
                                 <?php echo $row['title']; ?>
                                 <div class="btn-group">
-									<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
-										<span class="fas fa-info-circle" title="Desc"></span>
-									</button>
-									<ul class="dropdown-menu pull-right" role="menu">
-										<li style="padding-left: 5px;"><?php echo $row['tm_desc'];?></li>
-									</ul>
+                                    <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
+                                            <span class="fas fa-info-circle" title="Desc"></span>
+                                    </button>
+                                    <ul class="dropdown-menu pull-right" role="menu">
+                                            <li style="padding-left: 5px;"><?php echo $row['tm_desc'];?></li>
+                                    </ul>
                                 </div>
                             </td>
                             <td>
@@ -212,9 +212,9 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['restore_training'])
                                             </ul>
                                         </div>
                                     </td>
-								<?php } ?>
-							    </tr> </table>
-							</td>
+                                    <?php } ?>
+                                </tr> </table>
+                            </td>
                         </tr>
                     <?php } ?>
                 </table>
