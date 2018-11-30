@@ -33,10 +33,16 @@ if (isset($staff)){
                 exit();
             }
         } else {
-            $error_msg = "Unable to find Queue ID.";
+            //Not Authorized to see this Page
+            $_SESSION['error_msg'] = "Unable to find Queue ID.";
+            header('Location: /index.php');
+            exit();
         }
     } else {
-        $error_msg = "Invalid Queue ID.";
+        //Not Authorized to see this Page
+        $_SESSION['error_msg'] = "Invalid Queue ID.";
+        header('Location: /index.php');
+        exit();
     }
 }
 
@@ -102,54 +108,41 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
     <!-- /.row -->
     <div class="row">
         <div class="col-md-8">
-            <?php if ($error_msg != "") { ?>
-                <div class="panel panel-danger">
-                    <div class="panel-heading">
-                        <i class="fa fa-address-card" aria-hidden="true"></i> Error With Contact Info
-                    </div>
-                    <div class="panel-body">
-                        <?php echo $error_msg;?>
-                    </div>
-                    <!-- /.panel-body -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fa fa-address-card" aria-hidden="true"></i> Update User Info : <?php echo "Queue ID $q_id"?>
                 </div>
-                <!-- /.panel -->
-            <?php } else { ?>
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <i class="fa fa-address-card" aria-hidden="true"></i> Update User Info : <?php echo "Queue ID $q_id"?>
-                    </div>
-                    <div class="panel-body">
-                        <table class="table table-bordered table-striped table-hover"><form name="wqform" id="wqform" autocomplete="off" method="POST" action="">
+                <div class="panel-body">
+                    <table class="table table-bordered table-striped table-hover"><form name="wqform" id="wqform" autocomplete="off" method="POST" action="">
+                        <tr>
+                            <td><b data-toggle="tooltip" data-placement="top" title="Operator ID">Operator: </b></td>
+                            <td><input type="text" name="operator" id="operator" class="form-control" value="<?php echo $old_operator?>" placeholder="<?php if ($staff->getRoleID() < $sv['LvlOfStaff']){echo $old_operator;} else {echo "1000000000";}?>" maxlength="10" size="10" <?php if ($staff->getRoleID() < $sv['LvlOfStaff']){echo "disabled";}?>/></td>
+                        </tr><tr>
+                            <td><b data-toggle="tooltip" data-placement="top" title="email contact information">Email Address: </b></td>
+                            <td><input type="text" name="op-email" id="op-email" class="form-control" value="<?php echo $Op_email?>" placeholder="example@mail.com" maxlength="100" size="10"/></td>
+                        </tr>
+                        <tr>
+                            <td><b data-toggle="tooltip" data-placement="top" title="phone contact information">Phone Number: </b></td>
+                            <td><input type="text" name="op-phone" id="op-phone" class="form-control" value="<?php echo $Op_phone?>" placeholder="1234567890" maxlength="10" size="10"/></td>
+                        </tr>
+                        <tfoot>
                             <tr>
-                                <td><b data-toggle="tooltip" data-placement="top" title="Operator ID">Operator: </b></td>
-                                <td><input type="text" name="operator" id="operator" class="form-control" value="<?php echo $old_operator?>" placeholder="<?php if ($staff->getRoleID() < $sv['LvlOfStaff']){echo $old_operator;} else {echo "1000000000";}?>" maxlength="10" size="10" <?php if ($staff->getRoleID() < $sv['LvlOfStaff']){echo "disabled";}?>/></td>
-                            </tr><tr>
-                                <td><b data-toggle="tooltip" data-placement="top" title="email contact information">Email Address: </b></td>
-                                <td><input type="text" name="op-email" id="op-email" class="form-control" value="<?php echo $Op_email?>" placeholder="example@mail.com" maxlength="100" size="10"/></td>
+                                <td colspan="2"><div class="pull-right"><input type="submit" name="submitBtn" value="Submit" class="btn btn-primary"></div></td>
                             </tr>
-                            <tr>
-                                <td><b data-toggle="tooltip" data-placement="top" title="phone contact information">Phone Number: </b></td>
-                                <td><input type="text" name="op-phone" id="op-phone" class="form-control" value="<?php echo $Op_phone?>" placeholder="1234567890" maxlength="10" size="10"/></td>
-                            </tr>
-                            <tfoot>
-                                <tr>
-                                    <td colspan="2"><div class="pull-right"><input type="submit" name="submitBtn" value="Submit" class="btn btn-primary"></div></td>
-                                </tr>
-                            </tfoot>
+                        </tfoot>
+                    </form>
+                    </table>
+                    <?php if ($staff->getRoleID() < $sv['LvlOfStaff']){ ?>
+                        <form method="post" action="" onsubmit="return removeUser()" >
+                            <button class="btn btn-danger pull-right" name="removeBtn">
+                                Remove From Queue
+                            </button>
                         </form>
-                        </table>
-                        <?php if ($staff->getRoleID() < $sv['LvlOfStaff']){ ?>
-                            <form method="post" action="" onsubmit="return removeUser()" >
-                                <button class="btn btn-danger pull-right" name="removeBtn">
-                                    Remove From Queue
-                                </button>
-                            </form>
-                        <?php } ?>
-                    </div>
-                    <!-- /.panel-body -->
+                    <?php } ?>
                 </div>
-                <!-- /.panel -->
-            <?php } ?>
+                <!-- /.panel-body -->
+            </div>
+            <!-- /.panel -->
         </div>
         <?php if (empty($Op_phone) && empty($Op_email)) { ?>
             <?php if ($staff->getRoleID() >= $sv['LvlOfStaff']) { ?>
