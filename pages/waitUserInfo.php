@@ -25,13 +25,13 @@ if (isset($staff)){
             $old_operator = $row['Operator'];
             $Op_email = $row['Op_email'];
             $Op_phone = $row['Op_phone'];
-            $devgr_id = $row['Devgr_id'];            
-            if (!$staff && $staff->getOperator() != $row['Operator']){
+            $devgr_id = $row['Devgr_id'];
+            if (($staff->getRoleID() < $sv['LvlOfStaff']) && ($staff->getOperator() != $row['Operator'])){
                 //Not Authorized to see this Page
                 $_SESSION['error_msg'] = "You are unable to view this page.";
                 header('Location: /index.php');
                 exit();
-            }
+            }  
         } else {
             //Not Authorized to see this Page
             $_SESSION['error_msg'] = "Unable to find Queue ID.";
