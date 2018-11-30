@@ -13,7 +13,6 @@ if (!$staff){
     exit();
 }
 
-
 if (isset($staff)){
     $q_id = filter_input(INPUT_GET , 'q_id', FILTER_VALIDATE_INT, false);
     if (is_int($q_id) && $result = $mysqli->query("
@@ -96,7 +95,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
 <div id="page-wrapper">
     <div class="row">
         <div class="col-lg-12">
-            <h1 class="page-header">Wait Queue User Info <?php echo $old_operator;?></h1>
+            <h1 class="page-header">Wait Queue User Info</h1>
         </div>
         <!-- /.col-lg-12 -->
     </div>
