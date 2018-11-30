@@ -13,6 +13,7 @@ if (!$staff){
     exit();
 }
 
+
 if (isset($staff)){
     $q_id = filter_input(INPUT_GET , 'q_id', FILTER_VALIDATE_INT, false);
     if (is_int($q_id) && $result = $mysqli->query("
@@ -25,7 +26,13 @@ if (isset($staff)){
             $old_operator = $row['Operator'];
             $Op_email = $row['Op_email'];
             $Op_phone = $row['Op_phone'];
-            $devgr_id = $row['Devgr_id'];
+            $devgr_id = $row['Devgr_id'];            
+            if ($staff->getOperator() != $row['Operator']){
+                //Not Authorized to see this Page
+                $_SESSION['error_msg'] = "You are unable to view this page.";
+                header('Location: /index.php');
+                exit();
+            }
         } else {
             $error_msg = "Unable to find Queue ID.";
         }
@@ -89,7 +96,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
 <div id="page-wrapper">
     <div class="row">
         <div class="col-lg-12">
-            <h1 class="page-header">Wait Queue User Info</h1>
+            <h1 class="page-header">Wait Queue User Info <?php echo $old_operator;?></h1>
         </div>
         <!-- /.col-lg-12 -->
     </div>
