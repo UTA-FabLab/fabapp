@@ -26,7 +26,7 @@ if (isset($staff)){
             $Op_email = $row['Op_email'];
             $Op_phone = $row['Op_phone'];
             $devgr_id = $row['Devgr_id'];            
-            if ($staff->getOperator() != $row['Operator']){
+            if (!$staff && $staff->getOperator() != $row['Operator']){
                 //Not Authorized to see this Page
                 $_SESSION['error_msg'] = "You are unable to view this page.";
                 header('Location: /index.php');
