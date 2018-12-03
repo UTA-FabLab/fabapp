@@ -12,14 +12,14 @@ if (!empty(filter_input(INPUT_GET, "training_ID"))) {
     <div class="modal-dialog">
         <!-- Modal content-->
         <div class="modal-content">
-            <form name="revokeForm" method="post" onsubmit="return reason_is_populated();">
+            <form name="revokeForm" method="post" action="">
 	            <div class="modal-header">
 	                <button type="button" class="close" data-dismiss="modal">&times;</button>
 	                <h4 class="modal-title">Revoke Training</h4>
 	            </div>
 	            <div class="modal-body">
 	                <p>Reason</p>
-	                <input type="text" id='reason' name="reason" id="operator" class="form-control" 
+	                <input type="text" name="reason" id="operator" class="form-control" 
 	                                        placeholder="Enter a reason" maxlength="100" size="40"/>
 	                <p><br/>Expiration</p>
 	                <input id="date" type="date" name='expiration' value="<?php echo date('Y-m-d', strtotime("+1 year")); ?>">
