@@ -63,7 +63,7 @@ class TrainingModule {
     }
 
     
-    public function cert($operator, $staff){
+    public function certify_training($operator, $staff){
         global $mysqli;
         global $sv;
         
@@ -77,7 +77,7 @@ class TrainingModule {
         if ($results = $mysqli->query("
             SELECT *
             FROM `tm_enroll`
-            WHERE tm_id = $this->tm_id AND operator = ".$staff->getOperator()." AND `current` = 'Y'
+            WHERE tm_id = $this->tm_id AND operator = ".$staff->getOperator()." AND `revoked` = 'N'
         ")){
             if( $results->num_rows == 1 || $staff->getRoleID() > 9) {
                 //True when they have the related training
@@ -91,9 +91,9 @@ class TrainingModule {
         
         if ($mysqli->query("
             INSERT INTO `tm_enroll` 
-                (`tm_id`, `operator`, `completed`, `staff_id`, `current`) 
+                (`tm_id`, `operator`, `completed`, `staff_id`, `revoked`) 
             VALUES
-                ('$this->tm_id', '$operator', CURRENT_TIME(), '".$staff->getOperator()."', 'Y');
+                ('$this->tm_id', '$operator', CURRENT_TIME(), '".$staff->getOperator()."', 'N');
         ")){
             return true;
         } elseif ( strpos($mysqli->error, "Duplicate") === 0) {
