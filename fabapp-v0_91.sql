@@ -531,7 +531,7 @@ CREATE TABLE IF NOT EXISTS `tm_enroll` (
   `operator` varchar(10) NOT NULL,
   `completed` datetime NOT NULL,
   `staff_id` varchar(10) NOT NULL,
-  `current` enum('Y','N') NOT NULL,
+  `revoked` enum('Y','N') NOT NULL,
   `altered_date` datetime DEFAULT NULL,
   `altered_notes` text,
   `altered_by` varchar(10) DEFAULT NULL,
