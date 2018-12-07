@@ -527,6 +527,7 @@ INSERT INTO `status` (`status_id`, `msg`) VALUES
 
 DROP TABLE IF EXISTS `tm_enroll`;
 CREATE TABLE IF NOT EXISTS `tm_enroll` (
+  `tme_key` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT, 
   `tm_id` int(11) NOT NULL,
   `operator` varchar(10) NOT NULL,
   `completed` datetime NOT NULL,

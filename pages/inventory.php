@@ -4,7 +4,25 @@
  *   FabApp V 0.9
  */
 
+$LvlOfInventory = 9;  //TODO: find out actual level; change for all
+
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
+
+// change inventory
+if($_SERVER["REQUEST_METHOD"] == "POST" && $staff->getRoleID() >= $LvlOfInventory && isset($_POST['save_material'])) {
+    $m_id = filter_input(INPUT_POST, 'm_id');
+    $quantity = filter_input(INPUT_POST, 'quantity');
+    $mat = new Materials($m_id);
+    $original_quantity = Materials::units_in_system($m_id);  // used only as reference incase mistakenly changed
+
+    if(Materials::update_material_quantity($m_id, $quantity, $staff)) {
+        $_SESSION['success_msg'] = $mat->getM_name()." updated from ".$original_quantity." to ".$quantity;
+    } else {
+        $_SESSION['error_msg'] = "Unable to update ".$mat->getM_name();
+    }
+    header("Location:inventory.php");
+} 
+
 
 ?>
 <title><?php echo $sv['site_name'];?> Inventory</title>
@@ -34,7 +52,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
                         <tbody>
                         <?php //Display Inventory Based on device group
                         if($result = $mysqli->query("
-                            SELECT `m_name`, SUM(unit_used) as `sum`, `color_hex`, `unit`
+                            SELECT `materials`.`m_id` as `m_id`, `m_name`, SUM(unit_used) as `sum`, `color_hex`, `unit`
                             FROM `materials`
                             LEFT JOIN `mats_used`
                             ON mats_used.m_id = `materials`.`m_id`
@@ -46,7 +64,11 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
                                 <tr>
                                     <td><?php echo $row['m_name']; ?></td>
                                     <td><div class="color-box" style="background-color: #<?php echo $row['color_hex'];?>;"/></td>
-                                    <td><?php echo number_format($row['sum'])." ".$row['unit']; ?></td>
+                                    <?php if($staff && $staff->getRoleID() >= $LvlOfInventory) {
+                                        echo "<td onclick='edit_materials(".$row['m_id'].")'>".number_format($row['sum'])." ".$row['unit']."</td>";
+                                    } else {
+                                        echo "<td>".number_format($row['sum'])." ".$row['unit']."</td>";
+                                    } ?>
                                 </tr>
                             <?php }
                         } else { ?>
@@ -64,13 +86,41 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
     <!-- /.row -->
 </div>
 <!-- /#page-wrapper -->
+
+<div id='material_modal' class='modal'> 
+</div>
+
 <?php
 //Standard call for dependencies
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 ?>
+
 <script>
-$('#invTable').DataTable({
-    "iDisplayLength": 25,
-    "order": []
-});
+    $('#invTable').DataTable({
+        "iDisplayLength": 25,
+        "order": []
+    });
+
+    function edit_materials(m_id){
+        if (Number.isInteger(m_id)){
+            if (window.XMLHttpRequest) {
+                // code for IE7+, Firefox, Chrome, Opera, Safari
+                xmlhttp = new XMLHttpRequest();
+            } else {
+                // code for IE6, IE5
+                xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+            }
+            xmlhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    document.getElementById("material_modal").innerHTML = this.responseText;
+                }
+            };
+            xmlhttp.open("GET", "sub/edit_materials.php?m_id=" + m_id, true);
+            xmlhttp.send();
+        }
+
+        $('#material_modal').modal('show');
+    }
+
+
 </script>

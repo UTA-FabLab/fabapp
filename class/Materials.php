@@ -22,7 +22,7 @@ class Materials {
         global $mysqli;
         
         if (!preg_match("/^\d+$/", $m_id))
-            throw new Exception('Material ID Number');
+            throw new Exception('Material ID Number '.$m_id." ".gettype($m_id));
         if ($result = $mysqli->query("
             SELECT *
             FROM `materials`
@@ -79,7 +79,44 @@ class Materials {
         }
         return $mysqli->error;
     }
-    
+   
+
+    public static function units_in_system($m_id) {
+        global $mysqli;
+
+        if (preg_match("/^\d+$/", $m_id)) {
+            if($result = $mysqli->query("
+                SELECT SUM(unit_used) as `sum`
+                FROM `mats_used`
+                WHERE `m_id` = '$m_id';
+            "))
+                return $result->fetch_object()->sum;
+        }
+        return false;
+    }
+
+
+    public static function update_material_quantity($m_id, $update_quantity, $staff) {
+        global $mysqli;
+        //TODO: change to proper level
+        if($staff->getRoleID() < 9) return false;
+
+        if(preg_match("/^\d+$/", $m_id) && is_numeric($update_quantity)) {
+            $current_amount = Materials::units_in_system($m_id);
+            $difference = $update_quantity - $current_amount;  // get the amount to find
+
+            if($mysqli->query("
+                INSERT INTO `mats_used`
+                    (`m_id`, `unit_used`, `mu_date`, `operator`, `mu_notes`) 
+                VALUES
+                    ('$m_id', '$difference', CURRENT_TIME(), '".$staff->getOperator()."', 'updated to match current inventory');
+            "))
+                return true;
+        }
+        return false;
+    }
+
+ 
     public function getM_id() {
         return $this->m_id;
     }
