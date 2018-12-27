@@ -200,12 +200,27 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
                             <li>
                                 <a href="/admin/error.php"><i class="fas fa-bolt"></i> Error</a>
                             </li>
-                        <?php } ?>
+                        <?php } 
+                        if(isset($staff) && $staff->getRoleID() >= $sv['LvlOfLead']) { ?>
+                            <li>
+                                <a href="#"><i class="fas fa-warehouse"></i> Inventory<span class="fas fa-angle-left"></span></a>
+                                <ul class="nav nav-second-level">
+                                    <li>
+                                        <a href="/pages/inventory.php"><i class="fas fa-box"></i> On Hand</a>
+                                    </li>
+                                    <li>
+                                        <a href="/pages/inventory_processing.php"><i class="fas fa-shipping-fast"></i> Edit Inventory</a>
+                                    </li>
+                                </ul>
+                                <!-- /.nav-second-level -->
+                            </li>
+                        <?php } else { ?>
                         <li>
                             <a href="/pages/inventory.php"><i class="fas fa-warehouse"></i> Inventory</a>
                         </li>
                         <!-- if role > 6 {show} -->
-                        <?php if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfStaff']) { ?>
+                        <?php }
+                        if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfStaff']) { ?>
                             <li>
                                 <a href="#" id="searchLink"><i class="fas fa-search fa-fw"></i> Look-Up By<span class="fas fa-angle-left"></span></a>
                                 <ul class="nav nav-second-level">
