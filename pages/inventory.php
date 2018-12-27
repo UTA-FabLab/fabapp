@@ -9,14 +9,16 @@ $LvlOfInventory = 9;  //TODO: find out actual level; change for all
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
 // change inventory
-if($_SERVER["REQUEST_METHOD"] == "POST" && $staff->getRoleID() >= $LvlOfInventory && isset($_POST['save_material'])) {
+if($_SERVER["REQUEST_METHOD"] == "POST" && $staff->getRoleID() >= $sv['LvlOfLead'] && isset($_POST['save_material'])) {
     $m_id = filter_input(INPUT_POST, 'm_id');
     $quantity = filter_input(INPUT_POST, 'quantity');
     $mat = new Materials($m_id);
-    $original_quantity = Materials::units_in_system($m_id);  // used only as reference incase mistakenly changed
+    $original_quantity = Mats_Used::units_in_system($m_id);  // used as reference incase mistakenly changed
+    $reason = "Updated to match current inventory";
+    $updated_quantity = $original_quantity + $quantity;
 
-    if(Materials::update_material_quantity($m_id, $quantity, $staff)) {
-        $_SESSION['success_msg'] = $mat->getM_name()." updated from ".$original_quantity." to ".$quantity;
+    if(Mats_Used::update_mat_quantity($m_id, $quantity, $reason, $staff, 16)) {
+        $_SESSION['success_msg'] = $mat->getM_name()." updated to ".$updated_quantity." by ".$quantity." ".$mat->getUnit();
     } else {
         $_SESSION['error_msg'] = "Unable to update ".$mat->getM_name();
     }
@@ -39,6 +41,20 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && $staff->getRoleID() >= $LvlOfInventor
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <i class="fas fa-warehouse fa-fw"></i> Inventory
+                    <?php if($staff && $staff->getRoleID() >= $sv['LvlOfLead']) { ?>
+                        <div class="pull-right">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                    <span class="fas fa-info"></span>
+                                </button>
+                                <ul class="dropdown-menu pull-right" role="menu">
+                                    <li>
+                                        <a>Click on the row to edit</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    <?php } ?>
                 </div>
                 <div class="panel-body">
                     <table class="table table-condensed" id="invTable">
@@ -64,8 +80,8 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && $staff->getRoleID() >= $LvlOfInventor
                                 <tr>
                                     <td><?php echo $row['m_name']; ?></td>
                                     <td><div class="color-box" style="background-color: #<?php echo $row['color_hex'];?>;"/></td>
-                                    <?php if($staff && $staff->getRoleID() >= $LvlOfInventory) {
-                                        echo "<td onclick='edit_materials(".$row['m_id'].")'>".number_format($row['sum'])." ".$row['unit']."</td>";
+                                    <?php if($staff && $staff->getRoleID() >= $sv['LvlOfLead']) {
+                                        echo "<td ondblclick='edit_materials(".$row['m_id'].")'>".number_format($row['sum'])." ".$row['unit']."</td>";
                                     } else {
                                         echo "<td>".number_format($row['sum'])." ".$row['unit']."</td>";
                                     } ?>

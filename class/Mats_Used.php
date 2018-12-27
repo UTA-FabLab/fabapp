@@ -159,7 +159,8 @@ class Mats_Used {
             return $mysqli->error;
         }
     }
-	
+
+
 	public static function insert_Mats($trans_id, $m_id, $status_id, $staff){
         global $mysqli;
         
@@ -184,12 +185,42 @@ class Mats_Used {
             return false;
         }
     }
-    
-    //When recieving materials into inventory
-    public static function insert_Inventory($m_id, $inv_rec, $status_id, $staff_id){
+
+
+    public static function units_in_system($m_id) {
         global $mysqli;
-        
+
+        if (preg_match("/^\d+$/", $m_id)) {
+            if($result = $mysqli->query("
+                SELECT SUM(unit_used) as `sum`
+                FROM `mats_used`
+                WHERE `m_id` = '$m_id';
+            "))
+                return $result->fetch_object()->sum;
+        }
+        return false;
     }
+
+    //TODO: status
+    public static function update_mat_quantity($m_id, $quantity, $reason, $staff, $status) {
+        global $mysqli;
+
+        if($staff->getRoleID() < $sv['LvlOfLead']) return false;
+
+        if(preg_match("/^\d+$/", $m_id) && is_numeric($quantity) && Mats_Used::regexStatus($status)) {
+            $reason = Mats_Used::regexReason($reason);
+            if($mysqli->query("
+                INSERT INTO `mats_used`
+                    (`m_id`, `unit_used`, `mu_date`, `status_id`, `operator`, `mu_notes`) 
+                VALUES
+                    ('$m_id', '$quantity', CURRENT_TIME(), '$status', '".$staff->getOperator()."', '$reason');
+            "))
+                return true;
+        }
+        return false;
+    }
+
+
     
     public static function regexUnit_Used($unit_used){
         if (preg_match("/^\d{0,5}\.{0,1}\d{0,2}$/", $unit_used) && $unit_used >= 0)
@@ -197,6 +228,24 @@ class Mats_Used {
         //echo "Invalid Amount Used - $unit_used";
         return false;
     }
+
+
+    public static function regexMatID($m_id) {
+        if(preg_match("/^\d+$/", $m_id)) return $m_id;
+        return false;
+    }
+
+
+    public static function regexReason($reason) {
+        return htmlspecialchars($reason);
+    }
+
+
+    public static function regexStatus($status) {
+        if(preg_match("/^\d+$/", $status)) return $status;
+        return false;     
+    }
+
     
     public function getMu_id() {
         return $this->mu_id;
