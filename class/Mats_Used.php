@@ -201,19 +201,22 @@ class Mats_Used {
         return false;
     }
 
-    //TODO: status
+    //TODO: adjust so that the increase quantity is stated instead of amount adjusted to
     public static function update_mat_quantity($m_id, $quantity, $reason, $staff, $status) {
         global $mysqli;
-
         if($staff->getRoleID() < $sv['LvlOfLead']) return false;
 
-        if(preg_match("/^\d+$/", $m_id) && is_numeric($quantity) && Mats_Used::regexStatus($status)) {
-            $reason = Mats_Used::regexReason($reason);
+        $m_id = Mats_Used::regexMatID($m_id);
+        $quantity = Mats_Used::regexQuantity($quantity);
+        $status = Mats_Used::regexStatus($status);
+        $reason = Mats_Used::regexReason($reason);
+
+        if($m_id && $quantity && $status) {
             if($mysqli->query("
                 INSERT INTO `mats_used`
                     (`m_id`, `unit_used`, `mu_date`, `status_id`, `operator`, `mu_notes`) 
                 VALUES
-                    ('$m_id', '$quantity', CURRENT_TIME(), '$status', '".$staff->getOperator()."', '$reason');
+                    ('$m_id', '$quantity', CURRENT_TIME(), '$status', '".$staff->getOperator()."', '".$reason."');
             "))
                 return true;
         }
@@ -231,7 +234,7 @@ class Mats_Used {
 
 
     public static function regexMatID($m_id) {
-        if(preg_match("/^\d+$/", $m_id)) return $m_id;
+        if(preg_match("/^\d+$/", $m_id)) return intval($m_id);
         return false;
     }
 
@@ -242,9 +245,17 @@ class Mats_Used {
 
 
     public static function regexStatus($status) {
-        if(preg_match("/^\d+$/", $status)) return $status;
+        if(preg_match("/^\d+$/", $status)) return intval($status);
         return false;     
     }
+
+
+    public static function regexQuantity($quantity) {
+        if(preg_match('/^[0-9]{1,7}+(\.[0-9]{1,2})?$/', $quantity) || is_numeric($quantity)) 
+            return floatval($quantity);
+        return false;
+    }    
+
 
     
     public function getMu_id() {

@@ -77,13 +77,24 @@ class Materials {
 	}
 
 
-	public static function mat_exists($name) {
+	public static function mat_exists($id_or_name) {
 		global $mysqli;
 
-		if($result = $mysqli->query("
+		// get by id
+		if(preg_match("/^\d+$/", $id_or_name)) {
+			if($result = $mysqli->query("
+				SELECT `m_id`
+				FROM `materials`
+				WHERE `m_id` = '".$id_or_name."';
+			")) {
+				return true;
+			}
+		}
+		// not numeric; get by name
+		elseif($result = $mysqli->query("
 			SELECT `m_id`
 			FROM `materials`
-			WHERE `m_name` = '".$name."';
+			WHERE `m_name` = '".$id_or_name."';
 		")) {
 			if($result->num_rows == 1) {
 				return $result->fetch_assoc()['m_id'];
@@ -108,11 +119,9 @@ class Materials {
 		$prepared_statement .= implode(", ", $statement_parts)." WHERE `m_id` = '".$m_id."';";
 		// echo '<script> console.log("Prep: '.$prepared_statement.'");</script>';  //TESTING
 		if($mysqli->query($prepared_statement)) {
-			// return false if no failures
-			return $mysqli->affected_rows != 1;
+			return $mysqli->affected_rows == 1;
 		}
-		echo '<script> console.log("Prep3: '.$prepared_statement.'");</script>';  //TESTING
-		return "Could not update material";
+		return false;
 	}
 
 
