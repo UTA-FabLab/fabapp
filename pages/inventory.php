@@ -11,14 +11,15 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 // change inventory
 if($_SERVER["REQUEST_METHOD"] == "POST" && $staff->getRoleID() >= $sv['LvlOfLead'] && isset($_POST['save_material'])) {
     $m_id = filter_input(INPUT_POST, 'm_id');
-    $quantity = filter_input(INPUT_POST, 'quantity');
+    $new_amount = filter_input(INPUT_POST, 'quantity');
     $mat = new Materials($m_id);
-    $original_quantity = Mats_Used::units_in_system($m_id);  // used as reference incase mistakenly changed
+    $original_amount = Mats_Used::units_in_system($m_id);
+    $difference = $new_amount - $original_amount;
     $reason = "Updated to match current inventory";
-    $updated_quantity = $original_quantity + $quantity;
 
-    if(Mats_Used::update_mat_quantity($m_id, $quantity, $reason, $staff, 16)) {
-        $_SESSION['success_msg'] = $mat->getM_name()." updated to ".$updated_quantity." by ".$quantity." ".$mat->getUnit();
+    if(Mats_Used::update_mat_quantity($m_id, $difference, $reason, $staff, 16)) {
+        $_SESSION['success_msg'] = $mat->getM_name()." updated from ".$original_amount." ".$mat->getUnit()." to ".
+                                   $new_amount." ".$mat->getUnit();
     } else {
         $_SESSION['error_msg'] = "Unable to update ".$mat->getM_name();
     }
@@ -49,7 +50,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && $staff->getRoleID() >= $sv['LvlOfLead
                                 </button>
                                 <ul class="dropdown-menu pull-right" role="menu">
                                     <li>
-                                        <a>Click on the row to edit</a>
+                                        <a>Double click on the unit to edit<br/>This should only be done for small inventory discrepancies</a>
                                     </li>
                                 </ul>
                             </div>

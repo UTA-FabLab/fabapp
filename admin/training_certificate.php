@@ -54,7 +54,7 @@ function submitTM($tm_id, $operator, $staff){
     
     //Attempt to mark as certified
     $tm = new TrainingModule($tm_id);
-    $msg = $tm->cert($operator, $staff);
+    $msg = $tm->certify_training($operator, $staff);
     if($msg === true){
         return true;
     } else {
