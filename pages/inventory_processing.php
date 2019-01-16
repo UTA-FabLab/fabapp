@@ -86,9 +86,13 @@ elseif ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['new_mat'])) {
 		}
 	}
 	// material doesn't exist
-	elseif(!$prior_id && $new_mat_id = Materials::create_new_mat($color, $measurability, $name, $price, $unit)) {
+	//TODO: doesn't send back good ID number
+	elseif(!$prior_id && Materials::create_new_mat($color, $measurability, $name, $price, $unit)) {
+		$new_mat_id = Materials::mat_exists($name);
 		$outcome = "S".str_replace(' ', '_', $name);
 		foreach($device_group as $dg) {
+			$prior_dgs = Materials::get_device_mat($prior_id);
+			if(in_array($dg, $prior_dgs)) continue;
 			if(Materials::assign_device_group($dg, $new_mat_id)) {
 				$outcome .= "|SDevice:_".$dg;
 			}
@@ -203,7 +207,7 @@ function get_populated_values($tag_name) {
 								Item Name
 							</td>	
 							<td class='col-md-8'>
-								<input id='new_item_name' class='form-control' type='text' placeholder='Boaty McBoatface' maxlength='50' /> 
+								<input id='new_item_name' class='form-control' type='text' placeholder='New Material' maxlength='50' /> 
 							</td>
 						</tr>
 						<tr>
@@ -413,10 +417,11 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 
 			// check if all information is filled out or empty
 			if(quantity === "" && mat_id === "NONE" && reason === "" && status_id === "NONE") continue;
-			else if(quantity === "") alert("Enter a quantity or clear everything in row");
-			else if(reason.length < 5) alert("Enter a reason or clear everything in row");
-			else if(status_id === "NONE") alert("Select a status or clear everything in row");
 			else if(mat_id === "NONE") alert("Select a material or clear everything in row");
+			else if(quantity === "") alert("Enter a quantity or clear everything in row");
+			else if(parseFloat(quantity) > 99999.99) alert("The database does not accept a quantity larger than 99999.99");
+			else if(status_id === "NONE") alert("Select a status or clear everything in row");
+			else if(reason.length < 5) alert("Enter a reason or clear everything in row");
 			else {
 				materials.push({"quantity" : quantity, "mat_id" : mat_id, "reason" : reason, "name" : name,
 				  "status_id" : status_id, "status_text" : status_text});
