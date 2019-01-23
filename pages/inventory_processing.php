@@ -437,6 +437,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 
 		var table_data = [["<b>Material</b>", "<b>Quantity</b>", "<b>Status</b>", "<b>Reason</b>"]];
 		for(var x = 0; x < materials.length; x++) {
+			if(materials[x]["status_id"] == "9") materials[x]["quantity"] = 0 - materials[x]["quantity"];
 			var data =  materials[x]["name"] + '|' + materials[x]["mat_id"] + '|' + materials[x]["quantity"] + '|' + 
 						materials[x]["reason"] + '|' + materials[x]["status_id"];
 			var information = materials[x]["name"]+"<input name='row-dict-"+x+"' value='"+data+"' hidden/>";
