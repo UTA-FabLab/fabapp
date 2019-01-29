@@ -71,6 +71,22 @@ class DeviceGroup {
         }
     }
     
+    public static function insert_dg($dg_name, $dg_parent, $dg_desc, $dg_pay, $dg_mat, $dg_store, $dg_juicebox, $dg_thermal, $dg_granular){
+        global $mysqli;
+        
+        if ($mysqli->query("
+            INSERT INTO `device_group` 
+              (`dg_name`,`dg_parent`,`dg_desc`, `payFirst`, `selectMatsFirst`, `storable`, `juiceboxManaged`, `thermalPrinterNum`, `granular_wait`) 
+            VALUES
+                ('$dg_name', $dg_parent, '$dg_desc', '$dg_pay', '$dg_mat', '$dg_store', '$dg_juicebox', '$dg_thermal', '$dg_granular');
+            ")){
+            $dg_id = $mysqli->insert_id;
+            return $dg_id;
+        } else {
+            return ("<div class='alert alert-danger'>".$mysqli->error."</div>");
+        }
+    }
+    
     //List all DGs that have devices within their group.
     public static function popDGs(){
         global $mysqli;
@@ -85,6 +101,31 @@ class DeviceGroup {
         } else {
             return false;
         }
+    }
+        
+    //List all DGs that have devices within their group.
+    public static function popDG_list(){
+        global $mysqli;
+        $all_dgs = array();
+        
+        
+        if($result = $mysqli->query("
+            SELECT `device_group`.`dg_id`, `device_group`.`dg_desc`
+            FROM `devices`
+            JOIN `device_group`
+            ON `device_group`.`dg_id` = `devices`.`dg_id`
+            WHERE `devices`.`public_view`='Y'
+            GROUP BY `device_group`.`dg_desc`, `device_group`.`dg_id`
+            ORDER BY `dg_desc`
+        ")){
+            while ($row = $result->fetch_assoc()){
+                $all_dgs[$row['dg_id']] = $row['dg_desc'];
+            }
+        } else {
+            return false;
+        }
+            
+        return $all_dgs;
     }
     
     //List all DGs that have devices within their group & have WQ tickets or are at capacity.
