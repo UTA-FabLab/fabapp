@@ -305,7 +305,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn2'])) {
                         <tr>
                             <td>
                                 <b data-toggle="tooltip" data-placement="top">Device Group Name Abreviation</b>
-                                <button type="button" style="background-color:gray" class="btn fas fa-info" onclick="dg_abv_Info()"></button>
+                                <button type="button" style="background-color:#D3D3D3" class="btn fas fa-info" onclick="dg_abv_Info()"></button>
                             </td>
                             <td><input type="text" name="device_group_abv" id="device_group_abv" class="form-control" placeholder="Device Group Abreviation" value="<?php echo $device_group_abv1;?>" tabindex="1"/></td>
                         </tr>
@@ -421,10 +421,10 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         inUseCheck();
     }
     
-	function button_text(element) {
-		if(element.innerHTML == "Remove Device") element.innerHTML = "Back";
-		else { element.innerHTML = "Remove Device"; }
-	}
+    function button_text(element) {
+        if(element.innerHTML == "Remove Device") element.innerHTML = "Back";
+        else { element.innerHTML = "Remove Device"; }
+    }
     
     function durationInfo(){
         $("#popModal").modal();
