@@ -416,7 +416,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
             }
         };
         
-        xmlhttp.open("GET","/pages/sub/md_getDevices.php?val="+ document.getElementById("dg_id").value, true);
+        xmlhttp.open("GET","/admin/sub/md_getDevices.php?val="+ document.getElementById("dg_id").value, true);
         xmlhttp.send();
         inUseCheck();
     }
