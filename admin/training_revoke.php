@@ -1,9 +1,14 @@
 <?php
+/*******************************************************************
+*
+*	@author MPZinke on 11.26.18
+*
+*	Provide a search field by operator to query all TMs a person has completed
+*	Edit button next to each TM- allow revocation, require reason, timestamp, staff_id. Restrict action to $sv['minRoleTrainer']
+*	Search by TMs and display all users. Show if current, date, and staff that issued the cert, etc
+*
+*******************************************************************/
 
-//////// ALPHA TRAINING MODULE SEARCH ////////
-// Provide a search field by operator to query all TMs a person has completed
-// Edit button next to each TM- allow revocation, require reason, timestamp, staff_id. Restrict action to $sv['minRoleTrainer']
-// Search by TMs and display all users. Show if current, date, and staff that issued the cert, etc
 
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 

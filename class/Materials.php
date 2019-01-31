@@ -152,26 +152,26 @@ class Materials {
 
 
 	// used to check which device groups have already been assigned to material
-    public static function get_device_mat($m_id) {
-        global $mysqli;
+	public static function get_device_mat($m_id) {
+		global $mysqli;
 
-        $group_ids = array();
-        if($result = $mysqli->query("
-            SELECT `dg_id`
-            FROM `device_materials`
-            WHERE `m_id` = '".$m_id."';
-        ")) {
-        	while($row = $result->fetch_assoc()) {
-        		$group_ids[] = $row['dg_id'];
-        	}
-        	return $group_ids;
-        }
-        return false;
-    }
+		$group_ids = array();
+		if($result = $mysqli->query("
+			SELECT `dg_id`
+			FROM `device_materials`
+			WHERE `m_id` = '".$m_id."';
+		")) {
+			while($row = $result->fetch_assoc()) {
+				$group_ids[] = $row['dg_id'];
+			}
+			return $group_ids;
+		}
+		return false;
+	}
 
 
-    public static function assign_device_group($dg_id, $m_id){
-    	global $mysqli;
+	public static function assign_device_group($dg_id, $m_id){
+		global $mysqli;
 
 		if ($stmt = $mysqli->prepare(" 
 			INSERT INTO `device_materials`
@@ -193,7 +193,7 @@ class Materials {
 			}
 		}
 	return false;
-    }
+	}
 
 
 
