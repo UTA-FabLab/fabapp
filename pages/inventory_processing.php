@@ -1,6 +1,13 @@
 <?php 
-
-/* created by: MPZinke on 12.8.18 */
+/**************************************************
+*
+*	@author MPZinke on 12.08.18
+*
+*	-Allow ability for lvl lead to edit inventory
+*	-Allow ability for admin to add new material
+*	 to inventory
+*
+**************************************************/
 
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
@@ -86,7 +93,6 @@ elseif ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['new_mat'])) {
 		}
 	}
 	// material doesn't exist
-	//TODO: doesn't send back good ID number
 	elseif(!$prior_id && Materials::create_new_mat($color, $measurability, $name, $price, $unit)) {
 		$new_mat_id = Materials::mat_exists($name);
 		$outcome = "S".str_replace(' ', '_', $name);
@@ -133,6 +139,7 @@ function get_populated_values($tag_name) {
 		</div>
 	</div>
 
+	<!-- Update inventory -->
 	<div class="col-md-12">
 		<div class="panel panel-default">
 			<div class="panel-heading">
