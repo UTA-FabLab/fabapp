@@ -63,7 +63,8 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_inventory'])) {
 								// display whether currently used material
 								if($row['current'] === 'N') echo "<option selected='selected' value='N'>N</option>";
 								else echo "<option value='N'>N</option>";
-								"</select> </td> </td> </tr>";
+								echo "</select> </td> </td> </tr>";
+							}
 						}
 						else {
 							echo "Unable to get table";
@@ -71,7 +72,6 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_inventory'])) {
 				</table>
 			</div>
 		</div>
-	<?php } ?>
 	</div>
 <!-- Display changes of inventory based on item selected; maybe new page? -->
 </div>
