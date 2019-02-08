@@ -47,7 +47,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
     $device_duration1 = "".$device_hour1.":".$device_minute1.":00";
     
     
-    if(isset($_POST['device_group_id']) && preg_match('/^[0-9]+$/i', $_POST['hours']) && isset($_POST['minutes']) && isset($_POST['device_public_view']) && preg_match('/^[a-z0-9\# ]{1,100}$/i', $_POST['device_name']) && preg_match('/^[0-9\.]+$/i', $_POST['device_base_price'])){
+    if(isset($_POST['device_group_id']) && preg_match('/^[0-9]+$/i', $_POST['hours']) && isset($_POST['minutes']) && isset($_POST['device_public_view']) && preg_match('/^[a-z0-9\-\_\# ]{1,100}$/i', $_POST['device_name']) && preg_match('/^[0-9\.]+$/i', $_POST['device_base_price'])){
         
         $d_id1 = Devices::insert_device($device_group_id1, $device_public_view1, $device_name1, $device_duration1, $device_base_price1, $device_url1);
 
@@ -70,7 +70,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
                     <div class='col-lg-6'><div class='alert alert-danger'>
                         You must properly fill the Device creation 'Public View' row.
                     </div> </div> </div> </div>");
-        } if (!preg_match('/^[a-z0-9\# ]{1,100}$/i', $_POST['device_name'])) {
+        } if (!preg_match('/^[a-z0-9\-\_\# ]{1,100}$/i', $_POST['device_name'])) {
             $d_msg = $d_msg.("<div class='row'><div style='text-align: center'>
                     <div class='col-lg-6'><div class='alert alert-danger'>
                         You must properly fill the Device creation 'Device Name' row: '".$_POST['device_name']."'
@@ -105,7 +105,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn1'])) {
     $dg_thermal1 = filter_input(INPUT_POST, 'dg_thermal');
     $dg_granular1 = filter_input(INPUT_POST, 'dg_granular');   
     
-    if(isset($_POST['device_group_parent']) && isset($_POST['dg_pay']) && isset($_POST['dg_mats']) && isset($_POST['dg_store']) && isset($_POST['dg_juicebox']) && isset($_POST['dg_thermal']) && isset($_POST['dg_granular']) && preg_match('/^[a-z0-9\# ]{1,100}$/i', $_POST['device_group_name']) && preg_match('/^[a-z0-9\#\_]{1,15}$/i', $_POST['device_group_abv'])){
+    if(isset($_POST['device_group_parent']) && isset($_POST['dg_pay']) && isset($_POST['dg_mats']) && isset($_POST['dg_store']) && isset($_POST['dg_juicebox']) && isset($_POST['dg_thermal']) && isset($_POST['dg_granular']) && preg_match('/^[a-z0-9\-\_\# ]{1,100}$/i', $_POST['device_group_name']) && preg_match('/^[a-z0-9\-\#\_]{1,15}$/i', $_POST['device_group_abv'])){
         
         $dg_id1 = DeviceGroup::insert_dg($device_group_abv1, $device_group_parent1, $device_group_name1, $dg_pay1, $dg_mats1, $dg_store1, $dg_juicebox1, $dg_thermal1, $dg_granular1);
 
@@ -118,12 +118,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn1'])) {
         }
 
     } else {
-        if (!preg_match('/^[a-z0-9\# ]{1,100}$/i', $_POST['device_group_name'])) {
+        if (!preg_match('/^[a-z0-9\-\_\# ]{1,100}$/i', $_POST['device_group_name'])) {
             $dg_msg = $dg_msg.("<div class='row'><div style='text-align: center'>
                     <div class='col-lg-6 pull-right'><div class='alert alert-danger'>
                         You must properly fill the Device Group creation 'Device Group Name' row: '".$_POST['device_group_name']."'
                     </div> </div> </div> </div>");
-        } if (!preg_match('/^[a-z0-9\#\_]{1,15}$/i', $_POST['device_group_abv'])) {
+        } if (!preg_match('/^[a-z0-9\-\#\_]{1,15}$/i', $_POST['device_group_abv'])) {
             $dg_msg = $dg_msg.("<div class='row'><div style='text-align: center'>
                     <div class='col-lg-6 pull-right'><div class='alert alert-danger'>
                         You must properly fill the Device Group creation 'Device Group Abreviation' row: '".$_POST['device_group_abv']."'
