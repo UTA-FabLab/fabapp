@@ -24,13 +24,10 @@ if (isset($_SESSION['wt_msg']) && $_SESSION['wt_msg'] == 'success'){
 if (!array_key_exists("clear_queue",$sv)){
     $mysqli->query("INSERT INTO `site_variables` (`id`, `name`, `value`, `notes`) VALUES (NULL, 'clear_queue', '8', 'Minimum Lvl Required to clear the Wait Queue')");
 }
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
-    if(Wait_queue::removeAllUsers($staff)){
-        $_SESSION['success_msg'] = "Wait Queue has been cleared";
-        header("Location:/index.php");
-    } else {
-        $_SESSION['error_msg'] = "Error removing all users from wait queue.";
-    }
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff->getRoleID() >= $sv['clear_queue']) {
+    Wait_queue::removeAllUsers();
+    $_SESSION['success_msg'] = "Wait Queue has been cleared";
+    header("Location:/index.php");
 } elseif ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
     $operator1 = filter_input(INPUT_POST, 'operator1');
     $em1 = filter_input(INPUT_POST,'op-email');
@@ -168,7 +165,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
                                 <tr>
                                     <td><b>Device:</b></td>
                                     <td>
-                                        <select class="form-control" name="devGrp" id="devGrp" onChange="change_group_wq()" >
+                                        <select class="form-control" name="devGrp" id="devGrp" onChange="change_group()" >
                                             <option value="" selected hidden> Select Device</option>
                                             <?php // Load all of the device groups that are being waited for - signified with a 'DG' in front of the value attribute
                                                 if ($result = $mysqli->query("
@@ -194,7 +191,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn'])) {
                                     </td>
                                 </tr>
                                 <tr> <br>
-                                    <td><p><b>Operator: </b><span id="processOperator"></span></p></td>
+                                    <td><p><b>Operator: </b><span type="password" id="processOperator"></span></p></td>
                                     <td><input type="text" name="operator_ticket" id="operator_ticket" class="form-control" placeholder="1000000000" maxlength="10" size="10"/></td>
                                 </tr>
                             </div>
@@ -436,6 +433,24 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         inUseCheck();
     }
     
+    function change_group(){
+        if (window.XMLHttpRequest) {
+            // code for IE7+, Firefox, Chrome, Opera, Safari
+            xmlhttp = new XMLHttpRequest();
+        } else {
+            // code for IE6, IE5
+            xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+        xmlhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("processOperator").innerHTML = this.responseText;
+            }
+        };
+        
+        xmlhttp.open("GET","/pages/sub/getWaitQueueID.php?val="+ document.getElementById("devGrp").value, true);
+        xmlhttp.send();
+    }
+    
     function listCarriers(){
         $("#popModal").modal();
         document.getElementById("modal-title").innerHTML = "Supported Carriers";
@@ -450,6 +465,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         }
      }
     
+    <?php if ($staff->getRoleID() < $sv['clear_queue']){ ?>
         function removeAllUsers(){
 
             if (confirm("You are about to delete ALL wait queue users. Click OK to continue or CANCEL to quit.")){
@@ -457,6 +473,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
             }
             return false;
         }
+    <?php } ?>
     
     function inUseCheck(){
         var operator = document.getElementById("operator1").value;

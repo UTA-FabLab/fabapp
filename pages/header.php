@@ -305,9 +305,6 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
 									<li>
 										<a href="/admin/onboarding.php"><i class="fas fa-clipboard"></i> OnBoarding</a>
 									</li>
-                  <li>
-                      <a href="/admin/manage_device.php"><i class="fas fa-edit"></i> Manage Devices</a>
-                  </li>
 									<li>
 										<a herf="#"><i class="fas fa-book"></i> Training<span class="fas fa-angle-left"></span></a>
 										<ul class="nav nav-third-level">
