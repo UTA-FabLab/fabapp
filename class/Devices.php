@@ -65,6 +65,71 @@ class Devices {
         }
         return false;
     }
+    
+    public static function hasDID($d_id){
+        global $mysqli;
+        return mysqli_num_rows($mysqli->query(" 
+                                SELECT * 
+                                FROM `devices` 
+                                WHERE `d_id`=$d_id"))>0;
+    }
+    
+    public static function updateDevice($d_id, $d_desc, $d_duration, $d_price, $dg_id, $d_url, $d_view)
+    {
+        global $mysqli;
+        
+        if ($mysqli->query("
+            UPDATE `devices`
+            SET `device_desc` = '$d_desc' , `d_duration` = '$d_duration' , `base_price` = '$d_price' , `dg_id` = '$dg_id' , `url` = '$d_url' , `public_view` = '$d_view'
+            WHERE `d_id` = '$d_id';
+        "))
+        {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+    
+    public static function insert_device($dg_id, $public_view, $d_name, $d_duration, $d_price, $d_url){
+        global $mysqli;
+        
+        if ($mysqli->query("
+            INSERT INTO `devices` 
+              (`device_id`,`public_view`,`device_desc`, `d_duration`, `base_price`, `dg_id`, `url`, `device_key`, `salt_key`, `exp_key`) 
+            VALUES
+                ('0','$public_view','$d_name', '$d_duration', '$d_price', '$dg_id', '$d_url', ' ', ' ', NULL);
+            ")){
+            $d_id = $mysqli->insert_id;
+            
+            if ($mysqli->query("
+                UPDATE `devices`
+                SET `device_id` = concat('00', $d_id)
+                WHERE `d_id` = $d_id;
+            ")) {
+                return $d_id;
+            }
+            else {
+                return ("<div class='alert alert-danger'>".$mysqli->error."</div>");
+            }
+        } else {
+            return ("<div class='alert alert-danger'>".$mysqli->error."</div>");
+        }
+    }
+    
+    public static function remove_device($d_id){
+        global $mysqli;
+        
+        if ($mysqli->query("
+            UPDATE `devices`
+            SET `public_view` = 'N'
+            WHERE `d_id` = $d_id;
+        ")) {
+            return $d_id;
+        }
+        else {
+            return ("<div class='alert alert-danger'>".$mysqli->error."</div>");
+        }
+    }
 
     public static function regexDID($d_id){
         global $mysqli;
@@ -234,15 +299,15 @@ class Devices {
     }
     
     public static function printDot($staff, $d_id){
-    	global $mysqli;
+        global $mysqli;
         global $sv;
         
-    	//look up current device status
-    	$dot = 0;
-    	$color = "white";
-    	$symbol = "circle";
-    	$lookup = "SELECT * FROM `service_call` WHERE `d_id` = '$d_id' AND `solved` = 'N' ORDER BY `sl_id` DESC";
-    	if($status = $mysqli->query($lookup)){
+        //look up current device status
+        $dot = 0;
+        $color = "white";
+        $symbol = "circle";
+        $lookup = "SELECT * FROM `service_call` WHERE `d_id` = '$d_id' AND `solved` = 'N' ORDER BY `sl_id` DESC";
+        if($status = $mysqli->query($lookup)){
             while ($ticket = $status->fetch_assoc()){
                 if($ticket['sl_id'] > $dot)
                     $dot = $ticket['sl_id'];
@@ -255,17 +320,17 @@ class Devices {
                 $color = "red";
                 $symbol = "times";
             }
-    	}
+        }
         
-    	if($staff){
+        if($staff){
             if($staff->getRoleID() >= $sv['LvlOfStaff'] || $staff->getRoleID() == $sv['serviceTechnican']) {
                 echo "<a href = '/pages/sr_history.php?d_id=$d_id'><i class='fas fa-$symbol fa-lg' style='color:$color'></i></a>&nbsp;";
             } else {
                 echo "<i class='fas fa-$symbol fa-lg' style='color:".$color."'></i>&nbsp;";
             }
-    	} else {
+        } else {
             echo "<i class='fas fa-$symbol fa-lg' style='color:".$color."'></i>&nbsp;";
-    	}
+        }
          
     }
 }
