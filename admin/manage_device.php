@@ -368,7 +368,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
                                 <td>
                                     <select class="form-control" name="dg1_id" id="dg1_id" onchange="change_dg1()" tabindex="1">
                                         <option disabled hidden selected value="">Device Group</option>
-                                        <?php if($dgs = DeviceGroup::popDG_list()){
+                                        <?php if($dgs = DeviceGroup::popAllDG_list()){
                                             foreach($dgs as $dg_id => $dg_desc){
                                                 echo("<option value='$dg_id'>$dg_desc</option>");
                                             }

@@ -22,6 +22,8 @@ if (!$staff || $staff->getRoleID() < 10){
             $row = $result->fetch_assoc();
             $d_name = $row['device_desc'];
             $d_duration = $row['d_duration'];
+            $d_hour = substr($d_duration,0,2);
+            $d_minute = substr($d_duration,3,2);
             $dg_id = $row['dg_id'];
             $d_url = $row['url'];
             $d_price = $row['base_price'];
@@ -50,14 +52,10 @@ if (isset($_SESSION['d_msg']) && $_SESSION['d_msg'] == 'success'){
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
-    $d_name1 = filter_input(INPUT_POST,'device_name');
-    if (filter_input(INPUT_POST,'no_change_duration') == "on"){
-        $d_duration1 = $d_duration;
-    } else {
-        $d_hour = filter_input(INPUT_POST,'hours');
-        $d_minute = filter_input(INPUT_POST,'minutes');
-        $d_duration1 = "".$d_hour.":".$d_minute.":00"; 
-    }
+$d_name1 = filter_input(INPUT_POST,'device_name');
+    $d_hour = filter_input(INPUT_POST,'hours');
+    $d_minute = filter_input(INPUT_POST,'minutes');
+    $d_duration1 = "".$d_hour.":".$d_minute.":00"; 
     if ((filter_input(INPUT_POST,'device_group_id')) == 10101010){
         $dg_id1 = $dg_id;
     } else {
@@ -71,7 +69,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
         $d_view1 = filter_input(INPUT_POST,'device_public_view'); 
     }
     
-    if(isset($_POST['device_group_id']) && preg_match('/^[0-9]+$/i', $_POST['hours']) && isset($_POST['minutes']) && preg_match('/^[a-z0-9\-\_\# ]{1,100}$/i', $_POST['device_name']) && preg_match('/^[0-9\.]+$/i', $_POST['device_base_price'])){
+    if(isset($_POST['device_group_id']) && preg_match('/^[0-9]+$/i', $_POST['hours']) && preg_match('/^[0-9]+$/i', $_POST['minutes']) && preg_match('/^[a-z0-9\-\_\# ]{1,100}$/i', $_POST['device_name']) && preg_match('/^[0-9\.]+$/i', $_POST['device_base_price'])){
         
         $status = Devices::updateDevice($d_id, $d_name1, $d_duration1, $d_price1, $dg_id1, $d_url1, $d_view1);
         if ($status == 1) {
@@ -182,27 +180,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
                             </tr>
                             <tr>
                                 <td>
-                                    <b data-toggle="tooltip" data-placement="top" title="Device Duration">Device Duration: </b><t>(Current Duration: </t><b><?php echo substr($d_duration,0,5);?></b><t>)</t>
+                                    <b data-toggle="tooltip" data-placement="top" title="Device Duration">Device Duration: </b>
                                     <button type="button" style="background-color:#D3D3D3" class="btn fas fa-info" onclick="durationInfo()"></button>
                                 </td>
                                 <td>
-                                    <input type="number" name="hours" id="hours" tabindex="6" min="0" max="100" 
-                                        step="1" placeholder="hh" max="99" pattern="[0-9]" value ="0"/>Hours
-                                    <select name="minutes" id="minutes" tabindex="7">
-                                        <option value="00">00</option>
-                                        <option value="05">05</option>
-                                        <option value="10">10</option>
-                                        <option value="15">15</option>
-                                        <option value="20">20</option>
-                                        <option value="25">25</option>
-                                        <option value="30">30</option>
-                                        <option value="35">35</option>
-                                        <option value="40">40</option>
-                                        <option value="45">45</option>
-                                        <option value="50">50</option>
-                                        <option value="55">55</option>
-                                    </select>minutes&emsp;&emsp;&emsp;&emsp;
-                                    <input type="checkbox" id="no_change_duration" name="no_change_duration" value="on"> <b>No Change</b><br>
+                                    <input type="number" name="hours" id="hours" tabindex="6" min="0" max="99" 
+                                        step="1" placeholder="hh" value ="<?php echo $d_hour?>"/>Hours
+                                    <input type="number" name="minutes" id="minutes" tabindex="6" min="0" max="59" 
+                                        step="1" placeholder="mm" max="99" value ="<?php echo $d_minute?>"/>Minutes
                                 </td>
                             </tr>
                             <tr>
@@ -242,6 +227,6 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
     function durationInfo(){
         $("#popModal").modal();
         document.getElementById("modal-title").innerHTML = "Device Duration";
-        document.getElementById("modal-body").innerHTML = "<?php echo ("Please enter the new maximum duration for the given device. If there is no change to the duration please select the 'No Change' checkbox."); ?>";
+        document.getElementById("modal-body").innerHTML = "<?php echo ("Please enter the new maximum duration for the given device. If there is no change to the duration please leave the forms as is."); ?>";
     }
 </script>
