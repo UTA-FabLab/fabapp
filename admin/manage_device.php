@@ -13,26 +13,26 @@ if (!$staff || $staff->getRoleID() < 10){
 }
 
 if (isset($_SESSION['d_msg']) && $_SESSION['d_msg'] == 'success'){
-    $d_msg = ("<div style='text-align: center'>
+    $d_msg = ("<div class='col-lg-6'><div style='text-align: center'>
             <div class='alert alert-success'>
                 Successfully added device to database!
-            </div> </div>");
+            </div> </div> </div>");
     unset($_SESSION['d_msg']);
 }
 
 if (isset($_SESSION['dg_msg']) && $_SESSION['dg_msg'] == 'success'){
-    $dg_msg = ("<div style='text-align: center'>
+    $dg_msg = ("<div class='col-lg-6 pull-right'><div style='text-align: center'>
             <div class='alert alert-success'>
                 Successfully added device group to database!
-            </div> </div>");
+            </div> </div> </div>");
     unset($_SESSION['dg_msg']);
 }
 
 if (isset($_SESSION['remove_d_msg']) && $_SESSION['remove_d_msg'] == 'success'){
-    $remove_d_msg = ("<div style='text-align: center'>
+    $remove_d_msg = ("<div class='col-lg-6'><div style='text-align: center'>
             <div class='alert alert-success'>
                 Successfully removed device from database!
-            </div> </div>");
+            </div> </div> </div>");
     unset($_SESSION['remove_d_msg']);
 }
 
@@ -47,7 +47,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
     $device_duration1 = "".$device_hour1.":".$device_minute1.":00";
     
     
-    if(isset($_POST['device_group_id']) && preg_match('/^[0-9]+$/i', $_POST['hours']) && isset($_POST['minutes']) && isset($_POST['device_public_view']) && preg_match('/^[a-z0-9 ]+$/i', $_POST['device_name']) && preg_match('/^[0-9\.]+$/i', $_POST['device_base_price'])){
+    if(isset($_POST['device_group_id']) && preg_match('/^[0-9]+$/i', $_POST['hours']) && isset($_POST['minutes']) && isset($_POST['device_public_view']) && preg_match('/^[a-z0-9\# ]{1,100}$/i', $_POST['device_name']) && preg_match('/^[0-9\.]+$/i', $_POST['device_base_price'])){
         
         $d_id1 = Devices::insert_device($device_group_id1, $device_public_view1, $device_name1, $device_duration1, $device_base_price1, $device_url1);
 
@@ -60,10 +60,37 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
         }
 
     } else {
-        $d_msg = ("<div style='text-align: center'>
-                <div class='alert alert-danger'>
-                    You Must Properly Fill Out All Required Fields
-                </div> </div>");
+        if (!isset($_POST['device_group_id'])) {
+            $d_msg = $d_msg.("<div class='row'><div style='text-align: center'>
+                    <div class='col-lg-6'><div class='alert alert-danger'>
+                        You must properly fill the Device creation 'Select Device Group' row.
+                    </div> </div> </div> </div>");
+        } if (!isset($_POST['device_public_view'])) {
+            $d_msg = $d_msg.("<div class='row'><div style='text-align: center'>
+                    <div class='col-lg-6'><div class='alert alert-danger'>
+                        You must properly fill the Device creation 'Public View' row.
+                    </div> </div> </div> </div>");
+        } if (!preg_match('/^[a-z0-9\# ]{1,100}$/i', $_POST['device_name'])) {
+            $d_msg = $d_msg.("<div class='row'><div style='text-align: center'>
+                    <div class='col-lg-6'><div class='alert alert-danger'>
+                        You must properly fill the Device creation 'Device Name' row: '".$_POST['device_name']."'
+                    </div> </div> </div> </div>");
+        } if (!preg_match('/^[0-9\.]+$/i', $_POST['device_base_price'])) {
+            $d_msg = $d_msg.("<div class='row'><div style='text-align: center'>
+                    <div class='col-lg-6'><div class='alert alert-danger'>
+                        You must properly fill the Device creation 'Base Price' row: '".$_POST['device_base_price']."'
+                    </div> </div> </div> </div>");
+        } if (!preg_match('/^[0-9]+$/i', $_POST['hours'])) {
+            $d_msg = $d_msg.("<div class='row'><div style='text-align: center'>
+                    <div class='col-lg-6'><div class='alert alert-danger'>
+                        You must properly fill the Device creation 'Device Duration - Hours' row.
+                    </div> </div> </div> </div>");
+        } if (!isset($_POST['minutes'])) {
+            $d_msg = $d_msg.("<div class='row'><div style='text-align: center'>
+                    <div class='col-lg-6'><div class='alert alert-danger'>
+                        You must properly fill the Device creation 'Device Duration - Minutes' row.
+                    </div> </div> </div> </div>");
+        }
     }
 }
 
@@ -78,7 +105,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn1'])) {
     $dg_thermal1 = filter_input(INPUT_POST, 'dg_thermal');
     $dg_granular1 = filter_input(INPUT_POST, 'dg_granular');   
     
-    if(isset($_POST['device_group_parent']) && isset($_POST['dg_pay']) && isset($_POST['dg_mats']) && isset($_POST['dg_store']) && isset($_POST['dg_juicebox']) && isset($_POST['dg_thermal']) && isset($_POST['dg_granular']) && preg_match('/^[a-z0-9 ]+$/i', $_POST['device_group_name']) && preg_match('/^[a-z0-9_]+$/i', $_POST['device_group_abv'])){
+    if(isset($_POST['device_group_parent']) && isset($_POST['dg_pay']) && isset($_POST['dg_mats']) && isset($_POST['dg_store']) && isset($_POST['dg_juicebox']) && isset($_POST['dg_thermal']) && isset($_POST['dg_granular']) && preg_match('/^[a-z0-9\# ]{1,100}$/i', $_POST['device_group_name']) && preg_match('/^[a-z0-9\#\_]{1,15}$/i', $_POST['device_group_abv'])){
         
         $dg_id1 = DeviceGroup::insert_dg($device_group_abv1, $device_group_parent1, $device_group_name1, $dg_pay1, $dg_mats1, $dg_store1, $dg_juicebox1, $dg_thermal1, $dg_granular1);
 
@@ -91,10 +118,52 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn1'])) {
         }
 
     } else {
-        $dg_msg = ("<div style='text-align: center'>
-                <div class='alert alert-danger'>
-                    You Must Properly Fill Out All Required Fields
-                </div> </div>");
+        if (!preg_match('/^[a-z0-9\# ]{1,100}$/i', $_POST['device_group_name'])) {
+            $dg_msg = $dg_msg.("<div class='row'><div style='text-align: center'>
+                    <div class='col-lg-6 pull-right'><div class='alert alert-danger'>
+                        You must properly fill the Device Group creation 'Device Group Name' row: '".$_POST['device_group_name']."'
+                    </div> </div> </div> </div>");
+        } if (!preg_match('/^[a-z0-9\#\_]{1,15}$/i', $_POST['device_group_abv'])) {
+            $dg_msg = $dg_msg.("<div class='row'><div style='text-align: center'>
+                    <div class='col-lg-6 pull-right'><div class='alert alert-danger'>
+                        You must properly fill the Device Group creation 'Device Group Abreviation' row: '".$_POST['device_group_abv']."'
+                    </div> </div> </div> </div>");
+        } if (!isset($_POST['device_group_parent'])) {
+            $dg_msg = ("<div class='row'><div style='text-align: center'>
+                    <div class='col-lg-6 pull-right'><div class='alert alert-danger'>
+                        You must properly fill the Device Group creation 'Device Group Parent' row.
+                    </div> </div> </div> </div>");
+        } if (!isset($_POST['dg_pay'])) {
+            $dg_msg = $dg_msg.("<div class='row'><div style='text-align: center'>
+                    <div class='col-lg-6 pull-right'><div class='alert alert-danger'>
+                        You must properly fill the Device Group creation 'Pay First' row.
+                    </div> </div> </div> </div>");
+        } if (!isset($_POST['dg_mats'])) {
+            $dg_msg = $dg_msg.("<div class='row'><div style='text-align: center'>
+                    <div class='col-lg-6 pull-right'><div class='alert alert-danger'>
+                        You must properly fill the Device Group creation 'Select Materials First' row.
+                    </div> </div> </div> </div>");
+        } if (!isset($_POST['dg_store'])) {
+            $dg_msg = $dg_msg.("<div class='row'><div style='text-align: center'>
+                    <div class='col-lg-6 pull-right'><div class='alert alert-danger'>
+                        You must properly fill the Device Group creation 'Storable' row.
+                    </div> </div> </div> </div>");
+        } if (!isset($_POST['dg_juicebox'])) {
+            $dg_msg = $dg_msg.("<div class='row'><div style='text-align: center'>
+                    <div class='col-lg-6 pull-right'><div class='alert alert-danger'>
+                        You must properly fill the Device Group creation 'JuiceBox Managed' row.
+                    </div> </div> </div> </div>");
+        } if (!isset($_POST['dg_thermal'])) {
+            $dg_msg = $dg_msg.("<div class='row'><div style='text-align: center'>
+                    <div class='col-lg-6 pull-right'><div class='alert alert-danger'>
+                        You must properly fill the Device Group creation 'Thermal Printer Number' row.
+                    </div> </div> </div> </div>");
+        } if (!isset($_POST['dg_granular'])) {
+            $dg_msg = $dg_msg.("<div class='row'><div style='text-align: center'>
+                    <div class='col-lg-6 pull-right'><div class='alert alert-danger'>
+                        You must properly fill the Device Group creation 'Granular Wait' row.
+                    </div> </div> </div> </div>");
+        }
     }
 }
 
@@ -114,11 +183,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn2'])) {
         }
 
     } else {
-        $remove_d_msg = ("<div style='text-align: center'>
-                <div class='alert alert-danger'>
-                    You Must Properly Fill Out All Required Fields
-                </div> </div>");
+        $remove_d_msg = ("<div class='row'><div style='text-align: center'>
+                <div class='col-lg-6'><div class='alert alert-danger'>
+                    You must properly select a device to delete from the database. Make sure to select the device group first, then select the device.
+                </div> </div> </div> </div>");
     }
+}
+
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
+    header("Location:/admin/sub/edit_device.php?d_id=".filter_input(INPUT_POST,'devices1')."");
 }
 
 ?>
@@ -134,6 +207,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn2'])) {
     </div>
     <!-- /.row -->
     
+    <!-- Success/Error Message -->
     <div class="row">
         <?php if($d_msg != "") { ?>
         <div style='text-align: center'>
@@ -153,13 +227,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn2'])) {
     </div>
     <!-- /.row -->
     
+    <!-- Panels -->
     <div class="row">
         <div class="col-md-6">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <i class="fas fa-box" aria-hidden="true"></i> Add Device
                 </div>
-                <form name="mdform1" id="mdform1" autocomplete="off" method="POST" action="">
+                <form name="mdform" id="mdform" autocomplete="off" method="POST" action="">
                     <div class="panel-body">
                         <table class="table table-bordered table-striped table-hover">
                             <tr>
@@ -167,7 +242,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn2'])) {
                                 <td>
                                     <select class="form-control" name="device_group_id" id="device_group_id" tabindex="1">
                                         <option value="" disabled selected>Select Your Option</option>
-                                        <?php if($dgs = DeviceGroup::popDG_list()){
+                                        <?php if($dgs = DeviceGroup::popAllDG_list()){
                                             foreach($dgs as $dg_id => $dg_desc){
                                                 echo("<option value='$dg_id'>$dg_desc</option>");
                                             }
@@ -203,11 +278,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn2'])) {
                             <tr>
                                 <td>
                                     <b data-toggle="tooltip" data-placement="top">Device Duration</b>
-                                    <button type="button" style="background-color:whites" class="btn fas fa-info" onclick="durationInfo()"></button>
+                                    <button type="button" style="background-color:white" class="btn fas fa-info" onclick="durationInfo()"></button>
                                 </td>
                                 <td>
                                     <input type="number" name="hours" id="hours" tabindex="6" min="0" max="100" 
-                                        step="1" placeholder="hh" max="99" pattern="[0-9]" value ="<?php echo $device_hour1;?>"></input>Hours
+                                        step="1" placeholder="hh" max="99" pattern="[0-9]" value ="<?php if (isset($device_hour1)){ echo $device_hour1; } else{ echo (0);}?>"/>Hours
                                     <select name="minutes" id="minutes" tabindex="7">
                                         <option value="00">00</option>
                                         <option value="05">05</option>
@@ -281,12 +356,48 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn2'])) {
                 </form>
             </div>
             <!-- /.panel -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fas fa-edit" aria-hidden="true"></i> Edit Device
+                </div>
+                <form name="mdform1" id="mdform1" autocomplete="off" method="POST" action="">
+                    <div class="panel-body">
+                        <table class="table table-bordered table-striped table-hover">
+                            <tr>
+                                <td><b data-toggle="tooltip" data-placement="top">Select Device Group</b></td>
+                                <td>
+                                    <select class="form-control" name="dg1_id" id="dg1_id" onchange="change_dg1()" tabindex="1">
+                                        <option disabled hidden selected value="">Device Group</option>
+                                        <?php if($dgs = DeviceGroup::popDG_list()){
+                                            foreach($dgs as $dg_id => $dg_desc){
+                                                echo("<option value='$dg_id'>$dg_desc</option>");
+                                            }
+                                        } else {
+                                            echo("<option value=''>Device list Error - SQL ERROR</option>");
+                                        }?>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><b data-toggle="tooltip" data-placement="top">Select Device</b></td>
+                                <td>
+                                    <select class="form-control" name="devices1" id="devices1" tabindex="1">
+                                        <option value =""> Select Group First</option>
+                                    </select>   
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <!-- /.panel-body -->
+                    <div class="panel-footer clearfix">
+                        <div class="pull-right"><input class="btn btn-primary" type="submit" name="submitBtn3" id="submitBtn3" onclick="return confirm(&quot;You are about to be redirected to the edit device page for this device. Click OK to continue or CANCEL to quit.&quot;)" value="Edit Device"></div>
+                    </div>
+                </form>
+            </div>
+            <!-- /.panel -->
         </div>
-        <!-- /.col-md-8 -->
-   <!-- </div>
+        <!-- /.col-md-6 -->
 
-
-    <div class="row">-->
         <div class="col-md-6">
             <div class="panel panel-default">
                 <div class="panel-heading">
@@ -388,7 +499,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn2'])) {
             </div>
             <!-- /.panel -->
         </div>
-        <!-- /.col-md-8 -->
+        <!-- /.col-md-6 -->
+
     </div>
     <!-- /.row -->
 
@@ -421,6 +533,25 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         inUseCheck();
     }
     
+    function change_dg1(){
+        if (window.XMLHttpRequest) {
+            // code for IE7+, Firefox, Chrome, Opera, Safari
+            xmlhttp = new XMLHttpRequest();
+        } else {
+            // code for IE6, IE5
+            xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+        xmlhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("devices1").innerHTML = this.responseText;
+            }
+        };
+        
+        xmlhttp.open("GET","/admin/sub/md_getDevices.php?val="+ document.getElementById("dg1_id").value, true);
+        xmlhttp.send();
+        inUseCheck();
+    }
+    
     function button_text(element) {
         if(element.innerHTML == "Remove Device") element.innerHTML = "Back";
         else { element.innerHTML = "Remove Device"; }
@@ -435,19 +566,19 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
     function d_name_Info(){
         $("#popModal").modal();
         document.getElementById("modal-title").innerHTML = "Device Name";
-        document.getElementById("modal-body").innerHTML = "<?php echo ("Please enter the full device name. Example: Roland CNC Mill, Brother Embroider, Janome Serger, etc."); ?>";
+        document.getElementById("modal-body").innerHTML = "<?php echo ("Please enter the full device name (maximum amount of characters: 100). Example: Roland CNC Mill, Brother Embroider, Janome Serger, etc."); ?>";
     }
     
     function dg_name_Info(){
         $("#popModal").modal();
         document.getElementById("modal-title").innerHTML = "Device Group Name";
-        document.getElementById("modal-body").innerHTML = "<?php echo ("Please enter the full device group name. Example: Linear Saws, PolyPrinter, Shop Room, etc."); ?>";
+        document.getElementById("modal-body").innerHTML = "<?php echo ("Please enter the full device group name (maximum amount of characters: 100). Example: Linear Saws, PolyPrinter, Shop Room, etc."); ?>";
     }
     
     function dg_abv_Info(){
         $("#popModal").modal();
         document.getElementById("modal-title").innerHTML = "Device Group Abreviation";
-        document.getElementById("modal-body").innerHTML = "<?php echo ("Please enter an abreviation for the given device group name with no spaces. For example: The abreviation of device group 'Linear Saw' is 'lin_saw'."); ?>";
+        document.getElementById("modal-body").innerHTML = "<?php echo ("Please enter an abreviation for the given device group name with no spaces (maximum amount of characters: 15). For example: The abreviation of device group 'Linear Saw' is 'lin_saw'."); ?>";
     }
 
 </script>

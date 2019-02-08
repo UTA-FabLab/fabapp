@@ -108,13 +108,32 @@ class DeviceGroup {
         global $mysqli;
         $all_dgs = array();
         
-        
         if($result = $mysqli->query("
             SELECT `device_group`.`dg_id`, `device_group`.`dg_desc`
             FROM `devices`
             JOIN `device_group`
             ON `device_group`.`dg_id` = `devices`.`dg_id`
             WHERE `devices`.`public_view`='Y'
+            GROUP BY `device_group`.`dg_desc`, `device_group`.`dg_id`
+            ORDER BY `dg_desc`
+        ")){
+            while ($row = $result->fetch_assoc()){
+                $all_dgs[$row['dg_id']] = $row['dg_desc'];
+            }
+        } else {
+            return false;
+        }
+            
+        return $all_dgs;
+    }
+    
+    public static function popAllDG_list(){
+        global $mysqli;
+        $all_dgs = array();
+        
+        if($result = $mysqli->query("
+            SELECT `device_group`.`dg_id`, `device_group`.`dg_desc`
+            FROM `device_group`
             GROUP BY `device_group`.`dg_desc`, `device_group`.`dg_id`
             ORDER BY `dg_desc`
         ")){
