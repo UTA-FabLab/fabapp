@@ -528,7 +528,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
             }
         };
         
-        xmlhttp.open("GET","/admin/sub/md_getDevices.php?val="+ document.getElementById("dg_id").value, true);
+        xmlhttp.open("GET","/admin/sub/md_getDevices.php?val="+ document.getElementById("dg_id").value+"&loc=1", true);
         xmlhttp.send();
         inUseCheck();
     }
@@ -547,7 +547,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
             }
         };
         
-        xmlhttp.open("GET","/admin/sub/md_getDevices.php?val="+ document.getElementById("dg1_id").value, true);
+        xmlhttp.open("GET","/admin/sub/md_getDevices.php?val="+ document.getElementById("dg1_id").value+"&loc=0", true);
         xmlhttp.send();
         inUseCheck();
     }

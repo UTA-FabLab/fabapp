@@ -74,13 +74,13 @@ class Devices {
                                 WHERE `d_id`=$d_id"))>0;
     }
     
-    public static function updateDevice($d_id, $d_desc, $d_duration, $d_price, $dg_id, $d_url)
+    public static function updateDevice($d_id, $d_desc, $d_duration, $d_price, $dg_id, $d_url, $d_view)
     {
         global $mysqli;
         
         if ($mysqli->query("
             UPDATE `devices`
-            SET `device_desc` = '$d_desc' , `d_duration` = '$d_duration' , `base_price` = '$d_price' , `dg_id` = '$dg_id' , `url` = '$d_url'
+            SET `device_desc` = '$d_desc' , `d_duration` = '$d_duration' , `base_price` = '$d_price' , `dg_id` = '$dg_id' , `url` = '$d_url' , `public_view` = '$d_view'
             WHERE `d_id` = '$d_id';
         "))
         {

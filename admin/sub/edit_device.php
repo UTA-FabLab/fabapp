@@ -14,7 +14,7 @@ if (!$staff || $staff->getRoleID() < 10){
 } else {
     $d_id = filter_input(INPUT_GET , 'd_id', FILTER_VALIDATE_INT, false);
     if (is_int($d_id) && $result = $mysqli->query("
-        SELECT `d`.`device_desc`, `d`.`d_duration`, `d`.`base_price`, `d`.`dg_id`, `d`.`url`, `dg`.`dg_desc`
+        SELECT `d`.`device_desc`, `d`.`d_duration`, `d`.`base_price`, `d`.`public_view`, `d`.`dg_id`, `d`.`url`, `dg`.`dg_desc`
         FROM `devices` `d`, `device_group` `dg`
         WHERE `d`.`d_id`=$d_id AND `d`.`dg_id`=`dg`.`dg_id`;
     ")) {
@@ -26,6 +26,7 @@ if (!$staff || $staff->getRoleID() < 10){
             $d_url = $row['url'];
             $d_price = $row['base_price'];
             $dg_desc = $row['dg_desc'];
+            $d_view = $row['public_view'];
         } else {
             //Not Authorized to see this Page
             $_SESSION['error_msg'] = "Unable to find device.";
@@ -63,11 +64,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
         $dg_id1 = filter_input(INPUT_POST,'device_group_id'); 
     }
     $d_url1 = filter_input(INPUT_POST,'device_url');     
-    $d_price1 = filter_input(INPUT_POST,'device_base_price');     
+    $d_price1 = filter_input(INPUT_POST,'device_base_price');
+    if ((filter_input(INPUT_POST,'device_public_view')) == 10101010){
+        $d_view1 = $d_view;
+    } else {
+        $d_view1 = filter_input(INPUT_POST,'device_public_view'); 
+    }
     
     if(isset($_POST['device_group_id']) && preg_match('/^[0-9]+$/i', $_POST['hours']) && isset($_POST['minutes']) && preg_match('/^[a-z0-9\-\_\# ]{1,100}$/i', $_POST['device_name']) && preg_match('/^[0-9\.]+$/i', $_POST['device_base_price'])){
         
-        $status = Devices::updateDevice($d_id, $d_name1, $d_duration1, $d_price1, $dg_id1, $d_url1);
+        $status = Devices::updateDevice($d_id, $d_name1, $d_duration1, $d_price1, $dg_id1, $d_url1, $d_view1);
         if ($status == 1) {
             $_SESSION['success_msg'] = "Device has been successfully updated.";
             header("Location:/admin/manage_device.php");
@@ -157,6 +163,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
                                     <button type="button" style="background-color:#D3D3D3" class="btn fas fa-info" onclick="d_name_Info()"></button>
                                 </td>
                                 <td><input type="text" name="device_name" id="device_name" class="form-control" value="<?php echo $d_name?>" placeholder="Device Name" size="10"/></td>
+                            </tr>
+                            <tr>
+                                <td><b data-toggle="tooltip" data-placement="top">Public View</b></td>
+                                <td><select class="form-control" name="device_public_view" id="device_public_view" tabindex="1">
+                                      <option value=10101010 selected>No Change</option>
+                                      <option value="Y">Yes</option>
+                                      <option value="N">No</option>
+                                    </select>
+                                </td>
                             </tr>
                             <tr>
                                 <td>
