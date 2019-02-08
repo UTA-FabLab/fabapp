@@ -303,24 +303,18 @@ class Wait_queue {
         }
     }
     
-    public static function removeAllUsers($staff)
+    public static function removeAllUsers()
      {
         global $mysqli;
-        global $sv;
         
-
-        if ($staff->getRoleID() >= $sv['clear_queue']){
-            if ($mysqli->query("
-                UPDATE `wait_queue`
-                SET `Op_email` = NULL, `Op_phone` = NULL, `End_date` = CURRENT_TIMESTAMP, valid='N'
-                WHERE valid='Y';
-            ")){
-                return true;
-            } else {
-                return false;
-            }
+        if ($mysqli->query("
+            UPDATE `wait_queue`
+            SET `Op_email` = NULL, `Op_phone` = NULL, `End_date` = CURRENT_TIMESTAMP, valid='N'
+            WHERE valid='Y';
+        ")){
+            return true;
         } else {
-            return false;
+            echo ("Error deleting users!");
         }
         
     }
@@ -666,16 +660,6 @@ class Wait_queue {
             $printer -> setEmphasis(true);
             $printer -> text("2. ");
             $printer -> setEmphasis(false);
-            $printer -> text("You may remove yourself from the\n");
-            $printer -> text("wait queue and/or change your contact\n");
-            $printer -> text("information by logging into FabApp\n");
-            $printer -> text("and clicking your icon in the\n");
-            $printer -> text("wait queue table.\n");
-            $printer -> feed();
-
-            $printer -> setEmphasis(true);
-            $printer -> text("3. ");
-            $printer -> setEmphasis(false);
             $printer -> text("FabApp only gives estimates & more\n");
             $printer -> text("than one machine may become available\n");
             $printer -> text("at a time. Stay in the lab if your\n");
@@ -683,7 +667,7 @@ class Wait_queue {
             $printer -> feed();
 
             $printer -> setEmphasis(true);
-            $printer -> text("4. ");
+            $printer -> text("3. ");
             $printer -> setEmphasis(false);
             $printer -> text("Prep your files while you wait to\n");
             $printer -> text("reduce lag time.\n");
