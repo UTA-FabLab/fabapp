@@ -71,6 +71,22 @@ class DeviceGroup {
         }
     }
     
+    public static function insert_dg($dg_name, $dg_parent, $dg_desc, $dg_pay, $dg_mat, $dg_store, $dg_juicebox, $dg_thermal, $dg_granular){
+        global $mysqli;
+        
+        if ($mysqli->query("
+            INSERT INTO `device_group` 
+              (`dg_name`,`dg_parent`,`dg_desc`, `payFirst`, `selectMatsFirst`, `storable`, `juiceboxManaged`, `thermalPrinterNum`, `granular_wait`) 
+            VALUES
+                ('$dg_name', $dg_parent, '$dg_desc', '$dg_pay', '$dg_mat', '$dg_store', '$dg_juicebox', '$dg_thermal', '$dg_granular');
+            ")){
+            $dg_id = $mysqli->insert_id;
+            return $dg_id;
+        } else {
+            return ("<div class='alert alert-danger'>".$mysqli->error."</div>");
+        }
+    }
+    
     //List all DGs that have devices within their group.
     public static function popDGs(){
         global $mysqli;
@@ -86,20 +102,63 @@ class DeviceGroup {
             return false;
         }
     }
+        
+    //List all DGs that have devices within their group.
+    public static function popDG_list(){
+        global $mysqli;
+        $all_dgs = array();
+        
+        if($result = $mysqli->query("
+            SELECT `device_group`.`dg_id`, `device_group`.`dg_desc`
+            FROM `devices`
+            JOIN `device_group`
+            ON `device_group`.`dg_id` = `devices`.`dg_id`
+            WHERE `devices`.`public_view`='Y'
+            GROUP BY `device_group`.`dg_desc`, `device_group`.`dg_id`
+            ORDER BY `dg_desc`
+        ")){
+            while ($row = $result->fetch_assoc()){
+                $all_dgs[$row['dg_id']] = $row['dg_desc'];
+            }
+        } else {
+            return false;
+        }
+            
+        return $all_dgs;
+    }
+    
+    public static function popAllDG_list(){
+        global $mysqli;
+        $all_dgs = array();
+        
+        if($result = $mysqli->query("
+            SELECT `device_group`.`dg_id`, `device_group`.`dg_desc`
+            FROM `device_group`
+            GROUP BY `device_group`.`dg_desc`, `device_group`.`dg_id`
+            ORDER BY `dg_desc`
+        ")){
+            while ($row = $result->fetch_assoc()){
+                $all_dgs[$row['dg_id']] = $row['dg_desc'];
+            }
+        } else {
+            return false;
+        }
+            
+        return $all_dgs;
+    }
     
     //List all DGs that have devices within their group & have WQ tickets or are at capacity.
     public static function popDG_WQ(){
         global $mysqli;
         $all_dgs = array();
-        $wq_dg = array(); //return this list to display selectable DGs
         
         //list all DGs = $all_dgs
         if($result = $mysqli->query("
-            SELECT `device_group`.`dg_id`, `device_group`.`dg_desc`, count(`devices`.`d_id`) as 'dg_qty', `device_group`.`granular_wait`
+            SELECT `device_group`.`dg_id`, `device_group`.`dg_desc`
             FROM `devices`
             JOIN `device_group`
             ON `device_group`.`dg_id` = `devices`.`dg_id`
-            WHERE `devices`.`d_id` NOT IN (
+            WHERE `devices`.`public_view`='Y' AND `devices`.`d_id` NOT IN (
                     SELECT `d_id`
                     FROM `service_call`
                     WHERE `solved` = 'N' AND `sl_id` >= 7
@@ -108,73 +167,13 @@ class DeviceGroup {
             ORDER BY `dg_desc`
         ")){
             while ($row = $result->fetch_assoc()){
-                $all_dgs[$row['dg_id']] = array('dg_desc' => $row['dg_desc'], 'dg_qty' => $row['dg_qty'], 'granular_wait' => $row['granular_wait']);
-            }
-        } else {
-            return false;
-        }
-        
-        //list all Distinct DGs in WQ
-        if($result = $mysqli->query("
-            SELECT DISTINCT `wait_queue`.`Devgr_id`
-            FROM `wait_queue`
-            WHERE `valid` = 'Y'
-        ")){
-            while ($row = $result->fetch_assoc()){
-                //pop matching DG from $all_dgs & add DG to $wq_dg
-                if (array_key_exists($row['Devgr_id'], $all_dgs)){
-                    $wq_dg[$row['Devgr_id']] = $all_dgs[$row['Devgr_id']]['dg_desc'];
-                    unset($all_dgs[$row['Devgr_id']]);
-                }
+                $all_dgs[$row['dg_id']] = $row['dg_desc'];
             }
         } else {
             return false;
         }
             
-        foreach($all_dgs as $dg_id => $values) {
-            if($values['granular_wait'] == 'N'){
-                if($result = $mysqli->query("
-                    SELECT count(*) as 'dg_busy'
-                    FROM `transactions`
-                    LEFT JOIN `devices`
-                    ON `transactions`.`d_id` = `devices`.`d_id`
-                    WHERE `transactions`.`status_id` <= 11 AND `devices`.`dg_id` = $dg_id AND `devices`.`d_id` NOT IN (
-                        SELECT `d_id`
-                        FROM `service_call`
-                        WHERE `solved` = 'N' AND `sl_id` >= 7
-                    )
-                ")){
-                    $row = $result->fetch_assoc();
-                    //all devices are busy, add DG to list
-                    if($values['dg_qty'] == $row['dg_busy']){
-                        $wq_dg[$dg_id] = $values['dg_desc'];
-                    }
-                } else {
-                    return false;
-                }
-            //Granular_wait == Yes, people can get inline of a specific device.
-            } else {
-                if($result = $mysqli->query("
-                    SELECT `devices`.`dg_id`
-                    FROM `transactions`
-                    LEFT JOIN `devices`
-                    ON `transactions`.`d_id` = `devices`.`d_id`
-                    WHERE `transactions`.`status_id` <= 11 AND `devices`.`dg_id` = $dg_id
-                ")){
-                    //devices is busy, add DG to list
-                    if($result->num_rows >= 1){
-                        $wq_dg[$dg_id] = $values['dg_desc'];
-                    } else {
-                        //Device is not busy
-                    }
-                } else {
-                    return false;
-                }
-            }
-        }
-               
-        ksort($wq_dg);
-        return $wq_dg;
+        return $all_dgs;
     }
     
     public function getDg_id() {
