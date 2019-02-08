@@ -34,7 +34,6 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/connections/db_connect8.php');
 include_once ($_SERVER['DOCUMENT_ROOT'].'/connections/ldap.php');
 include_once ($_SERVER['DOCUMENT_ROOT'].'/class/all_classes.php');
 date_default_timezone_set($sv['timezone']);
-
 if( isset($_SESSION['staff']) ){
     $staff = unserialize($_SESSION['staff']);
     $_SESSION['loc'] = $_SERVER['PHP_SELF'];
@@ -46,7 +45,6 @@ if( isset($_SESSION['staff']) ){
         $_SESSION["timeOut"] = (intval(time()) + $staff->getTimeLimit());
     }
 }
-
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if( isset($_POST['signBtn']) ){
         if ( empty($_POST["netID"])){
