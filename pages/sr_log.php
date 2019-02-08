@@ -195,7 +195,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn']) &&
                                                 <i class="<?php echo $sr->getStaff()->getIcon();?> fa-lg" title="<?php echo $sr->getStaff()->getOperator();?>"></i>
                                             </button>
                                             <ul class="dropdown-menu" role="menu">
-                                                <li style="padding-left: 5px;"><?php echo $sr->getStaff()->getOperator();?></li>
+                                                <li style="padding-left: 5px;"><?php echo $staff->getOperator();?></li>
                                             </ul>
                                         </div>
                                     </td>
