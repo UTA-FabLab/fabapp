@@ -65,7 +65,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
     $d_url1 = filter_input(INPUT_POST,'device_url');     
     $d_price1 = filter_input(INPUT_POST,'device_base_price');     
     
-    if(isset($_POST['device_group_id']) && preg_match('/^[0-9]+$/i', $_POST['hours']) && isset($_POST['minutes']) && preg_match('/^[a-z0-9\# ]{1,100}$/i', $_POST['device_name']) && preg_match('/^[0-9\.]+$/i', $_POST['device_base_price'])){
+    if(isset($_POST['device_group_id']) && preg_match('/^[0-9]+$/i', $_POST['hours']) && isset($_POST['minutes']) && preg_match('/^[a-z0-9\-\_\# ]{1,100}$/i', $_POST['device_name']) && preg_match('/^[0-9\.]+$/i', $_POST['device_base_price'])){
         
         $status = Devices::updateDevice($d_id, $d_name1, $d_duration1, $d_price1, $dg_id1, $d_url1);
         if ($status == 1) {
@@ -81,7 +81,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
                     <div class='col-lg-10'><div class='alert alert-danger'>
                         You must properly fill the Device creation 'Select Device Group' row.
                     </div> </div> </div> </div>");
-        } if (!preg_match('/^[a-z0-9\# ]{1,100}$/i', $_POST['device_name'])) {
+        } if (!preg_match('/^[a-z0-9\-\_\# ]{1,100}$/i', $_POST['device_name'])) {
             $d_msg = $d_msg.("<div class='row'><div style='text-align: center'>
                     <div class='col-lg-10'><div class='alert alert-danger'>
                         You must properly fill the Device creation 'Device Name' row: '".$_POST['device_name']."'
