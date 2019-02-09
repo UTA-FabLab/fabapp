@@ -242,15 +242,16 @@ CREATE TABLE IF NOT EXISTS `interaction` (
 
 DROP TABLE IF EXISTS `materials`;
 CREATE TABLE IF NOT EXISTS `materials` (
-  `m_id` int(11) NOT NULL AUTO_INCREMENT,
+  `m_id` int(11) NOT NULL,
   `m_name` varchar(50) DEFAULT NULL,
   `m_parent` int(11) DEFAULT NULL,
   `price` decimal(8,4) DEFAULT NULL,
   `unit` varchar(50) NOT NULL,
   `color_hex` varchar(6) DEFAULT NULL,
   `measurable` enum('Y','N') NOT NULL DEFAULT 'N',
-  PRIMARY KEY (`m_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+  `current` enum('Y','N') NOT NULL DEFAULT 'Y'
+) ENGINE=InnoDB AUTO_INCREMENT=77 DEFAULT CHARSET=utf8;
+
 
 -- --------------------------------------------------------
 
@@ -527,19 +528,17 @@ INSERT INTO `status` (`status_id`, `msg`) VALUES
 
 DROP TABLE IF EXISTS `tm_enroll`;
 CREATE TABLE IF NOT EXISTS `tm_enroll` (
-  `tme_key` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT, 
+  `tme_key` int(11) NOT NULL,
   `tm_id` int(11) NOT NULL,
   `operator` varchar(10) NOT NULL,
   `completed` datetime NOT NULL,
   `staff_id` varchar(10) NOT NULL,
-  `current` enum('Y','N') NOT NULL,
+  `revoked` enum('Y','N') NOT NULL,
   `altered_date` datetime DEFAULT NULL,
   `altered_notes` text,
   `altered_by` varchar(10) DEFAULT NULL,
-  `expiration_date` datetime DEFAULT NULL,
-  PRIMARY KEY (`tm_id`,`operator`),
-  KEY `tm_enroll_index_operator` (`operator`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `expiration_date` datetime DEFAULT NULL
+) ENGINE=InnoDB AUTO_INCREMENT=507 DEFAULT CHARSET=utf8;
 
 
 -- --------------------------------------------------------
