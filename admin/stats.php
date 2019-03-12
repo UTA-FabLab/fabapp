@@ -2,7 +2,15 @@
 
 /**********************************************************
 *
-*	-CSV Generator
+*	@author MPZinke on 03.12.19
+*	CC BY-NC-AS UTA FabLab 2016-2018
+*	FabApp V 0.91
+*
+*	-CSV, PiChart Generator
+*	-DESCRIPTION: get date and method of query;
+*	 sort query and echo to js function to create file
+*	-FUTURE: make download names more 
+*	 specific
 *
 **********************************************************/
 
@@ -10,7 +18,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
 // staff clearance
 if (!$staff || $staff->getRoleID() < $sv['minRoleTrainer']){
-	//Not Authorized to see this Page
+	// Not Authorized to see this Page
 	header('Location: /index.php');
 	$_SESSION['error_msg'] = "Insufficient role level to access, You must be a Trainer.";
 }
@@ -23,14 +31,24 @@ if($_SESSION['type'] == 'success'){
 
 // prebuilt queries
 if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['prebuilt_button'])) {
-	$function = htmlspecialchars(filter_input(INPUT_POST, "prebuilt_query"));
+	$function = htmlspecialchars(filter_input(INPUT_POST, "static_queries"));
 	$start = htmlspecialchars(filter_input(INPUT_POST, "start_time"));
 	$end = htmlspecialchars(filter_input(INPUT_POST, "end_time"));
+	$download_piechart = filter_input(INPUT_POST, "pichrt_chk");  // 't' for downloading
+	$device = htmlspecialchars(filter_input(INPUT_POST, "device"));
 
 	$params = Table::get_prebuild_data($end, $function, $start);
+
+	// prepare if specific device wanted by adding AND condition infront of GROUP BY
+	if($function !== "byStation" && $device !== "*") {
+		$statement = "AND `d_id` = '".$device."' ";
+		$params["statement"] = substr_replace($params["statement"], $statement, strpos($params["statement"], "GROUP BY"), 0);
+	}
 	
+	// create data
 	$csv = export_csv($params["file_name"], $params["head"], $params["statement"]);
-	if($params["file_name"] != "TicketsByHourForEachDay" && $params["file_name"] != "FailedTickets") 
+	if($params["file_name"] != "TicketsByHourForEachDay" && $params["file_name"] != "FailedTickets"
+	&& $download_piechart === "t")
 		$pie = create_pie_chart($params["file_name"], $params["head"], $params["statement"]);
 }
 
@@ -44,13 +62,13 @@ function export_csv($file_name, $head, $statement) {
 
 	$values = "";
 	if($results = $mysqli->query($statement)) {
-  		// failed tickets
+  		// failed tickets only have the one value
   		if($file_name == "FailedTickets") {
   			$row = $results->fetch_assoc();
   			$values = "$head[0]\n".$row['COUNT(*)'];
   		}
   		else {
-  			$values = implode(",", $head)."\\n";
+  			$values = implode(",", $head)."\\n";  // create t-head
 	  		while($row = $results->fetch_assoc()) {
 	  			$values .= implode(",", $row)."\\n";
 	  		}
@@ -69,10 +87,6 @@ function create_pie_chart($file_name, $head, $statement) {
 	global $mysqli;
 
 	if($results = $mysqli->query($statement)) {
-		echo 	"<script>window.onload = function() {".
-					"document.getElementById('badQueryMessage').innerHTML = '';".
-				"}; </script>";  // clear possible error message
-
 		$values = array();
 		$slices = array();
 		while($row = $results->fetch_assoc()) {
@@ -90,23 +104,7 @@ function create_pie_chart($file_name, $head, $statement) {
 				"}; </script>";
 	}	
 }
-
-// -————————————— QUERY BUILDER ————————————— 
-
-$tables = get_tables();
-
-function get_tables() {
-	global $mysqli;  // do not know why is this required
-
-	$tmp = array();
-	if($results = $mysqli->query("SELECT `table_name`, `label`
-								  FROM `table_descriptions`;")) {
-		while($row = $results->fetch_array(MYSQLI_ASSOC)) {
-			$tmp[] = $row;
-		}
-		return $tmp;
-	}
-} ?>
+?>
 
 <title><?php echo $sv['site_name'];?> Data Reports</title>
 <div id="page-wrapper">
@@ -126,13 +124,14 @@ function get_tables() {
 				</div>
 				<!-- pie chart -->
 				<div>
+					<input value='f' name='pichrt_chk' id='pichrt_chk' hidden/>
 					<canvas id='piechart' width="1000px" height="1500px" hidden>Your browser does not support graphics</canvas>
 					<a id='download' download="FabApp_PieChart.png" href="" onclick="download_piechart(this);"></a>
 				</div>
 				<!-- Prebuilt inputs -->
 				<table class='table'> <tr>
-					<td class='col-md-8' align="pull-left">
-						<select id='static_queries' class='form-control' onchange='showQueryContent(this), prebuilt_populated()'>
+					<td class='col-md-6' align="pull-left">
+						<select id='static_queries' name='static_queries' class='form-control' onchange='showQueryContent(this), prebuilt_populated()'>
 							<option disabled selected hidden>Select Query</option>
 							<option value='byHour'>Tickets by Hour</option>
 							<option value='byDay'>Tickets by Day</option>
@@ -142,67 +141,41 @@ function get_tables() {
 							<option value='failedTickets'>Failed Tickets</option>
 						</select>
 					</td>
-					<td class='col-md-4'>
-						<button name='prebuilt_button' id='prebuilt_button' class='btn btn-default' style='width:40%;' disabled>Get Query</button> 
+					<td class='col-md-2'>
+						<button name='prebuilt_button' id='prebuilt_button' class='btn btn-default' style='width:80%;' disabled>Get Query</button> 
 					</td>
+					<td class='col-md-2' style='height:100%;margin:auto;'>
+						<div class='input-group'>
+							<label><input id='pie_check' type="checkbox" onchange='var pie=document.getElementById("pichrt_chk"); pie.value = (pie.value =="f") ? "t" : "f";' disabled> Include Piechart</label>
+						</div>
+					</td> 
 				</tr> </table>
 			</div>
 
 			<div id='prebuilt_fields'>
-				<input name='prebuilt_query' id='prebuilt_query' hidden/>
 				<div id='dates' hidden>
 					<div class='input-group' id='start_time' style="padding:8px;padding-top:2px;padding-bottom:2px;"> 
-						<!-- TESTING -->
-						<span class='input-group-addon'>Start&nbsp;</span><input type='date' name='start_time' id='prebuild_start' class='form-control' value='<?php 
-						echo date('Y-m-d', strtotime("-3 year"));
-						?>' onchange="prebuilt_populated()" />
-						<!-- <span class='input-group-addon'>Start&nbsp;</span><input type='date' name='start_time' id='prebuild_start' class='form-control' onchange="prebuilt_populated()" /> -->
+						<span class='input-group-addon'>Start&nbsp;</span><input type='date' name='start_time' id='prebuild_start' class='form-control' onchange="prebuilt_populated()" />
 					</div>
 					<div class='input-group' id='end_time' style="padding:8px;padding-top:2px;padding-bottom:2px;"> 
 						<span class='input-group-addon'>End&nbsp;&nbsp;</span><input type='date' name='end_time' id='prebuild_end' class='form-control' value='<?php
 						echo date('Y-m-d');
 						?>' onchange="prebuilt_populated()"/>
-						
-						<!-- <span class='input-group-addon'>End&nbsp;&nbsp;</span><input type='date' name='end_time' id='prebuild_end' class='form-control' onchange="prebuilt_populated()"/> -->
 					</div>
 				</div>
-			</div>
-		</form>
-	<!---------------------------- custom query builder ---------------------------->
-		<form method='POST'>
-			<h2>Custom Query</h2>
-			<div class='col-md-6'>
-				<select id='table_select' class='form-control status_select' onchange='getTableCols(this, "table1")'>
-				<?php
-				if($tables && count($tables) > 0) {
-					echo "<option selected value=''>—Select Table—</option>";
-					foreach($tables as $tab) {
-						echo "<option value='$tab[table_name]'>".$tab['label']."</option>";
-					}
-				}
-				else {
-					echo "<option disabled selected hidden>Could not get query</option>";
-				}
-				?>
-				</select>
-				<div id='table1'>
-				</div>
-			</div>
-			<div class='col-md-6'>
-				<select id='cross_reference' class='form-control status_select' onchange='getTableCols(this, "table2")' disabled>
-					<option selected style="color:#888888;">—Optional Cross Reference—</option>
-				<?php
-				if($tables && count($tables) > 0) {
-					foreach($tables as $tab) {
-						echo "<option value='$tab[table_name]'>".$tab['label']."</option>";
-					}
-				}
-				else {
-					echo "<option disabled selected hidden>Could not get query</option>";
-				}
-				?>
-				</select>
-				<div id='table2'>
+				<div id='devices' class='input-group hidden' style='padding:8px;width:100%;'>
+					<select id='device' name='device' class='form-control'>
+						<option value='*'>All</option>
+						<?php 
+						if($results = $mysqli->query("SELECT `d_id`, `device_desc` 
+														FROM  `devices`;"
+						)) {
+							while($row = $results->fetch_assoc()) {
+								echo "<option value='$row[d_id]'>$row[device_desc]</option>";
+							}
+						}
+						?>
+					</select>
 				</div>
 			</div>
 		</form>
@@ -213,11 +186,18 @@ function get_tables() {
 <?php include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php'); ?>
 
 <script>
-	// used once query type is selected to display time (& payment type) inputs
+	// used once query type is selected to display time & checkbox & hide/show devices inputs
 	function showQueryContent(element) {
 		var option = element.value;
-		document.getElementById("prebuilt_query").value = option;  // set input value filtered for on PHP call
 		$("#dates").show();
+		document.getElementById('devices').classList.remove("hidden");
+		document.getElementById("pie_check").disabled = false;
+		if(option == "byHourDay") {
+			document.getElementById("pie_check").disabled = true;
+			document.getElementById("pichrt_chk").value = "f";
+		}
+		else if(option == "byStation")
+			document.getElementById('devices').classList.add("hidden");
 	}
 
 
@@ -236,11 +216,10 @@ function get_tables() {
 	}
 
 
-
 	function create_csv(filename, array) {
 		var csvContent = 'data:text/csv;charset=utf-8,' + array;
 		var encodedUri = encodeURI(csvContent);
-		window.open(encodedUri, 'test.csv');
+		window.open(encodedUri);
 	}
 
 
@@ -252,8 +231,8 @@ function get_tables() {
 			ctx.beginPath();
 			ctx.fillStyle = color;
 			ctx.arc(500, 500, 500, start, stop, false);
-			ctx.lineTo(500, 500);
-			ctx.rect(pos_x, pos_y-40, 40, 40)
+			ctx.lineTo(500, 500);  // center of circle
+			ctx.rect(pos_x, pos_y-40, 40, 40);
 			ctx.fill();
 			// text
 			ctx.fillStyle = '#000000';
@@ -271,18 +250,19 @@ function get_tables() {
 	function create_pie_chart(data, filename) {
 		var canvas = document.getElementById('piechart');
 		canvas.getContext('2d').clearRect(0, 0, 1000, 1500);
-
+		// pre-made color list
 		var colors = ['#0019F5', '#46A9F6', '#72FAFC', '#62D7A8', '#009000', '#55BA36', '#D8FB52', '#FFFE54', '#E7C042', '#FD8633', '#EB5B2A',
-					    '#CB331F', '#800000', '#652121', '#5C4033', '#333333', '#999999', '#FF69B4', '#CB3464', '#CB3496', '#CA3AE7', '#8129F5',
-					    '#551A8B', '#000080'];
-		var start = 0;
+						'#CB331F', '#800000', '#652121', '#5C4033', '#333333', '#999999', '#FF69B4', '#CB3464', '#CB3496', '#CA3AE7', '#8129F5',
+						'#551A8B', '#000080'];
+		
+		var start = 0;  // wedge beginning
 		data = data.split(';');
-		var row_per_col = Math.ceil(data.length/3);
+		var row_per_col = Math.ceil(data.length/3);  // number of rows for text positioning
 		for(var x = 0; x < data.length; x++) {
 			// chart
+			var color = colors[parseInt(x*colors.length/data.length)];  // space out colors so they are different Hues
 			var row = data[x].split(',');
-			var stop = start + 2 * Math.PI * row[1];
-			var color = colors[parseInt(x*colors.length/data.length)];
+			var stop = start + 2 * Math.PI * row[1];  // wedge ending
 			var text_pos = [parseInt(x/row_per_col)*300+50, (x%row_per_col)*50+1100];
 			create_wedge(canvas, color, start, stop, row[0], text_pos[0], text_pos[1]);
 			start = stop;
@@ -290,42 +270,6 @@ function get_tables() {
 		document.getElementById('download').download = filename;
 		document.getElementById('download').click();
 	}
-
-
-
-// ———————————— Query Builder ————————————
-
-
-	// AJAX for getting the names of columns from selected table
-	function getTableCols(element, table_div){
-		var table = element.value;
-		var cross_reference = document.getElementById("cross_reference");
-		if(cross_reference.disabled && document.getElementById("table_select").value) $("#cross_reference").prop("disabled", false);
-		
-		if (window.XMLHttpRequest) xmlhttp = new XMLHttpRequest();  // code for IE7+, Firefox, Chrome, Opera, Safari
-		else { xmlhttp = new ActiveXObject("Microsoft.XMLHTTP"); }  // code for IE6, IE5
-		if(table === "") {
-			document.getElementById(table_div).innerHTML = "";
-			$("#cross_reference").prop("disabled", true);
-			return;
-		}
-		xmlhttp.onreadystatechange = function() {
-			if (this.readyState == 4 && this.status == 200) document.getElementById(table_div).innerHTML = this.responseText;
-		};
-		xmlhttp.open("GET", "sub/getTableCols.php?table_id=" + table, true);
-		xmlhttp.send();
-	}
-
-
-	function isChecked(x) {
-		console.log("HERE");  //TESTING
-		if( $("#"+x).is(":visible") ) 
-			$("#"+x).hide();
-		else {
-			$("#"+x).show();
-		}
-	}
-
 </script>
 
 <?php 
