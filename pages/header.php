@@ -299,9 +299,11 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
 							<li>
 								<a href="#"><i class="fas fa-sitemap"></i> Admin<span class="fas fa-angle-left"></span></a>
 								<ul class="nav nav-second-level">
+									<?php if(isset($staff) && $staff->getRoleID() >= $sv['minRoleTrainer']) { ?>
 									<li>
 										<a href="/admin/stats.php"><i class="fas fa-chart-line"></i> Data Reports</a>
 									</li>
+									<?php } ?>
 			                                    <li>
 			                                        <a href="/admin/manage_device.php"><i class="fas fa-edit"></i> Manage Devices</a>
 			                                    </li>
