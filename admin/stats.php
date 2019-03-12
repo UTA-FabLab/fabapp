@@ -3,7 +3,7 @@
 /**********************************************************
 *
 *	@author MPZinke on 03.12.19
-*	CC BY-NC-AS UTA FabLab 2016-2018
+*	CC BY-NC-AS UTA FabLab 2016-2019
 *	FabApp V 0.91
 *
 *	-CSV, PiChart Generator
