@@ -300,14 +300,20 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
 								<a href="#"><i class="fas fa-sitemap"></i> Admin<span class="fas fa-angle-left"></span></a>
 								<ul class="nav nav-second-level">
 									<li>
+										<a href="/admin/stats.php"><i class="fas fa-chart-line"></i> Data Reports</a>
+									</li>
+			                                    <li>
+			                                        <a href="/admin/manage_device.php"><i class="fas fa-edit"></i> Manage Devices</a>
+			                                    </li>
+									<li>
 										<a href="/admin/objbox.php"><i class="fas fa-gift"></i> Objects in Storage</a>
 									</li>
 									<li>
 										<a href="/admin/onboarding.php"><i class="fas fa-clipboard"></i> OnBoarding</a>
 									</li>
-			                                    <li>
-			                                        <a href="/admin/manage_device.php"><i class="fas fa-edit"></i> Manage Devices</a>
-			                                    </li>
+									<li>
+										<a href="/admin/sv.php"><i class="fas fa-sliders-h"></i> Site Variables</a>
+									</li>
 									<li>
 										<a herf="#"><i class="fas fa-book"></i> Training<span class="fas fa-angle-left"></span></a>
 										<ul class="nav nav-third-level">
@@ -329,12 +335,6 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
 												<a href="/admin/addrfid.php"><i class="fas fa-wifi"></i> Add RFID</a>
 											</li>
 										</ul>
-									</li>
-									<li>
-										<a href="/admin/stats.php"><i class="fas fa-chart-line"></i> Data Reports</a>
-									</li>
-									<li>
-										<a href="/admin/sv.php"><i class="fas fa-sliders-h"></i> Site Variables</a>
 									</li>
 								</ul>
 								<!-- /.nav-second-level -->
