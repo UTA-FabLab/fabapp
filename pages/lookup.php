@@ -395,7 +395,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </div>
                 <!-- /.panel -->
             <?php } ?>
-            <?php if ($staff && $ticket->getStatus()->getStatus_id() == 12){ ?>
+            <?php if (isset($staff) && $staff->getRoleID() >= $sv['LvlOfStaff'] && $ticket->getStatus()->getStatus_id() == 12){ ?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <i class="fas fa-wrench fa-lg" title="Undo"></i> Service Ticket
@@ -435,7 +435,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <td>Removed On</td>
                                 <td><?php echo $objbox->getO_end(); ?></td>
                             </tr>
-                            <?php if ($staff && $staff->getRoleID() >= $sv['LvlOfStaff']){?>
+                            <?php if (isset($staff) && $staff->getRoleID() >= $sv['LvlOfStaff']){?>
                                 <tr>
                                     <td>Picked Up By</td>
                                     <td><?php 
@@ -495,7 +495,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <!-- /.panel -->
             <?php }
             //Look for associated charges
-            if(is_object($staff) && $ticket->getAc() && (($ticket->getUser()->getOperator() == $staff->getOperator()) || $staff->getRoleID() >= $sv['LvlOfStaff']) ){?>
+            if(isset($staff) && $ticket->getAc() && (($ticket->getUser()->getOperator() == $staff->getOperator()) || $staff->getRoleID() >= $sv['LvlOfStaff']) ){ ?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <i class="fas fa-credit-card fa-lg"></i> Related Charges
@@ -645,7 +645,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
                 <h4 class="modal-title">Add Authorized Recipient</h4>
             </div>
-            <?php if ($staff->getOperator() == $ticket->getUser()->getOperator()) { ?>
+            <?php if (isset($staff) && $staff->getOperator() == $ticket->getUser()->getOperator()) { ?>
                 <form name="aarForm" method="post" action="" onsubmit="return validateAAR()">
                 <div class="modal-body">
                     <p>Authorized the following recipient to pick up and pay for this ticket.
