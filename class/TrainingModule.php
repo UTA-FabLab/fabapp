@@ -52,14 +52,17 @@ class TrainingModule {
 
 	public static function get_all_certificates() {
 		global $mysqli;
-		$result = $mysqli->query("SELECT * FROM `tm_enroll`
+
+		if($result = $mysqli->query("SELECT * FROM `tm_enroll`
 									 LEFT JOIN `trainingmodule`
 									 ON `tm_enroll`.`tm_id` = `trainingmodule`.`tm_id`
-									 ORDER BY `tme_key` DESC;");
-		while($row = $result->fetch_array(MYSQLI_ASSOC)) {
-			$trainings[] = $row;
+									 ORDER BY `tme_key` DESC;
+			")) {
+			while($row = $result->fetch_assoc()) {
+				$trainings[] = $row;
+			}
+			return $trainings;
 		}
-		return $trainings;
 	}
 
 	
@@ -91,9 +94,9 @@ class TrainingModule {
 		
 		if ($mysqli->query("
 			INSERT INTO `tm_enroll` 
-				(`tm_id`, `operator`, `completed`, `staff_id`, `revoked`) 
+				(`tm_id`, `operator`, `completed`, `staff_id`, `current`) 
 			VALUES
-				('$this->tm_id', '$operator', CURRENT_TIME(), '".$staff->getOperator()."', 'N');
+				('$this->tm_id', '$operator', CURRENT_TIME(), '".$staff->getOperator()."', 'Y');
 		")){
 			return true;
 		} elseif ( strpos($mysqli->error, "Duplicate") === 0) {
