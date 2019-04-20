@@ -5,12 +5,14 @@ class Table {
 	private $label;
 	private $modal_contents;
 	private $columns = array();
+	private $column_types = array();
 
 	public function __construct($table_name) {
 		$table_name = htmlspecialchars($table_name);
 		$this->table_name = $table_name;
 
 		global $mysqli;
+		// label for table (average Jo(ette) name of table)
 		if($result = $mysqli->query("SELECT `label`
 									 FROM `table_descriptions`
 									 WHERE `t_d_id` = '$table_name`;
@@ -18,12 +20,13 @@ class Table {
 			$this->label = $result->fetch_assoc()->label;
 		}
 
-		if($result = $mysqli->query("SELECT `COLUMN_NAME` 
+		// columns
+		if($result = $mysqli->query("SELECT `COLUMN_NAME`, `DATA_TYPE`
 									 FROM `INFORMATION_SCHEMA`.`COLUMNS` 
-									 WHERE `TABLE_NAME`='".$table_name."';
+									 WHERE `TABLE_NAME`='$table_name';
 		")) {
 			while($row = $result->fetch_assoc()) {
-				$this->columns[] = $row['COLUMN_NAME'];
+				$this->columns[$row['COLUMN_NAME']] = $row['DATA_TYPE'];
 			}
 		}
 	}
@@ -94,6 +97,28 @@ class Table {
 		$params["head"] = $head;
 		$params["statement"] = $statement;
 		return $params;
+	}
+
+
+	// get list of all tables based on table_descriptions table in DB
+	static function get_tables() {
+		global $mysqli;
+
+		if($result = $mysqli->query("SELECT *
+									FROM `table_descriptions`
+		")) {
+			$tables = array();
+			while($row = $result->fetch_assoc()) {
+				$tables[$row['label']] = $row['table_name'];
+			}
+		return $tables;
+		}
+		return NULL;
+	}
+
+
+	public function get_table_name() {
+		return $this->table_name;
 	}
 
 
