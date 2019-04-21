@@ -52,16 +52,12 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['prebuilt_button'])) {
 	if($params["file_name"] != "TicketsByHourForEachDay" && $params["file_name"] != "FailedTickets"
 	&& $download_piechart === "t")
 		$pie = create_pie_chart($params["file_name"], $params["head"], $params["statement"]);
-	if(isset($pie)) {
-		echo "<script> window.onload = function() {
-					create_pie_chart('$pie[data]', '$pie[data]');
-				}
-			  </script>";
-	}
-	echo 	"<script> window.onload = function() {
-					create_csv('$csv[file_name]', '$csv[data]');
-				}
-			</script>";
+
+	$script = "<script> window.onload = function() {".(isset($pie) ? "	 create_pie_chart('$pie[data]', '$pie[file_name]');	 " : "");
+	$script .= "create_csv('$csv[file_name]', '$csv[data]');
+			}
+		</script>";
+	echo $script;
 }
 // custom query
 elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_custom_query'])) {
@@ -130,7 +126,9 @@ function create_pie_chart($file_name, $head, $statement) {
 		foreach($values as $key => $value) {
 			$slices[] = "$key,".strval($value / $sum);
 		}
-		return array_combine(array('data', 'filename'), array(implode(";", $slices), $file_name));
+	echo "<script> console.log(\"PIE STuff\"); </script>";  //TESTING
+
+		return array_combine(array('data', 'file_name'), array(implode(";", $slices), $file_name));
 	}	
 }
 
@@ -476,7 +474,7 @@ function initiate_query($head, $query) {
 		var csvContent = 'data:text/csv;charset=utf-8,' + array;
 		var encodedUri = encodeURI(csvContent);
 		window.open(encodedUri);
-		window.location.href = "./stats.php"
+		// window.location.href = "./stats.php"
 	}
 
 
