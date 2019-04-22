@@ -228,8 +228,9 @@ function initiate_query($head, $query) {
 									<option value='byDay'>Tickets by Day</option>
 									<option value='byHourDay'>Tickets by Hour for Each Day</option>
 									<option value='byStation'>Tickets by Station</option>
-									<option value='byAccount'> Tickets by Account</option>
 									<option value='failedTickets'>Failed Tickets</option>
+									<option value='byAccount'>Tickets by Account</option>
+									<option value='IDTs'>IDT Tickets</option>
 								</select>
 							</td>
 							<td class='col-md-2'>
