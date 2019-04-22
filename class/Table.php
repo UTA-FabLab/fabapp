@@ -92,6 +92,15 @@ class Table {
 							AND '$start' <= `t_start` 
 		  					AND `t_start` <= '$end';";
 		}
+		elseif($function === "IDTs") {
+			$file_name = "IDTs";
+			$head = array("ac_id", "a_id", "trans_id", "ac_date", "operator", "staff_id", "amount", "recon_date", "recond_id", "ac_notes");
+			$statement = "SELECT *
+							FROM `acct_charge`
+							WHERE `a_id` = 5
+							AND '$start' <= `ac_date` 
+		  					AND `ac_date` <= '$end';";
+		}
 		$params = array();
 		$params["file_name"] = $file_name;
 		$params["head"] = $head;
