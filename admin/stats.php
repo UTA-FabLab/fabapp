@@ -83,7 +83,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_custom_query
 
 	$data['file_name'] = "FabLab_DataReport";
 	$data['results'] = query_results($query);
-	$data['head'] = array_keys($data['results'][0]);
+	$data['head'] = $data['results'] ? array_keys($data['results'][0]) : NULL;
 	$data['query'] = $query;
 	$data['tsv'] = tsv($head, $query);
 	$data['pie'] = NULL;
@@ -412,55 +412,59 @@ function get_selections($table) {
 		</div>
 
 	<!---------------------------------- Query Data Area ---------------------------------->
-		<?php if(isset($data) && $data['results'] != NULL) { ?>
+		<?php if(isset($data)) { ?>
 		<div class="panel panel-default">
 			<div class="panel-heading">
 				<button class='btn btn-default' style='right: 10px;' type='button' data-toggle='collapse' data-target='.results_collapse' 
 				  onclick='results_button_text(this);' aria-expanded='false' aria-controls='collapse'>Hide Query</button>
 			</div>
 			<div class='collapse in results_collapse'>
-				<div>
-					<table class='col-md-12'>
-						<tr> 
-							<td colspan='2' style='padding:16px;'> 
-								<?php echo $data['query'] ?> 
-							</td> 
-						</tr>
-						<tr>
-							<td class='col-md-3' style='padding:16px;'>
-								<button class='btn btn-default' onclick='exportTableToExcel("<?php echo $data['tsv'] ?>", "<?php echo $data['file_name']?>");'>Download Excel</button>
-							</td>
-							<td class='col-md-3' style='padding:16px;'>
-								<?php if($data['pie']) { ?>
-								<button class='btn btn-default' onclick='create_pie_chart("<?php echo $data['pie'] ?>", "<?php echo $data['file_name']?>");'>Download Pie Chart</button>
-								<?php } ?>
-							</td>
-						</tr>
-					</table>
-				</div>
 				<div style='padding:16px;'>
-					<table id='query_table' class='table col-md-12'>
-						<thead>
-							<?php
-							foreach($data['head'] as $key) echo "<td>$key</td>";
-							?>
-						</thead>
-						<tbody>
-							<?php
-							foreach($data['results'] as $row) {
-								echo "<tr>";
-								foreach($row as $key => $value) {
-									echo "<td>";
-									if($key == "trans_id") 
-										echo "<a href='http://$_SERVER[HTTP_HOST]/pages/lookup.php?trans_id=$value' target='_blank'>$value</a>";  //CHANGE HTTPS
-									else echo $value;
-									echo "</td>";
-								}
-								echo "</tr>";
-							} ?>
-						</tbody>
-					</table>
+					<?php echo $data['query']; ?>
 				</div>
+				<?php
+				 if($data['results'] != NULL) { ?>
+					<div>
+						<table class='col-md-12'>
+							<tr>
+								<td class='col-md-3' style='padding:16px;'>
+									<button class='btn btn-default' onclick='exportTableToExcel("<?php echo $data['tsv'] ?>", "<?php echo $data['file_name']?>");'>Download Excel</button>
+								</td>
+								<td class='col-md-3' style='padding:16px;'>
+									<?php if($data['pie']) { ?>
+									<button class='btn btn-default' onclick='create_pie_chart("<?php echo $data['pie'] ?>", "<?php echo $data['file_name']?>");'>Download Pie Chart</button>
+									<?php } ?>
+								</td>
+							</tr>
+						</table>
+					</div>
+					<div style='padding:16px;'>
+						<table id='query_table' class='table col-md-12'>
+							<thead>
+								<?php
+								foreach($data['head'] as $key) echo "<td>$key</td>";
+								?>
+							</thead>
+							<tbody>
+								<?php
+								foreach($data['results'] as $row) {
+									echo "<tr>";
+									foreach($row as $key => $value) {
+										echo "<td>";
+										if($key == "trans_id") 
+											echo "<a href='https://$_SERVER[HTTP_HOST]/pages/lookup.php?trans_id=$value' target='_blank'>$value</a>";  //CHANGE HTTPS
+										else echo $value;
+										echo "</td>";
+									}
+									echo "</tr>";
+								} ?>
+							</tbody>
+						</table>
+					</div>
+				<?php 
+				}
+				else echo "<h3 style='padding:16px;'>No Data For Selection</h3>";
+				?>
 			</div>
 		</div>
 		<?php } ?>
