@@ -34,7 +34,7 @@ class Table {
 
 	public static function get_prebuild_data($end, $function, $start) {
 		if($function === "byHour") {
-			$file_name = "TicketsByHour";
+			$file_name = "FabLab_TicketsByHour";
 			$head = array("HOUR(`t_start`)", "COUNT(*)");
 			$statement = "SELECT HOUR(`t_start`), COUNT(*)
 		  					FROM `transactions`
@@ -43,7 +43,7 @@ class Table {
 		  					GROUP BY HOUR(`t_start`);";
 		}
 		elseif($function === "byDay") {
-			$file_name = "TicketByDay";
+			$file_name = "FabLab_TicketByDay";
 			$head = array("DAYNAME(`t_start`)", "COUNT(*)");
 			$statement = "SELECT DAYNAME(`t_start`), COUNT(*)
 							FROM `transactions`
@@ -53,7 +53,7 @@ class Table {
 		}
 		elseif($function === "byHourDay") {
 			$head = array("DAYNAME(`t_start`)", "HOUR(`t_start`),COUNT(*)");
-			$file_name = "TicketsByHourForEachDay";
+			$file_name = "FabLab_TicketsByHourForEachDay";
 			$statement = "SELECT DAYNAME(`t_start`), HOUR(`t_start`), COUNT(*)
 		  					FROM `transactions`
 		  					WHERE '$start' <= `t_start` 
@@ -62,7 +62,7 @@ class Table {
 		  					ORDER BY WEEKDAY(`t_start`), HOUR(`t_start`);";
 		}
 		elseif($function === "byStation") {
-			$file_name = "TicketsByStation";
+			$file_name = "FabLab_TicketsByStation";
 			$head = array("dg_desc", "COUNT(*)");
 			$statement = "SELECT `device_group`.`dg_desc`, COUNT(*)
 							FROM `transactions`
@@ -73,7 +73,7 @@ class Table {
 							GROUP BY `device_group`.`dg_desc`;";
 		}
 		elseif($function === "byAccount") {
-			$file_name = "TicketsByAccount";
+			$file_name = "FabLab_TicketsByAccount";
 			$head = array("name", "COUNT(*)");
 			$statement = "SELECT `accounts`.`name`, COUNT(*)
 							FROM `transactions`
@@ -84,7 +84,7 @@ class Table {
 							GROUP BY `accounts`.`name`;";
 		}
 		elseif($function === "failedTickets") {
-			$file_name = "FailedTickets";
+			$file_name = "FabLab_FailedTickets";
 			$head = array("COUNT(*)");
 			$statement = "SELECT COUNT(*)
 							FROM `transactions`
@@ -93,7 +93,7 @@ class Table {
 		  					AND `t_start` <= '$end';";
 		}
 		elseif($function === "IDTs") {
-			$file_name = "IDTs";
+			$file_name = "FabLab_IDTs";
 			$head = array("ac_id", "a_id", "trans_id", "ac_date", "operator", "staff_id", "amount", "recon_date", "recond_id", "ac_notes");
 			$statement = "SELECT *
 							FROM `acct_charge`

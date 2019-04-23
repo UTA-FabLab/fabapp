@@ -11,8 +11,6 @@
 *	 sort query and echo to js function to create file
 *	-FUTURE: make download names more 
 *	 specific
-*	-TODO: add organize by & group by
-*	 	Fill out the rest of the Table.php functions
 *
 **********************************************************/
 
@@ -36,7 +34,6 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['prebuilt_button'])) {
 	$function = htmlspecialchars(filter_input(INPUT_POST, "static_queries"));
 	$start = htmlspecialchars(filter_input(INPUT_POST, "start_time"));
 	$end = htmlspecialchars(filter_input(INPUT_POST, "end_time"));
-	$download_piechart = filter_input(INPUT_POST, "pichrt_chk");  // 't' for downloading
 	$device = htmlspecialchars(filter_input(INPUT_POST, "device"));
 
 	$params = Table::get_prebuild_data($end, $function, $start);
@@ -48,16 +45,17 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['prebuilt_button'])) {
 	}
 	
 	// create data
-	$csv = export_csv($params["file_name"], $params["head"], $params["statement"]);
-	if($params["file_name"] != "TicketsByHourForEachDay" && $params["file_name"] != "FailedTickets"
-	&& $download_piechart === "t")
-		$pie = create_pie_chart($params["file_name"], $params["head"], $params["statement"]);
+	$data['head'] = $params['head'];
+	$data['file_name'] = $params['file_name'];
+	$data['query'] = $params['statement'];
+	$data['results'] = query_results($params['statement']);
+	$data['tsv'] = tsv($params['head'], $params['statement']);
+	// pie chart
+	if($params["file_name"] != "FabLab_TicketsByHourForEachDay" && $params["file_name"] != "FabLab_FailedTickets" 
+	&& $params["file_name"] != "FabLab_IDTs")
+		$data['pie'] = create_pie_chart($params["head"], $params["statement"]);
+	else $data['pie'] = NULL;
 
-	$script = "<script> window.onload = function() {".(isset($pie) ? "	 create_pie_chart('$pie[data]', '$pie[file_name]');	 " : "");
-	$script .= "create_csv('$csv[file_name]', '$csv[data]');
-			}
-		</script>";
-	echo $script;
 }
 // custom query
 elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_custom_query'])) {
@@ -70,11 +68,12 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_custom_query
 	$group_by = filter_input(INPUT_POST, "group_by_select");
 	$order_by = filter_input(INPUT_POST, "order_by_select");
 	
+	// if second table value chosen, get joinable information
 	if($table2 != "—Optional Cross Reference—") {
 		$selections2 = implode(", ", (filter_input(INPUT_POST, "selection-2") == "*" ? array("`$table1`.*") : get_selections("2")));
 		$join = "JOIN `".$table2."` ON ".explode('|', filter_input(INPUT_POST, "join_select"))[0]." = ".explode('|', filter_input(INPUT_POST, "compare_join_select"))[0];
 	}
-	$head = $selections.",".$selections2."\\n";
+	$head =  ($selections2 ? explode(', ', $selections.", ".$selections2) : explode(', ', $selections));
 	$query = ($selections2 ? "SELECT ".$selections.", ".$selections2 : "SELECT ".$selections)." ";  // if applies: add selections
 	$query .= " FROM `$table1` ";
 	$query = ($join ? $query.$join." " : $query);  // if applies: add join
@@ -82,53 +81,61 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_custom_query
 	$query = ($group_by ? $query."GROUP BY ".$group_by." " : $query);
 	$query = ($order_by ? $query."ORDER BY ".$order_by : $query);
 
-	echo "<script> console.log(\"QUERY: $query\"); </script>";  //TESTING
+	$data['file_name'] = "FabLab_DataReport";
+	$data['results'] = query_results($query);
+	$data['head'] = array_keys($data['results'][0]);
+	$data['query'] = $query;
+	$data['tsv'] = tsv($head, $query);
+	$data['pie'] = NULL;
 
-	//TODO: create head and add query for checking
-	initiate_query($head, $query);
 }
 
 
-// -————————————  PREBUILD QUERY ————————————— 
-// 	-Get fields, sort values, inject JS function call at bottom of page
-
-function export_csv($file_name, $head, $statement) {
+// return tsv string to print into excel sheet
+function tsv($head, $statement) {
 	global $mysqli;
 
-	$values = "";
 	if($results = $mysqli->query($statement)) {
-  		// failed tickets only have the one value
-  		if($file_name == "FailedTickets") {
-  			$row = $results->fetch_assoc();
-  			$values = "$head[0]\n".$row['COUNT(*)'];
-  		}
-  		else {
-  			$values = implode(",", $head)."\\n";  // create t-head
-			while($row = $results->fetch_assoc()) {
-				$values .= implode(",", $row)."\\n";
-			}
-		}
-		return array_combine(array('file_name', 'data'), array($file_name, $values));
+		$values = implode("\\t", $head)."\\n";
+		while($row = $results->fetch_assoc())
+			$values .= implode("\\t", $row)."\\n";
+		return $values;
 	}
 }
 
-
-function create_pie_chart($file_name, $head, $statement) {
+// return an array of the results of a query
+function query_results($statement) {
 	global $mysqli;
 
 	if($results = $mysqli->query($statement)) {
 		$values = array();
-		$slices = array();
-		while($row = $results->fetch_assoc()) {
-			$values[$row[$head[0]]] = $row[$head[1]];
-		}
-		$sum = array_sum($values);
-		foreach($values as $key => $value) {
-			$slices[] = "$key,".strval($value / $sum);
-		}
-	echo "<script> console.log(\"PIE STuff\"); </script>";  //TESTING
+		while($row = $results->fetch_assoc())
+			$values[] = $row;
+		return $values;
+	}
+}
 
-		return array_combine(array('data', 'file_name'), array(implode(";", $slices), $file_name));
+// -————————————  PREBUILD QUERY ————————————— 
+// 	-Get fields, sort values, inject JS function call at bottom of page
+
+
+function create_pie_chart($head, $statement) {
+	global $mysqli;
+
+	if($results = $mysqli->query($statement)) {
+		// convert results into array
+		$values = array();
+		while($row = $results->fetch_assoc())
+			$values[$row[$head[0]]] = $row[$head[1]];
+
+		$sum = array_sum($values);
+
+		// get proportionality of each value for each key
+		$slices = array();
+		foreach($values as $key => $value)
+			$slices[] = "$key,".strval($value / $sum);
+
+		return implode(";", $slices);
 	}	
 }
 
@@ -165,31 +172,6 @@ function get_selections($table) {
 	}
 }
 
-
-function initiate_query($head, $query) {
-	global $mysqli;
-
-	// contains a semicolon which would allow for insertion of another statement (ie. INSERT, DROP, ALTER, etc)
-	if(strpos($query, ';') !== false)
-		echo "<script> alert('There is a banned character in your query'); </script>";
-	elseif($results = $mysqli->query($query)) {
-		// add header
-		$data = "";
-		while($row = $results->fetch_assoc()) {
-			$data .= implode(',', $row)."\\n";
-		}
-		$data = "QUERY: ".$query."\\n".$head.$data;
-		echo "<script> window.onload = function() {
-					create_csv('$csv[file_name]', \"$data\");
-				}
-			 </script>";
-	}
-	else {
-		echo "<script> console.log('No bueno');</script>";
-	}
-}
-
-
 ?>
 
 <title><?php echo $sv['site_name'];?> Data Reports</title>
@@ -215,12 +197,12 @@ function initiate_query($head, $query) {
 					</div>
 					<!-- pie chart -->
 					<div>
-						<input value='f' name='pichrt_chk' id='pichrt_chk' hidden/>
 						<canvas id='piechart' width="1000px" height="1500px" hidden>Your browser does not support graphics</canvas>
 						<a id='download' download="FabApp_PieChart.png" href="" onclick="download_piechart(this);" hidden></a>
 					</div>
-						<!-- Prebuilt inputs -->
-						<table class='table'> <tr>
+					<!-- Prebuilt inputs -->
+					<table class='table'> 
+						<tr>
 							<td class='col-md-6' align="pull-left">
 								<select id='static_queries' name='static_queries' class='form-control' onchange='showQueryContent(this), prebuilt_populated()'>
 									<option disabled selected hidden>Select Query</option>
@@ -236,12 +218,8 @@ function initiate_query($head, $query) {
 							<td class='col-md-2'>
 								<button name='prebuilt_button' id='prebuilt_button' class='btn btn-default' style='width:80%;' disabled>Get Query</button> 
 							</td>
-							<td class='col-md-2' style='height:100%;margin:auto;'>
-								<div class='input-group'>
-									<label><input id='pie_check' type="checkbox" onchange='var pie=document.getElementById("pichrt_chk"); pie.value = (pie.value =="f") ? "t" : "f";' disabled> Include Piechart</label>
-								</div>
-							</td> 
-						</tr> </table>
+						</tr> 
+					</table>
 				</div>
 
 				<div id='prebuilt_fields'>
@@ -432,6 +410,60 @@ function initiate_query($head, $query) {
 				</form>
 			</div>
 		</div>
+
+	<!---------------------------------- Query Data Area ---------------------------------->
+		<?php if(isset($data) && $data['results'] != NULL) { ?>
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<button class='btn btn-default' style='right: 10px;' type='button' data-toggle='collapse' data-target='.results_collapse' 
+				  onclick='results_button_text(this);' aria-expanded='false' aria-controls='collapse'>Hide Query</button>
+			</div>
+			<div class='collapse in results_collapse'>
+				<div>
+					<table class='col-md-12'>
+						<tr> 
+							<td colspan='2' style='padding:16px;'> 
+								<?php echo $data['query'] ?> 
+							</td> 
+						</tr>
+						<tr>
+							<td class='col-md-3' style='padding:16px;'>
+								<button class='btn btn-default' onclick='exportTableToExcel("<?php echo $data['tsv'] ?>", "<?php echo $data['file_name']?>");'>Download Excel</button>
+							</td>
+							<td class='col-md-3' style='padding:16px;'>
+								<?php if($data['pie']) { ?>
+								<button class='btn btn-default' onclick='create_pie_chart("<?php echo $data['pie'] ?>", "<?php echo $data['file_name']?>");'>Download Pie Chart</button>
+								<?php } ?>
+							</td>
+						</tr>
+					</table>
+				</div>
+				<div style='padding:16px;'>
+					<table id='query_table' class='table col-md-12'>
+						<thead>
+							<?php
+							foreach($data['head'] as $key) echo "<td>$key</td>";
+							?>
+						</thead>
+						<tbody>
+							<?php
+							foreach($data['results'] as $row) {
+								echo "<tr>";
+								foreach($row as $key => $value) {
+									echo "<td>";
+									if($key == "trans_id") 
+										echo "<a href='http://$_SERVER[HTTP_HOST]/pages/lookup.php?trans_id=$value' target='_blank'>$value</a>";  //CHANGE HTTPS
+									else echo $value;
+									echo "</td>";
+								}
+								echo "</tr>";
+							} ?>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+		<?php } ?>
 	</div>
 </div>
 
@@ -439,17 +471,14 @@ function initiate_query($head, $query) {
 <?php include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php'); ?>
 
 <script>
+	$("#query_table").DataTable();
+
 	// used once query type is selected to display time & checkbox & hide/show devices inputs
 	function showQueryContent(element) {
 		var option = element.value;
 		$("#dates").show();
 		document.getElementById('devices').classList.remove("hidden");
-		document.getElementById("pie_check").disabled = false;
-		if(option == "byHourDay") {
-			document.getElementById("pie_check").disabled = true;
-			document.getElementById("pichrt_chk").value = "f";
-		}
-		else if(option == "byStation")
+		if(option == "byStation")
 			document.getElementById('devices').classList.add("hidden");
 	}
 
@@ -469,13 +498,40 @@ function initiate_query($head, $query) {
 	}
 
 
-	// js download the passed values to add to csv; download and reload page so that
-	// 	it doesn't redownload everytime refreshed
-	function create_csv(filename, array) {
-		var csvContent = 'data:text/csv;charset=utf-8,' + array;
-		var encodedUri = encodeURI(csvContent);
-		window.open(encodedUri);
-		// window.location.href = "./stats.php"
+	function results_button_text(element) {
+		if(element.innerHTML == "Hide Query") element.innerHTML = "Show Query";
+		else element.innerHTML = "Hide Query";
+	}
+
+
+	function exportTableToExcel(tsv, filename = ''){
+		var downloadLink;
+		var dataType = 'application/vnd.ms-excel';
+		
+		// Specify file name
+		filename = filename?filename+'.xls':'excel_data.xls';
+		
+		// Create download link element
+		downloadLink = document.createElement("a");
+		
+		document.body.appendChild(downloadLink);
+		
+		if(navigator.msSaveOrOpenBlob){
+				var blob = new Blob(['\ufeff', tsv], {
+						type: dataType
+				});
+				navigator.msSaveOrOpenBlob( blob, filename);
+		}
+		else{
+				// Create a link to the file
+				downloadLink.href = 'data:' + dataType + ', ' + tsv;
+		
+				// Setting the file name
+				downloadLink.download = filename;
+				
+				//triggering the function
+				downloadLink.click();
+		}
 	}
 
 
@@ -569,12 +625,12 @@ function initiate_query($head, $query) {
 			$("#columns, #condition_row, #group_by, #order_by, #submit_custom_query").show();
 			$("#table-2").prop("disabled", false);
 			document.getElementById("selection-"+table).disabled = false;
-
 			$.ajax({
-				url: 'sub/getTableCols.php?table_id='+table_choice,
+				url: './sub/getTableCols.php?table_id='+table_choice,
 				type: 'GET', 
 				dataType: "json",     // change dataType as well.
 				success: function(data) {
+					console.log("LN: 631");
 					add_columns_to_selections(data, table);
 					add_columns_to_conditions(table);
 					add_columns_to_joins(table);
@@ -664,6 +720,7 @@ function initiate_query($head, $query) {
 			var select = create_selection(column_select, selected_column, value);  // SELECT: allow for selection of functions applied to column
 			var functionality = function() {
 				unhide_tag_option_if_hidden(select, selected_column, table);
+				if(document.getElementById('tags-'+table).children.length == 0) column_select.value = '*';
 				refactor_selection_names(table);  // rename others to be sequential
 			};
 
@@ -846,17 +903,6 @@ function initiate_query($head, $query) {
 	// function to allow more precise evalutation for future options
 	function unhide_tag_option_if_hidden(select, selected_column, table) {
 		selected_column.hidden = false;
-	}
-
-
-	//DELETE: no longer needed but kept for reference
-	function isChecked(x) {
-		console.log("HERE");  //TESTING
-		if( $("#"+x).is(":visible") ) 
-			$("#"+x).hide();
-		else {
-			$("#"+x).show();
-		}
 	}
 
 </script>

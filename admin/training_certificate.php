@@ -73,7 +73,7 @@ function submitTM($tm_id, $operator, $staff){
 	<!-- /.row -->
 	<div class="row">
 		<div class="col-md-8">
-			<?php if ($staff && $staff->getRoleID() >= $sv['minRoleTrainer']) {?>
+			<?php if ($staff && $staff->getRoleID() >= $sv['LvlOfLead']) {?>
 				<div class="panel panel-default">
 					<div class="panel-heading">
 						<i class="far fa-check-circle fa-lg"></i> Certify Completion of Training
