@@ -564,6 +564,7 @@ function get_selections($table) {
 	}
 
 	function create_pie_chart(data, filename) {
+		console.log(data);
 		var canvas = document.getElementById('piechart');
 		canvas.getContext('2d').clearRect(0, 0, 1000, 1500);
 		// pre-made color list
@@ -579,8 +580,9 @@ function get_selections($table) {
 			var color = colors[parseInt(x*colors.length/data.length)];  // space out colors so they are different Hues
 			var row = data[x].split(',');
 			var stop = start + 2 * Math.PI * row[1];  // wedge ending
-			var text_pos = [parseInt(x/row_per_col)*300+50, (x%row_per_col)*50+1100];
-			create_wedge(canvas, color, start, stop, row[0], text_pos[0], text_pos[1]);
+			var text = row[0].substring(0,12).padEnd(12) + (parseFloat(row[1]) * 100).toFixed(1).toString()+'%';
+			var text_pos = [parseInt(x/row_per_col)*350+25, (x%row_per_col)*50+1100];
+			create_wedge(canvas, color, start, stop, text, text_pos[0], text_pos[1]);
 			start = stop;
 		}
 		document.getElementById('download').download = filename;
