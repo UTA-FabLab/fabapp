@@ -72,7 +72,7 @@ class TrainingModule {
 		
 		if (!Users::regexUser($operator)) return "Invalid Operator ID";
 
-		if ($sv['minRoleTrainer'] > $staff->getRoleID()){
+		if ($sv['LvlOfLead'] > $staff->getRoleID()){
 			return ("Staff Member Lacks Authority to Issue Certificate");
 		}
 	
