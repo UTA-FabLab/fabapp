@@ -260,10 +260,6 @@ class ObjBox {
         } else {
             //Generate New Address
             $address = self::suggestAddress();
-            // exit because ObjBox has Error
-            if (strlen($address) > 2){
-                return $address;
-            }
 
             //Log moving item into ObjManager
             if ($mysqli->query("
