@@ -59,7 +59,7 @@ class Wait_queue {
     }
     
 
-    public static function insertWaitQueue($operator, $d_id, $dg_id, $phone, $email) {
+    public static function insertWaitQueue($operator, $d_id, $dg_id, $phone, $carrier_name, $email) {
         global $mysqli;
         
         /**
@@ -67,6 +67,7 @@ class Wait_queue {
          * d_id, dg_id
          */
         
+        //return ("<div class='alert alert-danger'>Bad Phone Number - $carrier_name</div>");
         //Validate input variables
         if (!self::regexPhone($phone) && !empty($phone)) {
             return ("<div class='alert alert-danger'>Bad Phone Number - $phone</div>");
@@ -85,9 +86,9 @@ class Wait_queue {
 
             if ($mysqli->query("
                 INSERT INTO `wait_queue` 
-                  (`operator`,`dev_id`,`Devgr_id`,`start_date`, `Op_email`, `Op_phone`) 
+                  (`operator`,`dev_id`,`Devgr_id`,`start_date`, `Op_email`, `Op_phone`, `carrier`) 
                 VALUES
-                    ('$operator','$d_id','$dg_id',CURRENT_TIMESTAMP, '$email', '$phone');
+                    ('$operator','$d_id','$dg_id',CURRENT_TIMESTAMP, '$email', '$phone', '$carrier_name');
 
             ")){        
                 Notifications::sendNotification($mysqli->insert_id, "FabApp Notification", "You have signed up for FabApp notifications. Your Wait Ticket number is: ".$mysqli->insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
@@ -103,9 +104,9 @@ class Wait_queue {
         } else {
             if ($mysqli->query("
                 INSERT INTO wait_queue 
-                  (`operator`, `Devgr_id`,`start_date`, `Op_email`, `Op_phone`) 
+                  (`operator`, `Devgr_id`,`start_date`, `Op_email`, `Op_phone`, `carrier`) 
                 VALUES
-                    ('$operator','$dg_id',CURRENT_TIMESTAMP, '$email', '$phone');
+                    ('$operator','$dg_id',CURRENT_TIMESTAMP, '$email', '$phone', '$carrier_name');
             ")){        
                 Notifications::sendNotification($mysqli->insert_id, "FabApp Notification", "You have signed up for FabApp notifications. Your Wait Ticket number is: ".$mysqli->insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateWaitTimes();
@@ -146,22 +147,9 @@ class Wait_queue {
         global $mysqli;
         global $operator;
 
-        // Get the email or phone number of the student to send them a confirmation notification
-        if ($result = $mysqli->query("
-            SELECT `Op_email`, `Op_phone`, `last_contact`
-            FROM `wait_queue`
-            WHERE `Q_id` = $queueItem->Q_id
-            LIMIT 1;
-        ")) {
-            $row = $result->fetch_assoc();
-            if (isset($row['Op_phone'])) {
-                // Send a notification that they have canceled their wait queue ticket
-                Notifications::sendNotification($queueItem->q_id, "FabApp Notification", "Your Wait Ticket has been cancelled", 'From: FabApp Notifications' . "\r\n" .'', 0);
-            }                 
-        }
-        else {
-            echo ("Could not retrieve phone number of customer ID #$queueItem->operator");
-        }
+
+            // Send a notification that they have canceled their wait queue ticket
+            Notifications::sendNotification($queueItem->q_id, "FabApp Notification", "Your Wait Ticket has been cancelled", 'From: FabApp Notifications' . "\r\n" .'', 0);             
         
             if ($mysqli->query("
                 UPDATE `wait_queue`
@@ -224,16 +212,8 @@ class Wait_queue {
             return $mysqli->error;
         }
         
-        // Get the email or phone number of the student to send them a confirmation notification
-        if ($result = $mysqli->query("
-            SELECT `Op_email`, `Op_phone`, `last_contact`
-            FROM `wait_queue`
-            WHERE `Operator` = $operator AND valid = 'Y'
-            LIMIT 1;
-        ")) {
-            $row = $result->fetch_assoc();
-            Notifications::sendNotification($q_id, "FabApp Notification", "Your Wait Ticket has been completed.", 'From: FabApp Notifications' . "\r\n" .'', 0);
-        }
+
+        Notifications::sendNotification($q_id, "FabApp Notification", "Your Wait Ticket has been completed.", 'From: FabApp Notifications' . "\r\n" .'', 0);
         
 
         $msg = Wait_queue::deleteContactInfo($q_id);
@@ -250,7 +230,7 @@ class Wait_queue {
         global $mysqli;
         if ($mysqli->query("
             UPDATE `wait_queue`
-            SET `Op_email`=NULL, `Op_phone`=NULL, `valid` = 'N', `End_date` = CURRENT_TIMESTAMP
+            SET `Op_email`=NULL, `Op_phone`=NULL, `carrier` = NULL, `valid` = 'N', `End_date` = CURRENT_TIMESTAMP
             WHERE `Q_id` = $q_id;
         ")) {
             //echo("\nSuccessfully deleted $q_id contact info!");
@@ -309,7 +289,7 @@ class Wait_queue {
         
         if ($mysqli->query("
             UPDATE `wait_queue`
-            SET `Op_email` = NULL, `Op_phone` = NULL, `End_date` = CURRENT_TIMESTAMP, valid='N'
+            SET `Op_email` = NULL, `Op_phone` = NULL, `carrier` = NULL, `End_date` = CURRENT_TIMESTAMP, valid='N'
             WHERE valid='Y';
         ")){
             return true;

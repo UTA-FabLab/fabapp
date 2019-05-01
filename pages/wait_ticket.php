@@ -4,7 +4,7 @@
  *   FabApp V 0.91
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
-$d_id1 = $dg_id1 = $ph1 = $em1 = $operator1 = $wt_msg = "";
+$d_id1 = $dg_id1 = $ph1 = $carrier_name1 = $em1 = $operator1 = $wt_msg = "";
 $number_of_queue_tables = 0;
 $device_array = array();
 
@@ -37,6 +37,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
         $d_id1 = filter_input(INPUT_POST,'devices');
         $dg_id1 = filter_input(INPUT_POST,'dg_id');
         $status = Wait_queue::hasDGWait($operator1 , $dg_id1);
+        
         if ($status)
         {
             $wt_msg = ("<div style='text-align: center'>
@@ -44,14 +45,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                         Operator is already in this Wait Queue.
                     </div> </div>");
         } else {
-            $wait_id1 = Wait_queue::insertWaitQueue($operator1, $d_id1, $dg_id1, $ph1, $em1);
-
-            if (is_int($wait_id1)){
-                $_SESSION['wt_msg'] = "success";
-                header("Location:wait_ticket.php");
-
+            if($ph1 && !isset($_POST['carrier_name'])){
+                $wt_msg = ("<div style='text-align: center'>
+                <div class='alert alert-danger'>
+                    You Must Select A Carrier If Entering a Phone Number
+                </div> </div>");
+            } elseif (!$ph1 && isset($_POST['carrier_name'])){
+                $wt_msg = ("<div style='text-align: center'>
+                <div class='alert alert-danger'>
+                    You Must Enter a Phone Number If Selecting a Carrier
+                </div> </div>");
+                
             } else {
-                $wt_msg = $wait_id1;
+                $carrier_name1 = filter_input(INPUT_POST,'carrier_name');
+                $wait_id1 = Wait_queue::insertWaitQueue($operator1, $d_id1, $dg_id1, $ph1, $carrier_name1, $em1);
+
+                if (is_int($wait_id1)){
+                    $_SESSION['wt_msg'] = "success";
+                    header("Location:wait_ticket.php");
+
+                } else {
+                    $wt_msg = $wait_id1;
+                }
             }
         }
     } else {
@@ -109,7 +124,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                             </td>
                         </tr>
                         <tr>
-                            <td><a href="#" data-toggle="tooltip" data-placement="top" title="The person that you will issue a wait ticket for">Operator</a></td>
+                            <td><a href="#" data-toggle="tooltip" data-placement="top" title="The person's MavID that you will issue a wait ticket for">Operator</a></td>
                             <td><input type="text" name="operator1" id="operator1" class="form-control" placeholder="1000000000" maxlength="10" size="10" value="<?php echo $operator1;?>" tabindex="1" oninput="inUseCheck()"/></td>
                         </tr>
                         <tr>
@@ -121,7 +136,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                 <a href="#" data-toggle="tooltip" data-placement="top" title="The phone number of person that you will issue a wait ticket for">(Optional) Phone</a>
                                 <button type="button" class="btn fas fa-broadcast-tower" onclick="listCarriers()"></button>
                             </td>
-                            <td><input type="text" name="op-phone" id="op-phone" class="form-control" placeholder="phone number" maxlength="10" size="10" value="<?php echo $ph1;?>" tabindex="1"/></td>
+                            <td>
+                                <div class="col-md-6">
+                                    <input type="text" name="op-phone" id="op-phone" class="form-control" placeholder="phone number" maxlength="10" size="10" value="<?php echo $ph1;?>" tabindex="1"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <select class="form-control" name="carrier_name" id="carrier_name" tabindex="1">
+                                        <option value="" disabled selected>Select Phone Carrier</option>
+                                        <option value="AT&T">AT&amp;T</option>
+                                        <option value="Verizon">Verizon</option>
+                                        <option value="T-Mobile">T-Mobile</option>
+                                        <option value="Sprint">Sprint</option>
+                                        <option value="Virgin Mobile">Virgin Mobile</option>
+                                        <option value="Prject Fi">Project Fi</option>
+                                    </select>
+                                </div>
+                            </td>
                         </tr>
                         <tr id="tr_verify" hidden>
                             <td colspan="2">
@@ -464,6 +494,14 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         window.location.href = "/pages/sub/endWaitList.php?q_id=" + q_id + "&loc=1";
         }
      }
+    
+    function removeAllUsers(){
+
+        if (confirm("You are about to delete ALL wait queue users. Click OK to continue or CANCEL to quit.")){
+            return true;
+        }
+        return false;
+    }
     
     <?php if ($staff->getRoleID() < $sv['clear_queue']){ ?>
         function removeAllUsers(){
