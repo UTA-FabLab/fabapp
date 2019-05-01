@@ -31,7 +31,7 @@ class Notifications {
 
             //Query the phone number and email
         if ($result = $mysqli->query("
-            SELECT `Op_phone` AS `Phone`, `Op_email` AS `Email`
+            SELECT `Op_phone` AS `Phone`, `Op_email` AS `Email`, `carrier` AS `Provider` 
             FROM `wait_queue`
             WHERE `Q_id` = $q_id AND valid='Y'
         ")) 
@@ -39,18 +39,19 @@ class Notifications {
             $row = $result->fetch_assoc();
             $phone = $row['Phone'];
             $email = $row['Email'];
+            $provider = $row['Provider'];
 
+        
             if (!empty($phone)) {
                 if ($result = $mysqli->query("
                     SELECT `email`
                     FROM `carrier`
-                    WHERE 1;
+                    WHERE `provider` = '$provider';
                 ")) {
                     while ($row = $result->fetch_assoc()) {
                         list($a, $b) = explode('number', $row['email']);
 
                         $hasbeenContacted = self::SendMail("".$phone."".$b."", $subject, $message);
-                        
                         if ($markContact == 1) {
                             $setLastContacted = true;
                         }
