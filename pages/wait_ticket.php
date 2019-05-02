@@ -143,12 +143,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                 <div class="col-md-6">
                                     <select class="form-control" name="carrier_name" id="carrier_name" tabindex="1">
                                         <option value="" disabled selected>Select Phone Carrier</option>
-                                        <option value="AT&T">AT&amp;T</option>
-                                        <option value="Verizon">Verizon</option>
-                                        <option value="T-Mobile">T-Mobile</option>
-                                        <option value="Sprint">Sprint</option>
-                                        <option value="Virgin Mobile">Virgin Mobile</option>
-                                        <option value="Prject Fi">Project Fi</option>
+                                        <?php // Load all of the device groups that are being waited for - signified with a 'DG' in front of the value attribute
+                                            if ($result = $mysqli->query("
+                                                    SELECT `provider`
+                                                    FROM `carrier` 
+                                                    WHERE 1;
+                                            ")) {
+                                                while ( $rows = mysqli_fetch_array ( $result ) ) {
+                                                    // Create value in the form of DG_dgID-dID
+                                                    echo "<option value=". $rows ['provider'] .">" . $rows ['provider'] . "</option>";
+                                                }
+                                            } else {
+                                                die ("There was an error loading the phone carriers.");
+                                            } ?> 
                                     </select>
                                 </div>
                             </td>
