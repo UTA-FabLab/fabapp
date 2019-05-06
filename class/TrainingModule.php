@@ -52,14 +52,17 @@ class TrainingModule {
 
 	public static function get_all_certificates() {
 		global $mysqli;
-		$result = $mysqli->query("SELECT * FROM `tm_enroll`
+
+		if($result = $mysqli->query("SELECT * FROM `tm_enroll`
 									 LEFT JOIN `trainingmodule`
 									 ON `tm_enroll`.`tm_id` = `trainingmodule`.`tm_id`
-									 ORDER BY `tme_key` DESC;");
-		while($row = $result->fetch_array(MYSQLI_ASSOC)) {
-			$trainings[] = $row;
+									 ORDER BY `tme_key` DESC;
+			")) {
+			while($row = $result->fetch_assoc()) {
+				$trainings[] = $row;
+			}
+			return $trainings;
 		}
-		return $trainings;
 	}
 
 	
@@ -69,7 +72,7 @@ class TrainingModule {
 		
 		if (!Users::regexUser($operator)) return "Invalid Operator ID";
 
-		if ($sv['minRoleTrainer'] > $staff->getRoleID()){
+		if ($sv['LvlOfLead'] > $staff->getRoleID()){
 			return ("Staff Member Lacks Authority to Issue Certificate");
 		}
 	
@@ -79,13 +82,15 @@ class TrainingModule {
 			FROM `tm_enroll`
 			WHERE tm_id = $this->tm_id AND operator = ".$staff->getOperator()." AND `current` = 'Y'
 		")){
-			if( $results->num_rows == 1 || $staff->getRoleID() > 9) {
+			if( $results->num_rows == 0 && $staff->getRoleID() < $sv['LvlOfLead']) {
 				//True when they have the related training
 				//Or when they are Admin
-			} else {
 				return "Staff Member Lacks Training";
 			}
-		} else {
+			else {
+			}
+		}
+		else {
 			return "Error with submission criteria";
 		}
 		
@@ -166,15 +171,18 @@ class TrainingModule {
 		}
 
 		global $mysqli;
-		$result = $mysqli->query("SELECT * FROM `tm_enroll`
+		if($result = $mysqli->query("SELECT * FROM `tm_enroll`
 									 LEFT JOIN `trainingmodule`
 									 ON `tm_enroll`.`tm_id` = `trainingmodule`.`tm_id`
-									 WHERE `tm_enroll`.`tm_id` = '".$tm_id."'
-									 ORDER BY `tme_key` DESC;");
-		while($row = $result->fetch_array(MYSQLI_ASSOC)) {
-			$trainings[] = $row;
+									 WHERE `tm_enroll`.`tm_id` = '$tm_id'
+									 ORDER BY `tme_key` DESC;"
+		)) {
+			while($row = $result->fetch_array(MYSQLI_ASSOC)) {
+				$trainings[] = $row;
+			}
+			return $trainings;
 		}
-		return $trainings;
+		return false;
 	}
 
 	//Returns String if Error
@@ -200,7 +208,8 @@ class TrainingModule {
 			} else {
 				return $mysqli->error;
 			}
-		} elseif ($dg_id){
+		}
+		elseif ($dg_id){
 			if ($mysqli->query("
 				INSERT INTO trainingmodule 
 					(`title`, `tm_desc`, `duration`, `dg_id`, `tm_required`, `class_size`, `tm_stamp`)

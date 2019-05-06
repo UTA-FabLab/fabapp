@@ -269,11 +269,8 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
 								</form>
 								</ul>
 							</li>
-						<?php } ?>
-							<li>
-								<a href="/pages/tools.php"><i class="fas fa-toolbox"></i> Tools</a>
-							</li>
-						<?php if (isset($staff) && ($staff->getRoleID() >=  $sv['LvlOfStaff'] || $staff->getRoleID() ==  $sv['serviceTechnican'])) { ?>
+						<?php }
+						if (isset($staff) && ($staff->getRoleID() >=  $sv['LvlOfStaff'] || $staff->getRoleID() ==  $sv['serviceTechnican'])) { ?>
 							<li>
 								<a href="#"><i class="fa fa-wrench fa-fw"></i> Service<span class="fa arrow"></span></a>
 								<ul class="nav nav-second-level">
@@ -289,8 +286,26 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
 								</ul>
 								<!-- /.nav-second-level -->
 							</li>
-						<?php }
-						if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfStaff']) { ?>
+						<?php } ?>
+							<li>
+								<a href="/pages/tools.php"><i class="fas fa-toolbox"></i> Tools</a>
+							</li>
+						<?php
+						if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfLead']) { ?>
+							<li>
+								<a herf="#"><i class="fas fa-book"></i> Training<span class="fas fa-angle-left"></span></a>
+								<ul class="nav nav-third-level">
+									<li>
+										<a href="/admin/training_certificate.php"><i class="far fa-check-circle"></i> Issue Certificate</a>
+									</li>
+									<li>
+										<a href="/admin/training_revoke.php"><i class="fas fa-search"></i> Issued Trainings</a>
+									</li>
+									<li>
+										<a href="/admin/manage_trainings.php"><i class="fas fa-edit"></i> Manage Trainings</a>
+									</li>
+								</ul>
+							</li>
 							<?php if ( $sv['wait_system'] == "new"){ ?>
 								<li>
 									<a href="/pages/wait_ticket.php"><i class="fas fa-list-ol"></i> Wait Queue Ticket</a>
@@ -299,28 +314,19 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
 							<li>
 								<a href="#"><i class="fas fa-sitemap"></i> Admin<span class="fas fa-angle-left"></span></a>
 								<ul class="nav nav-second-level">
+									<?php if(isset($staff) && $staff->getRoleID() >= $sv['minRoleTrainer']) { ?>
+									<li>
+										<a href="/admin/stats.php"><i class="fas fa-chart-line"></i> Data Reports</a>
+									</li>
+									<?php } ?>
+			                                    <li>
+			                                        <a href="/admin/manage_device.php"><i class="fas fa-edit"></i> Manage Devices</a>
+			                                    </li>
 									<li>
 										<a href="/admin/objbox.php"><i class="fas fa-gift"></i> Objects in Storage</a>
 									</li>
 									<li>
 										<a href="/admin/onboarding.php"><i class="fas fa-clipboard"></i> OnBoarding</a>
-									</li>
-                                    <li>
-                                        <a href="/admin/manage_device.php"><i class="fas fa-edit"></i> Manage Devices</a>
-                                    </li>
-									<li>
-										<a herf="#"><i class="fas fa-book"></i> Training<span class="fas fa-angle-left"></span></a>
-										<ul class="nav nav-third-level">
-											<li>
-												<a href="/admin/training_certificate.php"><i class="far fa-check-circle"></i> Issue Certificate</a>
-											</li>
-											<li>
-												<a href="/admin/training_revoke.php"><i class="fas fa-search"></i> Issued Trainings</a>
-											</li>
-											<li>
-												<a href="/admin/manage_trainings.php"><i class="fas fa-edit"></i> Manage Trainings</a>
-											</li>
-										</ul>
 									</li>
 									<li>
 										<a herf="#"><i class="fas fa-users"></i> Users<span class="fas fa-angle-left"></span></a>
@@ -330,12 +336,19 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
 											</li>
 										</ul>
 									</li>
+								</ul>
+								<!-- /.nav-second-level -->
+							</li>
+							<?php if(isset($staff) && $staff->getRoleID() >= $sv['minRoleTrainer']) { ?>
+							<li>
+								<a href="#"><i class="fas fa-user-cog"></i> Site Tools<span class="fas fa-angle-left"></span></a>
+								<ul class="nav nav-second-level">
 									<li>
 										<a href="/admin/sv.php"><i class="fas fa-sliders-h"></i> Site Variables</a>
 									</li>
 								</ul>
-								<!-- /.nav-second-level -->
 							</li>
+							<?php } ?>
 						<?php } ?>
 					</ul>
 				</div>
