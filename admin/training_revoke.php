@@ -198,7 +198,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['restore_training'])
 						for ($x = 0; $x < count($trainings); $x++){
 							$row = $trainings[$x];
 							echo "<tr";
-								if($row['revoked'] == 'Y') echo " style='background-color:#ffcccc;'";  // highlight if revoked; '>' in next line is very important
+								if($row['current'] == 'N') echo " style='background-color:#ffcccc;'";  // highlight if revoked; '>' in next line is very important
 							echo ">";
 								$operator = Users::withID($row['operator']);
 								$issuer = Users::withID($row['staff_id']);
@@ -249,7 +249,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['restore_training'])
 									<!-- cell for revoke -->
 									<td class='col-sm-2'>
 										<?php if($staff && $staff->getRoleID() >= $sv['minRoleTrainer']) {
-											if($row['revoked'] === 'Y') { ?>
+											if($row['current'] === 'N') { ?>
 											<form method="post">
 												<button type='submit' value=<?php echo "'".$row['tme_key']."'"; ?> class='btn btn-success' name='restore_training' >Restore
 												</button>
@@ -258,7 +258,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['restore_training'])
 												<button type='button' value='Revoke' class='btn btn-danger' <?php echo "onclick='revoke_training(".$row['tme_key'].")'" ?> >Revoke
 												</button>
 											<?php }
-										} elseif($row['revoked'] === 'Y') {
+										} elseif($row['current'] === 'N') {
 											echo "<b>Revoked</b>";
 										}
 									echo "</td>";

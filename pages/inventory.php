@@ -42,7 +42,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && $staff->getRoleID() >= $sv['LvlOfLead
 	</div>
 	<!-- /.row -->
 	<div class="row">
-		<div class="col-md-8">
+		<div class="col-md-12">
 			<div class="panel panel-default">
 				<div class="panel-heading">
 					<i class="fas fa-warehouse fa-fw"></i> Inventory
@@ -65,15 +65,16 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && $staff->getRoleID() >= $sv['LvlOfLead
 					<table class="table table-condensed" id="invTable">
 						<thead>
 							<tr>
-								<th>Material</th>
-								<th><i class="fas fa-paint-brush fa-fw"></i></th>
-								<th>Qty on Hand</th>
+								<th class='col-md-5'>Material</th>
+								<th><i class="fas fa-paint-brush fa-fw col-md-1"></i></th>
+								<th class='col-md-2'>Qty on Hand</th>
+								<th class='col-md-4'>Product Number</th>
 							</tr>
 						</thead>
 						<tbody>
 						<?php //Display Inventory Based on device group
 						if($result = $mysqli->query("
-							SELECT `materials`.`m_id` as `m_id`, `m_name`, SUM(unit_used) as `sum`, `color_hex`, `unit`
+							SELECT `materials`.`m_id` as `m_id`, `m_name`, SUM(unit_used) AS `sum`, `materials`.`product_number`, `color_hex`, `unit`
 							FROM `materials`
 							LEFT JOIN `mats_used`
 							ON mats_used.m_id = `materials`.`m_id`
@@ -85,12 +86,13 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && $staff->getRoleID() >= $sv['LvlOfLead
 							while ($row = $result->fetch_assoc()){ ?>
 								<tr>
 									<td><?php echo $row['m_name']; ?></td>
-									<td><div class="color-box" style="background-color: #<?php echo $row['color_hex'];?>;"/></td>
+									<td align='center'><div class="color-box" style="width:100%;background-color: #<?php echo $row['color_hex'];?>;"/></td>
 									<?php if($staff && $staff->getRoleID() >= $sv['LvlOfLead']) {
 										echo "<td ondblclick='edit_materials(".$row['m_id'].")'>".number_format($row['sum'])." ".$row['unit']."</td>";
 									} else {
 										echo "<td>".number_format($row['sum'])." ".$row['unit']."</td>";
 									} ?>
+									<td><?php echo $row['product_number']; ?>
 								</tr>
 							<?php }
 						} else { ?>

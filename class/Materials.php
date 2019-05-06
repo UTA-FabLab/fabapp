@@ -17,6 +17,7 @@ class Materials {
 	private $m_parent;
 	private $color_hex;
 	private $measurable;
+	private $m_prod_number;
 	
 	public function __construct($m_id) {
 		global $mysqli;
@@ -37,9 +38,12 @@ class Materials {
 			$this->setM_parent($row['m_parent']);
 			$this->setColor_hex($row['color_hex']);
 			$this->setMeasurable($row['measurable']);
+			$this->setProdNumber($row['product_number']);
 		}
 	}
 	
+
+	// return specific device material object or return all device materials
 	public static function getDeviceMats($dg_id = false){
 		global $mysqli;
 		$device_mats = array();
@@ -48,9 +52,11 @@ class Materials {
 		
 		if($dg_id === false) {
 			if($result = $mysqli->query("
-			 SELECT m_id, price, m_name, unit 
-			 FROM materials
-			 ORDER BY m_name ASC;
+			SELECT materials.m_id, price, m_name, unit 
+			FROM materials
+			LEFT JOIN device_materials
+			ON materials.m_id = device_materials.m_id
+			ORDER BY m_name ASC;
 		  ")){
 			 while( $row = $result->fetch_assoc()) {
 				array_push($device_mats, new self($row['m_id']));
@@ -104,7 +110,7 @@ class Materials {
 	}
 
 
-	public static function update_mat($color, $m_id, $measurability, $price, $unit) {
+	public static function update_mat($color, $m_id, $measurability, $price, $product_number, $unit) {
 		global $mysqli;
 
 		$statement_parts = [];
@@ -115,26 +121,28 @@ class Materials {
 		$statement_parts[] = "`measurable` = '".$measurability."'";
 		if($price !== NULL) $statement_parts[] = "`price` = '".$price."'";
 		if($unit !== "") $statement_parts[] = "`unit` = '".$unit."'";
+		if($product_number) $statement_parts[] = "`product_number` = '$product_number'";
 
 		$prepared_statement .= implode(", ", $statement_parts)." WHERE `m_id` = '".$m_id."';";
 		// echo '<script> console.log("Prep: '.$prepared_statement.'");</script>';  //TESTING
 		if($mysqli->query($prepared_statement)) {
-			return $mysqli->affected_rows == 1;
+			// echo '<script> console.log("TRUE");</script>';  //TESTING
+			return $mysqli->affected_rows <= 1;
 		}
 		return false;
 	}
 
 
-	public static function create_new_mat($color, $measurability, $name, $price, $unit) {
+	public static function create_new_mat($color, $measurability, $name, $price, $product_number, $unit) {
 		global $mysqli;
 
 		if ($stmt = $mysqli->prepare(" 
 			INSERT INTO `materials`
-				(`m_name`, `m_parent`, `price`, `unit`, `color_hex`, `measurable`)
+				(`m_name`, `m_parent`, `price`, `product_number`, `unit`, `color_hex`, `measurable`)
 			VALUES
-				(?, NULL, ?, ?, ?, ?);
+				(?, NULL, ?, ?, ?, ?, ?);
 		")) {
-			$stmt->bind_param("sdsss", $name, floatval($price), $unit, $color, $measurability);
+			$stmt->bind_param("sdssss", $name, floatval($price), $product_number, $unit, $color, $measurability);
 			if ($stmt->execute() === true){
 				$row = $stmt->affected_rows;
 				// Success, only one row was updated
@@ -147,12 +155,12 @@ class Materials {
 				}
 			}
 		}
-	return false;
+		return false;
 	}
 
 
 	// used to check which device groups have already been assigned to material
-	public static function get_device_mat($m_id) {
+	public static function get_device_material_group($m_id) {
 		global $mysqli;
 
 		$group_ids = array();
@@ -222,6 +230,11 @@ class Materials {
 		return htmlspecialchars($name);
 	}
 
+	public static function regexProductNum($product_number) {
+		if(strlen($product_number) > 30 || strlen($product_number) == 0) return false;
+		return htmlspecialchars($product_number);
+	}
+
 	public static function regexPrice($price) {
 		if(preg_match('/^[0-9]{1,8}+(\.[0-9]{1,4})?$/', $price)) return $price;
 		return false;
@@ -278,6 +291,10 @@ class Materials {
 		return $this->color_hex;
 	}
 
+	public function getProdNumber() {
+		return $this->m_prod_number;
+	}
+
 	public function setM_id($m_id) {
 		$this->m_id = $m_id;
 	}
@@ -313,5 +330,9 @@ class Materials {
 		} else {
 			$this->color_hex = NULL;
 		}
+	}
+
+	private function setProdNumber($product_number) {
+		$this->m_prod_number = $product_number;
 	}
 }

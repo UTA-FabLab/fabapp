@@ -6,6 +6,8 @@
 *	-Allow ability for lvl lead to edit inventory
 *	-Allow ability for admin to add new material
 *	 to inventory
+*	-UPDATE: added product number
+*	 on 04.03.19
 *
 **************************************************/
 
@@ -34,12 +36,12 @@ if (filter_input(INPUT_GET, 'outcome')){
 		"}; </script>";
 }
 
-
+// -------------------------------------- PAGE FUNCTIONALITY --------------------------------------
 
 $device_mats = Materials::getDeviceMats();
 
+// new inventory processing
 if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_inventory'])) {
-
 	$outcomes = array();
 	$values = get_populated_values("row-dict");
 	foreach($values as $val) {
@@ -50,9 +52,12 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_inventory'])) {
 	}
 	header("Location: inventory_processing.php?outcome=".implode('|', $outcomes));
 }
+// new materials
 elseif ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['new_mat'])) {
 	// check inputs
 	if(!$name = Materials::regexName(filter_input(INPUT_POST, "item_name"))) $failure = "Name too long for creating new material";
+
+	$product_number = Materials::regexProductNum(filter_input(INPUT_POST, "product_number"));
 
 	$price = filter_input(INPUT_POST, "item_price");
 	if($price && !Materials::regexPrice($price)) $failure = "Bad price for creating new material";
@@ -79,53 +84,46 @@ elseif ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['new_mat'])) {
 
 	// commence query
 	$prior_id = Materials::mat_exists($name);  // material already exists
-	if($prior_id && Materials::update_mat($color, $prior_id, $measurability, $price, $unit)) {
-		$outcome = "S".str_replace(' ', '_', $name);  // S for success, F for failed
-		foreach($device_group as $dg) {
-			$prior_dgs = Materials::get_device_mat($prior_id);  // called each time to prevent double submission in 1 attempt
-			if(in_array($dg, $prior_dgs)) continue;  // don't create duplicate
-			if(Materials::assign_device_group($dg, $m_id)) {
-				$outcome .= "|SDevice:_".$dg;
-			}
-			else {
-				$outcome .= "|FDevice:_".$dg;	
-			}
-		}
-	}
-	// material doesn't exist
-	elseif(!$prior_id && Materials::create_new_mat($color, $measurability, $name, $price, $unit)) {
-		$new_mat_id = Materials::mat_exists($name);
-		$outcome = "S".str_replace(' ', '_', $name);
-		foreach($device_group as $dg) {
-			$prior_dgs = Materials::get_device_mat($prior_id);
-			if(in_array($dg, $prior_dgs)) continue;
-			if(Materials::assign_device_group($dg, $new_mat_id)) {
-				$outcome .= "|SDevice:_".$dg;
-			}
-			else {
-				$outcome .= "|FDevice:_".$dg;	
-			}
-		}
+	// if((material exists and successfully update) || (material !exists and successfully created))
+	if(($prior_id && Materials::update_mat($color, $prior_id, $measurability, $price, $product_number, $unit)) 
+	   || (!$prior_id && Materials::create_new_mat($color, $measurability, $name, $price, $product_number, $unit))) {
+	   	$m_id = ($prior_id ? $prior_id : Materials::mat_exists($name));  // id to assign device groups
+		$outcome = "S".str_replace(' ', '_', $name).successful_and_failed_device_group_additions($m_id, $device_group);  // S for success, F for failed
 	}
 	else {  // update or create material failed
-		$outcome .= "F".str_replace(' ', '_', $name);
+		$outcome = "F".str_replace(' ', '_', $name);
 	}
 	header("Location:inventory_processing.php?outcome=".$outcome);
 }
 
 
-// get values for possible instances, return values in array
+// get values for possible instances, return values in array (eg device groups or update rows)
 function get_populated_values($tag_name) {
 	$count = 0;
 	$values = array();
 	while(true) {
-		$data = filter_input(INPUT_POST, $tag_name."-".$count);
+		$data = filter_input(INPUT_POST, $tag_name."-".$count++);
 		if(!$data || $count > 100) return $values;  // 100 to failsafe
 		
 		if($instances = substr_count($data, '|')) $values[] = explode('|', $data, $instances+1);
 		else $values[] = $data;
-		$count++;
 	}
+}
+
+
+// add already non-existing device groups to material
+function successful_and_failed_device_group_additions($m_id, $device_group) {
+	foreach($device_group as $dg) {
+		$prior_dgs = Materials::get_device_material_group($m_id);  // called each time to prevent double submission in 1 attempt
+		if(in_array($dg, $prior_dgs)) continue;  // don't create duplicate
+		if(Materials::assign_device_group($dg, $m_id)) {
+			$outcome .= "|SDevice:_".$dg;
+		}
+		else {
+			$outcome .= "|FDevice:_".$dg;	
+		}
+	}
+	return $outcome;
 }
 
 
@@ -144,26 +142,42 @@ function get_populated_values($tag_name) {
 		<div class="panel panel-default">
 			<div class="panel-heading">
 				<i class="fas fa-shipping-fast"></i> Update For Newly Delivered Inventory
+				<div class="pull-right">
+					<div class="btn-group">
+						<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+							<span class="fas fa-info"></span>
+						</button>
+						<ul class="dropdown-menu pull-right" role="menu">
+							<li>
+								<a>If the product number does not match the<br/>product received please ask a supervisor</a>
+							</li>
+						</ul>
+					</div>
+				</div>
 			</div>
 			<!-- /.panel-heading -->
 			<div class='collapse in inventory_collapse' id='collapse'>
 				<div class="panel-body">
 					<table class="table-striped table-bordered table-responsive col-md-12" id="update_mat_table">
 						<thead>
-							<th class='col-md-2' style="text-align:center">Material</th>
-							<th class='col-md-2' style="text-align:center">Change In Quantity</th>
-							<th class='col-md-2' style="text-align:center">Status</th>
-							<th class='col-md-4' style="text-align:center">Reason</th>
+							<th class='col-md-2' style="text-align:center;">Material</th>
+							<th class='col-md-2' style="text-align:center;">Change In Quantity</th>
+							<th class='col-md-1' style="text-align:center;">Status</th>
+							<th class='col-md-2' style="text-align:center;">Product Number</th>
+							<th class='col-md-3' style="text-align:center;">Reason</th>
 						</thead>
 						<tr class='update_rows'>
 							<td class="td_select">
-								<select class="form-control dm_select" onchange='update_unit(this)'>
-									<option selected='selected' value="NONE">Select Material</option>
-									<?php foreach($device_mats as $dm){
-										// options have two values: m_id, unit
-										echo ("<option value='".$dm->getM_id()."|".$dm->getUnit()."' id='".$dm->getUnit()."' >".$dm->getM_name()."</option>");
-									}?>
-								</select>
+								<div>
+									<select class="form-control dm_select" onchange='update_unit(this)'>
+										<option selected='selected' value="NONE">Select Material</option>
+										<?php foreach($device_mats as $dm){
+											// options have three values: m_id, unit, product number
+											echo ("<option value='".$dm->getM_id()."|".$dm->getUnit()."|".$dm->getProdNumber().
+													"' id='".$dm->getUnit()."' >".$dm->getM_name()."</option>");
+										}?>
+									</select>
+								</div>
 							</td>
 							<td>
 								<div class="input-group">
@@ -172,17 +186,25 @@ function get_populated_values($tag_name) {
 								</div>
 							</td>
 							<td id='status'>
-								<select class="form-control status_select">
-									<option selected='selected' value="NONE">Select Status</option>
-									<?php  if($autofills = $mysqli->query("
-										SELECT * 
-										FROM `status`
-									")) {
-										while($row = $autofills->fetch_assoc()) {
-											echo "<option value='$row[status_id]'>$row[msg]</option>";
-										}
-									}?>
-								</select>
+								<div>
+									<select class="form-control status_select">
+										<option selected='selected' value="NONE">Select Status</option>
+										<?php  if($autofills = $mysqli->query("
+											SELECT * 
+											FROM `status`
+										")) {
+											while($row = $autofills->fetch_assoc()) {
+												echo "<option value='$row[status_id]'>$row[msg]</option>";
+											}
+										}?>
+									</select>
+								</div>
+							</td>
+							<!-- TODO -->
+							<td id='product'>
+								<div class='product_number' style='text-align:center;'>
+									
+								</div>
 							</td>
 							<td id='reason'>
 								<input type='text' class='form-control reason' placeholder='Reason'/>
@@ -199,7 +221,7 @@ function get_populated_values($tag_name) {
 			</div>
 		</div>
 
-	<!-- Add new item to inventory -->
+	<!------------------------------- Add new item to inventory ------------------------------->
 	<?php if($staff->getRoleID() >= $sv['minRoleTrainer']) { ?>
 		<div class="panel panel-default">
 			<div class="panel-heading">
@@ -215,6 +237,14 @@ function get_populated_values($tag_name) {
 							</td>	
 							<td class='col-md-8'>
 								<input id='new_item_name' class='form-control' type='text' placeholder='New Material' maxlength='50' /> 
+							</td>
+						</tr>
+						<tr>
+							<td class='col-md-4'>
+								Product Number
+							</td>
+							<td class='col-md-8'>
+								<input id='new_product_number' class='form-control' type='text' placeholder='3D ABS-1KG1.75-BLK' maxlength='30' /> 
 							</td>
 						</tr>
 						<tr>
@@ -349,46 +379,42 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 
 
 <script> 
-	function button_text(element) {
-		if(element.innerHTML == "Create New Inventory Item") element.innerHTML = "Back to Update Current Inventory";
-		else { element.innerHTML = "Create New Inventory Item"; }
-	}
 
-
-	// insert [unit] into span
+	// insert [unit] and related product # into cells
 	function update_unit(element) {
-		var select = element.options[element.selectedIndex].value.split('|');
-		if(select[1] === "") select[1] = "[ - ]";
-		else if(select[1] === undefined) select[1] = "";
-		element.parentElement.parentElement.getElementsByClassName("unit")[0].innerHTML = select[1];
+		var select_mat_data = element.options[element.selectedIndex].value.split('|');
+		var great_grandparent = element.parentElement.parentElement.parentElement;
+		great_grandparent.getElementsByClassName("unit")[0].innerHTML = select_mat_data[1] || "[ - ]";
+		great_grandparent.getElementsByClassName("product_number")[0].innerHTML = select_mat_data[2] || "[unassigned]";
 	}
 
 
-
-	function additional_mat(){
+	// add material row to inventory update table
+	function additional_mat() {
 		var loaded_mats = document.querySelectorAll(".update_rows").length;
 		var table = document.getElementById("update_mat_table");
-		var row = table.insertRow(-1);
-		var cell1 = row.insertCell(0);
-		var cell2 = row.insertCell(1);
-		var cell3 = row.insertCell(2);
-		var cell4 = row.insertCell(3);
+		var row = table.insertRow(-1);  // insert at bottom
+		var cells = [row.insertCell(0), row.insertCell(1), row.insertCell(2), row.insertCell(3), row.insertCell(4)];
 		row.className = "update_rows";
 		// duplicate material dropdown, replace select id with next increment
-		cell1.innerHTML = document.getElementsByClassName("td_select")[0].innerHTML;
-		cell2.innerHTML = 
+		cells[0].innerHTML = document.getElementsByClassName("td_select")[0].innerHTML;
+		cells[1].innerHTML = 
 			"<div class='input-group'>"+
 				"<input type='number' min='0' class='form-control loc quantity' placeholder='1,000'/>"+
 				"<span class='input-group-addon unit' ></span>"+
 			"</div>";
-		cell3.innerHTML = document.getElementById("status").innerHTML;
-		cell4.innerHTML =
+		cells[2].innerHTML = document.getElementById("status").innerHTML;
+		cells[3].innerHTML = document.getElementById("product").innerHTML;
+		cells[4].innerHTML =
 			"<td id='reason'>"+ 
 				"<input type='text' class='form-control reason' placeholder='Reason'/>"+ 
 			"</td>";
 	}
 
 
+	// write number of fails and successes to modal once query sent
+	// get string with instances delineated by '|' with first char success/fail; rest: name of attempt
+	// return as format read by modal /populate modal(....)
 	function outcome_sorter(str) {
 		var outputs = str.split('|');
 		var results = [];
@@ -402,39 +428,18 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	}
 
 
+// ----------------------------------------- DATA & MODAL -----------------------------------------
 
-// --------------------- DATA & MODAL ---------------------
-
-	// populate modal with inventory
+	// populate modal with inventory change
 	function update_inventory(){
 		// get information of updated materials
-		var input_info = document.querySelectorAll(".update_rows");
-		var materials = [];
-		for(var x = 0; x < input_info.length; x++) {
-			var quantity = input_info[x].getElementsByClassName("quantity")[0].value;
-			var reason = input_info[x].getElementsByClassName("reason")[0].value.replace(/\|/g, ";");
-			
-			var mat = input_info[x].getElementsByClassName("dm_select")[0];
-			var mat_id = mat.options[mat.selectedIndex].value.split('|')[0];
-			var name = mat.options[mat.selectedIndex].text;
-
-			var status = input_info[x].getElementsByClassName("status_select")[0];
-			var status_id = status.options[status.selectedIndex].value;
-			var status_text = status.options[status.selectedIndex].text;			
-
-			// check if all information is filled out or empty
-			if(quantity === "" && mat_id === "NONE" && reason === "" && status_id === "NONE") continue;
-			else if(mat_id === "NONE") alert("Select a material or clear everything in row");
-			else if(quantity === "") alert("Enter a quantity or clear everything in row");
-			else if(parseFloat(quantity) > 99999.99) alert("The database does not accept a quantity larger than 99999.99");
-			else if(status_id === "NONE") alert("Select a status or clear everything in row");
-			else if(reason.length < 5) alert("Enter a reason or clear everything in row");
-			else {
-				materials.push({"quantity" : quantity, "mat_id" : mat_id, "reason" : reason, "name" : name,
-				  "status_id" : status_id, "status_text" : status_text});
-				continue;
-			}
-			return;
+		var input_rows = document.querySelectorAll(".update_rows");
+		var materials = [];  // list to hold dict values for data from each row
+		for(var x = 0; x < input_rows.length; x++) {
+			var row = get_and_check_update_values(input_rows[x]);
+			if(row == null) return;  // bad data: stop process from proceding to modal populations
+			else if(row == "") continue;  // ignore blank row
+			materials.push(row);
 		}
 
 		if(materials.length < 1) {
@@ -442,28 +447,56 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 			return;
 		}
 
-		var table_data = [["<b>Material</b>", "<b>Quantity</b>", "<b>Status</b>", "<b>Reason</b>"]];
+		// header for modal table
+		var table_data = [["<b>Material</b>", "<b>Quantity</b>", "<b>Status</b>", "<b>Product Number</b>", "<b>Reason</b>"]];
+		// add rest of data
 		for(var x = 0; x < materials.length; x++) {
 			if(materials[x]["status_id"] == "9") materials[x]["quantity"] = 0 - materials[x]["quantity"];
 			var data =  materials[x]["name"] + '|' + materials[x]["mat_id"] + '|' + materials[x]["quantity"] + '|' + 
 						materials[x]["reason"] + '|' + materials[x]["status_id"];
 			var information = materials[x]["name"]+"<input name='row-dict-"+x+"' value='"+data+"' hidden/>";
-			table_data.push([information, materials[x]["quantity"], materials[x]["status_text"], materials[x]["reason"]]);
+			table_data.push([information, materials[x]["quantity"], materials[x]["status_text"], materials[x]["product"], materials[x]["reason"]]);
 		}
 		populate_modal("All Data Is Correct", "update_inventory", table_data, "Update Inventory");
 	}
 
 
+	// get info for each row, add it to dictionary, send dict to populate confirmation module
+	function get_and_check_update_values(div) {
+		var quantity = div.getElementsByClassName("quantity")[0].value;
+		var reason = div.getElementsByClassName("reason")[0].value.replace(/\|/g, ";");
+		
+		var mat = div.getElementsByClassName("dm_select")[0];
+		var mat_id = mat.options[mat.selectedIndex].value.split('|')[0];
+		var name = mat.options[mat.selectedIndex].text;
+		var product = div.getElementsByClassName("product_number")[0].innerHTML;
+
+		var status = div.getElementsByClassName("status_select")[0];
+		var status_id = status.options[status.selectedIndex].value;
+		var status_text = status.options[status.selectedIndex].text;			
+
+		// check if all information is filled out or empty
+		// product is not passed to backend, so no need to check
+		if(quantity === "" && mat_id === "NONE" && reason === "" && status_id === "NONE") return "";
+		else if(mat_id === "NONE") alert("Select a material or clear everything in row");
+		else if(quantity === "") alert("Enter a quantity or clear everything in row");
+		else if(parseFloat(quantity) > 99999.99) alert("The database does not accept a quantity larger than 99999.99");
+		else if(status_id === "NONE") alert("Select a status or clear everything in row");
+		else if(reason.length < 5) alert("Enter a reason or clear everything in row");
+		else return {"quantity" : quantity, "mat_id" : mat_id, "name" : name,
+			  "status_id" : status_id, "status_text" : status_text, "product" : product, "reason" : reason};
+		// bad data
+		return null;
+	}
+
+
 	function populate_modal(button_label, button_name, data, head) {
 		var table = document.getElementById("confirmation_table");
-		
 		// clear modal
 		document.getElementById("modal-header").innerHTML =
 			"<button type='button' class='close' data-dismiss='modal'>&times;</button>"+
 			"<h4 class='modal-title'>"+head+"</h4>";
-		for(var x = table.getElementsByTagName("tr").length-1; x >= 0; x--) {
-			table.deleteRow(x);
-		}
+		for(var x = table.getElementsByTagName("tr").length-1; x >= 0; x--) table.deleteRow(x);
 		document.getElementById("modal-footer").innerHTML = 
 			"<button type='button' id='cancel_button' class='btn btn-default' data-dismiss='modal'>Cancel</button>"+
 			"<button type='submit' id='modal_submit' class='btn btn-primary' name='"+button_name+"'>"+button_label+"</button>";
@@ -483,37 +516,33 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 
 <?php 
 
+// ------------------------------------ CREATE NEW MATERIAL ---------------------------------------
+
 // further restrict new item creation to trainers
-if($staff->getRoleID() >= $sv['minRoleTrainer']) { 
+if($staff->getRoleID() >= $sv['minRoleTrainer']) { ?>
 
-	// add names and ids to check if name already exists
-	if($result = $mysqli->query("
-		SELECT `m_name`
-		FROM `materials`;"
-	)) {
-		echo "	var preexisting_mats = assign_mat_names();
-			function assign_mat_names() {
-				var temp = [];";
-		while($row = $result->fetch_array(MYSQLI_ASSOC)) {
-			echo "temp.push('$row[m_name]'.toLowerCase());";
-		}
-		echo "return temp;}";
-	} ?>
-
-
-	function additional_device_groups() {
-		var related_dg = document.querySelectorAll(".device_group").length;
-		var table = document.getElementById("new_item_table");
-		var row = table.insertRow(-1);
-		var innerdata = document.getElementById("dg_row").innerHTML;
-		row.innerHTML = innerdata.substr(0,91) + related_dg + innerdata.substr(92);
+	// change the text of the button that collapses the section between current inventory and create new material
+	function button_text(element) {
+		if(element.innerHTML == "Create New Inventory Item") element.innerHTML = "Back to Update Current Inventory";
+		else { element.innerHTML = "Create New Inventory Item"; }
 	}
 
 
-	// ugly; should redress
+	// add more device group rows 
+	function additional_device_groups() {
+		var row = document.getElementById("new_item_table").insertRow(-1);
+		var innerdata = document.getElementById("dg_row").innerHTML;
+		// put HTML of first device group div into new one with updated id
+		row.innerHTML = innerdata.replace("new_item_dg-0", "new_item_dg-"+document.querySelectorAll(".device_group").length);
+	}
+
+
+	// check if name already exists and warn of overriding
+	// checks against the listed materials in update inventory select div
 	function name_already_used(name) {
-		for(var x = 0; x < preexisting_mats.length; x++) {
-			if(preexisting_mats[x] == name) {
+		var created_materials = document.getElementsByClassName("dm_select")[0];
+		for(var x = 0; x < created_materials.options.length; x++) {
+			if(created_materials.options[x].text.toLowerCase() == name) {
 				var modal_button = document.getElementById("modal_submit");
 				var modal_header = document.getElementsByClassName("modal-header")[0];
 				modal_header.innerHTML = modal_header.innerHTML + 
@@ -529,57 +558,54 @@ if($staff->getRoleID() >= $sv['minRoleTrainer']) {
 
 	// populate modal with info for new item
 	function create_new_item() {
-		var titles = ["Item Name", "Measurable", "Price", "Unit", "Color Hex"];
-		var ids = ["new_item_name", "new_item_measurability", "new_item_price", "new_item_unit"];
+		var titles = ["Item Name", "Product Number", "Measurable", "Price", "Unit", "Color Hex"];
+		var ids = ["new_item_name", "new_product_number", "new_item_measurability", "new_item_price", "new_item_unit"];
 		if(include_color) ids.push("new_item_color");  // otherwise color is not selected
 
-		// require fields populated
-		if(document.getElementById(ids[0]).value == "" || document.getElementById(ids[1]).value == "") {
+		// require fields populated (first 3)
+		for(var x = 0; x < 1; x++) if(document.getElementById(ids[x]).value == "") {
 			alert(titles[x] + " requires a value");
 			return;
 		}
-
-		var table_data = [["<b>Label</b>", "<b>Value</b>"]];
+		var material_attributes = [["<b>Attribute</b>", "<b>Value</b>"]];
+		// remove whitespace and add each attribute value to input for PHP to get data from
 		for(var x = 0; x < ids.length; x++) {
-			var value = document.getElementById(ids[x]).value.replace(/^\s+|\s+$/g, '');
-			if(!value) continue;
-
+			var value = document.getElementById(ids[x]).value.replace(/^\s+|\s+$/g, '');  
+			if(!value) continue;  // ignore blank values
+			// input to store data for PHP to get from
 			var information = "<input name='"+ids[x].substr(4)+"' value='"+value+"' hidden/>" + value;
-			table_data.push([titles[x], information]);
+			material_attributes.push([titles[x], information]);
 		}
 
 		// device groups: front end allows for double submission; back end doesn't
 		var dg_instances = document.querySelectorAll(".device_group");
 		var populated_dg_count = 0;
 		for(var x = 0; x < dg_instances.length; x++) {
-			var value = dg_instances[x].options[dg_instances[x].selectedIndex].value;
-			if(!value) continue;
-			
-			var text = dg_instances[x].options[dg_instances[x].selectedIndex].text;
-			var information = "<input name='item_device_group-"+populated_dg_count+"' value='"+value+"' hidden/>" + text;
-			table_data.push(["Device Group", information]);
-			populated_dg_count++;
+			var group = dg_instances[x].options[dg_instances[x].selectedIndex];
+			if(!group.value) continue;  // ignore blank rows
+
+			var information = "<input name='item_device_group-"+populated_dg_count++
+						+"' value='"+group.value+"' hidden/>" + group.text;  // not a typo
+			material_attributes.push(["Device Group", information]);
 		}
 
-		populate_modal("All Data Is Correct", "new_mat", table_data, "create_new_item");
-
+		populate_modal("All Data Is Correct", "new_mat", material_attributes, "New Material");
 		// display warning if name is already chosen (case insensitive, remove white space)
-		var name = document.getElementById("new_item_name").value;
-		name_already_used(name.toLowerCase().replace(/^\s+|\s+$/g, ''));
+		name_already_used(document.getElementById("new_item_name").value.toLowerCase().replace(/^\s+|\s+$/g, ''));
 	}
 
 
-
-	// ------------------- COLOR PICKING -------------------
+	// ------------------------------------- COLOR PICKING -------------------------------------
 
 	var include_color = false;  // bool to determine if to include color
 
-	var previous_value = "rgb(80,0,0)";
+	var previous_value = "rgb(80,0,0)";  // store string of rgb; default on if bad string entered
 	var color_field = document.getElementById("rgb_input");
 	color_field.value = previous_value;
 	color_field.addEventListener('keyup', function(evt){
 		// no "rgb(", ")", values > 255
 		var rgb = this.value.substring(4, this.value.length-1).split(',');
+		// you're bad at this: reset string punishment
 		if(this.value.length < 8) {
 			this.value = "rgb(80,0,0)";
 		}
@@ -587,13 +613,11 @@ if($staff->getRoleID() >= $sv['minRoleTrainer']) {
 		  parseInt(rgb[0]) > 255 || parseInt(rgb[1]) > 255 || parseInt(rgb[2]) > 255) {
 			this.value = previous_value;
 		}
-		else {
-			previous_value = this.value;
-		}
+		else previous_value = this.value;  // update value to default on
 	}, false);
 
 
-
+	// button action to hide/show activate/deactivate color input ability
 	function color_switch() {
 		$("#rgb_td").hide();
 		$("#color_picker_td").hide();
@@ -611,6 +635,7 @@ if($staff->getRoleID() >= $sv['minRoleTrainer']) {
 	}
 
 
+	// when enter or tab pressed, change color to HEX equivalent of RGB value in input
 	function color_submitOnEnter(e) {
 		keyboardKey = e.which || e.keyCode;
 		if (keyboardKey == 13) {
@@ -619,6 +644,7 @@ if($staff->getRoleID() >= $sv['minRoleTrainer']) {
 	}
 
 
+	// get value in RGB input, change to HEX, set HTML5 input color to HEX equiv.
 	function color_setFullColor() {
 		var color_field = document.getElementById("rgb_input");
 		var color = color_field.value.substring(4, color_field.value.length-1).split(',');
@@ -631,6 +657,7 @@ if($staff->getRoleID() >= $sv['minRoleTrainer']) {
 	}
 
 
+	// change RGB input to equivalent of HEX value from HTML5 color picker
 	function color_clickColor(hex, html5) {
 		var color;
 		if (html5 && html5 == 5)  {

@@ -2,6 +2,8 @@
 /**************************************************
 *
 *	@author MPZinke on 11.26.18
+*	CC BY-NC-AS UTA FabLab 2016-2019
+*	FabApp V 0.91
 *
 *	-Handles the processes used to assign, catalogue
 *	 & revoke certificates of individuals in the 
@@ -66,7 +68,7 @@ class IndividualsCertificates {
 
 		if ($stmt = $mysqli->prepare(" 
 			UPDATE `tm_enroll`
-			SET `altered_by` = ?, `altered_date` = now(), `altered_notes`= ?, `revoked` = 'Y', `expiration_date`= ?
+			SET `altered_by` = ?, `altered_date` = now(), `altered_notes`= ?, `current` = 'N', `expiration_date`= ?
 			WHERE `tme_key` = ?;
 		")) {
 		$stmt->bind_param("sssi", $staff->getOperator(), $reason, $expiration, $tme_key);
@@ -99,7 +101,7 @@ class IndividualsCertificates {
 
 		if($mysqli->query("
 			UPDATE `tm_enroll`
-			SET `revoked` = 'N', `altered_by` = '$staff_id'
+			SET `current` = 'Y', `altered_by` = '$staff_id'
 			WHERE `tme_key` = $tme_key;
 		")){
 			if($mysqli->affected_rows == 1) {
