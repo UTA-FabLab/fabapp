@@ -54,7 +54,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['Save'])) {
                             </button>
                             <ul class="dropdown-menu pull-right" role="menu">
                                 <li>
-                                    <a>Double Click on the row to Edit.</a>
+                                    <a>Click on the row to edit</a>
                                 </li>
                             </ul>
                         </div>
@@ -65,15 +65,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['Save'])) {
                         <thead>
                             <tr class="tablerow">
                                 <th class="col-sm-2">Key</th>
-                                <th class="col-sm-5">Value</th>
-                                <th class="col-sm-5">Description</th>
+                                <th class="col-sm-4">Value</th>
+                                <th class="col-sm-6">Description</th>
                             </tr>
                         </thead>
                         
                         <?php //Fetch all values in the db to generate a table
                         $sv_array = Site_Variables::getAll();
                         foreach($sv_array as $sva){
-                            echo "<tr ondblclick='edit_sv(".$sva->getId().")'>";
+                            echo "<tr onclick='edit_sv(".$sva->getId().")'>";
                             echo ("<td>".$sva->getName()."</td>");
                             echo ("<td style='word-wrap: break-word'>".$sva->getValue()."</td>");
                             echo ("<td>".$sva->getNotes()."</td>");

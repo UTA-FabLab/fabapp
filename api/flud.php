@@ -230,6 +230,8 @@ function update_end_time( $dev_id ){
         $row = $result->fetch_assoc();
         $ticket = new Transactions($row['trans_id']);
     }
+
+    $ticket->t_end = date("Y-m-d H:i:s");
 	
     if ($ticket->end_octopuppet()){
         $json_out["success"] = "Update Successful for ".$ticket->getTrans_id();

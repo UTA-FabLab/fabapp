@@ -9,6 +9,9 @@
 *	-UPDATE: added product number
 *	 on 04.03.19
 *
+*	Edited by Sammy Hamwi Summer 2019
+*	 with sheetgood changes
+*
 **************************************************/
 
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
@@ -37,17 +40,20 @@ if (filter_input(INPUT_GET, 'outcome')){
 }
 
 // -------------------------------------- PAGE FUNCTIONALITY --------------------------------------
-
-$device_mats = Materials::getDeviceMats();
+$resultStr = "";
+$materials = Materials::get_all_materials();
 
 // new inventory processing
 if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_inventory'])) {
 	$outcomes = array();
 	$values = get_populated_values("row-dict");
 	foreach($values as $val) {
+		// val: 0) name, 1) mat_id, 2) quantity, 3) status
 		if(!Materials::mat_exists($val[1])) continue;  // ignore unknown materials
 		// function regexs all inputs; S for success, F for failed
-		if(Mats_Used::update_mat_quantity($val[1], floatval($val[2]), $val[3], $staff, $val[4])) $outcomes[] = "S".str_replace(' ', '_', $val[0]);
+		// quant * -1 to counter default quantity used as negative value change in ::insert_material_used
+		if(is_int(Mats_Used::insert_material_used(null, $val[1], $val[3], $staff, -1 * floatval($val[2]))))
+			$outcomes[] = "S".str_replace(' ', '_', $val[0]);
 		else $outcomes[] = "F".str_replace(' ', '_', $val[0]);
 	}
 	header("Location: inventory_processing.php?outcome=".implode('|', $outcomes));
@@ -95,6 +101,88 @@ elseif ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['new_mat'])) {
 	}
 	header("Location:inventory_processing.php?outcome=".$outcome);
 }
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+	if ( isset($_POST['variantBtn']) ){
+		if(preg_match('/^[a-z0-9\-\_\# ]{1,100}$/i', $_POST['sheet_name']) && preg_match('/^[0-9\.]+$/i', $_POST['sheet_cost'])){
+			$sheet_name = filter_input(INPUT_POST, "sheet_name");
+			$sheet_cost = filter_input(INPUT_POST, "sheet_cost");
+
+			$resultStr = Materials::create_new_material($sheet_name, $sv[sheet_goods_parent], $sheet_cost, "NULL", "sq_inch(es)", "", "Y");
+		}
+		else{
+			if (!preg_match('/^[a-z0-9\-\_\# ]{1,100}$/i', $_POST['sheet_name'])) {
+				$resultStr = $resultStr.("<div class='col-md-12'><div class='alert alert-danger'> Incorrect input: ". $_POST['sheet_name'] ." on Sheet Good Material Name row.</div></div>"); 
+			}
+			if (!preg_match('/^([1-9][0-9]*|0)(\.[0-9]{2})?$/', $_POST['sheet_cost'])) {
+				$resultStr = $resultStr.("<div class='col-md-12'><div class='alert alert-danger'> Incorrect input: ". $_POST['cost'] ." on Sheet Cost row.</div></div>"); 
+			}
+		}
+	} 
+	elseif ( isset($_POST['variantBtn1'])){
+		$color = substr(filter_input(INPUT_POST, "sheet_color"), 1);  // ignore '#'
+		if(isset($_POST['m_id1']) && preg_match('/^[a-z0-9\-\_\# ]{1,100}$/i', $_POST['sheet_name1']) && !($color && !$color = Materials::regexColor($color))){
+			
+			//if(!$color) $color = "";
+			
+			$sheet_parent1 = filter_input(INPUT_POST, "m_id1");
+			
+			if ($result1 = $mysqli->query("			
+				SELECT `materials`.`price`
+				FROM `materials`
+				WHERE `materials`.`m_id` = '$sheet_parent1';")){
+			
+				while($row = $result1->fetch_assoc()){
+					$sheet_cost1 = $row[price];
+				}
+			}
+			$sheet_name1 = filter_input(INPUT_POST, "sheet_name1");
+
+			$resultStr = Materials::create_new_material($sheet_name1, $sheet_parent1, $sheet_cost1, "NULL", "sq_inch(es)", $color, "Y");
+		}
+		else{
+			if (!preg_match('/^[a-z0-9\-\_\# ]{1,100}$/i', $_POST['sheet_name1'])) {
+				$resultStr = $resultStr.("<div class='col-md-12'><div class='alert alert-danger'> Incorrect input: ". $_POST['sheet_name1'] ." on Sheet Good Material Name row.</div></div>"); 
+			}
+			if ($color && !$color = Materials::regexColor($color)) {
+				$resultStr = $resultStr.("<div class='col-md-12'><div class='alert alert-danger'> Bad color for creating Sheet Variant.</div></div>"); 
+			}
+			if (!preg_match('/^([1-9][0-9]*|0)(\.[0-9]{2})?$/', $_POST['m_id1'])) {
+				$resultStr =  $resultStr.("<div class='col-md-12'><div class='alert alert-danger'> You must properly fill the Sheet Parent row.</div></div>"); 
+			}
+			if (!preg_match('/^[a-f0-9]{6}$/', $_POST['sheet_color_hex']) && $_POST['sheet_color_hex'] != "") {
+				$resultStr = $resultStr.("<div class='col-md-12'><div class='alert alert-danger'> Incorrect input: ". $_POST['sheet_color_hex'] ." on Color HEX row.</div></div>"); 
+			}
+		}
+	} 
+	elseif ( isset($_POST['inventoryBtn']) ) {
+		if(isset($_POST['m_id']) && isset($_POST['variants']) && preg_match('#^\d+(?:\.\d{1,2})?$#', $_POST['sheet_width']) && preg_match('#^\d+(?:\.\d{1,2})?$#', $_POST['sheet_height']) && preg_match('/^[0-9]+$/i', $_POST['sheet_quantity'])){
+			$m_id = filter_input(INPUT_POST, "variants");
+			$sheet_parent = filter_input(INPUT_POST, "m_id");
+			$sheet_width = filter_input(INPUT_POST, "sheet_width");
+			$sheet_height = filter_input(INPUT_POST,"sheet_height");
+			$sheet_quantity = filter_input(INPUT_POST, "sheet_quantity");
+		
+			$resultStr = Materials::create_new_sheet_inventory($m_id, $sheet_parent, $sheet_width, $sheet_height, $sheet_quantity);
+		}
+		else{
+			if (!isset($_POST['m_id'])) {
+				$resultStr = $resultStr.("<div class='col-md-12'><div class='alert alert-danger'> You must properly fill the Sheet Material row.</div></div>");
+			}
+			if (!isset($_POST['variants'])) {
+				$resultStr = $resultStr.("<div class='col-md-12'><div class='alert alert-danger'> You must properly fill the Sheet Material row.</div></div>");
+			}
+			if (!preg_match('#^\d+(?:\.\d{1,2})?$#', $_POST['sheet_width'])) {
+				$resultStr = $resultStr.("<div class='col-md-12'><div class='alert alert-danger'> Incorrect input: ". $_POST['width'] ." on Width row.</div></div>");
+			}
+			if (!preg_match('#^\d+(?:\.\d{1,2})?$#', $_POST['sheet_height'])) {
+				$resultStr = $resultStr.("<div class='col-md-12'><div class='alert alert-danger'> Incorrect input: ". $_POST['height'] ." on Height row.</div></div>"); 
+			}
+			if (!preg_match('/^[0-9]+$/i', $_POST['sheet_quantity'])) {
+				$resultStr = $resultStr.("<div class='col-md-12'><div class='alert alert-danger'> Incorrect input: ". $_POST['sheet_quantity'] ." on Sheet Quantity row.</div></div>"); 
+			}
+		}
+	}
+}
 
 
 // get values for possible instances, return values in array (eg device groups or update rows)
@@ -136,7 +224,11 @@ function successful_and_failed_device_group_additions($m_id, $device_group) {
 			<h1 class="page-header">Edit Inventory</h1>
 		</div>
 	</div>
-
+	
+	<?php if ($resultStr != ""){ ?>
+			<?php echo $resultStr; ?>
+	<?php } ?>
+	
 	<!-- Update inventory -->
 	<div class="col-md-12">
 		<div class="panel panel-default">
@@ -164,17 +256,16 @@ function successful_and_failed_device_group_additions($m_id, $device_group) {
 							<th class='col-md-2' style="text-align:center;">Change In Quantity</th>
 							<th class='col-md-1' style="text-align:center;">Status</th>
 							<th class='col-md-2' style="text-align:center;">Product Number</th>
-							<th class='col-md-3' style="text-align:center;">Reason</th>
 						</thead>
 						<tr class='update_rows'>
 							<td class="td_select">
 								<div>
 									<select class="form-control dm_select" onchange='update_unit(this)'>
 										<option selected='selected' value="NONE">Select Material</option>
-										<?php foreach($device_mats as $dm){
+										<?php foreach($materials as $mat){
 											// options have three values: m_id, unit, product number
-											echo ("<option value='".$dm->getM_id()."|".$dm->getUnit()."|".$dm->getProdNumber().
-													"' id='".$dm->getUnit()."' >".$dm->getM_name()."</option>");
+											echo ("<option value='$mat->m_id|$mat->unit|$mat->m_prod_number
+													' id='$mat->unit' >$mat->m_name</option>");
 										}?>
 									</select>
 								</div>
@@ -192,9 +283,11 @@ function successful_and_failed_device_group_additions($m_id, $device_group) {
 										<?php  if($autofills = $mysqli->query("
 											SELECT * 
 											FROM `status`
-										")) {
+											WHERE `message` IS NOT NULL
+											AND `status_id` < 11;" 
+										)) {
 											while($row = $autofills->fetch_assoc()) {
-												echo "<option value='$row[status_id]'>$row[msg]</option>";
+												echo "<option value='$row[status_id]'>$row[message]</option>";
 											}
 										}?>
 									</select>
@@ -205,9 +298,6 @@ function successful_and_failed_device_group_additions($m_id, $device_group) {
 								<div class='product_number' style='text-align:center;'>
 									
 								</div>
-							</td>
-							<td id='reason'>
-								<input type='text' class='form-control reason' placeholder='Reason'/>
 							</td>
 						</tr>
 					</table>
@@ -343,9 +433,238 @@ function successful_and_failed_device_group_additions($m_id, $device_group) {
 			</div>
 		</div>
 	<?php } ?>
+		
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<button class='btn btn-default' style='right: 10px;' type='button' data-toggle='collapse' data-target='.sheet_inventory_collapse' 
+			  onclick='button_text2(this)' aria-expanded='false' aria-controls='collapse'>Manage Sheet Good Inventory</button>
+		</div>
+		<div class='collapse sheet_inventory_collapse'>
+			<div class='panel-body'>
+				<div class="col-md-6">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<i class="fas fa-plus fa-fw" aria-hidden="true"></i> Add New Sheet Good Inventory
+					</div>
+					<div class="panel-body">
+						<table class="table table-bordered table-striped table-hover">
+							<form method="POST" action="" autocomplete='off'>
+								<tr>
+									<td>
+										<b data-toggle="tooltip" data-placement="top" title="Select Variant">Sheet Material </b>
+									</td>
+									<td>
+										<div class="col-md-6">
+										<select class="form-control" name="m_id" id="m_id" onchange="change_m_id()" tabindex="1">
+											<option disabled hidden selected value="">Sheet Parent</option>
+											<?php
+												$result = $mysqli->query("			
+													SELECT DISTINCT `materials`.`m_id`, `materials`.`m_name`
+													FROM `materials`
+													WHERE `materials`.`m_parent` = '$sv[sheet_goods_parent]';");
+												while($row = $result->fetch_assoc()){
+													echo "<option value=\"$row[m_id]\">$row[m_name]</option>";
+												}
+											?>
+										</select>
+										</div>
+
+
+										<div class="col-md-6">
+										<select class="form-control" name="variants" id="variants" tabindex="1">
+											<option value =""> Select Parent First</option>
+										</select>   
+										</div>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<b data-toggle="tooltip" data-placement="top">Sheet Size (Inches) </b>
+									</td>
+									<td>
+										<div class="col-md-12">
+											<div class="col-md-2">
+												<i>Width </i>
+											</div>
+											<div class="col-md-10">
+												<div class="input-group">
+													<input type="number" class="form-control"name="sheet_width" id="sheet_width" max="500" min="1" value="0" step="0.1" placeholder="Enter Width" />
+													<span class="input-group-addon unit">inch(es)</span>
+												</div>
+											</div>
+										</div>
+										<div class="col-md-12">
+											<div class="col-md-2">
+												<i>Height </i>
+											</div>
+											<div class="col-md-10">
+												<div class="input-group">
+													<input type="number" class="form-control"name="sheet_height" id="sheet_height" max="500" min="1" value="0" step="0.1" placeholder="Enter Height" />
+													<span class="input-group-addon unit">inch(es)</span>
+												</div>
+											</div>
+										</div>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<b data-toggle="tooltip" data-placement="top">Quantity </b>
+									</td>
+									<td>
+										<input type="number" class="form-control"name="sheet_quantity" id="sheet_quantity" max="250" min="1" value="1" step="1" placeholder="Enter Quantity" />
+									</td>
+								</tr>
+
+								<tfoot>
+									<tr>
+										<td colspan="2">
+											<div class="pull-left">
+												<button type="submit" name="inventoryBtn" class="btn btn-success" onclick="return Submitter()">Add Sheet Inventory</button>
+											</div>
+										</td>
+									</tr>
+								</tfoot>
+							</form>
+						</table>
+					</div>
+					<!-- /.panel-body -->
+				</div>
+				<!-- /.panel --> 
+			</div>
+
+				<div class="col-md-6">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<i class="fas fa-plus fa-fw" aria-hidden="true"></i> Add New Sheet Good Variant
+					</div>
+					<div class="panel-body">
+						<table class="table table-bordered table-striped table-hover">
+							<form method="POST" action="" autocomplete='off'>
+								<tr>
+									<td>
+										<b data-toggle="tooltip" data-placement="top" title="Select Parent">Sheet Parent </b>
+									</td>
+									<td>
+										<select class="form-control" name="m_id1" id="m_id1">
+											<option disabled selected value="">Select Sheet</option>
+											<?php
+												$result = $mysqli->query("			
+													SELECT DISTINCT `materials`.`m_id`, `materials`.`m_name`
+													FROM `materials`
+													WHERE `materials`.`m_parent` = '$sv[sheet_goods_parent]';");
+												while($row = $result->fetch_assoc()){
+													echo "<option value=\"$row[m_id]\">$row[m_name]</option>";
+												}
+											?>
+										</select>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<b data-toggle="tooltip" data-placement="top" title="Enter the name of the sheet material">Sheet Good Name </b>
+									</td>
+									<td>
+										<input type="text" class="form-control"name="sheet_name1" id="sheet_name1" maxlength="50" size="50" placeholder="Enter Name" />
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<b data-toggle="tooltip" data-placement="top" title="Choose or input the color of the material">Color Hex </b>
+										<br>Include Color <input type="checkbox" id="colorBox" />
+									</td>
+									<td>
+										<div style="text-align:center;">
+											<input disabled type="color" name="sheet_color" id="sheet_color" value="" style="width: 300px;">
+										</div>
+									</td>
+								</tr>
+								<tfoot>
+									<tr>
+										<td colspan="2">
+											<div class="pull-left">
+												<button type="submit" name="variantBtn1" class="btn btn-success" onclick="return Submitter()">Add Sheet Variant</button>
+											</div>
+										</td>
+									</tr>
+								</tfoot>
+							</form>
+						</table>
+					</div>
+					<!-- /.panel-body -->
+					<div class="panel-heading">
+						<div class="panel panel-default">
+							<div style="text-align:center;">
+							<input class='btn btn-info' type='button' data-toggle='collapse' data-target='.variant_field' onclick='button_text1(this)' aria-expanded='false' style='width:100%;' aria-controls='collapse' id="Add Sheet Good Material" value='Add Sheet Good Material'/>
+							</div>
+						</div>
+					</div>
+					<div class="panel-body">
+						<div class='col-md-12 variant_field collapse'>
+							<table class="table table-bordered table-striped table-hover">
+								<form method="POST" action="" autocomplete='off'>
+									<tr>
+										<td>
+											<b data-toggle="tooltip" data-placement="top" title="email contact information">Sheet Good Material Name </b>
+										</td>
+										<td>
+											<input type="text" class="form-control"name="sheet_name" id="sheet_name" maxlength="50" size="50" placeholder="Enter Name" />
+										</td>
+									</tr>
+									<tr>
+										<td>
+											<b data-toggle="tooltip" data-placement="top">Sheet Cost (per in<sup>2</sup>) </b>
+										</td>
+										<td>
+											<div class="input-group">
+												<span class="input-group-addon unit">$</span>
+												<input type="number" name="sheet_cost" id="sheet_cost" min="0" step='0.01' class="form-control" max="99.99" min="0.00" value="0.00" step="0.01" tabindex="1"/>
+											</div>
+										</td>
+									</tr>
+									<tfoot>
+										<tr>
+											<td colspan="2">
+												<div class="pull-left">
+													<button type="submit" name="variantBtn" class="btn btn-success" onclick="return Submitter()">Add Sheet Material</button>
+												</div>
+											</td>
+										</tr>
+									</tfoot>
+								</form>
+							</table>
+						</div>
+					</div>
+				</div>
+				<!-- /.panel --> 
+			</div>
+			</div>
+		</div>
+	</div>
+
 	</div>
 <!-- Update inventory -->
 <!-- Display changes of inventory based on item selected; maybe new page? -->
+		<div class="row">
+			<div class="row">
+				&nbsp;&nbsp;&nbsp;&nbsp;
+			</div>
+			<!-- /.row -->
+
+			<div class="row">
+				&nbsp;&nbsp;&nbsp;&nbsp;
+			</div>
+			<!-- /.row -->
+
+			<div class="row">
+				&nbsp;&nbsp;&nbsp;&nbsp;
+			</div>
+			<!-- /.row -->
+
+			<div class="row">
+				&nbsp;&nbsp;&nbsp;&nbsp;
+			</div>
+			<!-- /.row -->
+		</div>
 </div>
 
 <!-- MODAL -->
@@ -394,7 +713,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 		var loaded_mats = document.querySelectorAll(".update_rows").length;
 		var table = document.getElementById("update_mat_table");
 		var row = table.insertRow(-1);  // insert at bottom
-		var cells = [row.insertCell(0), row.insertCell(1), row.insertCell(2), row.insertCell(3), row.insertCell(4)];
+		var cells = [row.insertCell(0), row.insertCell(1), row.insertCell(2), row.insertCell(3)];
 		row.className = "update_rows";
 		// duplicate material dropdown, replace select id with next increment
 		cells[0].innerHTML = document.getElementsByClassName("td_select")[0].innerHTML;
@@ -405,10 +724,6 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 			"</div>";
 		cells[2].innerHTML = document.getElementById("status").innerHTML;
 		cells[3].innerHTML = document.getElementById("product").innerHTML;
-		cells[4].innerHTML =
-			"<td id='reason'>"+ 
-				"<input type='text' class='form-control reason' placeholder='Reason'/>"+ 
-			"</td>";
 	}
 
 
@@ -430,6 +745,33 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 
 // ----------------------------------------- DATA & MODAL -----------------------------------------
 
+	function Submitter(){
+
+		if (confirm("You are about to submit this query. Click OK to continue or CANCEL to quit.")){
+			return true;
+		}
+		return false;
+	} 
+	
+	function change_m_id(){
+		if (window.XMLHttpRequest) {
+			// code for IE7+, Firefox, Chrome, Opera, Safari
+			xmlhttp = new XMLHttpRequest();
+		} else {
+			// code for IE6, IE5
+			xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+		}
+		xmlhttp.onreadystatechange = function() {
+			if (this.readyState == 4 && this.status == 200) {
+				document.getElementById("variants").innerHTML = this.responseText;
+			}
+		};
+		
+		xmlhttp.open("GET","/pages/sub/si_getVariants.php?val="+ document.getElementById("m_id").value, true);
+		xmlhttp.send();
+		inUseCheck();
+	}
+	
 	// populate modal with inventory change
 	function update_inventory(){
 		// get information of updated materials
@@ -448,14 +790,14 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 		}
 
 		// header for modal table
-		var table_data = [["<b>Material</b>", "<b>Quantity</b>", "<b>Status</b>", "<b>Product Number</b>", "<b>Reason</b>"]];
+		var table_data = [["<b>Material</b>", "<b>Quantity</b>", "<b>Status</b>", "<b>Product Number</b>"]];
 		// add rest of data
 		for(var x = 0; x < materials.length; x++) {
-			if(materials[x]["status_id"] == "9") materials[x]["quantity"] = 0 - materials[x]["quantity"];
+			if(materials[x]["status_id"] == <?php echo $status["removed"]; ?>) materials[x]["quantity"] = 0 - materials[x]["quantity"];
 			var data =  materials[x]["name"] + '|' + materials[x]["mat_id"] + '|' + materials[x]["quantity"] + '|' + 
-						materials[x]["reason"] + '|' + materials[x]["status_id"];
+						materials[x]["status_id"];
 			var information = materials[x]["name"]+"<input name='row-dict-"+x+"' value='"+data+"' hidden/>";
-			table_data.push([information, materials[x]["quantity"], materials[x]["status_text"], materials[x]["product"], materials[x]["reason"]]);
+			table_data.push([information, materials[x]["quantity"], materials[x]["status_text"], materials[x]["product"]]);
 		}
 		populate_modal("All Data Is Correct", "update_inventory", table_data, "Update Inventory");
 	}
@@ -464,7 +806,6 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	// get info for each row, add it to dictionary, send dict to populate confirmation module
 	function get_and_check_update_values(div) {
 		var quantity = div.getElementsByClassName("quantity")[0].value;
-		var reason = div.getElementsByClassName("reason")[0].value.replace(/\|/g, ";");
 		
 		var mat = div.getElementsByClassName("dm_select")[0];
 		var mat_id = mat.options[mat.selectedIndex].value.split('|')[0];
@@ -482,9 +823,8 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 		else if(quantity === "") alert("Enter a quantity or clear everything in row");
 		else if(parseFloat(quantity) > 99999.99) alert("The database does not accept a quantity larger than 99999.99");
 		else if(status_id === "NONE") alert("Select a status or clear everything in row");
-		else if(reason.length < 5) alert("Enter a reason or clear everything in row");
 		else return {"quantity" : quantity, "mat_id" : mat_id, "name" : name,
-			  "status_id" : status_id, "status_text" : status_text, "product" : product, "reason" : reason};
+			  "status_id" : status_id, "status_text" : status_text, "product" : product};
 		// bad data
 		return null;
 	}
@@ -527,7 +867,19 @@ if($staff->getRoleID() >= $sv['minRoleTrainer']) { ?>
 		else { element.innerHTML = "Create New Inventory Item"; }
 	}
 
-
+	function button_text1(element) {
+		element.value = (element.value == "Add Sheet Good Material") ? "Hide Tool" : "Add Sheet Good Material";
+	}
+	
+	function button_text2(element) {
+		if(element.innerHTML == "Manage Sheet Good Inventory") element.innerHTML = "Hide";
+		else { element.innerHTML = "Manage Sheet Good Inventory"; }
+	}
+	
+	document.getElementById('colorBox').onchange = function() {
+		document.getElementById('sheet_color').disabled = !this.checked;
+	};
+	
 	// add more device group rows 
 	function additional_device_groups() {
 		var row = document.getElementById("new_item_table").insertRow(-1);

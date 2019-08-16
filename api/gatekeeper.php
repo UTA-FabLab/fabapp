@@ -27,7 +27,7 @@ function gatekeeper ($operator, $d_id) {
     }
     
     // Check to see if device ID is a valid any-digit number
-    if (!Devices::regexDID($d_id)) {
+    if (!Devices::regexDeviceID($d_id)) {
         return array ("status_id" => 1, "ERROR" => "Invalid or missing device id value - $d_id", "authorized" => "N");
     } else {
         $device = new Devices($d_id);

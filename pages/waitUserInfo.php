@@ -50,7 +50,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
     $em = filter_input(INPUT_POST,'op-email');
     $ph = filter_input(INPUT_POST, 'op-phone');
     $new_operator = filter_input(INPUT_POST,'operator');
-    $status = Wait_queue::updateContactInfo($q_id, $ph, $em, $old_operator, $new_operator, $devgr_id);
+    $carrier_name = filter_input(INPUT_POST,'carrier_name');
+    $status = Wait_queue::updateContactInfo($q_id, $ph, $em, $carrier_name, $old_operator, $new_operator, $devgr_id);
     if ($status === 0) {
         if ($_REQUEST['loc'] == 0) {
             header("Location:/index.php");
@@ -61,7 +62,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
     } else {
         $_SESSION['error_msg'] = $status;
         header("Location:/pages/waitUserInfo.php?q_id=$q_id&loc=$_REQUEST[loc]");
-        
+
     }
 }
 ?>
@@ -103,7 +104,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
                             </tr>
                             <tr>
                                 <td><b data-toggle="tooltip" data-placement="top" title="phone contact information">Phone Number: </b></td>
-                                <td><input type="text" name="op-phone" id="op-phone" class="form-control" value="<?php echo $Op_phone?>" placeholder="1234567890" maxlength="10" size="10"/></td>
+                                <td>
+                                    <div class="col-md-6">
+                                        <input type="text" name="op-phone" id="op-phone" class="form-control" value="<?php echo $Op_phone?>" placeholder="1234567890" maxlength="10" size="10"/>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <select class="form-control" name="carrier_name" id="carrier_name" tabindex="1">
+                                            <option value="" disabled selected>Select Phone Carrier</option>
+                                            <?php // Load all of the device groups that are being waited for - signified with a 'DG' in front of the value attribute
+                                                if ($result = $mysqli->query("
+                                                        SELECT `provider`
+                                                        FROM `carrier` 
+                                                        WHERE 1;
+                                                ")) {
+                                                    while ( $rows = mysqli_fetch_array ( $result ) ) {
+                                                        // Create value in the form of DG_dgID-dID
+                                                        echo "<option value=". $rows ['provider'] .">" . $rows ['provider'] . "</option>";
+                                                    }
+                                                } else {
+                                                    die ("There was an error loading the phone carriers.");
+                                                } ?> 
+                                        </select>
+                                    </div>
+                                </td>
                             </tr>
                             <tfoot>
                                 <tr>

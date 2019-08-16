@@ -101,7 +101,6 @@ class Notifications {
             WHERE `Q_id` = $q_id AND valid='Y'
         ")) {
         }
-    }
-    
+    } 
 }
 ?>
