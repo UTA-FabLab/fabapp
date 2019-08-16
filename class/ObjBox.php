@@ -101,7 +101,7 @@ class ObjBox {
     }
     
     public static function findObj($user){
-    global $mysqli;
+	global $mysqli;
         $instance = array();
         
         if (is_object($user)){
@@ -109,12 +109,12 @@ class ObjBox {
         }
         
         //find objects that belong to uta_id
-    if ($result = $mysqli->query("
+	if ($result = $mysqli->query("
             Select `o_id`
             FROM `objbox` JOIN `transactions`
             ON `transactions`.`trans_id` = `objbox`.`trans_id`
             WHERE `transactions`.`operator` = '$operator' AND `objbox`.`o_end` IS NULL;
-    ")){
+	")){
             //if result is zero Look at Auth Recipients Table
             $numRows = $result->num_rows;
             if(($numRows) == 0){
@@ -223,14 +223,14 @@ class ObjBox {
         if (!Transactions::regexTrans($trans_id)) return "Invalid Ticket #";
         
         //Check if Object already has a home
-    if ($result = $mysqli->query("
+	if ($result = $mysqli->query("
             SELECT `address`, `t_end`
             FROM `transactions`
             LEFT JOIN `objbox`
             ON `transactions`.`trans_id` = `objbox`.`trans_id`
             WHERE `transactions`.`trans_id` = '$trans_id'
             LIMIT 1;
-    ")){
+	")){
             //exit if so
             $row = $result->fetch_assoc();
             if ( isset($row["address"]) ){

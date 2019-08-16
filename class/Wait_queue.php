@@ -239,7 +239,7 @@ class Wait_queue {
         }
     }
     
-    public static function updateContactInfo($q_id, $ph, $em, $old_operator, $new_operator, $devgr_id)
+    public static function updateContactInfo($q_id, $ph, $em, $carrier_name, $old_operator, $new_operator, $devgr_id)
     {
         global $mysqli;
         $status= 0;
@@ -269,10 +269,15 @@ class Wait_queue {
             return "Bad Email - $em";
         }
         
+        if(!empty($ph) && empty($carrier_name)) {
+            $status = 1;
+            return "Incorrect Carrier Selection";
+        }
+        
         if ($status == 0){
             if ($mysqli->query("
                 UPDATE `wait_queue`
-                SET `Op_email` = '$em' , `Op_phone` = '$ph' , `Operator` = '$new_operator'
+                SET `Op_email` = '$em' , `Op_phone` = '$ph' , `Operator` = '$new_operator' , `carrier` = '$carrier_name'
                 WHERE `Q_id` = '$q_id' AND valid='Y';
             "))
             {

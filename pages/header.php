@@ -34,6 +34,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/connections/db_connect8.php');
 include_once ($_SERVER['DOCUMENT_ROOT'].'/connections/ldap.php');
 include_once ($_SERVER['DOCUMENT_ROOT'].'/class/all_classes.php');
 date_default_timezone_set($sv['timezone']);
+if(!$mysqli->query("SET NAMES 'utf8';")) throw new Exception("Could not set MySqli encoding to UTF-8");
 
 if( isset($_SESSION['staff']) ){
 	$staff = unserialize($_SESSION['staff']);
@@ -41,7 +42,8 @@ if( isset($_SESSION['staff']) ){
 	//Logout if session has timed out.
 	if ($_SESSION["timeOut"] < time()) {
 		header("Location:/logout.php");
-	} else {
+	}
+	else {
 		//echo $_SESSION["timeOut"] ." - ". time();
 		$_SESSION["timeOut"] = (intval(time()) + $staff->getTimeLimit());
 	}
@@ -51,9 +53,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 	if( isset($_POST['signBtn']) ){
 		if ( empty($_POST["netID"])){
 			$_SESSION['error_msg'] = 'No User Name';
-		} elseif (empty($_POST["pass"]) ){
+		}
+		elseif (empty($_POST["pass"]) ){
 			$_SESSION['error_msg'] = 'Missing Password';
-		} else {
+		}
+		else {
 			//Remove 3rd argument, define attribute in ldap.php
 			$operator = AuthenticateUser($_POST["netID"],$_POST["pass"]);
 			if (array_key_exists('netID', $_SESSION)){
@@ -79,7 +83,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 					echo "<script>window.location.href='/index.php';</script>";
 				}
 				exit();
-			} else {
+			}
+			else {
 				echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','Invalid user name and/or password!', false)}</script>";
 			}
 		}
@@ -91,27 +96,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 				if(strcmp($searchType, "s_trans") == 0){
 					$trans_id = $searchField;
 					header("location:/pages/lookup.php?trans_id=$trans_id");
-				} elseif (strcmp($searchType, "s_operator") == 0){
+				}
+				elseif (strcmp($searchType, "s_operator") == 0){
 					$operator = $searchField;
 					header("location:/pages/lookup.php?operator=$operator");
-				} else {
+				}
+				else {
 					echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','Illegal Search Condition', false)}</script>";
 				}
-			} else {
+			}
+			else {
 				echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','Illegal Search Condition', false)}</script>";
 			}
-		} else {
-			echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','Please enter a number.', false)}</script>";
 		}
-		
-	} elseif( filter_input(INPUT_POST, 'pickBtn') !== null ){
-		if( filter_input(INPUT_POST, 'pickField') !== null){
-			if(!Users::regexUser(filter_input(INPUT_POST, 'pickField'))){
-				echo "<script>window.onload = function(){goModal('Success',\"Invalid ID # ".filter_input(INPUT_POST, pickField)."\", true)}</script>";
-			} else {
-				$operator = filter_input(INPUT_POST, 'pickField');
-				header("location:/pages/pickup.php?operator=$operator");
-			}
+		else {
+			echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','Please enter a number.', false)}</script>";
 		}
 	}
 }
@@ -119,7 +118,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
 	echo "<script>window.onload = function(){goModal('Success',\"$_SESSION[success_msg]\", true)}</script>";
 	unset($_SESSION['success_msg']);
-} elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
+}
+elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 	echo "<script>window.onload = function(){goModal('Error',\"$_SESSION[error_msg]\", false)}</script>";
 	unset($_SESSION['error_msg']);
 }
@@ -174,15 +174,16 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
 						<!-- /.dropdown-login -->
 					</li>
 				<!--php class Staff if logged in-->
-				<?php } else {?>
+				<?php }
+				else {?>
 					<li class="dropdown">
 						<a class="dropdown-toggle" data-toggle="dropdown" href="#">
 							<i class="<?php echo $staff->getIcon();?> fa-2x"></i> <i class="fas fa-caret-down"></i>
 						</a>
 						<ul class="dropdown-menu dropdown-user">
-							<li><a href="/pages/info.php" onclick="loadingModal()"><i class="fas fa-info fa-fw"></i> Information</a></li>
+							<li><a href="/pages/info.php" onclick="loadingModal()"><i class="fas fa-info"></i> Information</a></li>
 							<li class="divider"></li>
-							<li><a href="/logout.php?n=n" onclick="loadingModal()"><i class="fas fa-sign-out-alt fa-fw"></i> Logout</a></li>
+							<li><a href="/logout.php?n=n" onclick="loadingModal()"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
 						</ul>
 						<!-- /.dropdown-user -->
 					</li>
@@ -215,6 +216,9 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
 									<li>
 										<a href="/pages/current_inventory.php"><i class="far fa-check-square"></i> Usable Inventory</a>
 									</li>
+									<li>
+										<a href="/pages/sheet_goods.php"><i class="fas fa-square"></i> Sheet Goods</a>
+									</li>
 									<?php } ?>
 								</ul>
 								<!-- /.nav-second-level -->
@@ -228,7 +232,7 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
 						<?php }
 						if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfStaff']) { ?>
 							<li>
-								<a href="#" id="searchLink"><i class="fas fa-search fa-fw"></i> Look-Up By<span class="fas fa-angle-left"></span></a>
+								<a href="#" id="searchLink"><i class="fas fa-search"></i> Look-Up By<span class="fas fa-angle-left"></span></a>
 								<ul class="nav nav-second-level">
 								<form name="searchForm" method="POST" action="" autocomplete="off"  onsubmit="return validateNum('searchForm')"> 
 									<li class="sidebar-radio">
@@ -248,41 +252,25 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
 								</form>
 								</ul>
 							</li>
-							<?php if ( $sv['wait_system'] != "new") { ?>
+							<?php if ($sv['wait_system'] != "new") { ?>
 								<li>
 									<a href="/admin/now_serving.php"><i class="fas fa-list-ol"></i> Now Serving</a>
 								</li>
-							<?php } ?>
-							<li>
-								<a href="#" id="pickLink"><i class="fas fa-gift"></i> Pick Up 3D Print<span class="fas fa-angle-left"></span></a>
-								<ul class="nav nav-second-level">
-								<form name="pickForm" method="POST" action="" autocomplete="off" onsubmit="return validateNum('pickForm')">
-									<li class="sidebar-search">
-										<div class="input-group custom-search-form">
-											<input type="text" name="pickField" id="pickField" class="form-control" placeholder="Enter ID #" maxlength="10" size="10">
-											<span class="input-group-btn">
-											<button class="btn btn-default" type="submit" name="pickBtn">
-												<i class="fas fa-search"></i>
-											</button>
-											</span>
-										</div>
-									</li>
-								</form>
-								</ul>
-							</li>
-						<?php }
+							<?php 
+							}
+						}
 						if (isset($staff) && ($staff->getRoleID() >=  $sv['LvlOfStaff'] || $staff->getRoleID() ==  $sv['serviceTechnican'])) { ?>
 							<li>
-								<a href="#"><i class="fa fa-wrench fa-fw"></i> Service<span class="fa arrow"></span></a>
+								<a href="#"><i class="fa fa-wrench"></i> Service<span class="fa arrow"></span></a>
 								<ul class="nav nav-second-level">
 									<li>
-										<a href="/pages/sr_history.php"><i class="fas fa-history fa-fw"></i> Device History</a>
+										<a href="/pages/sr_history.php"><i class="fas fa-history"></i> Device History</a>
 									</li>
 									<li>
-										<a href='/pages/open_sr.php'><i class='far fa-comment fa-fw'></i> Open Service Issues</a>
+										<a href='/pages/open_sr.php'><i class='far fa-comment'></i> Open Service Issues</a>
 									</li>
 									<li>
-										<a href="/pages/sr_issue.php"><i class="fas fa-fire fa-fw"></i> Report Issue</a>
+										<a href="/pages/sr_issue.php"><i class="fas fa-fire"></i> Report Issue</a>
 									</li>
 								</ul>
 								<!-- /.nav-second-level -->
@@ -307,49 +295,51 @@ if (isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= ""){
 									</li>
 								</ul>
 							</li>
-							<?php
-							if( $sv['wait_system'] == "new"){ ?>
-								<li>
-									<a href="/pages/wait_ticket.php"><i class="fas fa-list-ol"></i> Wait Queue Ticket</a>
-								</li>
-							<?php } 
-							if(isset($staff) && $staff->getRoleID() >= $sv['minRoleTrainer']) {
-							?>
-								<li>
-									<a href="#"><i class="fas fa-sitemap"></i> Admin<span class="fas fa-angle-left"></span></a>
-									<ul class="nav nav-second-level">
-										<li>
-											<a href="/admin/stats.php"><i class="fas fa-chart-line"></i> Data Reports</a>
-										</li>
-										<li>
-											<a href="/admin/manage_device.php"><i class="fas fa-edit"></i> Manage Devices</a>
-										</li>
-										<li>
-											<a href="/admin/objbox.php"><i class="fas fa-gift"></i> Objects in Storage</a>
-										</li>
-										<li>
-											<a href="/admin/onboarding.php"><i class="fas fa-clipboard"></i> OnBoarding</a>
-										</li>
-										<li>
-											<a herf="#"><i class="fas fa-users"></i> Users<span class="fas fa-angle-left"></span></a>
-											<ul class="nav nav-third-level">
-												<li>
-													<a href="/admin/addrfid.php"><i class="fas fa-wifi"></i> Add RFID</a>
-												</li>
-											</ul>
-										</li>
-									</ul>
-									<!-- /.nav-second-level -->
-								</li>
+						<?php }
+						if(isset($staff) && $staff->getRoleID() >=  $sv['LvlOfStaff'] && $sv['wait_system'] == "new"){ ?>
 							<li>
-								<a href="#"><i class="fas fa-user-cog"></i> Site Tools<span class="fas fa-angle-left"></span></a>
+								<a href="/pages/wait_ticket.php"><i class="fas fa-list-ol"></i> Wait Queue Ticket</a>
+							</li>
+						<?php } 
+						if(isset($staff) && $staff->getRoleID() >= $sv['minRoleTrainer']) {
+						?>
+							<li>
+								<a href="#"><i class="fas fa-sitemap"></i> Admin<span class="fas fa-angle-left"></span></a>
 								<ul class="nav nav-second-level">
 									<li>
-										<a href="/admin/sv.php"><i class="fas fa-sliders-h"></i> Site Variables</a>
+										<a href="/admin/stats.php"><i class="fas fa-chart-line"></i> Data Reports</a>
+									</li>
+									<li>
+										<a href="/admin/manage_device.php"><i class="fas fa-edit"></i> Manage Devices</a>
+									</li>
+									<li>
+										<a href="/admin/objbox.php"><i class="fas fa-gift"></i> Objects in Storage</a>
+									</li>
+									<li>
+										<a href="/admin/onboarding.php"><i class="fas fa-clipboard"></i> OnBoarding</a>
+									</li>
+									<li>
+										<a herf="#"><i class="fas fa-users"></i> Users<span class="fas fa-angle-left"></span></a>
+										<ul class="nav nav-third-level">
+											<li>
+												<a href="/admin/addrfid.php"><i class="fas fa-wifi"></i> Add RFID</a>
+											</li>
+										</ul>
 									</li>
 								</ul>
+								<!-- /.nav-second-level -->
 							</li>
-							<?php } ?>
+						<li>
+							<a href="#"><i class="fas fa-user-cog"></i> Site Tools<span class="fas fa-angle-left"></span></a>
+							<ul class="nav nav-second-level">
+								<li>
+									<a href="/admin/sv.php"><i class="fas fa-sliders-h"></i> Site Variables</a>
+								</li>
+								<li>
+									<a href="/admin/storage_unit_creator.php"><i class="fas fa-inbox"></i> Storage Box</a>
+								</li>
+							</ul>
+						</li>
 						<?php } ?>
 					</ul>
 				</div>

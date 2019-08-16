@@ -51,7 +51,7 @@
     <script type="text/javascript" src="/vendor/blackrock-digital/js/sb-admin-2.js"></script>
     <script type="text/javascript" src="/vendor/datatables/js/dataTables.min.js"></script>
     <script type="text/javascript" src="/vendor/bs-datetimepicker/js/bootstrap-datetimepicker.min.js"></script>
-    <script type="text/javascript" src="/vendor/fabapp/fabapp.js"></script>
+    <script type="text/javascript" src="/vendor/fabapp/fabapp.js?v=3"></script>
     <script type="text/javascript" src="/vendor/metisMenu/metisMenu.min.js"></script>
     <script type="text/javascript" src="/vendor/morrisjs/morris.min.js"></script>
     <script type="text/javascript" src="/vendor/raphael/raphael.min.js"></script>

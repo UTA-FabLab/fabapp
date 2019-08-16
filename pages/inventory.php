@@ -74,7 +74,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && $staff->getRoleID() >= $sv['LvlOfLead
 						<tbody>
 						<?php //Display Inventory Based on device group
 						if($result = $mysqli->query("
-							SELECT `materials`.`m_id` as `m_id`, `m_name`, SUM(unit_used) AS `sum`, `materials`.`product_number`, `color_hex`, `unit`
+							SELECT `materials`.`m_id` as `m_id`, `m_name`, SUM(quantity) AS `sum`, `materials`.`product_number`, `color_hex`, `unit`
 							FROM `materials`
 							LEFT JOIN `mats_used`
 							ON mats_used.m_id = `materials`.`m_id`

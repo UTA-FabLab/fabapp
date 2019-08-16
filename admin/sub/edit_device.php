@@ -145,7 +145,7 @@ $d_name1 = filter_input(INPUT_POST,'device_name');
                                 <td>
                                     <select class="form-control" name="device_group_id" id="device_group_id" tabindex="1">
                                         <option value=10101010 selected>No Change</option>
-                                        <?php if($dgs = DeviceGroup::popAllDG_list()){
+                                        <?php if($dgs = DeviceGroup::all_device_groups()){
                                             foreach($dgs as $dgs_id => $dgs_desc){
                                                 echo("<option value='$dgs_id'>$dgs_desc</option>");
                                             }
