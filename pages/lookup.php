@@ -21,7 +21,7 @@
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
 if(!$staff) $error = exit_if_error("Please log in", "/index.php");
-elseif(!isset($_GET["operator"]) && !isset($_GET["trans_id"])) exit_if_error("Search parameter is missing", "/index.php");
+elseif(!isset($_GET["operator"]) && !isset($_GET["trans_id"]) && !isset($_GET["offlineTrans"])) exit_if_error("Search parameter is missing", "/index.php");
 
 // lookup by ticket ID
 if(isset($_GET["trans_id"])) {
@@ -50,6 +50,23 @@ elseif(isset($_GET["operator"])) {
 		}
 		else exit_if_error("DB error");
 	} 
+}
+// lookup by offline transactions
+elseif(isset($_GET["offlineTrans"])) {
+	$offTransId = $_GET['offlineTrans'];
+	if($result = $mysqli->query("
+		SELECT trans_id
+		FROM offline_transactions
+        WHERE offline_transactions.off_trans_id = '$offTransId'
+		LIMIT 1
+	")) {
+		if(!$result->num_rows) exit_if_error("No Offline Transactions Found for Offline ID# $offlineTrans");
+		else {
+			$row = $result->fetch_assoc();
+			$ticket = new Transactions($row['trans_id']);
+		}
+	}
+	else exit_if_error("DB error");
 }
 
 // check permission
@@ -160,7 +177,11 @@ function exit_with_success($message, $redirect=null) {
 			<?php if($staff->roleID >= $role["staff"]) { ?>
 				<div class="panel panel-default">
 					<div class="panel-heading clearfix">
-						<i class="fas fa-ticket-alt fa-lg"></i> Ticket # <b><?php echo $ticket->trans_id; ?></b>
+					<?php if ($offTrans = OfflineTrans::byTransId($ticket->trans_id)) { ?>
+                        <i class="fas fa-ticket-alt fa-lg"></i> Ticket # <b><?php echo $ticket->getTrans_id(); ?> | <?php echo $offTrans; ?></b>
+                    <?php } else { ?>
+                        <i class="fas fa-ticket-alt fa-lg"></i> Ticket # <b><?php echo $ticket->getTrans_id(); ?></b>
+                    <?php } ?>
 						<div class="pull-right">
 							<div class="btn-group">
 								<button type="button" class="btn btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
@@ -183,10 +204,14 @@ function exit_with_success($message, $redirect=null) {
 						<table class ="table table-bordered table-striped">
 							<tr>
 								<td>Device</td>
-								<td>
-									<?php echo $ticket->device->name; ?>	
-								</td>
-							</tr>
+                            	<td><?php echo $ticket->getDevice()->getDevice_desc(); ?></td>
+                       		</tr>
+                        	<?php if ($offTrans = OfflineTrans::byTransId($ticket->trans_id)) { ?>
+                            <tr>
+                                <td>Offline Trans.</td>
+                                <td><?php echo $offTrans; ?></td>
+                            </tr>
+                        	<?php } ?>
 							<tr>
 								<td>Time</td>
 								<td>
