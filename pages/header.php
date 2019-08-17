@@ -100,6 +100,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 				elseif (strcmp($searchType, "s_operator") == 0){
 					$operator = $searchField;
 					header("location:/pages/lookup.php?operator=$operator");
+				} 
+				elseif (strcmp($searchType, "s_off_trans") == 0){
+					$offTransId = $searchField;
+					header("location:/pages/lookup.php?offlineTrans=OFF$offTransId");
 				}
 				else {
 					echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','Illegal Search Condition', false)}</script>";
@@ -201,6 +205,10 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 							<li>
 								<a href="/admin/error.php"><i class="fas fa-fw fa-bolt"></i> Error</a>
 							</li>
+						<?php } if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfLead']) { ?>
+							<li>
+								<a href="/pages/offline_ticket.php"><i class="fas fa-fw fa-exclamation"></i> Offline Transactions</a>
+							</li>
 						<?php } 
 						if(isset($staff) && $staff->getRoleID() >= $sv['LvlOfLead']) { ?>
 							<li>
@@ -238,6 +246,9 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 									<li class="sidebar-radio">
 										<input type="radio" name="searchType" value="s_trans" id="s_trans" checked onchange="searchF()" onclick="searchF()"><label for="s_trans">Ticket</label>
 										<input type="radio" name="searchType" value="s_operator" id="s_operator" onchange="searchF()" onclick="searchF()"><label for="s_operator">ID #</label>
+									</li>
+									<li class="sidebar-radio" style="padding:0px">
+										<input type="radio" name="searchType" value="s_off_trans" id="s_off_trans" onchange="searchF()" onclick="searchF()"><label for="s_off_trans">Offline Transaction</label>
 									</li>
 									<li class="sidebar-search">
 										<div class="input-group custom-search-form">
