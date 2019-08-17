@@ -23,20 +23,22 @@ $json_out = array();
 $headers = apache_request_headers();
 if ($sv['api_key'] == "") {
     $json_out["api_key"] = "Not Set";
-} elseif(isset($headers['authorization'])){
+} elseif (isset($headers['authorization'])) {
     if ($sv['api_key'] != $headers['authorization'] ){
         $json_out["ERROR"] = "Unable to authenticate Device";
+        http_response_code(401);
         ErrorExit(1);
     }
-} elseif(isset($headers['Authorization'])){
+} elseif (isset($headers['Authorization'])) {
     if ($sv['api_key'] != $headers['Authorization'] ){
         $json_out["ERROR"] = "Unable to Authenticate Device";
+        http_response_code(401);
         ErrorExit(1);
     }
 } else {
-    $json_out["authorized"] = "N";
-    $json_out["ERROR"] = "Header Not Set";
-    ErrorExit(2);
+    $json_out["ERROR"] = "Header Are Not Set";
+    http_response_code(401);
+    ErrorExit(1);
 }
 
 // Input posted with "Content-Type: application/json" header
@@ -51,7 +53,7 @@ $type      = $input_data["type"];
 	
 // Check the request type
 if (strtolower($type) == "device_id") {
-	$device_id = $input_data["device"];
+	$device_id = $input_data["device_id"];
 	GetByDeviceID($device_id);
 } else {
 	$json_out["ERROR"] = "Unknown type: $type";
