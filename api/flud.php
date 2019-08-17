@@ -27,22 +27,6 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/class/all_classes.php');
 include_once 'gatekeeper.php';
 $json_out = array();
 
-/*
-//Test Data
-$input_data["type"] = "print";
-$input_data["uta_id"] = "1000000016";
-$input_data["device_id"] = "0021";
-$input_data["m_id"] = "63";
-$input_data["est_filament_used"] = "1";
-$input_data["est_build_time"] = "04:01:00";
-$input_data["filename"] = "Medium_Test_1.000@13_2.25@63_3@16_colorSwap.gcode";
-$input_data["p_id"] = "3";
-
-//Test End
-//$input_data["type"] = "update_end_time";
-//$input_data["device_id"] = 21;
-*/
-//Compare Header API Key with site variable's API Key
 $headers = apache_request_headers();
 if ($sv['api_key'] == "") {
     $json_out["api_key"] = "Not Set";
@@ -109,13 +93,30 @@ exit(0);
 //  Inserts entry into the 'transactions' table
 
 function PrintTransaction ($operator, $device_id) {
-    global $json_out;
-    global $mysqli;
-    global $input_data;
+    global $json_out, $mysqli, $input_data, $status;
     $json_out["authorized"] = "N";
-        
-    foreach (gatekeeper($operator, $device_id) as $key => $value){
-        $json_out[$key] =  $value;
+    
+    if ($input_data["fa_status"] == "offline"){
+        $t_start = date("Y-m-d H:i:s", substr($input_data["off_trans_id"], 3));
+        $off_trans_id = $input_data["off_trans_id"];
+        $json_out["authorized"] = "Y";
+        $json_out["status_id"] = $status["offline"];
+        if ($result = $mysqli->query("
+                SELECT *
+                FROM `offline_transactions`
+                WHERE `off_trans_id` = '$off_trans_id';
+            ")){
+                if ($result->num_rows > 0){
+                    $json_out["off_status"] = 2;
+                    return;
+                }
+            }
+    } else {
+        $t_start = date("Y-m-d H:i:s");
+        $off_trans_id = "0";
+        foreach (gatekeeper($operator, $device_id) as $key => $value){
+            $json_out[$key] =  $value;
+        }
     }
 
     if ($json_out["authorized"] == "N"){
@@ -178,28 +179,50 @@ function PrintTransaction ($operator, $device_id) {
         INSERT INTO transactions
             (`operator`,`d_id`,`t_start`,`status_id`,`p_id`,`est_time`) 
         VALUES
-            ('$operator','$d_id',CURRENT_TIMESTAMP,'$auth_status','$p_id','$est_build_time');
-    ")){
+            ('$operator','$d_id','$t_start','$auth_status','$p_id','$est_build_time');
+        ")){
         $trans_id = $json_out["trans_id"] = $mysqli->insert_id;
         $print_json["trans_id"] = $trans_id;
-        
+        if ($input_data["fa_status"] == "offline"){
+            if ($stmt = $mysqli->prepare("
+                INSERT INTO offline_transactions
+                    (`trans_id`, `off_trans_id`) 
+                VALUES
+                    (?, '$off_trans_id');
+            ")){
+                $bind_param = $stmt->bind_param("i", $trans_id);
+                $stmt->execute();
+                $stmt->close();
+                $json_out["off_status"] = 1;
+            } else {
+                $json_out["ERROR"] = $mysqli->error;
+                $json_out["off_status"] = 0;
+            }
+        }
+
         if ($stmt = $mysqli->prepare("
             INSERT INTO mats_used
-                (`trans_id`,`m_id`, `unit_used`, `status_id`, `mu_notes`, `mu_date`) 
+                (`trans_id`,`m_id`, `quantity`, `status_id`) 
             VALUES
-                (?, ?, ?, ?, ?, CURRENT_TIMESTAMP);
+                (?, ?, ?, ?);
         ")){
-            $bind_param = $stmt->bind_param("iidis", $trans_id, $m_id, $input_data["est_filament_used"], $auth_status, $filename);
+            $bind_param = $stmt->bind_param("iidi", $trans_id, $m_id, $input_data["est_filament_used"], $auth_status);
             $stmt->execute();
             $stmt->close();
         } else {
             $json_out["ERROR"] = $mysqli->error;
             $json_out["authorized"] = "N";
+            if ($input_data["fa_status"] == "offline"){
+                $json_out["off_status"] = 0;
+            }
             return;
         }
     } else {
         $json_out["ERROR"] = $mysqli->error;
         $json_out["authorized"] = "N";
+        if ($input_data["fa_status"] == "offline"){
+            $json_out["off_status"] = 0;
+        }
         return;
     }
 	
@@ -221,7 +244,7 @@ function update_end_time( $dev_id ){
     
 	// Check for deviceID value
     if (! (preg_match("/^\d*$/", $dev_id))) {
-        $json_out["ERROR"] = "Invalid transaction number";
+        $json_out["ERROR"] = "Invalid device number";
         ErrorExit(1);
     }
     
@@ -229,13 +252,14 @@ function update_end_time( $dev_id ){
             SELECT *
             FROM `transactions`
             WHERE `d_id` = '$dev_id' AND `t_end` is NULL
+            LIMIT 1;
     ")){
         $row = $result->fetch_assoc();
         $ticket = new Transactions($row['trans_id']);
     }
-
+    
     $ticket->t_end = date("Y-m-d H:i:s");
-	
+    
     if ($ticket->end_octopuppet()){
         $json_out["success"] = "Update Successful for ".$ticket->getTrans_id();
     } else {
