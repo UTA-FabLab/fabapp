@@ -49,15 +49,18 @@ if ($sv['api_key'] == "") {
 } elseif (isset($headers['authorization'])) {
     if ($sv['api_key'] != $headers['authorization'] ){
         $json_out["ERROR"] = "Unable to authenticate Device";
+        http_response_code(401);
         ErrorExit(1);
     }
 } elseif (isset($headers['Authorization'])) {
     if ($sv['api_key'] != $headers['Authorization'] ){
         $json_out["ERROR"] = "Unable to Authenticate Device";
+        http_response_code(401);
         ErrorExit(1);
     }
 } else {
     $json_out["ERROR"] = "Header Are Not Set";
+    http_response_code(401);
     ErrorExit(1);
 }
 
