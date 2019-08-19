@@ -71,8 +71,8 @@ $d_name1 = filter_input(INPUT_POST,'device_name');
     
     if(isset($_POST['device_group_id']) && preg_match('/^[0-9]+$/i', $_POST['hours']) && preg_match('/^[0-9]+$/i', $_POST['minutes']) && preg_match('/^[a-z0-9\-\_\# ]{1,100}$/i', $_POST['device_name']) && preg_match('/^[0-9\.]+$/i', $_POST['device_base_price'])){
         
-        $status = Devices::updateDevice($d_id, $d_name1, $d_duration1, $d_price1, $dg_id1, $d_url1, $d_view1);
-        if ($status == 1) {
+        $update_status = Devices::updateDevice($d_id, $d_name1, $d_duration1, $d_price1, $dg_id1, $d_url1, $d_view1);
+        if ($update_status == 1) {
             $_SESSION['success_msg'] = "Device has been successfully updated.";
             header("Location:/admin/manage_device.php");
         } else {

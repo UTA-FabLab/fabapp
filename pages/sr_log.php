@@ -22,10 +22,10 @@ if ( !empty(filter_input(INPUT_GET, "sc_id")) ) {
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn']) && 
         ($staff->getRoleID() >= $sv['staffTechnican'] || $staff->getRoleID() == $sv['serviceTechnican'])){
-    $status = filter_input(INPUT_POST, 'status');
+    $device_status = filter_input(INPUT_POST, 'status');
     $sl_id = filter_input(INPUT_POST, 'sl_id');
     $sr_notes = filter_input(INPUT_POST, 'sr_notes');
-    $msg = $sc->insert_reply($staff, $status, $sl_id, $sr_notes);
+    $msg = $sc->insert_reply($staff, $device_status, $sl_id, $sr_notes);
     if (is_string($msg)){
         //display error message
         $errorMsg = $msg;

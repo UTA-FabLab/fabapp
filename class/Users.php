@@ -207,7 +207,7 @@ class Users {
 			 ORDER BY `trans_id` DESC;
 		")){
 			while($row = $result->fetch_assoc()){
-				array_push($tickets, array($row['trans_id'], $row['device_name'], $row['t_start'], $row['msg'], $row['amount']));
+				array_push($tickets, array($row['trans_id'], $row['device_name'], $row['t_start'], $row['message'], $row['amount']));
 			}
 		}
 		return $tickets;

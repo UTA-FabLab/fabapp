@@ -88,7 +88,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 				echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','Invalid user name and/or password!', false)}</script>";
 			}
 		}
-	} elseif( isset($_POST['searchBtn']) ){
+	}
+	elseif( isset($_POST['searchBtn']) ){
 		if(filter_input(INPUT_POST, 'searchField')){
 			$searchField = filter_input(INPUT_POST, 'searchField');
 			if(filter_input(INPUT_POST, 'searchType')){
@@ -100,10 +101,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 				elseif (strcmp($searchType, "s_operator") == 0){
 					$operator = $searchField;
 					header("location:/pages/lookup.php?operator=$operator");
-				} 
-				elseif (strcmp($searchType, "s_off_trans") == 0){
-					$offTransId = $searchField;
-					header("location:/pages/lookup.php?offlineTrans=OFF$offTransId");
 				}
 				else {
 					echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','Illegal Search Condition', false)}</script>";
@@ -115,6 +112,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 		}
 		else {
 			echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','Please enter a number.', false)}</script>";
+		}
+	}
+	elseif( filter_input(INPUT_POST, 'pickBtn') !== null ){
+		if( filter_input(INPUT_POST, 'pickField') !== null){
+			if(!Users::regexUser(filter_input(INPUT_POST, 'pickField'))){
+				echo "<script>window.onload = function(){goModal('Success',\"Invalid ID # ".filter_input(INPUT_POST, pickField)."\", true)}</script>";
+			}
+			else {
+				$operator = filter_input(INPUT_POST, 'pickField');
+				header("location:/pages/pickup.php?operator=$operator");
+			}
 		}
 	}
 }
@@ -199,33 +207,29 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 				<div class="sidebar-nav navbar-collapse">
 					<ul class="nav" id="side-menu">
 						<li>
-							<a href="/index.php"><i class="fas fa-fw fa-ticket-alt"></i> FabApp</a>
+							<a href="/index.php"><i class="fas fa-ticket-alt"></i> FabApp</a>
 						</li>
 						<?php if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfStaff']) { ?>
 							<li>
-								<a href="/admin/error.php"><i class="fas fa-fw fa-bolt"></i> Error</a>
-							</li>
-						<?php } if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfLead']) { ?>
-							<li>
-								<a href="/pages/offline_ticket.php"><i class="fas fa-fw fa-exclamation"></i> Offline Transactions</a>
+								<a href="/admin/error.php"><i class="fas fa-bolt"></i> Error</a>
 							</li>
 						<?php } 
 						if(isset($staff) && $staff->getRoleID() >= $sv['LvlOfLead']) { ?>
 							<li>
-								<a href="#"><i class="fas fa-fw fa-warehouse"></i> Inventory<span class="fas fa-angle-left"></span></a>
+								<a href="#"><i class="fas fa-warehouse"></i> Inventory<span class="fas fa-angle-left"></span></a>
 								<ul class="nav nav-second-level">
 									<li>
-										<a href="/pages/inventory.php"><i class="fas fa-fw fa-box"></i> On Hand</a>
+										<a href="/pages/inventory.php"><i class="fas fa-box"></i> On Hand</a>
 									</li>
 									<li>
-										<a href="/pages/inventory_processing.php"><i class="fas fa-fw fa-shipping-fast"></i> Edit Inventory</a>
+										<a href="/pages/inventory_processing.php"><i class="fas fa-shipping-fast"></i> Edit Inventory</a>
 									</li>
 									<?php if(isset($staff) && $staff->getRoleID() >= $sv['minRoleTrainer']) { ?>
 									<li>
-										<a href="/pages/current_inventory.php"><i class="far fa-fw fa-check-square"></i> Usable Inventory</a>
+										<a href="/pages/current_inventory.php"><i class="far fa-check-square"></i> Usable Inventory</a>
 									</li>
 									<li>
-										<a href="/pages/sheet_goods.php"><i class="fas fa-fw fa-square"></i> Sheet Goods</a>
+										<a href="/pages/sheet_goods.php"><i class="fas fa-square"></i> Sheet Goods</a>
 									</li>
 									<?php } ?>
 								</ul>
@@ -234,21 +238,18 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 						<?php } 
 						else { ?>
 						<li>
-							<a href="/pages/inventory.php"><i class="fas fa-fw fa-warehouse"></i> Inventory</a>
+							<a href="/pages/inventory.php"><i class="fas fa-warehouse"></i> Inventory</a>
 						</li>
 						<!-- if role > 6 {show} -->
 						<?php }
 						if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfStaff']) { ?>
 							<li>
-								<a href="#" id="searchLink"><i class="fas fa-fw fa-search"></i> Look-Up By<span class="fas fa-angle-left"></span></a>
+								<a href="#" id="searchLink"><i class="fas fa-search"></i> Look-Up By<span class="fas fa-angle-left"></span></a>
 								<ul class="nav nav-second-level">
 								<form name="searchForm" method="POST" action="" autocomplete="off"  onsubmit="return validateNum('searchForm')"> 
 									<li class="sidebar-radio">
 										<input type="radio" name="searchType" value="s_trans" id="s_trans" checked onchange="searchF()" onclick="searchF()"><label for="s_trans">Ticket</label>
 										<input type="radio" name="searchType" value="s_operator" id="s_operator" onchange="searchF()" onclick="searchF()"><label for="s_operator">ID #</label>
-									</li>
-									<li class="sidebar-radio" style="padding:0px">
-										<input type="radio" name="searchType" value="s_off_trans" id="s_off_trans" onchange="searchF()" onclick="searchF()"><label for="s_off_trans">Offline Transaction</label>
 									</li>
 									<li class="sidebar-search">
 										<div class="input-group custom-search-form">
@@ -263,77 +264,94 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 								</form>
 								</ul>
 							</li>
+							<li>
+								<a href="#" id="pickLink"><i class="fas fa-gift"></i> Pick Up 3D Print<span class="fas fa-angle-left"></span></a>
+								<ul class="nav nav-second-level">
+								<form name="pickForm" method="POST" action="" autocomplete="off" onsubmit="return validateNum('pickForm')">
+									<li class="sidebar-search">
+										<div class="input-group custom-search-form">
+											<input type="text" name="pickField" id="pickField" class="form-control" placeholder="Enter ID #" maxlength="10" size="10">
+											<span class="input-group-btn">
+											<button class="btn btn-default" type="submit" name="pickBtn">
+												<i class="fas fa-search"></i>
+											</button>
+											</span>
+										</div>
+									</li>
+								</form>
+								</ul>
+							</li>
 							<?php if ($sv['wait_system'] != "new") { ?>
 								<li>
-									<a href="/admin/now_serving.php"><i class="fas fa-fw fa-list-ol"></i> Now Serving</a>
+									<a href="/admin/now_serving.php"><i class="fas fa-list-ol"></i> Now Serving</a>
 								</li>
 							<?php 
 							}
 						}
 						if (isset($staff) && ($staff->getRoleID() >=  $sv['LvlOfStaff'] || $staff->getRoleID() ==  $sv['serviceTechnican'])) { ?>
 							<li>
-								<a href="#"><i class="fa fa-fw fa-wrench"></i> Service<span class="fa arrow"></span></a>
+								<a href="#"><i class="fa fa-wrench"></i> Service<span class="fa arrow"></span></a>
 								<ul class="nav nav-second-level">
 									<li>
-										<a href="/pages/sr_history.php"><i class="fas fa-fw fa-history"></i> Device History</a>
+										<a href="/pages/sr_history.php"><i class="fas fa-history"></i> Device History</a>
 									</li>
 									<li>
-										<a href='/pages/open_sr.php'><i class='far fa-fw fa-comment'></i> Open Service Issues</a>
+										<a href='/pages/open_sr.php'><i class='far fa-comment'></i> Open Service Issues</a>
 									</li>
 									<li>
-										<a href="/pages/sr_issue.php"><i class="fas fa-fw fa-fire"></i> Report Issue</a>
+										<a href="/pages/sr_issue.php"><i class="fas fa-fire"></i> Report Issue</a>
 									</li>
 								</ul>
 								<!-- /.nav-second-level -->
 							</li>
 						<?php } ?>
 							<li>
-								<a href="/pages/tools.php"><i class="fas fa-fw fa-toolbox"></i> Tools</a>
+								<a href="/pages/tools.php"><i class="fas fa-toolbox"></i> Tools</a>
 							</li>
 						<?php
 						if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfLead']) { ?>
 							<li>
-								<a herf="#"><i class="fas fa-fw fa-book"></i> Training<span class="fas fa-angle-left"></span></a>
+								<a herf="#"><i class="fas fa-book"></i> Training<span class="fas fa-angle-left"></span></a>
 								<ul class="nav nav-third-level">
 									<li>
-										<a href="/admin/training_certificate.php"><i class="far fa-fw fa-check-circle"></i> Issue Certificate</a>
+										<a href="/admin/training_certificate.php"><i class="far fa-check-circle"></i> Issue Certificate</a>
 									</li>
 									<li>
-										<a href="/admin/training_revoke.php"><i class="fas fa-fw fa-search"></i> Issued Trainings</a>
+										<a href="/admin/training_revoke.php"><i class="fas fa-search"></i> Issued Trainings</a>
 									</li>
 									<li>
-										<a href="/admin/manage_trainings.php"><i class="fas fa-fw fa-edit"></i> Manage Trainings</a>
+										<a href="/admin/manage_trainings.php"><i class="fas fa-edit"></i> Manage Trainings</a>
 									</li>
 								</ul>
 							</li>
 						<?php }
 						if(isset($staff) && $staff->getRoleID() >=  $sv['LvlOfStaff'] && $sv['wait_system'] == "new"){ ?>
 							<li>
-								<a href="/pages/wait_ticket.php"><i class="fas fa-fw fa-list-ol"></i> Wait Queue Ticket</a>
+								<a href="/pages/wait_ticket.php"><i class="fas fa-list-ol"></i> Wait Queue Ticket</a>
 							</li>
 						<?php } 
 						if(isset($staff) && $staff->getRoleID() >= $sv['minRoleTrainer']) {
 						?>
 							<li>
-								<a href="#"><i class="fas fa-fw fa-sitemap"></i> Admin<span class="fas fa-angle-left"></span></a>
+								<a href="#"><i class="fas fa-sitemap"></i> Admin<span class="fas fa-angle-left"></span></a>
 								<ul class="nav nav-second-level">
 									<li>
-										<a href="/admin/stats.php"><i class="fas fa-fw fa-chart-line"></i> Data Reports</a>
+										<a href="/admin/stats.php"><i class="fas fa-chart-line"></i> Data Reports</a>
 									</li>
 									<li>
-										<a href="/admin/manage_device.php"><i class="fas fa-fw fa-edit"></i> Manage Devices</a>
+										<a href="/admin/manage_device.php"><i class="fas fa-edit"></i> Manage Devices</a>
 									</li>
 									<li>
-										<a href="/admin/objbox.php"><i class="fas fa-fw fa-gift"></i> Objects in Storage</a>
+										<a href="/admin/objbox.php"><i class="fas fa-gift"></i> Objects in Storage</a>
 									</li>
 									<li>
-										<a href="/admin/onboarding.php"><i class="fas fa-fw fa-clipboard"></i> OnBoarding</a>
+										<a href="/admin/onboarding.php"><i class="fas fa-clipboard"></i> OnBoarding</a>
 									</li>
 									<li>
-										<a herf="#"><i class="fas fa-fw fa-users"></i> Users<span class="fas fa-angle-left"></span></a>
+										<a herf="#"><i class="fas fa-users"></i> Users<span class="fas fa-angle-left"></span></a>
 										<ul class="nav nav-third-level">
 											<li>
-												<a href="/admin/addrfid.php"><i class="fas fa-fw fa-wifi"></i> Add RFID</a>
+												<a href="/admin/addrfid.php"><i class="fas fa-wifi"></i> Add RFID</a>
 											</li>
 										</ul>
 									</li>

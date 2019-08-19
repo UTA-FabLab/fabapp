@@ -45,7 +45,7 @@ class AuthRecipients {
 			if (!$stmt->bind_param("ss", $trans_id, $operator))
 					return "AR Bind Error 47";
 			if ($stmt->execute()){
-				return true;
+				return null;
 			} else {
 				return "AR Execute Error 51";
 			}

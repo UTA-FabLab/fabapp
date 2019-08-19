@@ -72,6 +72,7 @@ class Status {
 		if($results = $mysqli->query("	SELECT `status_id`
 										FROM `status`
 										WHERE `message` IS NOT NULL
+										AND `status_id` != '$status[sheet_sale]'
 										AND '$status[active]' <= `status_id`
 										AND `status_id` <= '30';"
 		)) {
@@ -90,7 +91,8 @@ class Status {
 		if($results = $mysqli->query("	SELECT `status_id`
 										FROM `status`
 										WHERE `message` IS NOT NULL
-										AND `status_id` <= '10';"
+										AND `status_id` <= '10'
+										AND `status_id` != '$status[sheet_sale]';"
 		)) {
 			$ticket_statuses = array();
 			while($row = $results->fetch_assoc())

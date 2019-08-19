@@ -70,12 +70,12 @@ class Devices {
 	
 	// check DB if desired device is not being used
 	public static function is_open($device_id){
-		global $mysqli;
+		global $mysqli, $status;
 		
 		if($result = $mysqli->query("
 			SELECT * 
 			FROM `transactions`
-			WHERE device_id = '$device_id' AND `status_id` < 12
+			WHERE device_id = '$device_id' AND `status_id` < $status[total_fail]
 		")){
 			if ($result->num_rows > 0) return true;
 			return false;
@@ -110,9 +110,9 @@ class Devices {
 		$color = "white";
 		$symbol = "circle";
 		$lookup = "SELECT * FROM `service_call` WHERE `d_id` = '$device_id' AND `solved` = 'N' ORDER BY `sl_id` DESC";
-		if($status = $mysqli->query($lookup)){
-			while ($ticket = $status->fetch_assoc()) if($ticket['sl_id'] > $dot) $dot = $ticket['sl_id'];
-			if($status == NULL || $dot <= 1) $color = "green";
+		if($service_status = $mysqli->query($lookup)){
+			while ($ticket = $service_status->fetch_assoc()) if($ticket['sl_id'] > $dot) $dot = $ticket['sl_id'];
+			if($service_status == NULL || $dot <= 1) $color = "green";
 			elseif($dot < 7) $color = "yellow";
 			else {
 				$color = "red";

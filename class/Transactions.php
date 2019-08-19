@@ -375,7 +375,7 @@ class Transactions {
 		$cost = 0;
 		// sum materials costs that are not failed
 		foreach($this->mats_used as $mu) {
-			if($mu->status->get_status_id() != $status['failed_mat'])  // failed materials are not charged to user
+			if($mu->status->status_id != $status['failed_mat'])  // failed materials are not charged to user
 				$cost += abs($mu->quantity_used) * $mu->material->price;
 		}
 		return (0 <= $cost && $cost < .005) ? 0 : $cost;

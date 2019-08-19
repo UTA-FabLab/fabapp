@@ -1,627 +1,860 @@
 <?php
-/*
- *   CC BY-NC-AS UTA FabLab 2016-2018
- *   FabApp V 0.9
- */
+
+/***********************************************************************************************************
+*	
+*	@author MPZinke
+*	created on 08.07.19 
+*	CC BY-NC-AS UTA FabLab 2016-2019
+*	FabApp V 0.94
+*		-House Keeping (DB cleanup, $status variable, class syntax/functionality)
+*		-Multiple Materials
+*		-Off-line Mode
+*		-Sheet Goods
+*		-Storage Box
+*
+*	DESCRIPTION: edit transaction, storage, account, material information passed by $_GET.  
+*	 Populate fields on page load and retrieve & write information on "Save".  Add to storage
+*	 through AJAX call to ./sub/storage_ajax_requests.php.  The ID number of the person 
+*	 who edits a field (eg Material) is placed in the staff input, as they assume responsibility.
+*	FUTURE:	-Use JS to highlight which inputs are incorrectly filled
+*	BUGS: 
+*
+***********************************************************************************************************/
+
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
-$errorMsg = "";
 
-if (!is_object($staff)){
-    $errorMsg = "Please Login";
-} elseif ($staff->getRoleID() < $sv['editTrans']) {
-    $errorMsg = "Not Authorized to Edit Ticket";
-} elseif (isset($_SESSION["edit_trans"]) && $_SESSION['type'] == "lookup"){
-    if (Transactions::regexTrans($_SESSION["edit_trans"])){
-        $trans_id = $_SESSION["edit_trans"];
-        $ticket = new Transactions($trans_id);
-        //Create List of Account IDs that are accessible by both the learner and the Staff memeber
-        $accounts = Accounts::listAccts($ticket->getUser(), $staff);
-        $a_ids = array();
-        foreach ($accounts as $a){
-            array_push($a_ids, $a->getA_id());
-        }
-    } else {
-        $errorMsg = "Invalid Ticket Number";
-    }
-} else {
-    $errorMsg = "Edit Parameter is Missing";
+if(!$staff) exit_if_error("Please Login", "/index.php");
+elseif($staff->roleID < $sv['editTrans']) exit_if_error("You are not authorized to edit this ticket", "/index.php");
+elseif(!$_GET["trans_id"]) exit_if_error("Search parameter is missing", "/index.php");
+elseif(!Transactions::regexTrans($_GET["trans_id"])) exit_if_error("Ticket #$_GET[trans_id] is invalid", "/index.php");
+else {
+	$trans_id = $_GET["trans_id"];
+	$ticket = new Transactions($trans_id);
+	$storage = StorageObject::object_is_in_storage($trans_id) ? new StorageObject($trans_id) : null;
+	$account_ids = array_map(create_function('$obj', 'return $obj->a_id;'), Accounts::listAccts($ticket->user, $staff));
 }
 
-if ($errorMsg != ""){
-    $_SESSION['error_msg'] = $errorMsg;
-    header("Location:/index.php");
-    exit();
-} elseif($staff->getOperator() == $ticket->getUser()->getOperator()) {
-    $_SESSION['error_msg'] = "You are unable to edit your own ticket.";
-    header("Location:/pages/lookup.php?trans_id=".$ticket->getTrans_id());
-    exit();
+if($staff->operator == $ticket->user->operator && $staff->roleID < $role["admin"])
+	exit_if_error("You do not have permission to edit your own ticket", "/index.php");
+
+
+
+if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["save_data"])) {
+	// materials
+	foreach($ticket->mats_used as $mat_used) {
+		$mu_id = $mat_used->mu_id;
+
+		$material = filter_input(INPUT_POST, "mu_mat_$mu_id");
+		if(!Materials::regexID($material)) exit_if_error("Material ID #$material is invalid");
+
+		if($mat_used->material->unit == "hour(s)")
+			$quantity_used = Mats_Used::regexQuantity(filter_input(INPUT_POST, "mu_hour_$mu_id")) 
+			+ Mats_Used::regexQuantity(filter_input(INPUT_POST, "mu_minute_$mu_id")) / 60;
+		else $quantity_used = Mats_Used::regexQuantity(filter_input(INPUT_POST, "mu_quantity_$mu_id"));
+
+		$mat_status = Mats_Used::regexStatus(filter_input(INPUT_POST, "mu_status_$mu_id"));
+		$mat_status = $mat_status ? new Status($mat_status) : null;
+		if($error = $mat_used->edit_material_used_information(array("quantity_used" => $quantity_used, 
+		"m_id" => $material, "status" => $mat_status, "staff" => $staff)))
+			exit_if_error("Unable to update material used #$mat_used->mu_id: $error");
+	}
+
+	// ticket
+	$ticket_status = filter_input(INPUT_POST, "status_id");
+	$notes = htmlspecialchars(filter_input(INPUT_POST, "ticket_notes"));
+	// input formats should regex, but prevent SQL injection just in case
+	$start_time = htmlspecialchars(filter_input(INPUT_POST, "t_start"));
+	$end_time = htmlspecialchars(filter_input(INPUT_POST, "t_end"));
+	// self regexing
+	$operator = Users::withID(filter_input(INPUT_POST, "operator"));
+	$staff = Users::withID(filter_input(INPUT_POST, "staff_id"));
+
+	if(!Status::regexID($ticket_status)) exit_if_error("Status ID $ticket_status is an invalid format");
+	
+	// not problems with data; reassign as appropriate data types
+	$ticket_status = new Status($ticket_status);
+
+	exit_if_error($error = $ticket->edit_transaction_information(array(
+			"t_start" => $start_time, "t_end" => $end_time, "status" => $ticket_status,
+			"notes" => $notes, "operator" => $operator, "staff" => $staff)));
+
+	if($ticket->pickup_time) {
+		$pickup_time = htmlspecialchars(filter_input(INPUT_POST, "pickup_time"));
+		$receiver = Users::withID(filter_input(INPUT_POST, "receiver"));
+
+		exit_if_error($ticket->edit_transaction_information(array(	"pickup_time" => $pickup_time, 
+																	"pickedup_by" => $receiver)));
+	}
+
+
+	// account_charge
+	if($ticket->acct_charge) {
+		foreach ($ticket->acct_charge as $ac) {
+			if(in_array($ac->account->a_id, $account_ids)) {
+				$ac_id = $ac->ac_id;
+				exit_if_error($ac->edit(filter_input(INPUT_POST, "ac_operator_$ac_id"),
+						filter_input(INPUT_POST, "ac_amount_$ac_id"), filter_input(INPUT_POST, "ac_date_$ac_id"),
+						filter_input(INPUT_POST, "ac_acct_$ac_id"), filter_input(INPUT_POST, "ac_staff_$ac_id"),
+						filter_input(INPUT_POST, "ac_notes_$ac_id")));
+			}
+		}
+	}
+
+
+	// storage
+	if(StorageObject::object_is_in_storage($trans_id)) {
+		if(filter_input(INPUT_POST, "remove_from_storage"))
+			exit_if_error(StorageObject::remove_object_from_storage($staff, $ticket->trans_id));
+		else {
+			$storage_object = new StorageObject($trans_id);
+
+			$stored_time = htmlspecialchars(filter_input(INPUT_POST, "storage_start"));
+			$storage_staff = Users::withID(filter_input(INPUT_POST, "storage_staff"));
+
+			exit_if_error($storage_object->edit_object_storage_information(array(	"storage_start" => $stored_time, 
+																						"staff" => $storage_staff)));
+		}
+	}
+
+	exit_with_success("Ticket #$trans_id successfully updated");
+
 }
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    //Catch Possible Errors
-    $err_catch = 0;
-    if (isset($_POST['saveBtn'])){
-        //Update Materials
-        foreach($ticket->getMats_used() as $mu){
-            $mu_id = $mu->getMu_id();
-            $err_catch += $mu->edit(filter_input(INPUT_POST,"mu_mat_$mu_id"), filter_input(INPUT_POST,"uu_$mu_id"), 
-                    filter_input(INPUT_POST,"mu_status_$mu_id"), filter_input(INPUT_POST,"mu_staff_$mu_id"), 
-                    filter_input(INPUT_POST,"mu_notes_$mu_id"));
-        }
-        //Update Ticket
-        $err_catch = $ticket->edit($err_catch, filter_input(INPUT_POST,"d_id"), filter_input(INPUT_POST,"t_start_picker"),
-                filter_input(INPUT_POST,"t_end_picker"), filter_input(INPUT_POST,"h"),  filter_input(INPUT_POST,"m"), 
-                filter_input(INPUT_POST,"s"), filter_input(INPUT_POST,"operator"),
-                filter_input(INPUT_POST,"status_id"), filter_input(INPUT_POST,"staff_id"));
-        
-        //Update Storage
-        if ($objbox = ObjBox::byTrans($ticket->getTrans_id())) {
-            $err_catch = $objbox->edit($err_catch, filter_input(INPUT_POST,"ob_start_picker"),
-                    filter_input(INPUT_POST,"ob_end_picker"), filter_input(INPUT_POST,"ob_operator"),
-                    filter_input(INPUT_POST,"ob_staff"));
-        }
-        
-        //Update Account
-        if($ticket->getAc()){
-            foreach ($ticket->getAc() as $ac){
-                if(in_array($ac->getAccount()->getA_id(), $a_ids)){
-                   $ac_id = $ac->getAc_id();
-                   $err_catch = $ac->edit($err_catch, filter_input(INPUT_POST,"ac_operator_$ac_id"),
-                           filter_input(INPUT_POST,"ac_amount_$ac_id"), filter_input(INPUT_POST,"ac_date_picker_$ac_id"),
-                           filter_input(INPUT_POST,"ac_acct_$ac_id"), filter_input(INPUT_POST,"ac_staff_$ac_id"),
-                           filter_input(INPUT_POST,"ac_notes_$ac_id"));
-                }
-            }
-        }
-        
-        if (is_string($err_catch)){
-            $_SESSION['error_msg'] = $err_catch;
-            header("Location:/pages/edit.php");
-        } elseif($err_catch == 0) {
-            //No changes
-            $_SESSION['success_msg'] = "No Changes Made.";
-            header("Location:/pages/lookup.php?trans_id=".$ticket->getTrans_id());
-        } elseif($err_catch == true) {
-            $_SESSION['success_msg'] = "Ticket has been updated.";
-            header("Location:/pages/lookup.php?trans_id=".$ticket->getTrans_id());
-        } else {
-            $_SESSION['error_msg'] = $err_catch;
-        }
-    }
+
+
+
+function material_not_already_used($material, $used_materials) {
+	foreach ($used_materials as $mat_used)
+		if($mat_used->material->m_id == $material->m_id) return false;
+	return true;
+}
+
+
+// if an error message passes, add error to session, redirect (default: home)
+function exit_if_error($error, $redirect=null) {
+	global $trans_id;
+
+	if($error) {
+		$_SESSION['error_msg'] = "Edit.php: ".$error;
+		if($redirect) header("Location:$redirect");
+		else header("Location:./edit.php?trans_id=$trans_id");
+		exit();
+	}
+}
+
+
+function exit_with_success($message, $redirect=null) {
+	global $trans_id;
+
+	$_SESSION["success_msg"] = $message;
+	if($redirect) header("Location:$redirect");
+	else header("Location:./lookup.php?trans_id=$trans_id");
+	exit();
 }
 ?>
-<title><?php echo $sv['site_name'];?> Edit Detail</title>
-<div id="page-wrapper"><form name="saveForm" method="post" action="" onsubmit="return validateForm()" autocomplete='off'>
-    <div class="row">
-        <div class="col-lg-12">
-            <h1 class="page-header">Edit Details <input class="btn btn-info" type="submit" name="saveBtn" value="Save"/></h1>
-        </div>
-        <!-- /.col-lg-12 -->
-    </div>
-    <!-- /.row -->
-    <div class="row">
-        <div class="col-lg-5">
-            <div class="panel panel-warning">
-                <div class="panel-heading">
-                    <i class="fas fa-ticket-alt fa-lg"></i> Ticket # <b><?php echo $ticket->getTrans_id(); ?></b>
-                </div>
-                <div class="panel-body">
-                    <table class ="table table-bordered table-striped">
-                        <tr>
-                            <td>Device</td>
-                            <td>
-                                <select name="d_id" class='form-control' tabindex="1" onchange="selectDevice(this)">
-                                    <?php $result = $mysqli->query("SELECT * FROM `devices` WHERE 1 ORDER BY `device_desc`;");
-                                    while($row = $result->fetch_assoc()){
-                                        if ($row["d_id"] == $ticket->getDevice()->getD_id()){
-                                            echo "<option selected value=$row[d_id]>$row[device_desc]</option>";
-                                        } else {
-                                            echo "<option value=$row[d_id]>$row[device_desc]</option>";
-                                        }
-                                    }
-                                    ?>
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Start Time</td>
-                            <td>
-                                <div class="form-group">
-                                    <div class='input-group date' id='t_start_picker'>
-                                        <input type='text' class="form-control" value="<?php echo $ticket->getT_start_picker(); ?>" name="t_start_picker"  id="t_start" tabindex="1"/>
-                                        <span class="input-group-addon">
-                                            <span class="fas fa-calendar-alt"></span>
-                                        </span>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>End Time</td>
-                            <td>
-                                <div class="form-group">
-                                    <div class='input-group date' id='t_end_picker'>
-                                        <input type='text' class="form-control" value="<?php echo $ticket->getT_end_picker(); ?>" name="t_end_picker" id="t_end" tabindex="1"/>
-                                        <span class="input-group-addon">
-                                            <span class="fas fa-calendar-alt"></span>
-                                        </span>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                Duration
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-                                        <i class="fas fa-info"></i>
-                                    </button>
-                                    <ul class="dropdown-menu" role="menu">
-                                        <li style="padding-left: 5px;">If the End Time is set and all 3 fields are left blank, then the Duration will automatically calculated.</li>
-                                    </ul>
-                                </div>
-                            </td>
-                            <td><?php
-                                if($ticket->getDuration_raw() != ""){
-                                    $dArray = explode(":", $ticket->getDuration_raw());
-                                    echo ("<input type='number' value='$dArray[0]' max='800' min='0' style='width: 4em' tabindex='1' name='h'/>h ");
-                                    echo ("<input type='number' value='$dArray[1]' max='59' min='0' style='width: 4em' tabindex='1' name='m'/>m ");
-                                    echo ("<input type='number' value='$dArray[2]' max='59' min='0' style='width: 4em' tabindex='1' name='s'/>s");
-                                } else { ?>
-                                    <input type='number' max='800' min='0' style='width: 4em' tabindex="1" name='h'/>h
-                                    <input type='number' max='59' min='0' style='width: 4em' tabindex="1" name='m'/>m
-                                    <input type='number' max='59' min='0' style='width: 4em' tabindex="1" name='s'/>s
-                            <?php } ?></td>
-                        </tr>
-                        <?php if ($ticket->getDevice()->getBase_price() > .005){ ?>
-                            <tr>
-                                <td>Cost</td>
-                                <td>
-                                    <?php echo " <i class='$sv[currency]'></i>".$ticket->getDevice()->getBase_price(). "/hour"; ?>
-                                </td>
-                            </tr>
-                        <?php } ?>
-                        <tr>
-                            <td>Operator</td>
-                            <td>
-                                <input type="text" name="operator" id="operator" placeholder="1000000000" value="<?php echo $ticket->getUser()->getOperator();?>"
-                                maxlength="10" class='form-control' tabindex="1">
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Status</td>
-                            <td><select name="status_id" id="status_id" class='form-control' tabindex="1"><?php
-                                $available_status = array(10,11,12,13,14,15,20);
-                                $t_status = $ticket->getStatus()->getStatus_id();
-                                $sArray = Status::getList();
-                                foreach($available_status as $as){
-                                    if ($t_status == $as){
-                                        echo ("<option value='$as' selected>$sArray[$as]</option>");
-                                    } else {
-                                        echo ("<option value='$as'>$sArray[$as]</option>");
-                                    }
-                                }
-                            ?></select></td>
-                        </tr>
-                        <tr>
-                            <td>Staff</td>
-                            <td><?php if ( is_object($ticket->getStaff()) ) { ?>
-                                <input type="text" name="staff_id" id="staff_id" placeholder="1000000000" value="<?php echo $ticket->getStaff()->getOperator();?>"
-                                maxlength="10" class='form-control' tabindex="1">
-                            <?php } else { ?>
-                                <input type="text" name="staff_id" id="staff_id" placeholder="1000000000" maxlength="10" class='form-control' tabindex="1">
-                            <?php } ?></td>
-                        </tr>
-                    </table>
-                </div>
-                <!-- /.panel-body -->
-            </div>
-            <!-- /.panel -->
-            <?php foreach ($ticket->getMats_used() as $mu) {
-                $mu_id = $mu->getMu_id();//pull ID to get unique identifier?>
-                <div class="panel panel-warning">
-                    <div class="panel-heading">
-                        <i class="far fa-life-ring fa-lg"></i> Material
-                    </div>
-                    <div class="panel-body">
-                        <table class="table table-bordered table-striped" style="table-layout:fixed">
-                            <tr>
-                                <td class="col-md-4">Material</td>
-                                <td class="col-md-8">
-                                    <select name="mu_mat_<?php echo $mu_id;?>" id="mu_mat_<?php echo $mu_id;?>" class='form-control' tabindex="2">
-                                        <?php
-                                        //List all Materials that are available to that device
-                                        $mats_array = Materials::getDeviceMats($ticket->getDevice()->getDg()->getDg_id());
-                                        foreach($mats_array as $ma){
-                                            if ($ma->getM_id() == $mu->getMaterial()->getM_id()){
-                                                echo "<option selected value=".$ma->getM_id().">".$ma->getM_name()."</option>";
-                                            } else {
-                                                echo "<option value=".$ma->getM_id().">".$ma->getM_name()."</option>";
-                                            }
-                                        }
-                                        ?>
-                                    </select>
-                                </td>
-                            </tr>
-                            <tr>
-                                <?php if ($mu->getMaterial()->getMeasurable() == "Y"){ ?>
-                                    <td>
-                                        Quantity Used
-                                    </td>
-                                    <td>
-                                        <div class="input-group">
-                                            <span class="input-group-addon"><?php printf("<i class='%s'></i> %.2f x " ,$sv['currency'], $mu->getMaterial()->getPrice());?></span>
-                                            <input class='form-control' type="number" name="uu_<?php echo $mu_id;?>" id="uu_<?php echo $mu_id;?>" autocomplete="off" tabindex="2"
-                                           value="<?php echo ($mu->getUnit_used());?>" min="0" max="9999" style="text-align:right;"/>
-                                            <span class="input-group-addon"><?php echo $mu->getMaterial()->getUnit()."\n"; ?></span>
-                                        </div>
-                                    </td>
-                                <?php } ?>
-                            </tr>
-                            <tr>
-                                <td>Time</td>
-                                <td><?php echo $mu->getMu_date()?></td>
-                            </tr>
-                            <tr>
-                                <td>Material Status</td>
-                                <td>
-                                    <select name="mu_status_<?php echo $mu_id;?>" id="mu_status_<?php echo $mu_id;?>" class='form-control' tabindex="2"><?php
-                                    $available_status = array(10,11,12,13,14,15,20);
-                                    $t_status = $mu->getStatus()->getStatus_id();
-                                    $sArray = Status::getList();
-                                    foreach($available_status as $as){
-                                        if ($t_status == $as){
-                                            echo ("<option value='$as' selected>$sArray[$as]</option>");
-                                        } else {
-                                            echo ("<option value='$as'>$sArray[$as]</option>");
-                                        }
-                                    } ?></select>
-                                </td>
-                            </tr>
-                            <?php if (strcmp($mu->getHeader(), "") != 0){ ?>
-                                <tr>
-                                    <td>File Name</td>
-                                    <td><div style="word-wrap: break-word;"><?php echo $mu->getHeader(); ?></div></td>
-                                </tr>
-                            <?php } ?>
-                            <tr>
-                                <td>Staff</td>
-                                <td>
-                                    <input type="text" name="mu_staff_<?php echo $mu_id;?>" id="mu_staff_<?php echo $mu_id;?>" placeholder="1000000000" value="<?php if (is_object($mu->getStaff())) {echo $mu->getStaff()->getOperator();}?>"
-                                        maxlength="10" class='form-control' tabindex="2">
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <i class="fas fa-edit"></i>Notes
-                                    <div class="btn-group">
-                                        <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-                                            <i class="fas fa-info"></i>
-                                        </button>
-                                        <ul class="dropdown-menu" role="menu">
-                                            <li style="padding-left: 5px;">Please state why this ticket needed to be edited.</li>
-                                        </ul>
-                                    </div>
-                                </td>
-                                <td><textarea name="mu_notes_<?php echo $mu_id;?>" id="mu_notes_<?php echo $mu_id;?>" class="form-control" tabindex="2"><?php echo $mu->getMu_notes();?></textarea></td>
-                            </tr>
-                        </table>
-                    </div>
-                    <!-- /.panel-body -->
-                </div>
-                <!-- /.panel -->
-            <?php } ?>
-        </div>
-        <!-- /.col-lg-5 -->
-        <div class="col-lg-6">
-            <?php if ($objbox = ObjBox::byTrans($ticket->getTrans_id())) { ?>
-                <div class="panel panel-warning">
-                    <div class="panel-heading">
-                        <i class="fas fa-gift fa-lg"></i> Storage
-                    </div>
-                    <div class="panel-body">
-                        <table class="table table-bordered table-striped">
-                            <tr>
-                                <td>Placed Into Storage</td>
-                                <td>
-                                    <div class="form-group">
-                                        <div class='input-group date' id='ob_start_picker'>
-                                            <input type='text' class="form-control" value="<?php echo $objbox->getO_start_picker(); ?>" name="ob_start_picker" id="ob_start" tabindex="3"/>
-                                            <span class="input-group-addon">
-                                                <span class="fas fa-calendar-alt"></span>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Removed On</td>
-                                <td>
-                                    <div class="form-group">
-                                        <div class='input-group date' id='ob_end_picker'>
-                                            <input type='text' class="form-control" value="<?php echo $objbox->getO_end_picker(); ?>" name="ob_end_picker" id="ob_end" tabindex="3"/>
-                                            <span class="input-group-addon">
-                                                <span class="fas fa-calendar-alt"></span>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Picked Up By</td>
-                                <td><input type="text" name="ob_operator" placeholder="1000000000" value="<?php if( $objbox->getUser() !== NULL ) echo $objbox->getUser()->getOperator();?>"
-                                maxlength="10" class='form-control' tabindex="3"></td>
-                            </tr>
-                            <tr>
-                                <td>Address</td>
-                                <td><?php echo $objbox->getAddress(); ?></td>
-                            </tr>
-                            <tr>
-                                <td>Staff</td>
-                                <td>
-                                    <input type="text" name="ob_staff" placeholder="1000000000" value="<?php echo $objbox->getStaff()->getOperator();?>"
-                                    maxlength="10" class='form-control' tabindex="3">
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                    <!-- /.panel-body -->
-                </div>
-                <!-- /.panel -->
-            <?php } 
-            //Look for associated charges
-            if($ticket->getAc()){?>
-                <div class="panel panel-warning">
-                    <div class="panel-heading">
-                        <i class="fas fa-credit-card fa-lg"></i> Related Charges
-                    </div>
-                    <div class="panel-body">
-                    <?php
-                    //Show Each Account charge
-                    foreach ($ticket->getAc() as $ac){ ?>
-                        <table class="table table-bordered">
-                            <?php
-                                $ac_id = $ac->getAc_id();
-                                //Show editing fields if they have access to the Account of the Charge
-                                if(in_array($ac->getAccount()->getA_id(), $a_ids)){
-                                    if ( is_object($ac->getUser()) ) { ?>
-                                        <tr>
-                                            <td colspan="2" align="center" class="active"><b>Account Charge # <?php echo $ac_id;?></b></td>
-                                        </tr>
-                                        <tr>
-                                            <td>Paid By</td>
-                                            <td>
-                                                <input type="text" name="ac_operator_<?php echo $ac_id;?>" id="ac_operator_<?php echo $ac_id;?>" placeholder="1000000000" value="<?php echo $ac->getUser()->getOperator();?>"
-                                                    maxlength="10" class="form-control"  tabindex="4">
-                                            </td>
-                                        </tr>
-                                    <?php } else { ?>
-                                        <tr>
-                                            <td>Paid By</td>
-                                            <td>
-                                                <input type="text" name="ac_operator_<?php echo $ac_id;?>" placeholder="1000000000" maxlength="10" class="form-control" tabindex="4">
-                                            </td>
-                                        </tr>
-                                    <?php } ?>
-                                        <tr>
-                                            <td>Amount</td>
-                                            <td>
-                                                <div class="form-group">
-                                                    <div class="input-group">
-                                                        <span class="input-group-addon">$</span>
-                                                        <input type="number" name="ac_amount_<?php echo $ac_id;?>" value="<?php echo $ac->getAmount();?>" step="0.01" class="form-control" tabindex="4"/>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>Date</td>
-                                            <td>
-                                                <div class="form-group">
-                                                    <div class='input-group date' id='ac_date_picker'>
-                                                        <input type='text' class="form-control" value="<?php echo $ac->getAc_date_picker();?>" name="ac_date_picker_<?php echo $ac_id;?>" id="ac_date_<?php echo $ac_id;?>" tabindex="4"/>
-                                                        <span class="input-group-addon">
-                                                            <span class="fas fa-calendar-alt"></span>
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>Account</td>
-                                            <td>
-                                                <select name="ac_acct_<?php echo $ac_id;?>" class="form-control" tabindex="4"><?php
-                                                    foreach($accounts as $a){
-                                                        if ($a->getA_id() == $ac->getAccount()->getA_id()){
-                                                            echo("<option value='".$a->getA_id()."' title=\"".$a->getDescription()."\" SELECTED>".$a->getName()."</option>");
-                                                        } else {
-                                                            echo("<option value='".$a->getA_id()."' title=\"".$a->getDescription()."\">".$a->getName()."</option>");
-                                                        }
-                                                    }
-                                                ?></select>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>Staff</td>
-                                            <td>
-                                                <input type="text" name="ac_staff_<?php echo $ac_id;?>" id="ac_staff_<?php echo $ac_id;?>" placeholder="1000000000" value="<?php echo $ac->getStaff()->getOperator();?>"
-                                                        maxlength="10" class="form-control" tabindex="4">
-                                            </td>
-                                        </tr>
-                                        <?php if ($ac->getAc_notes()){ ?><tr>
-                                            <td>Notes</td>
-                                            <td>
-                                                <textarea name="ac_notes_<?php echo $ac_id;?>" id="ac_notes_<?php echo $ac_id;?>" class="form-control" tabindex="2"><?php echo $ac->getAc_notes();?></textarea>
-                                            </td>
-                                        <?php } ?></tr>
-                                    <?php //Locked View of Acct Charge, staff does not have access to this account
-                                    } else {
-                                        if ( is_object($ac->getUser()) ) { ?> <tr>
-                                            <td colspan="2" align="center" class="active"><b>Account Charge # <?php echo $ac_id;?></b></td>
-                                        </tr>
-                                        <tr>
-                                            <td>Paid By</td>
-                                            <td>
-                                                <div class="btn-group">
-                                                    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-                                                        <i class="<?php echo $ac->getUser()->getIcon();?> fa-lg" title="<?php echo $ac->getUser()->getOperator();?>"></i>
-                                                    </button>
-                                                    <ul class="dropdown-menu" role="menu">
-                                                        <li style="padding-left: 5px;"><?php echo $ac->getUser()->getOperator();?></li>
-                                                    </ul>
-                                                </div>
-                                            </td>
-                                        </tr><?php } ?>
-                                        <tr>
-                                            <td>Amount</td>
-                                            <td><?php echo "<i class='".$sv['currency']."'></i> ".number_format($ac->getAmount(), 2);?></td>
-                                        </tr>
-                                        <tr>
-                                            <td>Account</td>
-                                            <td>
-                                                <div class="btn-group">
-                                                    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-                                                        <i class='far fa-calendar-alt' title="<?php echo $ac->getAc_date();?>"></i>
-                                                    </button>
-                                                    <ul class="dropdown-menu" role="menu">
-                                                        <li style="padding-left: 5px;"><?php echo $ac->getAc_date();?></li>
-                                                    </ul>
-                                                </div>
-                                                <?php echo $ac->getAccount()->getName();?>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>Staff</td>
-                                            <td>
-                                                <div class="btn-group">
-                                                    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-                                                        <i class="<?php echo $ac->getStaff()->getIcon();?> fa-lg" title="<?php echo $ac->getStaff()->getOperator();?>"></i>
-                                                    </button>
-                                                    <ul class="dropdown-menu" role="menu">
-                                                        <li style="padding-left: 5px;"><?php echo $ac->getStaff()->getOperator();?></li>
-                                                    </ul>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <?php if ($ac->getAc_notes()){ ?>
-                                        <tr>
-                                            <td>Notes</td>
-                                            <td>
-                                                <?php echo $ac->getAc_notes();?>
-                                            </td>
-                                        </tr>
-                                        <?php } ?>
-                                    <?php } ?>
-                        </table>
-                        <?php } ?>
-                    </div>
-                    <!-- /.panel-body -->
-                </div>
-                <!-- /.panel -->
-            <?php } ?>
-        </div>
-        <!-- /.col-lg-5 -->
-    </div>
-    <!-- /.row -->
-</form></div>
-<!-- /#page-wrapper -->
-<?php
-//Standard call for dependencies
-include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
+
+<title><?php echo $sv['site_name']; ?> Edit Detail</title>
+<div id="page-wrapper">
+	<form name="saveForm" method="post" action="" onsubmit="return validateForm()" autocomplete='off'>
+		<div class="row">
+			<div class="col-lg-12">
+				<h1 class="page-header">Edit Details <input class="btn btn-info" type="submit" name="save_data" value="Save"/></h1>
+			</div> <!-- /.col-lg-12 -->
+		</div> <!-- /.row -->
+		<div class="row">
+			<div class="col-lg-6">
+				<div class="panel panel-warning">
+					<div class="panel-heading">
+						<i class="fas fa-ticket-alt fa-lg"></i> Ticket # <b><?php echo $ticket->getTrans_id(); ?></b>
+					</div>
+					<div class="panel-body">
+						<?php 
+							$readonly = $staff->operator == $ticket->staff->operator ? "readonly" : "";  // prevent staff from listing someone else as changer
+						?>
+						<table class ="table table-bordered table-striped">
+							<tr>
+								<td>Device</td>
+								<td>
+									<?php echo $ticket->device->name; ?>
+								</td>
+							</tr>
+							<?php if($ticket->filename) { ?>
+								<tr>
+									<td>File Name</td>
+									<td>
+										<div style="word-wrap: break-word;"><?php echo $ticket->filename; ?></div>
+									</td>
+								</tr>
+							<?php } ?>
+							<tr>
+								<td>Start Time</td>
+								<td>
+									<input id='t_start' name='t_start' class='form-control' value='<?php echo date("Y-m-d\TH:i:s", strtotime($ticket->t_start)); ?>' 
+									type='datetime-local' onkeyup='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'
+									onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'/>
+								</td>
+							</tr>
+							<tr>
+								<td>End Time</td>
+								<td>
+									<input id='t_end' name='t_end' class='form-control' value='<?php echo date("Y-m-d\TH:i:s", strtotime($ticket->t_end)); ?>' 
+									type='datetime-local' onkeyup='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'
+									onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'/>
+								</td>
+							</tr>
+							<tr>
+								<td>Status</td>
+								<td>
+									<select name="status_id" id="status_id" class='form-control' onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'>
+										<?php
+										$available_statuses = Status::device_and_transaction_statuses();
+										$status_descriptions = Status::getList();
+										foreach($available_statuses as $available_status) {
+											$selected = $ticket->status->status_id == $available_status ? "selected" : "";
+											echo ("<option value='$available_status' $selected>$status_descriptions[$available_status]</option>");
+										} ?>
+									</select>
+								</td>
+							</tr>
+							<?php if($ticket->pickup_time) { ?>
+							<tr>
+								<td>Picked Up Time</td>
+								<td>
+									<input id='pickup_time' name='pickup_time' class='form-control' value='<?php echo date("Y-m-d\TH:i:s", strtotime($ticket->pickup_time)); ?>' 
+									type='datetime-local' onkeyup='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'
+									onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'/>
+								</td>
+							</tr>
+							<tr>
+								<td>Picked Up By</td>
+								<td>
+									<input type='number' name='receiver' id='receiver' placeholder='1000000000' value='<?php echo $ticket->pickedup_by->operator; ?>'
+									class='form-control' onkeyup='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'
+									onchange='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'>
+								</td>
+							</tr>
+							<?php } ?>
+							<tr>
+								<td>Started By</td>
+								<td>
+									<input type="number" name="operator" id="operator" placeholder="1000000000" value="<?php echo $ticket->user->operator; ?>"
+									class='form-control' onkeyup='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'
+									onchange='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'>
+								</td>
+							</tr>
+							<tr>
+								<td>Staff</td>
+								<td>
+									<input type="number" name="staff_id" id="staff_id" placeholder="1000000000" value="<?php echo $ticket->staff ? $ticket->staff->operator : ""; ?>"
+									onkeyup='restrict_size(this);' onchange='restrict_size(this);' class='form-control' <?php echo $readonly; ?>>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<i class="fas fa-edit"></i>Notes
+										<div class="btn-group">
+											<button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+												<i class="fas fa-info"></i>
+											</button>
+											<ul class="dropdown-menu" role="menu">
+												<li style="padding-left: 5px;">Please state why this ticket needed to be edited.</li>
+											</ul>
+										</div>
+								</td>
+								<td>
+									<textarea name='ticket_notes' id='ticket_notes' class='form-control' 
+									onkeyup='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'
+									onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'><?php echo $ticket->notes; ?></textarea>
+								</td>
+							</tr>
+						</table>
+					</div> <!-- /.panel-body -->
+				</div> <!-- /.panel -->
+				<div class="panel panel-warning">
+					<div class="panel-heading">
+						<i class="far fa-life-ring fa-lg"></i> Material
+					</div>
+					<div id='mats_used_display'>
+						<?php foreach ($ticket->mats_used as $mat_used) {
+							$readonly = $staff->operator == $mat_used->staff->operator ? "readonly" : "";  // prevent staff from listing someone else as changer
+							$mu_id = $mat_used->mu_id; ?>
+							<div class="panel-body">
+								<table id='mu-<?php echo $mu_id; ?>' class="table table-bordered table-striped mats_used" style="table-layout:fixed">
+									<tr>
+										<td class="col-md-4">Material</td>
+										<td class="col-md-8">
+											<select name="mu_mat_<?php echo $mu_id; ?>" id="mu_mat-<?php echo $mu_id; ?>" class='form-control' 
+											onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 1);'>
+												<?php
+												//List all Materials that are available to that device
+												$device_materials = Materials::getDeviceMats($ticket->device->device_group->dg_id);
+												foreach($device_materials as $material) {
+													$selected = $material->m_id == $mat_used->material->m_id ? "selected" : "";
+													echo "<option $selected value='$material->m_id'>$material->m_name</option>";
+												} ?>
+											</select>
+										</td>
+									</tr>
+									<?php if($mat_used->material->is_measurable) { ?>
+										<tr>
+											<td>
+												Quantity Used
+											</td>
+											<td>
+												<div class="input-group">
+													<?php if($mat_used->material->unit == "hour(s)") { 
+														$hour = floor($mat_used->quantity_used);
+														$minute = ($mat_used->quantity_used - $hour) * 60; ?>
+														<span class='input-group-addon'><?php printf("<i class='$sv[currency]'></i> %.2f x ", $mat_used->material->price); ?></span>
+														<!-- hours is not set to a minimum because it is assumed staff knows what they are doing -->
+														<input class='form-control' type='number' name='mu_hour_<?php echo $mu_id; ?>' id='mu_hour-<?php echo $mu_id; ?>' autocomplete='off' tabindex='2'
+														value='<?php echo $hour; ?>' min='0' max='9999' step='1' style='text-align:right;' onkeyup='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 4, 1);'
+														onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 4, 1);'/>
+														<span class='input-group-addon'>Hours</span>
+														<input class='form-control' type='number' name='mu_minute_<?php echo $mu_id; ?>' id='mu_minute-<?php echo $mu_id; ?>' autocomplete='off' tabindex='2'
+														value='<?php echo $minute; ?>' min='0' max='9999' style='text-align:right;' onkeyup='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 4, 1);'
+														onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 4, 1);'/>
+														<span class="input-group-addon">Minutes</span>
+													<?php
+													}
+													else { 
+													?>
+														<span class='input-group-addon'><?php printf("<i class='$sv[currency]'></i> %.2f x ", $mat_used->material->price); ?></span>
+														<input class='form-control' type='number' name='mu_quantity_<?php echo $mu_id; ?>' id='mu_quantity-<?php echo $mu_id; ?>' autocomplete='off'
+														value='<?php echo $mat_used->quantity_used; ?>' min='0' max='9999' onkeyup='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 4, 1);'
+														style='text-align:right;' onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 4, 1);'/>
+														<span class='input-group-addon'><?php echo $mat_used->material->unit; ?></span>
+													<?php } ?>
+												</div>
+											</td>
+										</tr>
+									<?php } ?>
+									<tr>
+										<td>Material Status</td>
+										<td>
+											<select name="mu_status_<?php echo $mu_id; ?>" id="mu_status-<?php echo $mu_id; ?>" class='form-control' 
+											onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 1);'>
+												<?php
+												$available_statuses = Status::material_statuses();
+												$status_descriptions = Status::getList();
+												foreach($available_statuses as $available_status) {
+													$selected = $mat_used->status->status_id == $available_status ? "selected" : "";
+													echo ("<option value='$available_status' $selected>$status_descriptions[$available_status]</option>");
+												} ?>
+											</select>
+										</td>
+									</tr>
+									<tr>
+										<td>Staff</td>
+										<td>
+											<input type="number" name="mu_staff_<?php echo $mu_id; ?>" id="mu_staff-<?php echo $mu_id; ?>" placeholder="1000000000" 
+											value="<?php if($mat_used->staff) echo $mat_used->staff->operator; ?>" onkeyup='restrict_size(this);' 
+											onchange='restrict_size(this);' class='form-control' <?php echo $readonly; ?>>
+										</td>
+									</tr>
+								</table>
+							</div> <!-- /.panel-body -->
+						<?php } ?>
+					</div> <!-- End of mats_used_display -->	
+					<div class="panel-body">
+						<table class='table table-bordered table-striped'>
+							<tr>
+								<td colspan='3'> Add material </td>
+							</tr>
+							<tr>
+								<td class='col-sm-4'>Material</td>
+								<td class='col-sm-5'>
+									<select id='new_material' name='new_material' class='form-control'>
+										<?php
+										foreach($ticket->device->device_group->optional_materials as $optional_material)
+											if(material_not_already_used($optional_material, $ticket->mats_used))
+												echo "<option value='$optional_material->m_id'>$optional_material->m_name</option>";
+										?>
+									</select>
+								</td>
+								<td class='col-sm-4'>
+									<button type='button' name='new_material_button' class='btn btn-success' onclick='add_new_material_used();'>Add Material</button>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div> <!-- /.panel -->
+			</div> <!-- /.col-lg-6 -->
+
+	<!-- STORAGE -->
+
+			<div class="col-lg-6">
+				<div id='storage_panel' class="panel panel-warning">
+					<div class="panel-heading">
+						<i class="fas fa-gift fa-lg"></i> Storage
+					</div>
+					<div class="panel-body">
+						<table id='storage_container'  class="table table-bordered table-striped">
+							<?php 
+							if(StorageObject::object_is_in_storage($ticket->trans_id)) { 
+								$storage_object = new StorageObject($ticket->trans_id); 
+								$readonly = $staff->operator == $storage_object->staff->operator ? "readonly" : "";  // prevent staff from listing someone else as changer
+								?>
+								<tr>
+									<td>Address</td>
+									<td>
+										<table width='100%'>
+											<tr>
+												<td width='40%'>
+													<?php echo $storage_object->box_id; ?>
+												</td>
+												<td width='50%' align='right'>
+													Remove From Storage
+												</td>
+												<td width='10%' style='padding-left:4px;'>
+											 		<input type='checkbox' name='remove_from_storage' />
+											 	</td>
+											</tr>
+										</table>
+									 </td>
+								</tr>
+								<tr>
+									<td>Placed Into Storage</td>
+									<td>
+										<input id='storage_start' name='storage_start' class='form-control' value='<?php echo date("Y-m-d\TH:i:s", strtotime($storage_object->storage_start)); ?>' 
+										type='datetime-local' onkeyup='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 1);'
+										onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 1);'/>
+									</td>
+								</tr>
+								<tr>
+									<td>Staff</td>
+									<td>
+										<input type='number' name="storage_staff" placeholder="1000000000" value="<?php echo $storage_object->staff->operator; ?>"
+										onchange='restrict_size(this);' onkeyup='restrict_size(this);' class='form-control' <?php echo $readonly; ?>>
+									</td>
+								</tr>
+							<?php 
+							}
+							else { ?>
+								<tr>
+									<td align='center' width='100%'>
+										<button type='button' class='btn btn-success' width='100%' onclick='$("#storage_modal").show("modal");'>Put Into Storage</button>
+									</td>
+								</tr>
+							<?php } ?>
+						</table>
+					</div> <!-- /.panel-body -->
+				</div> <!-- /.panel -->
+
+		<!-- ACCOUNT CHARGES -->
+
+				<?php
+				//Look for associated charges
+				if($ticket->acct_charge) {?>
+					<div class="panel panel-warning">
+						<div class="panel-heading">
+							<i class="fas fa-credit-card fa-lg"></i> Related Charges
+						</div>
+						<div class="panel-body">
+						<?php
+						//Show Each Account charge
+						foreach($ticket->acct_charge as $account_charge) { 
+							$ac_id = $account_charge->ac_id;
+							?>
+							<table id='ac-<?php echo $ac_id; ?>' class="table table-bordered account_charge">
+								<?php
+									//Show editing fields if they have access to the Account of the Charge
+									if(in_array($account_charge->account->a_id, $account_ids)) {
+										$readonly = $staff->operator == $account_charge->staff->operator ? "readonly" : "";  // prevent staff from listing someone else as changer
+										if(is_object($account_charge->user)) { ?>
+											<tr>
+												<td colspan="2" align="center" class="active"><b>Account Charge # <?php echo $ac_id; ?></b></td>
+											</tr>
+											<tr>
+												<td>Paid By</td>
+												<td>
+													<input type="number" name="ac_operator_<?php echo $ac_id; ?>" id="ac_operator-<?php echo $ac_id; ?>" placeholder="1000000000" 
+													value="<?php echo $account_charge->user->operator; ?>" class="form-control" 
+													onkeyup='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);' 
+													onchange='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'/>
+												</td>
+											</tr>
+										<?php 
+										}
+										else { ?>
+											<tr>
+												<td>Paid By</td>
+												<td>
+													<input type="number" name="ac_operator_<?php echo $ac_id; ?>" id="ac_operator-<?php echo $ac_id; ?>" 
+													placeholder="1000000000" attern="[0-9]{10}" class="form-control" 
+													onkeyup='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'
+													onchange='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'>
+												</td>
+											</tr>
+										<?php } ?>
+											<tr>
+												<td>Amount</td>
+												<td>
+													<div class="form-group">
+														<div class="input-group">
+															<span class="input-group-addon"><?php echo "<i class='$sv[currency]'></i>" ; ?></span>
+															<input type="number" id='ac_amount-<?php echo $ac_id; ?>' name="ac_amount_<?php echo $ac_id; ?>" 
+															value="<?php echo $account_charge->amount; ?>" step="0.01" class="form-control"
+															onkeyup='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'
+															onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'/>
+														</div>
+													</div>
+												</td>
+											</tr>
+											<tr>
+												<td>Date</td>
+												<td>
+													<input id='ac_date_<?php echo $ac_id; ?>' name='ac_date_<?php echo $ac_id; ?>' class='form-control' 
+													value='<?php echo date("Y-m-d\TH:i:s", strtotime($storage_object->storage_start)); ?>' type='datetime-local' 
+													onkeyup='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'
+													onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'/>
+												</td>
+											</tr>
+											<tr>
+												<td>Account</td>
+												<td>
+													<select name="ac_acct_<?php echo $ac_id; ?>" id="ac_acct-<?php echo $ac_id; ?>" class="form-control" 
+													onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'><?php
+														foreach(Accounts::listAccts($ticket->user, $staff) as $acct) {
+															$selected = ($acct->a_id == $account_charge->account->a_id) ? "selected" : "";
+															echo("<option value='$acct->a_id' title='$acct->getDescription()'' $selected>$acct->name</option>");
+														}
+														?>
+													</select>
+												</td>
+											</tr>
+											<tr>
+												<td>Staff</td>
+												<td>
+													<input type="number" name="ac_staff_<?php echo $ac_id; ?>" id="ac_staff-<?php echo $ac_id; ?>" placeholder="1000000000" 
+													value="<?php echo $account_charge->staff->operator; ?>" onchange='restrict_size(this);' class="form-control" <?php echo $readonly ?>/>
+												</td>
+											</tr>
+											<tr>
+												<td>Notes</td>
+												<td>
+													<textarea name="ac_notes_<?php echo $ac_id; ?>" id="ac_notes-<?php echo $ac_id; ?>" class="form-control" tabindex="2"><?php echo $account_charge->ac_notes; ?></textarea>
+												</td>
+											</tr>
+									<?php // locked View of Acct Charge, staff does not have access to this account
+									}
+									else {
+										if(is_object($account_charge->user)) { ?>
+											<tr>
+												<td colspan="2" align="center" class="active"><b>Account Charge # <?php echo $ac_id; ?></b></td>
+											</tr>
+											<tr>
+												<td>Paid By</td>
+												<td>
+													<div class="btn-group">
+														<button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+															<i class="<?php echo $account_charge->user->icon; ?> fa-lg" title="<?php echo $account_charge->user->operator; ?>"></i>
+														</button>
+														<ul class="dropdown-menu" role="menu">
+															<li style="padding-left: 5px;"><?php echo $account_charge->user->operator; ?></li>
+														</ul>
+													</div>
+												</td>
+											</tr>
+										<?php } ?>
+										<tr>
+											<td>Amount</td>
+											<td><?php echo "<i class='$sv[currency]'></i> ".number_format($account_charge->amount, 2); ?></td>
+										</tr>
+										<tr>
+											<td>Account</td>
+											<td>
+												<div class="btn-group">
+													<button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+														<i class='far fa-calendar-alt' title="<?php echo $account_charge->ac_date; ?>"></i>
+													</button>
+													<ul class="dropdown-menu" role="menu">
+														<li style="padding-left: 5px;"><?php echo $account_charge->ac_date; ?></li>
+													</ul>
+												</div>
+												<?php echo $account_charge->account->name; ?>
+											</td>
+										</tr>
+										<tr>
+											<td>Staff</td>
+											<td>
+												<div class="btn-group">
+													<button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+														<i class="<?php echo $account_charge->staff->icon; ?> fa-lg" title="<?php echo $account_charge->staff->operator; ?>"></i>
+													</button>
+													<ul class="dropdown-menu" role="menu">
+														<li style="padding-left: 5px;"><?php echo $account_charge->staff->operator; ?></li>
+													</ul>
+												</div>
+											</td>
+										</tr>
+										<?php if($account_charge->ac_notes) { ?>
+											<tr>
+												<td>Notes</td>
+												<td>
+													<?php echo $account_charge->ac_notes; ?>
+												</td>
+											</tr>
+										<?php 
+										}
+									} ?>
+								</table>
+							<?php } ?>
+						</div> <!-- /.panel-body -->
+					</div> <!-- /.panel -->
+				<?php } ?>
+			</div> <!-- /.col-lg-5 -->
+		</div> <!-- /.row -->
+	</form>
+</div> <!-- /#page-wrapper -->
+
+
+<div id="storage_modal" class="modal">
+	<div class="modal-dialog">
+		<!-- Modal content-->
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h4 class="modal-title">Change Address</h4>
+			</div>
+			<div class="modal-body">
+				<div class='input-group'>
+					<span class='input-group-addon'>Drawer</span>
+					<select id='drawer' class='form-control' onchange='add_to_storage(this);'>
+						<option selected disabled hidden>—</option>
+						<?php 
+						$drawers = StorageDrawer::get_unique_drawers();
+						if($drawers)
+							foreach($drawers as $option) 
+								echo "<option value='$option'>$option</option>";
+						else echo "<option>ERROR: Could not get drawer types from DB</option>";
+						?>
+					</select>
+				</div>
+				<div id='drawer_table' align='center'>
+					<!-- New Box Magic Goes Here -->
+				</div>
+			</div>
+			<div class="modal-footer">
+				  <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+			</div> 
+		</div>
+	</div>
+</div>
+
+
+<?php // standard call for dependencies
+	include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 ?>
-<script type="text/javascript">
-$(function () {$('#t_start_picker').datetimepicker();});
-$(function () {$('#t_end_picker').datetimepicker();});
-$(function () {$('#ob_start_picker').datetimepicker();});
-$(function () {$('#ob_end_picker').datetimepicker();});
-$(function () {$('#ac_date_picker').datetimepicker();});
-function validateForm() {
-    var date_array = ['t_start','t_end'];
-    var id_array = ["operator", "staff_id"];
-    <?php if ($objbox = ObjBox::byTrans($ticket->getTrans_id())) {
-        echo("date_array.push('ob_start');");
-    } ?>
-    <?php foreach($ticket->getAc() as $ac) {
-        $ac_id = $ac->getAc_id();
-        if (in_array($ac->getAccount()->getA_id(), $a_ids)){?>
-            id_array.push("ac_staff_<?php echo $ac_id;?>");
-            id_array.push("ac_operator_<?php echo $ac_id;?>");
-            date_array.push("ac_date_<?php echo $ac_id;?>");
-        <?php }
-    } 
-    foreach($ticket->getMats_used() as $mu) { 
-        $mu_id = $mu->getMu_id();?>
-        id_array.push("mu_staff_<?php echo $mu_id;?>");
-        //Status Select Check
-        var x = document.getElementById('mu_status_<?php echo $mu_id;?>').value;
-        //check Notes Field
-        var notes = document.getElementById('mu_notes_<?php echo $mu_id;?>').value;
-        if (notes.length == 0 && x == 12){
-            msg = 'Please state why this Ticket has been edited and marked failed.';
-        } else if (notes.length == 0 && x == 15){
-            msg = 'Please state why this Ticket has been edited and marked cancelled.';
-        } else if (notes.length == 0){
-            msg = 'Please state why this Ticket has been edited.';
-        } else if (notes.length < 10){
-            msg = 'Please Explain More about why this Ticket has been edited.';
-        } else {
-            msg = '';
-        }
-        
-        if (msg != ''){
-            //Msg has been set, send alert and stop form from sending
-            alert(msg);
-            document.getElementById('mu_notes_<?php echo $mu_id;?>').focus();
-            return false;
-        }
-        
-        //check MU Selection
-        var mu = document.getElementById('mu_mat_<?php echo $mu_id;?>');
-        if (!mu.value) {
-            alert('Please Select a Material.');
-            mu.focus();
-            return false;
-        }
-    <?php } ?>
-    var status_id = document.getElementById("status_id").value;
-    if (status_id == 10){
-        var index = date_array.indexOf('t_end');
-        if (index > -1){
-            date_array.splice(index,1);
-        }
-    }
-    for (var i=0; i < date_array.length; i++){
-        if (stdRegEx(date_array[i], /(\d{2})\/(\d{2})\/(\d{4}) (\d{1,2}):(\d{2}) ([a-zA-Z]{2})/, "Invalid Date Time") === false){
-            var x = document.getElementById(date_array[i]).value;
-            console.log(date_array[i]+x);
-            return false;
-        }
-    }
-    for (var i=0; i < id_array.length; i++){
-        var x = document.getElementById(id_array[i]).value;
-        if (stdRegEx(id_array[i], /<?php echo $sv['regexUser'];?>/, "Invalid Operator ID # "+ x) === false){
-            console.log(id_array[i]+x);
-            return false;
-        }
-    }
-}
-function selectDevice(element){
-    if (window.XMLHttpRequest) {
-        // code for IE7+, Firefox, Chrome, Opera, Safari
-        xmlhttp = new XMLHttpRequest();
-    } else {
-        // code for IE6, IE5
-        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-    }
-    xmlhttp.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200) {
-            <?php //Target all MU's
-            foreach($ticket->getMats_used() as $mu) { ?>
-            document.getElementById("mu_mat_<?php echo $mu->getMu_id();?>").innerHTML = this.responseText;
-            <?php } ?>
-        }
-    };
-    device = "d_id=" + element.value;
-    xmlhttp.open("GET","sub/edit_mu.php?" + device,true);
-    xmlhttp.send();
-}
+<script>
+
+	// set currently logged in user as staff for MU && don't let them change it back
+	function change_edit_staff(element, ID, ancestry, ordinal_youngest_child) {
+		var ancestor = element;
+		for(var x = 0; x < ancestry; x++)
+			ancestor = ancestor.parentElement;
+		var staff_input = ancestor.children[ancestor.children.length-(ordinal_youngest_child)].children[1].children[0];
+		staff_input.value = ID;
+		staff_input.readOnly = true;
+	}
+
+
+	// prevent string from being longer than 10 chars for ID
+	function restrict_size(element) {
+		if(element.value.length > 10) element.value = element.value.substring(0, 10);
+	}
+
+
+	function add_new_material_used() {
+		var m_id = document.getElementById("new_material").value;
+		if(isNaN(parseInt(m_id))) return;
+		
+		$.ajax({
+			url: "./sub/material_ajax_requests.php",
+			type: "POST",
+			dataType: "json",
+			data: {"add_new_material" : true, "trans_id" : <?php echo $ticket->trans_id; ?>, "m_id" : m_id},
+			success: function(response) {
+				if(response["error"]) {
+					alert(response["error"]);
+					return;
+				}
+
+				// add stuff to page
+				var panel = document.getElementById("mats_used_display");
+				panel.innerHTML += response["material_HTML"];
+				alert("Successfully added "+response["material_name"]+" to materials");
+				$(`#new_material option[value=${m_id}]`).hide();
+				$(`#new_material`).val("");
+			}
+		});
+	}
+
+
+	// ————————————————— STORAGE ————————————————— 
+
+	function add_to_storage(drawer) {
+		$.ajax({
+			url: "./sub/storage_ajax_requests.php",
+			type: "POST",
+			dataType: "json",
+			data: {"choose_unit_in_drawer" : true, "drawer_label" : drawer.value},
+			success: function(response) {
+				var drawer_label = `<h3>Drawer ${drawer.value} </h3>`;
+				document.getElementById("drawer_table").innerHTML = drawer_label+response["drawer_HTML"];
+			}
+		});
+	}
+
+
+	function add_to_location(unit) {
+		var drawer = document.getElementById("drawer").value;
+		$.ajax({
+			url: "./sub/storage_ajax_requests.php",
+			type: "POST",
+			dataType: "json",
+			data: {	"move_to_new_location" : true, 
+					"drawer" : drawer, 
+					"unit" : unit.innerHTML,
+					"trans_id" : <?php echo $ticket->trans_id; ?>
+			},
+			success: function(response) {
+				if(response["error"]) alert(`Unable to move object to location ${drawer}${unit.innerHTML}`);
+				else {
+					document.getElementById("storage_container").innerHTML = 	
+						`<tr> 
+							<td>Address</td>
+							<td>
+								<table width='100%'>
+									<tr>
+										<td width='40%'>
+											${drawer}${unit.innerHTML}
+										</td>
+										<td width='50%' align='right'>
+											Remove From Storage
+										</td>
+										<td width='10%' style='padding-left:4px;'>
+									 		<input type='checkbox' name='remove_from_storage' />
+									 	</td>
+									</tr>
+								</table>
+							 </td>
+						</tr>
+						<tr>
+							<td>Placed Into Storage</td>
+							<td>
+								<input name='storage_start' value='${current_time()}' type='datetime-local' class='form-control' readonly/> 
+							</td>
+						</tr>
+						<tr>
+							<td>Staff</td>
+							<td>
+								<input name='storage_staff' value='<?php echo $staff->operator; ?>' class='form-control' readonly/>
+							</td>
+						</tr>`;
+					document.getElementById("storage_modal").style.display = "none";
+					alert(`Successfully moved object to location ${drawer}${unit.innerHTML}`);
+				}
+			}
+		});
+	}
+
+
+	function current_time() {
+		var now = new Date($.now())
+
+		var year = now.getFullYear();
+		var month = now.getMonth().toString().length === 1 ? '0' + (now.getMonth() + 1).toString() : now.getMonth() + 1;
+		var date = now.getDate().toString().length === 1 ? '0' + (now.getDate()).toString() : now.getDate();
+		var hours = now.getHours().toString().length === 1 ? '0' + now.getHours().toString() : now.getHours();
+		var minutes = now.getMinutes().toString().length === 1 ? '0' + now.getMinutes().toString() : now.getMinutes();
+		var seconds = now.getSeconds().toString().length === 1 ? '0' + now.getSeconds().toString() : now.getSeconds();
+
+		return year + '-' + month + '-' + date + 'T' + hours + ':' + minutes + ':' + seconds;
+	}
+
+
+	// ————————————————— VALIDATE ————————————————— 
+
+	// main function for making sure values are filled
+	function validateForm() {
+		if(!validate_mats_used()) return false;
+		else if(!validate_account_charges()) return false;
+
+		return true;
+	}
+
+
+	function validate_account_charges() {
+		var account_charges = document.getElementsByClassName("account_charge");
+
+		for(var x = 0; x < account_charges.length; x++) {
+			var ac_id = account_charges[x].id.split("-")[1];
+			if(!document.getElementById("ac_operator-"+ac_id).value
+			|| !document.getElementById("ac_amount"+ac_id).value
+			|| !document.getElementById("ac_acct").value) {
+				alert("Account charge is missing a value");
+				return null;
+			}
+			if(stdRegEx(	document.getElementById("ac_operator-"+ac_id).value, 
+							/<?php echo $sv['regexUser']; ?>/, "Invalid Operator ID # "+ x)) {
+				alert("The operator used for is invalid");
+				return false;
+			}
+		}
+		return true;
+	}
+
+
+	function validate_mats_used() {
+		var mats_used = document.getElementsByClassName("mats_used");
+
+		for(var x = 0; x < mats_used.length; x++) {
+			var mu_id = mats_used[x].id.split("-")[1];
+
+			if(!document.getElementById("mu_mat-"+mu_id).value || 
+			!document.getElementById("mu_status-"+mu_id).value ||
+			!document.getElementById("mu_staff-"+mu_id).value) {
+				alert("Not all values for materials are filled");
+				return false;
+			}
+
+			// quantity
+			if(document.getElementById("mu_quantity-"+mu_id) && 
+			!parseFloat(document.getElementById("mu_quantity-"+mu_id).value) &&
+			document.getElementById("mu_status-"+mu_id).value != <?php echo $status["unused"]; ?>) {
+				alert("A ticket cannot have a non zero value with a status other than unused");
+				return false;
+			}
+			else if(document.getElementById("mu_hour-"+mu_id))
+				if(!parseFloat(document.getElementById("mu_hour-"+mu_id).value) 
+				&& (!parseFloat(document.getElementById("mu_minute-"+mu_id).value)
+				&& document.getElementById("mu_status-"+mu_id).value != <?php echo $status["unused"]; ?>)) {
+					alert("A ticket cannot have a non zero value with a status other than unused");
+					return false;
+				}
+		}
+		return true;
+	}
+
+
+	function selectDevice(element) {
+		if(window.XMLHttpRequest) {
+			// code for IE7+, Firefox, Chrome, Opera, Safari
+			xmlhttp = new XMLHttpRequest();
+		} else {
+			// code for IE6, IE5
+			xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+		}
+		xmlhttp.onreadystatechange = function() {
+			if(this.readyState == 4 && this.status == 200) {
+				<?php //Target all MU's
+				foreach($ticket->mats_used as $mu) { ?>
+				document.getElementById("mu_mat_<?php echo $mu->mu_id; ?>").innerHTML = this.responseText;
+				<?php } ?>
+			}
+		};
+		device = "d_id=" + element.value;
+		xmlhttp.open("GET","sub/edit_mu.php?" + device,true);
+		xmlhttp.send();
+	}
 </script>

@@ -76,6 +76,9 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['end_button'])) {
 	$error = $ticket->end_transaction($staff, $ticket_status);
 	exit_if_error($error, "./end.php?trans_id=$trans_id");
 
+	$ticket_notes = htmlspecialchars(filter_input(INPUT_POST, "ticket_notes"));
+	if($ticket_notes) exit_if_error($ticket->edit_transaction_information(array("notes" => $ticket_notes)));
+
 	// completely failed ticket; nothing to pay for
 	if($ticket_status == $status['total_fail']) {
 		$_SESSION['success_msg'] = "Ticket successfully ended.";
@@ -385,7 +388,7 @@ function exit_if_error($error, $redirect=null) {
 						<tr>
 							<td><i class="fas fa-edit"></i>Notes</td>
 							<td>
-								<textarea name="mu_notes_<?php echo $mat_used->mu_id;?>" id="mu_notes_<?php echo $mu_id;?>" 
+								<textarea name='ticket_notes' id='ticket_notes'
 								class="form-control"><?php echo $ticket->notes;?></textarea>
 							</td>
 						</tr>
@@ -463,10 +466,12 @@ function exit_if_error($error, $redirect=null) {
 					<div id='storage_confirmation' hidden>
 						<h3 id='storage_confirmation_location'></h3>
 					</div>
+					<div id='notes_confirmation'>
+					</div>
 				</div>
 				<div class='modal-footer'>
 					  <button type='button' class='btn btn-default' onclick='$("#confirmation_modal").hide();'>Change Info</button>
-					  <button type='submit' name='end_button' class='btn btn-danger'>Submit</button>
+					  <button type='submit' name='end_button' class='btn btn-success'>Submit</button>
 				</div>
 			</form>
 		</div>
@@ -622,15 +627,8 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 		for(var x = 0; x < children.length; x++)
 			quantity_sum += children[x].quantity();
 
-		// all children are blank: set children values evenly
-		if(!quantity_sum)
-			for(var x =0; x < children.length; x++)
-				children[x].set_val(round(parent_input.value / children.length, 2));
-
-		// assign proportion of new total
-		else
-			for(var x = 0; x < children.length; x++)
-				children[x].set_val(round(children[x].quantity() / quantity_sum * parent_input.value, 2));
+		for(var x = 0; x < children.length; x++)
+			children[x].set_val(round(children[x].quantity() / quantity_sum * parent_input.value, 2));
 
 		adjust_balances();
 	}
@@ -796,6 +794,9 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 			alert("Please select a ticket status");
 			return;
 		}
+		else if(ticket_status.value == global_status["partial_fail"] && document.getElementById("ticket_notes") < 10) {
+			alert("You must state how the ticket failed")
+		}
 		document.getElementById("ticket_status_confirmation").innerHTML = 
 			confirmation_cell_format('ticket_status', `<h5>${ticket_status_name}</h5>`, ticket_status.value);
 		
@@ -827,6 +828,11 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 							"Currently stored in "+box_id+"</span>";
 			storage_confirmation.innerHTML = confirmation_cell_format("storage", span, box_id.replace("-", ""));
 		}
+
+		if(document.getElementById("ticket_notes").value)
+			document.getElementById("notes_confirmation").innerHTML = `<b>NOTES: </b>
+			${document.getElementById("ticket_notes").value}`;
+		else document.getElementById("notes_confirmation").innerHTML = "";
 
 		$("#confirmation_modal").show();
 	}
@@ -955,14 +961,12 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 
 	// call to modal to get first available box with type; create drawer layout & insert into modal
 	function get_box_for_type(unit_type) {
-		console.log("Box type");
 		$.ajax({
 			url: "./sub/storage_ajax_requests.php",
 			type: "POST",
 			dataType: "json",
 			data: {"drawer_for_type" : true, "unit_type" : unit_type.value},
 			success: function(response) {
-				console.log("ASYNC");
 				if(response["error"]) {
 					alert(response["error"]);
 					return;

@@ -306,7 +306,7 @@ class Wait_queue {
     
     public static function calculateWaitTimes()
     {
-        global $mysqli;
+        global $mysqli, $status;
 
         // Find all of the device groups that are being waited for
         if ($result= $mysqli->query("
@@ -322,7 +322,7 @@ class Wait_queue {
                 if ($result2 = $mysqli->query("
                     SELECT `devices`.`d_id`, `t_start`, `est_time`, `t_end`
                     FROM `devices` JOIN `device_group` ON `devices`.`dg_id` = `device_group`.`dg_id`
-                    LEFT JOIN (SELECT `t_start`, `t_end`, `est_time`, `d_id`, `status_id` FROM `transactions` WHERE `status_id` < 12) as t 
+                    LEFT JOIN (SELECT `t_start`, `t_end`, `est_time`, `d_id`, `status_id` FROM `transactions` WHERE `status_id` < $status[total_fail]) as t 
                     ON `devices`.`d_id` = `t`.`d_id`
                     WHERE `public_view` = 'Y' AND `device_group`.`dg_id` = $device_group AND `devices`.`d_id` NOT IN (
                     
@@ -412,7 +412,7 @@ class Wait_queue {
 
     public static function calculateDeviceWaitTimes()
     {
-        global $mysqli;
+        global $mysqli, $status;
 
         // Find all of the device groups that are being waited for
         if ($result= $mysqli->query("
@@ -428,7 +428,7 @@ class Wait_queue {
                 if ($result2 = $mysqli->query("
                     SELECT `devices`.`d_id`, `t_start`, `est_time`, `t_end`
                     FROM `devices` JOIN `device_group` ON `devices`.`dg_id` = `device_group`.`dg_id`
-                        LEFT JOIN (SELECT `t_start`, `t_end`, `est_time`, `d_id`, `operator`, `status_id` FROM `transactions` WHERE `status_id` < 12) as t 
+                        LEFT JOIN (SELECT `t_start`, `t_end`, `est_time`, `d_id`, `operator`, `status_id` FROM `transactions` WHERE `status_id` < $status[total_fail]) as t 
                         ON `devices`.`d_id` = `t`.`d_id`
                     WHERE `public_view` = 'Y' AND `devices`.`d_id` = $device_id AND `devices`.`d_id` NOT IN 
                     (

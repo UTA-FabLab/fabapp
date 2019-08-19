@@ -39,7 +39,7 @@ function gatekeeper ($operator, $d_id) {
         FROM `transactions`
         LEFT JOIN devices
         ON devices.d_id = transactions.d_id
-        WHERE devices.d_id = $d_id AND status_id < 12
+        WHERE devices.d_id = $d_id AND status_id < $status[]
         LIMIT 1;
     ")){
         if( $result->num_rows > 0){
@@ -158,7 +158,7 @@ function gatekeeper ($operator, $d_id) {
         // If device has no training modules, no need to check further
         // so exit the function.
         //echo "No Training Required";
-        return array ("status_id" => 10, "authorized" => "Y");
+        return array ("status_id" => $status["active"], "authorized" => "Y");
     }
 
     // Check if user has completed the necessary training modules

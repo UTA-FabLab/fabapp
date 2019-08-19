@@ -21,7 +21,7 @@
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
 if(!$staff) $error = exit_if_error("Please log in", "/index.php");
-elseif(!isset($_GET["operator"]) && !isset($_GET["trans_id"]) && !isset($_GET["offlineTrans"])) exit_if_error("Search parameter is missing", "/index.php");
+elseif(!isset($_GET["operator"]) && !isset($_GET["trans_id"])) exit_if_error("Search parameter is missing", "/index.php");
 
 // lookup by ticket ID
 if(isset($_GET["trans_id"])) {
@@ -50,23 +50,6 @@ elseif(isset($_GET["operator"])) {
 		}
 		else exit_if_error("DB error");
 	} 
-}
-// lookup by offline transactions
-elseif(isset($_GET["offlineTrans"])) {
-	$offTransId = $_GET['offlineTrans'];
-	if($result = $mysqli->query("
-		SELECT trans_id
-		FROM offline_transactions
-        WHERE offline_transactions.off_trans_id = '$offTransId'
-		LIMIT 1
-	")) {
-		if(!$result->num_rows) exit_if_error("No Offline Transactions Found for Offline ID# $offlineTrans");
-		else {
-			$row = $result->fetch_assoc();
-			$ticket = new Transactions($row['trans_id']);
-		}
-	}
-	else exit_if_error("DB error");
 }
 
 // check permission
@@ -103,7 +86,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['undo_button'])) {
 
 	// assume that all materials are used
 	foreach($ticket->mats_used as $mat_used)
-		exit_if_error($mat_used->edit_material_used_informations(array("status" => $status["used"])));
+		exit_if_error($mat_used->edit_material_used_informations(array("status" => new Status($status["used"]))));
 }
 elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['new_material_button'])) {
 	$new_material = filter_input(INPUT_POST, "new_material");
@@ -177,18 +160,20 @@ function exit_with_success($message, $redirect=null) {
 			<?php if($staff->roleID >= $role["staff"]) { ?>
 				<div class="panel panel-default">
 					<div class="panel-heading clearfix">
-					<?php if ($offTrans = OfflineTrans::byTransId($ticket->trans_id)) { ?>
-                        <i class="fas fa-ticket-alt fa-lg"></i> Ticket # <b><?php echo $ticket->getTrans_id(); ?> | <?php echo $offTrans; ?></b>
-                    <?php } else { ?>
-                        <i class="fas fa-ticket-alt fa-lg"></i> Ticket # <b><?php echo $ticket->getTrans_id(); ?></b>
-                    <?php } ?>
+						<i class="fas fa-ticket-alt fa-lg"></i> Ticket # <b><?php echo $ticket->trans_id; ?></b>
 						<div class="pull-right">
 							<div class="btn-group">
 								<button type="button" class="btn btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
 									<span class="caret"></span>
 								</button>
 								<ul class="dropdown-menu pull-right" role="menu">
-									<?php if($staff->roleID >= $sv['editTrans']) { ?>
+									<?php if($staff->operator == $ticket->user->operator) { ?>
+										<li>
+											<a href="javascript: addBtn()" />Add Authorized Recipient</a>
+										</li>
+									<?php
+									}
+									if($staff->roleID >= $sv['editTrans']) { ?>
 										<li>
 											<a href='/pages/edit.php?trans_id=<?php echo $ticket->trans_id; ?>' class="bg-warning"/>Edit</a>
 										</li>
@@ -204,14 +189,10 @@ function exit_with_success($message, $redirect=null) {
 						<table class ="table table-bordered table-striped">
 							<tr>
 								<td>Device</td>
-                            	<td><?php echo $ticket->getDevice()->getDevice_desc(); ?></td>
-                       		</tr>
-                        	<?php if ($offTrans = OfflineTrans::byTransId($ticket->trans_id)) { ?>
-                            <tr>
-                                <td>Offline Trans.</td>
-                                <td><?php echo $offTrans; ?></td>
-                            </tr>
-                        	<?php } ?>
+								<td>
+									<?php echo $ticket->device->name; ?>	
+								</td>
+							</tr>
 							<tr>
 								<td>Time</td>
 								<td>
@@ -230,6 +211,16 @@ function exit_with_success($message, $redirect=null) {
 												<li style="padding-left: 5px;">Estimated Time <?php echo $ticket->est_time; ?></li>
 											</ul>
 										</div>
+									</td>
+								</tr>
+							<?php 
+							} 
+							if($ticket->filename) {
+							?>
+								<tr>
+									<td>Filename</td>
+									<td>
+										<?php echo $ticket->filename; ?>
 									</td>
 								</tr>
 							<?php } ?>
@@ -258,14 +249,14 @@ function exit_with_success($message, $redirect=null) {
 								<tr>
 									<td>Staff</td>
 									<td>
-											<div class="btn-group">
-												<button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-													<i class="<?php echo $ticket->staff->icon; ?> fa-lg" title="<?php echo $ticket->staff->operator; ?>"></i>
-												</button>
-												<ul class="dropdown-menu" role="menu">
-													<li style="padding-left: 5px;"><?php echo $ticket->staff->operator; ?></li>
-												</ul>
-											</div>
+										<div class="btn-group">
+											<button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+												<i class="<?php echo $ticket->staff->icon; ?> fa-lg" title="<?php echo $ticket->staff->operator; ?>"></i>
+											</button>
+											<ul class="dropdown-menu" role="menu">
+												<li style="padding-left: 5px;"><?php echo $ticket->staff->operator; ?></li>
+											</ul>
+										</div>
 									</td>
 								</tr>
 							<?php 
@@ -474,7 +465,7 @@ function exit_with_success($message, $redirect=null) {
 
 		<div class="col-lg-5">
 			<?php // rework to rollback transaction, mats_used, ac_charge...user gets to put it back in storage manually (limit 30 minutes)
-			if($sv['LvlOfStaff'] <= $staff->roleID && -1800 < (date("Y-m-d H:i:s") - strtotime($ticket->t_end))) {
+			if($sv['LvlOfStaff'] <= $staff->roleID && -1800 < (date("Y-m-d H:i:s") - strtotime($ticket->t_end)) && $ticket->status->status_id > $status["moveable"]) {
 				if($ticket->device->device_id != $sv["sheet_device"]) { ?>
 				<div class="panel panel-default">
 					<div class="panel-heading">
@@ -591,10 +582,10 @@ function exit_with_success($message, $redirect=null) {
 								<td>
 									<div class="btn-group">
 										<button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-											<i class="<?php echo $storage->pickedup_by->icon; ?> fa-lg" title="<?php echo $storage->pickedup_by->operator; ?>"></i>
+											<i class="<?php echo $ticket->pickedup_by->icon; ?> fa-lg" title="<?php echo $ticket->pickedup_by->operator; ?>"></i>
 										</button>
 										<ul class="dropdown-menu" role="menu">
-											<li style="padding-left: 5px;"><?php echo $storage->pickedup_by->operator; ?></li>
+											<li style="padding-left: 5px;"><?php echo $ticket->pickedup_by->operator; ?></li>
 										</ul>
 									</div>
 								</td>
