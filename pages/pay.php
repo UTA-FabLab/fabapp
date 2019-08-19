@@ -77,8 +77,8 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['pay_button'])) {
 	$operator = filter_input(INPUT_POST, "payer");
 	if(!Users::regexUser($operator))
 		exit_if_error("The payer ID supplied is not a valid ID number");
-	$reciever = Users::withID($operator);
-	if(!AuthRecipients::validatePickUp($ticket, $reciever))
+	$receiver = Users::withID($operator);
+	if(!AuthRecipients::validatePickUp($ticket, $receiver))
 		exit_if_error("The person is not allowed to pick up this ticket");
 
 	// update notes if changed
@@ -91,7 +91,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['pay_button'])) {
 		if(!is_numeric($account_id)) exit_if_error("Account ID $account_id supplied is not valid", "pay.php?trans_id=$trans_id");
 
 
-		$response = Acct_charge::insertCharge($ticket, $account_id, $reciever, $staff);
+		$response = Acct_charge::insertCharge($ticket, $account_id, $receiver, $staff);
 		if(is_string($response))
 			exit_if_error($response, "pay.php?trans_id=$trans_id");
 

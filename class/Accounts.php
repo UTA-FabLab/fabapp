@@ -275,7 +275,7 @@ class Acct_charge {
 		return $this->writeAttr();
 	}
 	
-	public static function insertCharge($ticket, $a_id, $payee, $staff){
+	public static function insertCharge($ticket, $a_id, $payer, $staff){
 		global $mysqli;
 		$trans_id = $ticket->getTrans_id();
 		$amount = $ticket->quote_cost();
@@ -299,7 +299,7 @@ class Acct_charge {
 					INSERT INTO `acct_charge` 
 						(`a_id`, `trans_id`, `ac_date`, `operator`, `staff_id`, `amount`, `ac_notes`) 
 					VALUES
-						('1', '$trans_id', CURRENT_TIME(), '$payee','".$staff->getOperator()."', '".-1.0 * $amount."', \"Credit Charge\");
+						('1', '$trans_id', CURRENT_TIME(), '$payer->operator','".$staff->getOperator()."', '".-1.0 * $amount."', \"Credit Charge\");
 				")){
 					//No return, all for the following query to return the proper insert id
 				} else {
@@ -317,27 +317,20 @@ class Acct_charge {
 			VALUES
 				(?, ?, CURRENT_TIME(), ?, ?, ?, ?);
 		")){
-			$stmt->bind_param("iissds", $a_id, $trans_id, $payee, $s_operator, $amount, $ac_notes);
+			$stmt->bind_param("iissds", $a_id, $trans_id, $payer->operator, $s_operator, $amount, $ac_notes);
 			$stmt->execute();
 			$ac_id = $mysqli->insert_id;
 			
 			//Update Account's Balance
 			$acct = new Accounts($a_id);
 			$acct->updateBalance($amount);
-			
-			//If all everything is good, Write all attributes of the ticket to the DB
-			if ($ticket->writeAttr()){
-				return $ac_id;
-			} else {
-				return "AC163 - Error Writing Ticket ";
-			}
 		} else {
 			return $mysqli->error;
 		}
 		return false;
 	}
 	
-	public static function insertSheetCharge($ticket, $a_id, $payee, $staff, $amount){
+	public static function insertSheetCharge($ticket, $a_id, $payer, $staff, $amount){
 		global $mysqli;
 		$trans_id = $ticket->getTrans_id();  
 		
@@ -356,7 +349,7 @@ class Acct_charge {
 					INSERT INTO `acct_charge` 
 						(`a_id`, `trans_id`, `ac_date`, `operator`, `staff_id`, `amount`, `ac_notes`) 
 					VALUES
-						('1', '$trans_id', CURRENT_TIME(), '$payee','".$staff->getOperator()."', '".-1.0 * $amount."', \"Credit Charge\");
+						('1', '$trans_id', CURRENT_TIME(), '$payer','".$staff->getOperator()."', '".-1.0 * $amount."', \"Credit Charge\");
 				")){
 					//No return, all for the following query to return the proper insert id
 				} else {
@@ -372,7 +365,7 @@ class Acct_charge {
 				INSERT INTO `acct_charge` 
 					(`a_id`, `trans_id`, `ac_date`, `operator`, `staff_id`, `amount`, `ac_notes`) 
 				VALUES
-					('$a_id', '$trans_id', CURRENT_TIME(), '$payee','$s_operator', '$amount', '$ac_notes');
+					('$a_id', '$trans_id', CURRENT_TIME(), '$payer','$s_operator', '$amount', '$ac_notes');
 		")){
 			$ac_id = $mysqli->insert_id;
 			

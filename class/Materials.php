@@ -482,7 +482,7 @@ class Mats_Used {
 	
 	// create a new instance of material usage in DB.  Optional quanity used
 	public static function insert_material_used($trans_id, $m_id, $status_id, $staff, $quantity_used=null) {
-		global $mysqli, $sv;
+		global $mysqli, $role, $sv;
 		
 		//Deny if user is not staff
 		if($staff->roleID < $role['staff']) return "Must be staff in order to update";

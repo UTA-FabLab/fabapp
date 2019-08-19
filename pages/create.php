@@ -83,7 +83,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['ticketBtn'])) {
 	foreach (gatekeeper($_POST["operator"], $device->device_id) as $key => $value) $gk_msg[$key] =  $value;
 	
 	if ($gk_msg["authorized"] == "N")
-		$error = "Status Code:".$gk_msg["status_id"]." - ".$gk_msg["ERROR"];
+		exit_if_error("Status Code:".$gk_msg["status_id"]." - ".$gk_msg["ERROR"]);
 	else {
 		$status_id = $gk_msg['status_id'];
 		$operator = Users::withID(filter_input(INPUT_POST, 'operator'));
