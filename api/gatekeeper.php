@@ -12,8 +12,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/class/Users.php');
 //
 
 function gatekeeper ($operator, $d_id) {
-    global $mysqli;
-    global $sv;
+    global $mysqli, $status, $sv;
     
     if (is_a($operator, "Users")){
         $user = $operator;
