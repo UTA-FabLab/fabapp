@@ -33,39 +33,39 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         //Unpaid Ticket
-        $mysqli->query("INSERT INTO `transactions` (`d_id`, `operator`, `est_time`, `t_start`, `t_end`, `duration`, `status_id`, `p_id`, `staff_id`)
-                        VALUES ('".$device->getD_id()."', '$operator', '01:00:00', '2018-05-08 12:00:00', '2018-05-08 13:00:00', '01:00:00', '20', '1', '$staff_id');");
+        $mysqli->query("INSERT INTO `transactions` (`d_id`, `operator`, `est_time`, `t_start`, `t_end`, `duration`, `status_id`, `p_id`, `staff_id`, `notes`)
+                        VALUES ('$device->d_id', '$operator', '01:00:00', '2018-05-08 12:00:00', '2018-05-08 13:00:00', '01:00:00', '$status[charge_to_acct]', '1', '$staff_id', 'Left without paying');");
         $ins_id = $mysqli->insert_id;
-        $mysqli->query("INSERT INTO `mats_used` (`trans_id`, `m_id`, `unit_used`, `mu_date`, `status_id`, `staff_id`, `mu_notes`)
-                        VALUES ('$ins_id', '18', '-4', CURRENT_TIMESTAMP, '20', '1000000010', 'Left Without Paying'); ");
+        $mysqli->query("INSERT INTO `mats_used` (`trans_id`, `m_id`, `unit_used`, `mu_date`, `status_id`, `staff_id`)
+                        VALUES ('$ins_id', '18', '-4', CURRENT_TIMESTAMP, '$status[used]', '1000000010'); ");
         $mysqli->query("INSERT INTO `acct_charge` (`ac_id`, `a_id`, `trans_id`, `ac_date`, `operator`, `staff_id`, `amount`, `ac_notes`, `recon_date`, `recon_id`)
                         VALUES (NULL, '1', '$ins_id', CURRENT_TIMESTAMP, $operator, '1000000010', '.20', 'Debit Charge', NULL, NULL);");
         $resultStr .= "Outstanding: ".$ins_id;
 
         //Ticket In Storage
-        $mysqli->query("INSERT INTO `transactions` (`d_id`, `operator`, `est_time`, `t_start`, `t_end`, `duration`, `status_id`, `p_id`, `staff_id`)
-                        VALUES ('".$device->getD_id()."', $operator, '01:00:00', '2018-05-08 12:00:00', '2018-01-08 13:00:00', '01:00:00', '14', '1', '1000000010');");
+        $mysqli->query("INSERT INTO `transactions` (`d_id`, `operator`, `est_time`, `t_start`, `t_end`, `duration`, `status_id`, `p_id`, `staff_id`, `notes`)
+                        VALUES ('$device->d_id', $operator, '01:00:00', '2018-05-08 12:00:00', '2018-01-08 13:00:00', '01:00:00', '$status[stored]', '1', '1000000010', 'Object In Storage');");
         $sto1 = $mysqli->insert_id;
-        $mysqli->query("INSERT INTO `mats_used` (`trans_id`, `m_id`, `unit_used`, `mu_date`, `status_id`, `staff_id`, `mu_notes`)
-                        VALUES ($sto1, '16', '-25', '2018-05-08 13:00:00', '14', $staff_id, 'Object In Storage');");
-        $mysqli->query("INSERT INTO `objbox` (o_start, address, trans_id, staff_id)
-                        VALUES ('2018-01-08 13:00:00', '3F', $sto1, '1000000010');");
+        $mysqli->query("INSERT INTO `mats_used` (`trans_id`, `m_id`, `unit_used`, `mu_date`, `status_id`, `staff_id`)
+                        VALUES ($sto1, '16', '-25', '2018-05-08 13:00:00', '$status[used]', $staff_id);");
+        $mysqli->query("UPDATE `storage_box` 
+                                SET `item_change_time` = '2018-01-08 13:00:00', `drawer` = '3', `unit` = 'F', `trans_id` = $sto1, `staff_id` = '1000000010');");
         //Ticket in Storage2
-        $mysqli->query("INSERT INTO `transactions` (`d_id`, `operator`, `est_time`, `t_start`, `t_end`, `duration`, `status_id`, `p_id`, `staff_id`)
-                    VALUES ('".$device->getD_id()."', $operator, '01:00:00', '2018-06-1 12:00:00', '2018-06-1 13:00:00', '01:00:00', '14', '1', '1000000010');");
+        $mysqli->query("INSERT INTO `transactions` (`d_id`, `operator`, `est_time`, `t_start`, `t_end`, `duration`, `status_id`, `p_id`, `staff_id`, `notes`)
+                    VALUES ('$device->d_id', $operator, '01:00:00', '2018-06-1 12:00:00', '2018-06-1 13:00:00', '01:00:00', '$status[stored]', '1', '1000000010', 'Object In Storage');");
         $sto2 = $mysqli->insert_id;
-        $mysqli->query("INSERT INTO `mats_used` (`trans_id`, `m_id`, `unit_used`, `mu_date`, `status_id`, `staff_id`, `mu_notes`)
-                        VALUES ($sto2, '16', '-20', '2018-06-1 13:00:00', '14', $staff_id, 'Object In Storage');");
-        $mysqli->query("INSERT INTO `objbox` (o_start, address, trans_id, staff_id)
-                        VALUES ('2018-06-1 13:00:00', '1A', $sto2, '1000000010');");
+        $mysqli->query("INSERT INTO `mats_used` (`trans_id`, `m_id`, `unit_used`, `mu_date`, `status_id`, `staff_id`)
+                        VALUES ($sto2, '16', '-20', '2018-06-1 13:00:00', '$status[used]', $staff_id);");
+        $mysqli->query("UPDATE `storage_box` 
+                                SET `item_change_time` = '2018-01-08 13:00:00', `drawer` = '1', `unit` = 'D', `trans_id` = $sto1, `staff_id` = '1000000010');");
         $resultStr .= ", Storage: $sto1 & $sto2";
 
         //Live Ticket
         $mysqli->query("INSERT INTO `transactions` (`d_id`, `operator`, `est_time`, `t_start`, `t_end`, `duration`, `status_id`, `p_id`, `staff_id`)
-                        VALUES ('".$device->getD_id()."', $operator, '01:00:00', CURRENT_TIMESTAMP, NULL, NULL, '10', '1', '1000000010');");
+                        VALUES ('$device->d_id', $operator, '01:00:00', CURRENT_TIMESTAMP, NULL, NULL, '$status[active]', '1', '1000000010');");
         $ins_id = $mysqli->insert_id;
         $mysqli->query("INSERT INTO `mats_used` (`trans_id`, `m_id`, `unit_used`, `mu_date`, `status_id`, `staff_id`, `mu_notes`)
-                        VALUES ('$ins_id', '14', '-4', CURRENT_TIMESTAMP, '10', '1000000010', NULL);");
+                        VALUES ('$ins_id', '14', '-4', CURRENT_TIMESTAMP, '$status[used]', '1000000010', NULL);");
         $resultStr .= ", Live Ticket: ".$ins_id."</br></br></br>";
     } elseif ( isset($_POST['addBtn']) ){
         $operator = filter_input(INPUT_POST, "op2");
@@ -120,7 +120,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <?php } ?>
 
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-7">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <i class="fas fa-user-friends"></i> FabApp Users
@@ -196,7 +196,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </div>
         </div>
         <!-- /.col-md-8 -->
-        <div class="col-md-4">
+        <div class="col-md-5">
             <div class="row">
                 <div class="panel panel-default">
                     <div class="panel-heading">

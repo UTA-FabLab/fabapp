@@ -66,7 +66,7 @@ elseif(!StorageObject::object_is_in_storage($trans_id)) {
 	// ticket has no debit (or credit) && not in FabLab
 	elseif($ticket->no_associated_materials_have_a_price() || !$ticket->remaining_balance()) {
 		// if there is a cost associated, but already paid and status is not charge_to_acct: change status to charge_to_acct
-		if($ticket->quote_cost()) exit_if_error($ticket->edit_transaction_information(array("status_id" => $status["charge_to_acct"])));
+		if($ticket->quote_cost()) exit_if_error($ticket->edit_transaction_information(array("status_id" => new Status($status["charge_to_acct"]))));
 		exit_with_success("There is no cost associated with this ticket and nothing in storage. There is nothing else to do for ticket #$trans_id");
 	}
 }
@@ -181,7 +181,7 @@ function exit_with_success($message, $redirect=null) {
 						<tr>
 							<td>Additional Notes</td>
 							<td>
-								<textarea name='notes' class='form-control'></textarea>
+								<textarea name='notes' class='form-control'><?php echo $ticket->notes; ?></textarea>
 							</td>
 						</tr>
 					</table>

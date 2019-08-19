@@ -1,347 +1,988 @@
-<?php
-/*
- *   CC BY-NC-AS UTA FabLab 2016-2017
- *   FabApp V 0.9
- */
+<?php 
+
+/***********************************************************************************************************
+*	
+*	@author MPZinke
+*	created on 08.07.19 
+*	CC BY-NC-AS UTA FabLab 2016-2019
+*	FabApp V 0.94
+*		-House Keeping (DB cleanup, $status variable, class syntax/functionality)
+*		-Multiple Materials
+*		-Off-line Mode
+*		-Sheet Goods
+*		-Storage Box
+*
+*	DESCRIPTION: Convenience page to allow for selecting of items in storage for user.  
+*	 Display transactions. Once transaction selected delete other & use same process as 
+*	 end.php.  Update values for selections.
+*	FUTURE:	-Make workable with a transaction being stored in multiple places
+*	BUGS: 
+*
+***********************************************************************************************************/
+
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
-$errorMsg = "";
-unset($_SESSION['pickupUser']);
 
-if($staff){
-    //Staff members or Higher may use this process
-    if($staff->getRoleID() < $sv['LvlOfStaff']){
-        $errorMsg = "Only staff members may use this process";
-    } else {
-        $user = Users::withID(filter_input(INPUT_GET, "operator"));
-        if (is_object($user)){
-            $objbox_array = ObjBox::findObj($user);
-            if (is_string($objbox_array)){
-                $errorMsg = $objbox_array;
-                echo "<script>console.log(\"$errorMsg\");</script>";
-            }
-        } else {
-            echo "<script>console.log(\"$user\");</script>";
-        }
-    }
-} else {
-    $errorMsg = "You Must Be Logged In to Pick Up a Print";
-}
-//We have an error, display the Issue
-if ($errorMsg != ""){
-    echo "<script> window.onload = function(){goModal('Error', \"$errorMsg\", false)}; //window.location.href='/index.php';}</script>";
+if($staff->roleID < $role["staff"]) exit_if_error("You do not have permission to view this page");
+elseif(!$_GET["operator"]) exit_if_error("No operator parameter supplied");
+elseif(!Users::regexUser($_GET["operator"])) exit_if_error("Operator #$_GET[operator] is not valid");
+else {
+	$operator = Users::withID($_GET["operator"]);
+	$tickets = StorageObject::all_in_storage_for_operator($operator);
 }
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && $errorMsg == "") {
-    $loc = "";
-    foreach($objbox_array as $ob){
-        if (isset($_POST['pickBtn_'.$ob->getO_id()])){
-            echo "<script>console.log('OB Btn: ".$ob->getO_id()."');</script>";
-            $status_id = 0;
-            $account = 0;
-            $ticket = $ob->getTransaction();
-            //Make a backup
-            $_SESSION['backup_ticket'] = serialize($ticket);
-            $_SESSION['backup_ob'] = serialize($ob);
-            
-            foreach($ticket->getMats_used() as $mu){
-                $mu_id = $mu->getMu_id();
-                
-                $mu_s = $_POST["status_".$mu->getMu_id()];
-                $mu->setStaff($staff->getOperator());
-                $mu->setUnit_used($_POST["uu_".$mu->getMu_id()]);
-                $mu->getStatus()->setStatus_id($mu_s);
-                $mu->setMu_notes($_POST['mu_notes_'.$mu->getMu_id()]);
-                
-                if ($mu_s > $status_id){
-                    $status_id = $mu_s;
-                }
-            }
-            
-            $ticket->getStatus()->setStatus_id($status_id);
-            if ($status_id == 12 or $status_id == 20){
-                echo "<script>console.log(\"Quote: ".$ticket->quote("mats")."\");</script>";
-                if ($ticket->quote("mats") >= .005){
-                    //Pass Object to be updated upon Successful payment
-                    $_SESSION['ticket'] = serialize($ticket);
-                    $_SESSION['pickupUser'] = serialize($user);
-                    $loc = "/pages/pay.php";
-                } else {
-                    if ($ticket->writeAttr()){
-                        $ob->pickedUpBy($user, $staff);
-                        //unset used session variables
-                        $loc = "/pages/lookup.php?trans_id=".$ob->getTransaction()->getTrans_id();
-                    } else {
-                        $errorMsg = "Unable to Update Ticket";
-                    }
-                }
-            } elseif ($errorMsg == ""){
-                $errorMsg = "Invalid Status Setting";
-            }
-            
-            if ($errorMsg != ""){
-                echo "<script>console.log(\"pickup.php: $errorMsg\");</script>";
-                echo "<script> alert('$errorMsg');</script>";
-            } else {
-               echo "<script>console.log('Destination: $loc');</script>";
-               header("Location:".$loc);
-            }
-        }
-    }
+
+// cost associated; get attributes from user
+if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['end_button'])) {
+	$ticket = new Transactions(filter_input(INPUT_POST, "chosen_ticket"));
+	// get material status and quanity
+	$materials_values = get_material_statuses_from_page($ticket->mats_used);
+	if($ticket->mats_used && !$materials_values)  // materials to be gathered but none gathered
+		exit_if_error("End: Could not get all values for materials", "./end.php?trans_id=$ticket->trans_id");
+	foreach($ticket->mats_used as $mat_used) {
+		$material_values = $materials_values[$mat_used->mu_id];
+		exit_if_error($mat_used->end_material_used($staff, $material_values['status'], $material_values['quantity']));
+	}
+
+	// end ticket
+	$ticket_status = filter_input(INPUT_POST, "ticket_status");  // update ticket
+	// prevent frontend changing of variables to cheat backend
+	if($ticket_status >= $status['charge_to_acct']) exit_if_error("End: Ticket status is invalid.");
+	exit_if_error($ticket->end_transaction($staff, $ticket_status), "./end.php?trans_id=$ticket->trans_id");
+
+	$ticket_notes = htmlspecialchars(filter_input(INPUT_POST, "ticket_notes"));
+	if($ticket_notes) exit_if_error($ticket->edit_transaction_information(array("notes" => $ticket_notes)));
+
+	// completely failed ticket; nothing to pay for
+	if($ticket_status == $status['total_fail']) {
+		$_SESSION['success_msg'] = "Ticket successfully ended.";
+		header("Location:./lookup.php?trans_id=$ticket->trans_id");
+	}
+	// already paid for; process is finished
+	elseif(!$ticket->remaining_balance()) {
+		$storage_obj = new StorageObject($ticket->trans_id);
+
+		exit_if_error($ticket->edit_transaction_information(array("status_id" => new Status($status['charge_to_acct']))));
+		$_SESSION['success_msg'] = "There is no balance on the ticket. Retrieve object from $storage_obj->box_id";
+		header("Location:./pay.php?trans_id=$ticket->trans_id");
+	}
+	// proceed to payment; if balance is negative, this is where they should be refunded
+	else {
+		$_SESSION['success_msg'] == "Please proceed to payment";
+		header("Location:./pay.php?trans_id=$ticket->trans_id");
+	}
 }
-if ($staff) {
+
+
+
+
+// ——————————— MATERIAL GROUPING AND PRINTING ———————————
+
+// function called to create inputs and statuses
+function group_materials_by_parent_and_create_inputs($mats_used) {
+	// group materials by parent
+	$m_parents = $group_quantity_used = $parentless = array();
+	foreach($mats_used as $mu) {
+		// combine with previously added 
+		if(array_key_exists($mu->material->m_parent->m_name, $m_parents)) {
+			$m_parents[$mu->material->m_parent->m_name][] = $mu;
+			$group_quantity_used[$mu->material->m_parent->m_name] += $mu->quantity_used;
+		}
+		// create new parent
+		elseif($mu->material->m_parent->m_name) {
+			$m_parents[$mu->material->m_parent->m_name] = array($mu);
+			$group_quantity_used[$mu->material->m_parent->m_name] = $mu->quantity_used;
+		}
+		else $parentless[] = $mu;
+	}
+
+	// create grouped inputs
+	$material_groups = array();
+	foreach($m_parents as $parent_name => $group)
+		if(count($group) == 1)
+			$material_groups[] =	"<table class='table table-bordered' style='margin-bottom:0px !important;'>".
+										create_material_html_block($group).
+									"</table>";
+		else
+			$material_groups[] = materials_group_table_block($group, $parent_name, $group_quantity_used[$parent_name]);
+
+	// create ungrouped inputs
+	foreach($parentless as $single_material)
+		$material_groups[] = 	"<table class='table table-bordered' style='margin-bottom:0px !important;'>".
+									create_material_html_block(array($single_material)).
+								"</table>";
+	return $material_groups;
+}
+
+
+// create a material group with a parent element and the children material blocks to the right
+function materials_group_table_block($group, $parent_name, $quantity) {
+	global $sv;
+
+	$parent_code = str_replace(" ", "_", $parent_name);  // name excluding spaces for id's and classes
+	return 	"<table width='100%' class='table table-bordered' style='margin-bottom:0px !important;'>
+				<tr class='tablerow info'>
+					<td colspan='2'>$parent_name</td>
+				</tr>
+				<tr>
+					<td>
+						<div class='input-group'>
+							<span class='input-group-addon'>MATERIAL-GROUP <i class='$sv[currency]'></i> ".sprintf("%0.2f", $group[0]->material->price)." x </span>
+							<input type='number' id='$parent_code' class='form-control' autocomplete='off' value='$quantity' style='text-align:right;'
+							onkeyup='adjust_children_input(this); adjust_balances();' onchange='adjust_children_input(this); adjust_balances();' >
+							<span class='input-group-addon'>".$group[0]->material->unit."</span>
+						</div>
+					</td>
+					<td style='padding:0px;'>
+						<table class='table table-striped' style='margin-bottom:0px !important;'>".
+							create_material_html_block($group).
+						"</table>
+					</td>
+				</tr>
+			</table>\n";
+}
+
+
+// create a <tr> for a mat used instance: include name, input, status selection
+function create_material_html_block($group) {
+	global $status, $sv;
+	$individual_materials = array();  // html blocks (rows of tables) to be imploded together
+
+	foreach($group as $mu) {
+		$mat = $mu->material;  // sugar
+
+		// —— SELECT ——
+		// if(!$mu->quantity_used) $default_selection = "selected";  // if not mats used, change selected to Not Used
+		// if material is not measurable only record un/used info and don't adjust quantity
+		if($mu->material->is_measurable)
+			$select = 	"<select id='$mu->mu_id-select' class='form-control mat_used_select measurable' 
+						onchange='adjust_ticket_status(this); adjust_input_for_status(this);'>
+							<option selected hidden>SELECT</option>
+							<option value='$status[used]'>Used</option>
+							<option $default_selection value='$status[unused]'>Not Used</option>
+							<option value='$status[failed_mat]'>Failed Material</option>
+						</select>";
+		else
+			$select = 	"<select id='$mu->mu_id-select' class='form-control mat_used_select immeasurable' 
+						onchange='adjust_ticket_status(this);'>
+							<option selected value='$status[used]'>Used</option>
+							<option value='$status[unused]'>Not Used</option>
+						</select>";
+
+		// —— MAT QUANTITY INPUT ——
+		if($mu->material->is_measurable) 
+			$quantity_input =	"<tr>
+									<td>
+										".material_quantity_input($mu)."
+									</td>
+								</tr>";
+
+
+		$individual_materials[] = 	"<td>
+										<table class='table' width='100%' style='margin-bottom:0px !important;'>
+											<tr class='tablerow info'>
+												<td>
+													$mat->m_name".
+													($mat->color_hex ? " <div class='color-box' style='background-color:#$mat->color_hex;' align='left'/>" : null).
+												"</td>
+											</tr>
+											<!-- row for quantity if material is measurable -->
+											$quantity_input
+											<tr class='mat_select_row'>
+												<td>
+													$select
+												</td>
+											</tr>
+										</table>
+									</td>";
+	}
+	return "<tr>".implode("</tr>\n<tr>", $individual_materials)."</tr>";
+}
+
+
+// create input html for quanities (either time or standard): used by create_material_html_block(.)
+function material_quantity_input($mat_used) {
+	global $sv;
+
+	$parent_code = str_replace(" ", "_", $mat_used->material->m_parent->m_name);  // name excluding spaces for id's and classes
+
+	if($mat_used->material->unit == "hour(s)") {
+		$min_hours = intval($sv['minTime']);
+
+		$hour = floor($mat_used->quantity_used);
+		$minute = ($mat_used->quantity_used - $hour) * 60;
+		return	"<div class='input-group'>
+					<span class='input-group-addon'><i class='$sv[currency]'></i> ".sprintf("%0.2f", $mat_used->material->price)." x </span>
+					<input type='number' id='$mat_used->mu_id-input' class='form-control mat_used_input $parent_code-child time' 
+					onkeyup='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
+					onchange='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
+					autocomplete='off' style='text-align:right;' min='$min_hours' step='1' value='$hour'>
+					<span class='input-group-addon'>Hours</span>
+
+					<input type='number' id='$mat_used->mu_id-minute' class='form-control time' 
+					onkeyup='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
+					onchange='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
+					autocomplete='off' style='text-align:right;' min='0' max='59' value='$minute'>
+					<span class='input-group-addon'>Minutes</span>
+				</div>";
+	}
+	return 	"<div class='input-group'>
+				<span class='input-group-addon'><i class='$sv[currency]'></i> ".sprintf("%0.2f", $mat_used->material->price)." x </span>
+				<input type='number' id='$mat_used->mu_id-input' class='form-control mat_used_input $parent_code-child' 
+				onkeyup='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
+				onchange='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
+				autocomplete='off' value='".sprintf("%0.2f", $mat_used->quantity_used)."' style='text-align:right;' min='0'/>
+				<span class='input-group-addon'>".$mat_used->material->unit."</span>
+			</div>";
+}
+
+
+
+// —————————————————— UTILITY  ——————————————————
+
+
+// dynamically get the materials (mu_id, status, quantity) from page 
+function get_material_statuses_from_page($mats_used) {
+	$materials = array();
+	foreach($mats_used as $mat_used) {
+		$material = array();
+		foreach(array("status", "quantity") as $header)
+			$material[$header] = floatval(filter_input(INPUT_POST, $mat_used->mu_id."-".$header));
+		if(!$material["status"]) return null;  // check to make sure a value is always gotten
+		$materials[$mat_used->mu_id] = $material;
+	}
+	return $materials;
+}
+
+
+// if an error message passes, add error to session, redirect (default: home)
+function exit_if_error($error, $redirect=null) {
+	if($error) {
+		$_SESSION['error_msg'] = "Pickup.php: ".$error;
+		if($redirect) header("Location:$redirect");
+		else header("Location:/index.php");
+		exit();
+	}
+}
+
+
+function exit_with_success($message, $redirect=null) {
+	$_SESSION["success_msg"] = $message;
+	if($redirect) header("Location:$redirect");
+	else header("Location:/index.php");
+	exit();
+}
+
 ?>
-<title><?php echo $sv['site_name'];?> Pick Up</title>
+
+
+
+<title><?php echo $sv['site_name'];?> Pickup Print</title>
 <div id="page-wrapper">
-    <div class="row">
-        <div class="col-lg-12">
-            <h1 class="page-header"><i class="fas fa-gift fa-2x"></i> Pick Up 3D Print</h1>
-        </div>
-        <!-- /.col-lg-12 -->
-    </div>
-    <!-- /.row -->
-    <div class="row">
-        <div class="col-lg-7">
-            <?php if(isset($objbox_array) && is_array($objbox_array)){foreach($objbox_array as $ob){
-                $ticket = $ob->getTransaction();
-                $mats_used = Mats_Used::byTrans($ob->getTransaction()->getTrans_id());
-                ?>
-                <form action="" method="post" autocomplete="off" onsubmit="return validateForm_<?php echo $ob->getO_id();?>()">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <i class="fas fa-ticket-alt"></i> Ticket # <?php echo $ticket->getTrans_id(); ?>
-                        <span class="pull-right"><i class="fas fa-map-marker fa-lg" title="Address"></i> <?php echo $ob->getAddress(); ?></span>
-                    </div>
-                    <div class="panel-body">
-                        <table class ="table table-bordered table-striped">
-                            <tr>
-                                <td>Device</td>
-                                <td><?php echo $ticket->getDevice()->getDevice_desc(); ?></td>
-                            </tr>
-                            <tr>
-                                <td>Time</td>
-                                <td><?php echo $ticket->getT_start()." - ".$ticket->getT_end(); ?></td>
-                            </tr>
-                            <tr>
-                                <td>Duration</td>
-                                <td><?php
-                                    echo $ticket->getDuration();
-                                    //Display Device per hour cost
-                                    if ($ticket->getDevice()->getBase_price() > .000001){
-                                        echo " * <i class='$sv[currency]'></i>".$ticket->getDevice()->getBase_price(). "/hour";
-                                    }
-                                ?></td>
-                            </tr>
-                            <tr>
-                                <td>Status</td>
-                                <td><?php echo $ticket->getStatus()->getMsg(); ?></td>
-                            </tr>
-                            <tr>
-                                <td>Address</td>
-                                <td><b><?php echo $ob->getAddress();?></b></td>
-                            </tr>
-                            <?php 
-                            foreach ($mats_used as $mu){ ?>
-                                <tr>
-                                    <td colspan="2">
-                                        <table class="table table-bordered"><tbody>
-                                            <tr class="tablerow info">
-                                                <td><?php echo $mu->getMaterial()->getM_name()?>
-                                                    <div class="color-box" style="background-color: #<?php echo $mu->getMaterial()->getColor_hex();?>; float:right;"></div>
-                                                </td>
-                                                <td>
-                                                    <?php if ($mu->getStatus()->getStatus_id() == 20){ ?>
-                                                        <i class='<?php echo $sv['currency'];?>'></i> <?php echo $mu->getMaterial()->getPrice(); ?> at <input type="number" name="uu_<?php 
-                                                            echo $mu->getMu_id();?>" id="uu_<?php echo $mu->getMu_id();?>" min="0" max="10000" 
-                                                            step="1" style="text-align: right" onclick="calc_<?php echo $ob->getO_id() ?>()" 
-                                                            onkeyup="calc_<?php echo $ob->getO_id() ?>()" value="<?php echo $mu->getUnit_used();?>" readonly> grams
-                                                    <?php } else { ?>
-                                                        <i class='<?php echo $sv['currency'];?>'></i> <?php echo $mu->getMaterial()->getPrice(); ?> at <input type="number" name="uu_<?php 
-                                                            echo $mu->getMu_id();?>" id="uu_<?php echo $mu->getMu_id();?>" min="0" max="10000" 
-                                                            step="1" style="text-align: right" onclick="calc_<?php echo $ob->getO_id() ?>()" 
-                                                            onkeyup="calc_<?php echo $ob->getO_id() ?>()" value="<?php echo $mu->getUnit_used();?>"> grams
-                                                    <?php } ?>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>Print Status</td>
-                                                <td>
-                                                    <select name="status_<?php echo $mu->getMu_id();?>" id="status_<?php echo $mu->getMu_id();?>" onchange="calc_<?php echo $ob->getO_id() ?>()" onkeyup="calc_<?php echo $ob->getO_id() ?>()">
-                                                        <option value="" selected disabled hidden>Select</option>
-                                                        <option value="20">Pick Up</option>
-                                                        <option value="12">Failed</option>
-                                                    </select>
-                                                </td>
-                                            </tr>
-                                            <?php
-                                            if (strcmp($mu->getHeader(), "") != 0){ ?>
-                                                <tr>
-                                                    <td>File Name</td>
-                                                    <td><?php echo $mu->getHeader(); ?></td>
-                                                </tr>
-                                            <?php } ?>
-                                            <tr>
-                                                <td><i class="fas fa-edit"></i>Notes</td>
-                                                <td><textarea name="mu_notes_<?php echo $mu->getMu_id();?>" id="mu_notes_<?php echo $mu->getMu_id();?>" class="form-control"><?php echo $mu->getMu_notes();?></textarea></td>
-                                            </tr>
-                                        </table>
-                                    </td>
-                                </tr>
-                            <?php } ?>
-                            <tr>
-                                <td align="right" colspan="2">
-                                    <div name="total_<?php echo $ob->getO_id();?>" id="total_<?php echo $ob->getO_id();?>">Total <i class='<?php echo $sv['currency'];?>'></i> 0.00</div>
-                                </td>
-                            </tr>
-                            <tr class="tablefooter">
-                                <td align="right" colspan="2"><input type="submit" name="pickBtn_<?php echo $ob->getO_id(); ?>" value="Pick Up" id="submitBtn"></td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-                </form>
-            <?php }} elseif(is_object($user)) { ?>
-                <div class="panel panel-default">
-                    <div class="panel-heading" style="color:Tomato">
-                        <i class="fas fa-exclamation-triangle" ></i> No Objects in Storage
-                    </div>
-                    <div class="panel-body">
-                        <a href="/pages/lookup.php?operator=<?php echo $user->getOperator(); ?>" title="Click to look up the user's last ticket"><i class="fas fa-link"></i> Goto Last Ticket</a>
-                    </div>
-                </div>
-                    
-            <?php } else { ?>
-                <div class="panel panel-default">
-                    <div class="panel-heading" style="color:Tomato">
-                        <i class="fas fa-exclamation-triangle" ></i> No Objects in Storage
-                    </div>
-                    <div class="panel-body">
-                        Look Up Their ID.
-                    </div>
-                </div>
-            <?php } ?>
-        </div>
-        <!-- /.col-lg-7 -->
-        
-        <div class="col-lg-4">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <i class="fas fa-search fa-2x"></i> Inspect your print
-                </div>
-                <div class="panel-body">
-                    <?php echo $sv['inspectPrint']."\n";?>
-                </div>
-                <!-- /.panel-body -->
-            </div>
-            <!-- /.panel -->
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <i class="fas fa-subscript"></i> ObjectBox Stats
-                    <div class="pull-right">
-                        <button type="button" class="btn btn-default btn-xs dropdown-toggle" aria-expanded="false"
-                                data-toggle="collapse" data-target="#obs">
-                            <i class="fas fa-bars"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="panel-body collapse" id="obs">
-                    <table class="table table-bordered table-hover">
-                        <tr>
-                            <td>Capacity</td>
-                            <td><?php echo $sv['box_number'] * $sv['letter'];?></td>
-                        </tr>
-                        <tr>
-                            <td>In Storage</td>
-                            <td><?php echo ObjBox::inStorage();?></td>
-                        </tr>
-                        <tr>
-                            <td>Total Objects Managed</td>
-                            <td><?php echo ObjBox::lifetimeObj();?></td>
-                        </tr>
-                    </table>
-                </div>
-                <!-- /.panel-body -->
-            </div>
-            <!-- /.panel -->
-        </div>
-        <!-- /.col-lg-4 -->
-    </div>
-    <!-- /.row -->
+	<div class="row">
+		<div class="col-lg-12">
+			<h1 class='page-header'>Prints</h1>
+		</div>
+	</div>
+	<div class="row">
+		<div id='page' class="col-md-10">
+			<?php if(!$tickets) { ?>
+				<div class="panel-heading" style="color:Tomato">
+					<i class="fas fa-exclamation-triangle" ></i> No Objects in Storage
+				</div>
+				<div class="panel-body">
+					<a href="/pages/lookup.php?operator=<?php echo $user->getOperator(); ?>" title="Click to look up the user's last ticket"><i class="fas fa-link"></i> Goto Last Ticket</a>
+				</div>
+			<?php 
+			}
+			foreach($tickets as $ticket) { ?>
+				<div id='ticket-<?php echo $ticket->trans_id; ?>' class="panel panel-default ticket">
+					<div class="panel-heading">
+						<i class="fas fa-ticket-alt fa-fw"></i> Ticket #<?php echo $ticket->trans_id;?>
+					</div>
+					<div class='container'>
+						<!-- overlay to partially white out unselected ticket -->
+						<div class='overlay' onclick='remove_other_tickets(this, <?php echo $ticket->trans_id; ?>);' vertical-align='middle'>
+							<h1>SELECT TICKET #<?php echo $ticket->trans_id; ?></h1>
+						</div>
+						<div class="panel-body ticket">
+							<table class="table table-striped table-bordered">
+								<tr>
+									<td class='col-md-3'>Device</td>
+									<td class='col-md-9'><?php echo $ticket->device->name;?></td>
+								</tr>
+								<tr>
+									<td>Operator</td>
+									<td>
+										<div class="btn-group">
+											<button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+												<i class="<?php echo $ticket->user->icon;?> fa-lg" title="<?php echo $ticket->user->operator;?>"></i>
+											</button>
+											<ul class="dropdown-menu" role="menu">
+												<li style="padding-left: 5px;"><?php echo $ticket->user->operator;?></li>
+											</ul>
+										</div>
+									</td>
+								</tr>
+								<tr>
+									<td>Ticket</td>
+									<td><?php echo $ticket->trans_id;?></td>
+								</tr>
+								<tr>
+									<td>Time</td>
+									<td><?php echo $ticket->t_start." - ".$ticket->t_end; ?></td>
+								</tr>
+								<?php if($ticket->est_time) { ?>
+									<tr>
+										<td>Estimated Time</td>	
+										<td><?php echo $ticket->est_time; ?></td>
+									</tr>
+								<?php 
+								}
+								if($ticket->duration) { ?>
+									<tr>
+										<td>Duration</td>
+										<td><?php echo $ticket->duration; ?>
+										</td>
+									</tr>
+								<?php } ?>
+								<tr>
+									<td>Current Status</td>
+									<td><?php echo $ticket->status->message; ?></td>
+								</tr>
+								<tr>
+									<td>End Status</td>
+									<td>
+										<table width="100%">
+											<tr>
+												<td>
+													<select id='ticket_status' name='ticket_status' class='form-control' onchange='adjust_materials_status(this);'>
+														<option selected hidden>SELECT</option>
+														<option value='<?php echo $status['complete']; ?>'>Pick Up</option>
+														<option value='<?php echo $status['partial_fail']; ?>'>Partial Fail</option>
+														<option value='<?php echo $status['total_fail']; ?>'>Total Fail</option>
+													</select>
+												</td>
+												<td id='storage_location' style='padding:4px;align:right' hidden>
+												</td>
+											</tr>
+										</table>
+									</td>
+								</tr>
+								<tr>
+									<td><i class="fas fa-edit"></i>Notes</td>
+									<td>
+										<textarea name='ticket_notes' id='ticket_notes' 
+										class="form-control"><?php echo $ticket->notes;?></textarea>
+									</td>
+								</tr>
+							<!------------------ MATERIALS ------------------>
+								<?php
+								$material_groups = group_materials_by_parent_and_create_inputs($ticket->mats_used);
+								foreach($material_groups as $mat_used) {
+									echo	"<tr>
+												<td colspan='2'>
+													$mat_used
+												</td>
+											</tr>";
+								 } ?>
+								<tr id="pickTR" hidden>
+									<td>Confirm ID</td>
+									<td>
+										<input type="text" name="pickID" class="form-control" placeholder="Enter ID #" maxlength="10" size="10">
+									</td>
+								</tr>
+							</table>
+							<table width='100%'>
+								<tr>
+									<td>
+										<input type="button" value="End" class="btn btn-success" onclick='populate_end_modal();'/>
+									</td>
+									<td align='right'>
+										<table>
+											<tr>
+												<td align='right'>Total:   <i class='<?php echo $sv['currency']; ?>'></i> </td>
+												<td id='total' align='right'> <?php echo sprintf("%0.2f", $ticket->quote_cost()); ?> </td>
+											</tr>
+											<?php if($ticket->current_transaction_credit()) { ?>
+												<tr>
+													<td align='right'> Credit:   <i class='<?php echo $sv['currency']; ?>'></i> </td>
+													<td id='credit' align='right'> <?php echo sprintf("%0.2f", $ticket->current_transaction_credit()); ?>  </td>
+												</tr>
+												<tr>
+													<td align='right'>Remaining Balance:   <i class='<?php echo $sv['currency']; ?>'></i></td>
+													<td id='remaining_balance' align='right'> <?php echo sprintf("%0.2f", $ticket->remaining_balance()); ?> </td>
+												</tr>
+											<?php } ?>
+										</table>
+									</td>
+								</tr>
+							</table>
+						</div>
+					</div>
+				</div>
+			<?php } ?>
+		</div>
+	</div>
 </div>
-<!-- /#page-wrapper -->
-<script type="text/javascript">
-<?php //make a function for each object in storage
-if(is_array($objbox_array)){foreach ($objbox_array as $ob) {
-    $mats_used = Mats_Used::byTrans($ob->getTransaction()->getTrans_id());
-    echo "function calc_".$ob->getO_id()."(){\n\t"; //Declare values
-    echo ("var total = 0;\n\t");
-    foreach($mats_used as $mu){
-        if ($mu->getStatus()->getStatus_id() == 20) {
-            echo("//value is already contained in ticket->quote()\n\t");
-            echo ("var status_".$mu->getMu_id()." = document.getElementById('status_".$mu->getMu_id()."').value;\n\t");
-            echo ("var rate_".$mu->getMu_id()." = ".$mu->getMaterial()->getPrice().";\n\t");
-            echo ("var uu_".$mu->getMu_id()." = document.getElementById('uu_".$mu->getMu_id()."').value;\n\t");
-            echo ("if (status_".$mu->getMu_id()." == 12)\n\t\t\t");
-            echo ("total -= rate_".$mu->getMu_id()." * uu_".$mu->getMu_id().";\n");
-        } else {
-            echo ("var status_".$mu->getMu_id()." = document.getElementById('status_".$mu->getMu_id()."').value;\n\t");
-            echo ("var rate_".$mu->getMu_id()." = ".$mu->getMaterial()->getPrice().";\n\t");
-            echo ("var uu_".$mu->getMu_id()." = document.getElementById('uu_".$mu->getMu_id()."').value;\n\t");
-            echo ("if (status_".$mu->getMu_id()." != 12)\n\t\t\t");
-            echo ("total += rate_".$mu->getMu_id()." * uu_".$mu->getMu_id().";\n");
-        }
-    } ?>
-    document.getElementById("total_<?php echo $ob->getO_id();?>").innerHTML = "Total <i class='<?php echo $sv['currency'];?>'></i> " + total.toFixed(2);
-}
-function validateForm_<?php echo $ob->getO_id() ?>(){
-    passive = true;
-    var storage = false;//14
-    var pickup = false;//20
-    <?php foreach($mats_used as $mu) {
-        $mu_id = $mu->getMu_id();
-        echo ("//Make sure material has been weighed\n");
-        echo ("\tvar x = document.getElementById('uu_$mu_id').value;\n");
-        echo ("\tif (x == null || x == ''){\n");
-        echo ("\t\talert('Please Weigh Object');\n");
-        echo ("\t\tdocument.getElementById('uu_$mu_id').focus();\n");
-        echo ("\t\treturn false;\n");
-        echo ("\t}\n");
-        
-        //Check Status dropdown
-        echo ("\n\t//Status Select Check\n");
-        echo ("\tvar x = document.getElementById('status_$mu_id').value;\n");
-        echo ("\tif (x == null || x == ''){\n");
-        echo ("\t\talert('Please Select Status');\n");
-        echo ("\t\tdocument.getElementById('status_$mu_id').focus();\n");
-        echo ("\t\treturn false;\n\t}\n");
-        echo ("\tif (x == 14){\n");
-        echo ("\t\tstorage = true;\n\t} else if(x == 20) {\n");
-        echo ("\t\tpickup = true;\n\t}");
-        
-        //check Notes Field
-        echo ("\n\tif (x == 12){\n");
-        echo ("\t\t//Notes Field Required for Failed Prints \n");
-        echo ("\t\tvar notes = document.getElementById('mu_notes_$mu_id').value;\n");
-        echo ("\t\tvar msg = '';\n");
-        echo ("\t\tif (notes.length < 10){\n");
-        echo ("\t\t\tmsg='Please Explain More......'\n");
-        echo ("\t\t\tif (notes.length == 0){\n");
-        echo ("\t\t\t\tmsg='Please state why this might have failed'\n");
-        echo ("\t\t\t}\n");
-        echo ("\t\t\talert(msg);\n");
-        echo ("\t\t\tdocument.getElementById('mu_notes_$mu_id').focus();\n");
-        echo ("\t\t\treturn false;\n\t\t}\n\t}\n");
-    }?>
-    
-    if (pickup && storage){
-        alert("You must decide either to Pickup or Move to Storage");
-        return false;
-    }
-}
 
-<?php }} ?>
+
+
+<!-- modal for selecting storage location -->
+<div id='confirmation_modal' class='modal'>
+	<div class='modal-dialog'>
+		<div class='modal-content'>
+			<form method='post'>
+				<div class='modal-header'>
+					<button type='button' class='close' onclick='$("#confirmation_modal").hide();'>&times;</button>
+					<h4 id='modal_title' class='modal-title'></h4>
+					<input id='chosen_ticket' name='chosen_ticket' hidden/>
+				</div>
+				<div id='confirmation_body' class='modal-body'>
+					<table class='table'>
+						<tr class='info'>
+							<td>
+								<h5> Ticket Status </h5>
+							</td>
+							<td id='ticket_status_confirmation'>
+							</td>
+						</tr>
+					</table>
+					<h5> Materials </h5>
+					<table id='material_confirmation_table' class='table'>
+					</table>
+					<div id='storage_confirmation' hidden>
+						<h4 id='storage_confirmation_location'></h4>
+					</div>
+					<div id='notes_confirmation'>
+					</div>
+				</div>
+				<div class='modal-footer'>
+					  <button type='button' class='btn btn-default' onclick='$("#confirmation_modal").hide();'>Change Info</button>
+					  <button type='submit' name='end_button' class='btn btn-success'>Submit</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<style>
+	.container {
+		overflow: hidden;
+		position: relative;
+		width: 100%;
+	}
+	.overlay {
+		color: rgb(255,255,255,0);
+		height: 100%;
+		width: 100%;
+		background:rgb(255,255,255,.8);
+		float:left;
+		position: absolute;
+		text-align: center;
+		z-index: 10;
+	}
+	.overlay:hover {
+		background-color: rgb(255,255,255,.4);
+	}
+	.overlay:hover h1{
+		background-color: rgb(92,184,92,1);
+		border:3px solid rgb(92,184,92);
+		border-radius:6px;
+		color:rgb(255,255,255,1);
+		display: inline-block;
+		padding: 8px;
+	}
+</style>
+
+
+<?php include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php'); ?>
+
+<script>
+	function remove_other_tickets(element, trans_id) {
+		var page = document.getElementById("page");
+		for(var x = page.children.length; 0 < x; x--) {
+			if(page.children[x-1].id == `ticket-${trans_id}`)
+				page.children[x-1].getElementsByClassName("overlay")[0].remove();
+			else page.children[x-1].remove();
+		}
+		document.getElementById("modal_title").innerHTML = "Pickup Ticket #"+trans_id;
+		document.getElementById("chosen_ticket").value = trans_id;
+	}
+
+
+
+
+	// bring status numbers (dynamically) to front end
+	var global_status = {<?php echo "'total_fail' : $status[total_fail], 'partial_fail' : $status[partial_fail], 
+										'cancelled' : $status[cancelled], 'complete' : $status[complete], 
+										'stored' : $status[stored], 'failed_mat' : $status[failed_mat], 
+										'used' : $status[used], 'unused' : $status[unused]"; ?>};
+
+
+	// ————————————— INPUT-STATUS CONTROL —————————————–
+	// ———————————————————————————————————————
+	/* This is a large chunk of the JS.  Its gloal is to control the values of inputs based on 
+	statuses and statuses based on inputs.
+	CONTROLS:
+		TICKET:
+		-A ticket status of cancelled with default to all materials being used.  This way they 
+		 must justify why/how a material is not used.  Gives inventory/FabLab benefit of the 
+		 doubt.
+		-A ticket status of cancelled may not have any failed_mat statuses, because a failed &
+		 sellable ticket means it should be marked as partial_fail.
+		-If no materials are used, then default to total fail, because we assume that a ticket 
+		 failed before it even started is more likely than individual starting & cancelling before
+		 any cost accrued.
+		MATERIALS:
+		-If all materials are marked as not failed, the ticket status is marked as complete.  B/c
+		 it is materials that are being marked, page assumes that the user is completing materials
+		 individually and is unsure of ticket status.  Otherwise, they would either mark it initially
+		 as complete, or have an unused/failed material.
+		-If a mat_used has a status of unused, the quantity is set to 0. If the quantity is 
+		 changed then the status must be reselected, because it is no longer unused.
+		-When a material status is set to unused, the input value is stored in a dictionary, in
+		 case the user decides to revert the status or misclicked.
+	*/
+
+	/* 
+	object to store data for quantity inputs and calculate/set quantities with methods.
+	Object was chosen because it allows for its quantity to be available and set regardless of 
+	whether the input is a time.  It takes the parameter of a input element, finds it (and its 
+	associated elements ie time, parent, status).
+	*/
+	class Input {
+		constructor(input) {
+			this.mu_id = input.id.substr(0, input.id.indexOf('-'));
+			this.element; 
+			this.is_time_based;
+			this.initialize_element_and_type(input);
+			this.parent = this.parent_from_classes(input.classList);
+			this.price = parseFloat(input.parentElement.children[0].innerHTML.match(/\d+(\.\d+)?/g));
+			this.status = document.getElementById(this.mu_id+"-select");
+		}
+
+
+		// if input is time based assign appropriate elements for it
+		initialize_element_and_type(input) {
+			if(input.classList.contains("time")) 
+				this.element = {	"hour" : document.getElementById(this.mu_id+"-input"), 
+									"min" : document.getElementById(this.mu_id+"-minute")}, 
+				this.is_time_based = true;
+			else {
+				this.element = input
+				this.is_time_based = false;
+			}
+		}
+
+
+		// return numeric quantity for input(s) associated
+		quantity() {
+			if(!this.is_time_based) return parseFloat(this.element.value);
+			return parseFloat(this.element['hour'].value) + parseFloat(this.element['min'].value) / 60;
+
+		}
+
+
+		// set quantity based on quantity passed and parse into hour/minute if necessary
+		set_val(quantity) {
+			if(!this.is_time_based) this.element.value = parseFloat(quantity);
+			else {
+				var hour = parseInt(quantity);
+				var minute = (quantity - hour) * 60;
+				this.element["hour"].value = hour;
+				this.element["min"].value = round(minute, 2);
+			}
+		}
+
+
+		// retrieve the parent name of a class (<parent_name>-child); return null if no parent name
+		parent_from_classes(classList) {
+			for(var x = 0; x < classList.length; x++)
+				if(classList[x].includes("-child") && classList[x].length > 6) 
+					return document.getElementById(classList[x].substr(0, classList[x].indexOf('-')));
+			return null;
+		}
+	}
+
+
+
+	// {'mu_id' : quantity, etc.} to hold values before status switching causes value to equal 0
+	var previous_mats_used_quantities = {};
+
+
+	// ————–———— QUANTITY CHILD-PARENT CALCULATION ——————————
+
+	// as group total is changed, change individual units used proportionally for new total
+	function adjust_children_input(parent_input) {
+		var children = create_inputs_by_class_name(parent_input.id+"-child");
+		var quantity_sum = 0;
+		// get previous sum & create input objects
+		for(var x = 0; x < children.length; x++)
+			quantity_sum += children[x].quantity();
+
+		// assign proportion of new total
+		for(var x = 0; x < children.length; x++)
+			children[x].set_val(round(children[x].quantity() / quantity_sum * parent_input.value, 2));
+
+		adjust_balances();
+	}
+
+
+	// as individual units used are changed, change group total units for new individual; adjust statuses
+	function adjust_parent_input(child_input_element) {
+		var mu_input = new Input(child_input_element);
+		if(!mu_input.parent) return;
+
+		var children = create_inputs_by_class_name(mu_input.parent.id+"-child");
+		var group_total = 0;
+		for(var x = 0; x < children.length; x++)
+			group_total += children[x].quantity();
+
+		mu_input.parent.value = group_total;
+	}
+
+
+	// ——————————–——— COST CALCULATION ———————————————
+
+	// as each mat used changes, calculate total cost (& remaining balance) for units provided
+	function adjust_balances() {
+		var total = calculate_total();
+		var remaining_balance = calculate_remaining_balance(total);
+
+		document.getElementById("total").innerHTML = round(total, 2);
+		if(document.getElementById("credit"))
+			document.getElementById("remaining_balance").innerHTML = round(remaining_balance, 2);
+	}
+
+
+	// total cost for all materials used without fail (does not include credit)
+	function calculate_total() {
+		var mats_used = create_inputs_by_class_name("mat_used_input");
+		var total = 0;
+		for(var x = 0; x < mats_used.length; x++)
+			if(mats_used[x].status.value != global_status['unused'] && mats_used[x].status.value != global_status['failed_mat'])
+				total += mats_used[x].quantity() * mats_used[x].price;
+		return total;
+	}
+
+
+	// amount to be charged 
+	function calculate_remaining_balance(total=null) {
+		var credit = document.getElementById("credit");
+		if(!credit) return;  // no credit found; no need to try to caluclate remaining balance
+
+		credit = parseFloat(credit.innerHTML);
+		if(total) return total - credit;  // option to save the resources
+		return calculate_total() - credit;
+	}
+
+
+	// ————————————————— STATUS —————————————————
+
+	// ———— TICKET-MAT_USED RELATIONSHIP ————
+
+	// material status changed: adjust ticket status
+	function adjust_ticket_status(status_element) {
+		// all materials being used (!failed) means ticket was complete
+		if(all_material_status_are(global_status['used'])) 
+			document.getElementById("ticket_status").value = global_status['complete'];
+		// if no materials were used then nothing is usable and is a total fail
+		else if(all_material_status_are(global_status['unused'])) 
+			document.getElementById("ticket_status").value = global_status['total_fail'];
+	}
+
+
+	// ticket status has been changed: adjust materials' statuses
+	function adjust_materials_status(ticket_status_object) {
+		document.getElementById("storage_location").innerHTML = "";  // clear prior storage location
+		var ticket_status = ticket_status_object.value;
+
+		// cancelled included b/c user more willing to check off what they didn't use
+		if(ticket_status == global_status["stored"] || ticket_status == global_status["complete"] ||
+		ticket_status == global_status["cancelled"])
+			set_status_for_all_materials_to_used_if_status_quantity_not_null();
+
+		// cancelled tickets are not allowed to have any failed_mat statuses
+		if(ticket_status == global_status['cancelled'])
+			$(`.mat_used_select option[value='${global_status['failed_mat']}']`).hide();
+		else $(`.mat_used_select option[value='${global_status['failed_mat']}']`).show();
+
+		if(ticket_status == global_status["stored"])
+			$("#storage_modal").show();
+	}
+
+
+	// ———— INPUT-STATUS RELATIONSHIP ————
+
+	// change value to 0 if not used; reset value if changed back
+	function adjust_input_for_status(status_element) {
+		var input = input_for_status(status_element);
+		// prevent unused materials from having any quantity
+		if(parseInt(status_element.value) == global_status['unused']) {
+			// store previous value into dictionary for mu_id for reverting when changing status back from unused
+			previous_mats_used_quantities[input.mu_id] = input.quantity();
+			input.set_val(0);
+		}
+		else if(!input.quantity() && previous_mats_used_quantities[input.mu_id]) {
+			input.set_val(previous_mats_used_quantities[input.mu_id]);
+			delete previous_mats_used_quantities[input.mu_id];  // inaccurate replacements
+		}
+		// recalulate amounts
+		var input_element = document.getElementById(input.mu_id+"-input");
+		adjust_parent_input(input_element);
+		adjust_balances();		
+	}
+
+
+	// auto select statuses based on input values
+	function adjust_status_for_input(input_element) {
+		var mu_input = new Input(input_element);
+
+		// don't allow non-zero elements to have "unused" status
+		if(mu_input.quantity() && mu_input.status.value == global_status['unused'])
+			mu_input.status.selectedIndex = "0";
+		// don't allow zero values to have status of used or failed
+		else if(!mu_input.quantity())
+			mu_input.status.value = global_status['unused'];
+	}
+
+
+	// ———— STATUS UTILITY ————
+
+	// check if all of the materials have the same status as status passed
+	function all_material_status_are(status) {
+		var materials_statuses = document.getElementsByClassName("mat_used_select");
+		for(var x = 0; x < materials_statuses.length; x++) 
+			if(parseInt(materials_statuses[x].value) != status) return false;
+		return true;
+	}
+
+
+	// return Input object for a status element
+	function input_for_status(status_object) {
+		var mat_used_id = mat_used_id_of_element(status_object);
+		return new Input(document.getElementById(mat_used_id+"-input"));
+	}
+
+
+	// 
+	function set_status_for_all_materials_to_used_if_status_quantity_not_null() {
+		var materials_statuses = document.getElementsByClassName("mat_used_select");
+		for(var x = 0; x < materials_statuses.length; x++)
+			// a material is measurable && not used if its value is 0
+			if(materials_statuses[x].classList.contains("measurable") && input_for_status(materials_statuses[x]).quantity())
+				materials_statuses[x].value = global_status["used"];
+	}
+
+
+	// ————————————–—— END CONFIRMATION ——————————————
+	// ———————————————————————————————————————
+
+
+	// get information from page and put into confirmation modal
+	function populate_end_modal() {
+		// ---- ticket ----
+		var ticket_status = document.getElementById("ticket_status");
+		var ticket_status_name = ticket_status.options[ticket_status.selectedIndex].text;
+		if(isNaN(ticket_status.value)) {
+			alert("Please select a ticket status");
+			return;
+		}
+		else if(ticket_status.value == global_status["partial_fail"] && document.getElementById("ticket_notes").value.length < 10) {
+			alert("You must state how the ticket failed");
+			return;
+		}
+		document.getElementById("ticket_status_confirmation").innerHTML = 
+			confirmation_cell_format('ticket_status', `<h5>${ticket_status_name}</h5>`, ticket_status.value);
+		
+		// ---- materials ----
+		var materials = get_and_sort_materials();
+		// mats_used listed but none accounted for: error in get_and_sort_materials()
+		if(!materials && document.getElementsByClassName("mat_used_select").length) return;
+
+		// no material is marked as failed && not all are unused: a failed ticket requires a fail material or all to be null
+		if((ticket_status.value == global_status['partial_fail'] || ticket_status.value == global_status['total_fail'])
+		&& (!any(materials, function(part, value) {return part['status'].value == value;}, global_status['failed_mat']) 
+		  && any(materials, function(part, value) {return part['status'].value != value;}, global_status['unused']))) {
+			alert(	"Ticket is marked as failed, but no failed material is indicated.\n"+
+					"Please indicate which material was failed on usage.\n"+
+					"If no materials were used, please mark all materials as unused.");
+			return;
+		}
+
+		populate_material_table(materials);
+
+		// ---- storage ----
+		var storage_confirmation = document.getElementById("storage_confirmation_location");
+		storage_confirmation.innerHTML = "";  // clear prior storage location
+		if(document.getElementById("storage_location").children.length) {
+			$("#storage_confirmation").show();
+			var box_id = document.getElementById("storage_location").children[0].innerHTML;
+			var span = 	"<span style='background-color:#0055FF;border:4px solid #0055FF;"+
+							"border-radius:4px;padding:8px;margin:auto;color:#FFFFFF;'>"+
+							" Storage: "+box_id+"</span>";
+			storage_confirmation.innerHTML = confirmation_cell_format("storage", span, box_id.replace("-", ""));
+		}
+
+		if(document.getElementById("ticket_notes").value)
+			document.getElementById("notes_confirmation").innerHTML = `<b>NOTES: </b>
+			${document.getElementById("ticket_notes").value}`;
+		else document.getElementById("notes_confirmation").innerHTML = "";
+
+		$("#confirmation_modal").show();
+	}
+
+
+	//  ———— MATERIALS ————
+		// — DATA COLLECTION —
+	// get materials by class, get inputs, selects, m_name, mu_id & add to dict; dict to array
+	function get_and_sort_materials() {
+		var materials = [];
+
+		// add measurable materials to mat list
+		var materials_inputs = create_inputs_by_class_name("mat_used_input");
+		for(var x = 0; x < materials_inputs.length; x++) {
+			var material = dictionary_of_measurable_material(materials_inputs[x]);
+			if(!material) return null;  // submission error: end process
+			materials.push(material);
+		}
+
+		// add immeasurable materials to mat list
+		var immeasurable_select = document.getElementsByClassName("immeasurable");
+		for(var x = 0; x < immeasurable_select.length; x++)
+			materials.push(dictionary_for_immeasurable_material(immeasurable_select[x]));
+
+		return materials;
+	}
+
+
+	function dictionary_for_immeasurable_material(immeasurable_select) {
+		var name = material_name(immeasurable_select);
+		var status = immeasurable_select;
+		var mu_id = immeasurable_select.id.substr(0, immeasurable_select.id.indexOf('-'));
+
+		return {"mu_id" : mu_id, "name" : name, "status" : status, "immeasurable" : true};
+	}
+
+
+	// 
+	function dictionary_of_measurable_material(material) {
+		var cost = material.quantity() * material.price;
+		var name = material_name(material.status);
+
+		// --error/logic checking
+		if(isNaN(parseFloat(material.status.value))) {
+			 alert("Please select a status for "+name);
+			 return null;
+		}
+		else if(material.status.value == global_status['used'] && !material.quantity()) { 
+			alert("Material status cannot be used with a 0 quantity for "+name);
+			return null;
+		}
+
+		return {'mu_id' : material.mu_id, 'name' : name, 'cost' : cost, 'quantity' : material.quantity(), 'status' : material.status};
+	}
+
+
+		// — MODAL BUILDING —
+	// using the material dictionary, add values to material table in modal
+	function populate_material_table(materials) {
+		$("#material_confirmation_table tr").remove();  // clear previous entries
+		var table = document.getElementById("material_confirmation_table");
+		
+		// create/add table headers
+		var header = table.insertRow(-1);
+		var header1 = header.insertCell(0);
+		var header2 = header.insertCell(1);
+		var header3 = header.insertCell(2);
+		var header4 = header.insertCell(3);
+
+		header1.innerHTML = "<h5>Material</h5>";
+		header2.innerHTML = "<h5>Status</h5>";
+		header3.innerHTML = "<h5>Quantity</h5>";
+		header4.innerHTML = "<h5>Cost</h5>";
+
+		// add values
+		for(var x = 0; x < materials.length; x++)
+			populate_material_table_row(materials[x], table.insertRow(-1));
+
+		// add total to modal
+		var total_row = table.insertRow(-1);
+		var total_title = total_row.insertCell(0);
+		total_title.innerHTML = "<h5>Total</h5>";
+		total_title.colSpan = "3";
+		var total_value = total_row.insertCell(1);
+		total_value.innerHTML = `<h5><i class='<?php echo $sv[currency]; ?>'></i>${document.getElementById("total").innerHTML}</h5>`;
+
+		$("#material_confirmation_table tr td:not(:first-child)").attr("align", "center");
+	}
+
+
+	// used by populate_material_table(.) to create a row and store values in it
+	function populate_material_table_row(material, row) {
+		var status_name = material['status'].options[material['status'].selectedIndex].text;
+
+		var mat = row.insertCell(0);
+		var status = row.insertCell(1);
+		var quantity = row.insertCell(2);
+		var cost = row.insertCell(3);
+
+		mat.innerHTML = material['name'];
+		status.innerHTML = confirmation_cell_format(material['mu_id']+'-status', status_name, material['status'].value);
+
+		if(!material["immeasurable"]) {
+			quantity.innerHTML = confirmation_cell_format(material['mu_id']+'-quantity', material['quantity'], material['quantity']);
+			cost.innerHTML = `<i class='<?php echo $sv[currency]; ?>'></i>${round(material['cost'], 2)}`;
+		}
+	}
+
+
+	// create innerHTML for a cell using text and a hidden input
+	function confirmation_cell_format(name, text, value) {
+		return `${text}<input name='${name}' value='${value}' hidden/>`;
+	}
+
+
+	// retrieve the name of a material based on a given input
+	// ascend up: status -> td -> tr -> table; down: tr[0] -> td [0] -> text; remove newline
+	function material_name(status_element) {
+		var ancestor = status_element.parentElement.parentElement.parentElement
+		return ancestor.children[0].children[0].textContent.trim();
+	}
+
+
+	// —————————————————— UTILITY —————————————————
+	// ———————————————————————————————————————
+
+	// if any of the items is relevant to the /usage function (eg contains /value), return true
+	function any(list, usage, value) {
+		for(var x = 0; x < list.length; x++)
+			if(usage(list[x], value)) return true;
+		return false;
+	}
+
+
+	// for every element in class_name passed, create an input object
+	function create_inputs_by_class_name(class_name) {
+		var inputs = [];
+		var elements = document.getElementsByClassName(class_name);
+		for(var x = 0; x < elements.length; x++)
+			inputs.push(new Input(elements[x]));
+		return inputs;
+	}
+
+
+	// get the mat_used id number from an element
+	function mat_used_id_of_element(element) {
+		return element.id.substr(0, element.id.indexOf('-'));
+	}
+
+
+	// because JS does not have a good rounding function, copied one from StackOverflow
+	function round(float, decimal) {
+		if(!float) return 0;
+		return Number(Math.round(float+`e${decimal}`)+`e-${decimal}`).toFixed(decimal);
+	}
+
+
 </script>
-<?php
-}
-//Standard call for dependencies
-include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
-?>

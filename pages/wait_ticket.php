@@ -36,9 +36,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
     if(isset($_POST['devices']) && isset($_POST['dg_id'])){
         $d_id1 = filter_input(INPUT_POST,'devices');
         $dg_id1 = filter_input(INPUT_POST,'dg_id');
-        $status = Wait_queue::hasDGWait($operator1 , $dg_id1);
+        $wait_status = Wait_queue::hasDGWait($operator1 , $dg_id1);
         
-        if ($status)
+        if ($wait_status)
         {
             $wt_msg = ("<div style='text-align: center'>
                     <div class='alert alert-danger'>
@@ -209,7 +209,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                                         SELECT DISTINCT D.`device_desc`, D.`dg_id`, D.`d_id`
                                                         FROM `devices` D 
                                                         JOIN `wait_queue` WQ on D.`dg_id` = WQ.`Devgr_id`
-                                                        LEFT JOIN (SELECT trans_id, t_start, t_end, d_id, operator, status_id FROM transactions WHERE status_id < 12  ORDER BY trans_id DESC) as t
+                                                        LEFT JOIN (SELECT trans_id, t_start, t_end, d_id, operator, status_id FROM transactions WHERE status_id < $status[total_fail]  ORDER BY trans_id DESC) as t
                                                         ON D.`d_id` = t.`d_id`
                                                         WHERE WQ.`valid`='Y' AND (WQ.`Devgr_id` = 2 OR D.`d_id` = WQ.`Dev_id`) AND t.`trans_id` IS NULL AND D.`d_id` NOT IN (
                                                             SELECT `d_id`

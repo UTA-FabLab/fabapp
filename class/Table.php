@@ -33,6 +33,8 @@ class Table {
 
 
 	public static function get_prebuild_data($end, $function, $start) {
+		global $status;
+
 		if($function === "byHour") {
 			$file_name = "FabLab_TicketsByHour";
 			$head = array("HOUR(`t_start`)", "COUNT(*)");
@@ -88,7 +90,7 @@ class Table {
 			$head = array("COUNT(*)");
 			$statement = "SELECT COUNT(*)
 							FROM `transactions`
-							WHERE `status_id` = 12
+							WHERE `status_id` = $status[total_fail]
 							AND '$start' <= `t_start` 
 		  					AND `t_start` <= '$end';";
 		}

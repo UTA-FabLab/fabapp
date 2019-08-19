@@ -280,15 +280,11 @@ function successful_and_failed_device_group_additions($m_id, $device_group) {
 								<div>
 									<select class="form-control status_select">
 										<option selected='selected' value="NONE">Select Status</option>
-										<?php  if($autofills = $mysqli->query("
-											SELECT * 
-											FROM `status`
-											WHERE `message` IS NOT NULL
-											AND `status_id` < 11;" 
-										)) {
-											while($row = $autofills->fetch_assoc()) {
-												echo "<option value='$row[status_id]'>$row[message]</option>";
-											}
+										<?php  
+											$mat_statuses = Status::material_statuses();
+											$status_list = Status::getList();
+											foreach($mat_statuses as $mat_stat)
+												echo "<option value='$mat_stat'>$status_list[$mat_stat]</option>";
 										}?>
 									</select>
 								</div>

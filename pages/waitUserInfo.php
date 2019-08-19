@@ -51,8 +51,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
     $ph = filter_input(INPUT_POST, 'op-phone');
     $new_operator = filter_input(INPUT_POST,'operator');
     $carrier_name = filter_input(INPUT_POST,'carrier_name');
-    $status = Wait_queue::updateContactInfo($q_id, $ph, $em, $carrier_name, $old_operator, $new_operator, $devgr_id);
-    if ($status === 0) {
+    $wait_status = Wait_queue::updateContactInfo($q_id, $ph, $em, $carrier_name, $old_operator, $new_operator, $devgr_id);
+    if ($wait_status === 0) {
         if ($_REQUEST['loc'] == 0) {
             header("Location:/index.php");
         } elseif ($_REQUEST['loc'] == 1) {
@@ -60,7 +60,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
         }
         $_SESSION['success_msg'] = "Contact Information Updated";
     } else {
-        $_SESSION['error_msg'] = $status;
+        $_SESSION['error_msg'] = $wait_status;
         header("Location:/pages/waitUserInfo.php?q_id=$q_id&loc=$_REQUEST[loc]");
 
     }

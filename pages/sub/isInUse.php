@@ -18,7 +18,7 @@ if (!empty($_GET["dg_id"]) || !empty($_GET["operator"]) && DeviceGroup::regexDev
             FROM `devices`
             JOIN `device_group`
             ON `devices`.`dg_id` = `device_group`.`dg_id`
-            LEFT JOIN (SELECT `trans_id`, `d_id`, `operator` FROM `transactions` WHERE `status_id` < 12) as t 
+            LEFT JOIN (SELECT `trans_id`, `d_id`, `operator` FROM `transactions` WHERE `status_id` < $status[total_fail]) as t 
             ON `devices`.`d_id` = `t`.`d_id`
             WHERE public_view = 'Y' AND t.`trans_id` IS NOT NULL AND `devices`.`dg_id` = ".$dg->dg_id." AND `operator` = '$_GET[operator]'
             ORDER BY `trans_id` DESC, `device_desc` ASC

@@ -77,6 +77,27 @@ class StorageObject {
 	}
 
 
+	public static function all_in_storage_for_operator($operator) {
+		global $mysqli;
+
+		$tickets = array();
+		if($results = $mysqli->query("	SELECT `storage_box`.`trans_id`
+										FROM `storage_box`
+										JOIN `transactions`
+										ON `transactions`.`trans_id` = `storage_box`.`trans_id`
+										LEFT JOIN `authrecipients`
+										ON `authrecipients`.`trans_id` = `storage_box`.`trans_id`
+										WHERE `transactions`.`operator` = '$operator->operator'
+										OR `authrecipients`.`operator` = '$operator->operator'
+										ORDER BY `storage_box`.`trans_id` ASC;"
+		)) {
+			while($row = $results->fetch_assoc())
+				$tickets[] = new Transactions($row["trans_id"]);
+			return $tickets;
+		}
+	}
+
+
 	public function edit_object_storage_information($change_array) {
 		if(!count($change_array)) return;
 		

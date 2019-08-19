@@ -240,8 +240,10 @@ function exit_if_error($error, $redirect=null) {
 							<table class="table table-striped table-bordered table-hover">
 								<tr class="tablerow">
 									<td align="center">ID Number</td>
-									<td><input type="text" name="operator" id="operator" class='form-control' placeholder="1000000000" value="<?php if(isset($operator)) echo $operator->getOperator();?>"
-										maxlength="10" size="10" autofocus tabindex="1"></td>
+									<td>
+										<input type="number" name="operator" id="operator" class='form-control' placeholder="1000000000" 
+										onchange='restrict_size(this);' onkeyup='restrict_size(this);' maxlength="10" size="10" autofocus tabindex="1"/>
+									</td>
 								</tr>
 								<tr class="tablerow">
 									<?php // build Purpose Option List
@@ -663,6 +665,12 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	function round(float, decimal) {
 		if(!float) return 0;
 		return Number(Math.round(float+`e${decimal}`)+`e-${decimal}`).toFixed(decimal);
+	}
+
+
+		// prevent string from being longer than 10 chars for ID
+	function restrict_size(element) {
+		if(element.value.length > 10) element.value = element.value.substring(0, 10);
 	}
 
 </script>

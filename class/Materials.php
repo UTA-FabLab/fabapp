@@ -135,9 +135,9 @@ class Materials {
 	public static function create_new_sheet_inventory($m_id, $m_parent, $sheet_width, $sheet_height, $sheet_quantity) {
 		global $mysqli;
 
-		$status = Materials::hasInventory($m_id , $sheet_width, $sheet_height);
+		$sheet_status = Materials::hasInventory($m_id , $sheet_width, $sheet_height);
 		
-		if ($status){
+		if ($sheet_status){
 			if ($mysqli->query("
 				UPDATE `sheet_good_inventory`
 				SET `quantity` = `quantity`+'$sheet_quantity' 
@@ -461,7 +461,7 @@ class Mats_Used {
 		
 		if(array_key_exists("m_id", $change_array)) $this->material = new Materials($change_array["m_id"]);
 		if(array_key_exists("quantity_used", $change_array)) $this->quantity_used = $change_array["quantity_used"];
-		if(array_key_exists("status", $change_array)) $this->status = new Status($change_array["status"]);
+		if(array_key_exists("status", $change_array)) $this->status = $change_array["status"];
 		if(array_key_exists("staff", $change_array)) $this->staff = $change_array["staff"];
 
 		return $this->update_mats_used();
@@ -572,8 +572,8 @@ class Mats_Used {
 		return htmlspecialchars($reason);
 	}
 
-	public static function regexStatus($status) {
-		if(preg_match("/^\d+$/", $status)) return intval($status);
+	public static function regexStatus($status_id) {
+		if(preg_match("/^\d+$/", $status_id)) return intval($status_id);
 		return false;	 
 	}
 
