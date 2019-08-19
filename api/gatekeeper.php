@@ -39,7 +39,7 @@ function gatekeeper ($operator, $d_id) {
         FROM `transactions`
         LEFT JOIN devices
         ON devices.d_id = transactions.d_id
-        WHERE devices.d_id = $d_id AND status_id < $status[]
+        WHERE devices.d_id = $d_id AND status_id < $status[total_fail]
         LIMIT 1;
     ")){
         if( $result->num_rows > 0){
