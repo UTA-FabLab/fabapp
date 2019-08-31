@@ -17,7 +17,7 @@
 *	 through AJAX call to ./sub/storage_ajax_requests.php.  The ID number of the person 
 *	 who edits a field (eg Material) is placed in the staff input, as they assume responsibility.
 *	FUTURE:	-Use JS to highlight which inputs are incorrectly filled
-*	BUGS: 
+*	BUGS:
 *
 ***********************************************************************************************************/
 
@@ -44,18 +44,21 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["save_data"])) {
 	foreach($ticket->mats_used as $mat_used) {
 		$mu_id = $mat_used->mu_id;
 
-		$material = filter_input(INPUT_POST, "mu_mat_$mu_id");
+		$material = filter_input(INPUT_POST, "$mu_id-material");
 		if(!Materials::regexID($material)) exit_if_error("Material ID #$material is invalid");
 
 		if($mat_used->material->unit == "hour(s)")
-			$quantity_used = Mats_Used::regexQuantity(filter_input(INPUT_POST, "mu_hour_$mu_id")) 
-			+ Mats_Used::regexQuantity(filter_input(INPUT_POST, "mu_minute_$mu_id")) / 60;
-		else $quantity_used = Mats_Used::regexQuantity(filter_input(INPUT_POST, "mu_quantity_$mu_id"));
+			$quantity_used = Mats_Used::regexQuantity(filter_input(INPUT_POST, "$mu_id-hour")) 
+			+ Mats_Used::regexQuantity(filter_input(INPUT_POST, "$mu_id-minute")) / 60;
+		else $quantity_used = Mats_Used::regexQuantity(filter_input(INPUT_POST, "$mu_id-quantity"));
 
-		$mat_status = Mats_Used::regexStatus(filter_input(INPUT_POST, "mu_status_$mu_id"));
-		$mat_status = $mat_status ? new Status($mat_status) : null;
+		$mat_status = Mats_Used::regexStatus(filter_input(INPUT_POST, "$mu_id-select"));
+		if(!$mat_status) exit_if_error("Invalid material status for mat_used #$mu_id");
+		$mat_status = new Status($mat_status);
+
+		$material_edit_staff = new Users::withID(filter_input(INPUT_POST, "$mu_id-staff"));
 		if($error = $mat_used->edit_material_used_information(array("quantity_used" => $quantity_used, 
-		"m_id" => $material, "status" => $mat_status, "staff" => $staff)))
+		"m_id" => $material, "status" => $mat_status, "staff" => $material_edit_staff)))
 			exit_if_error("Unable to update material used #$mat_used->mu_id: $error");
 	}
 
@@ -282,7 +285,7 @@ function exit_with_success($message, $redirect=null) {
 									<tr>
 										<td class="col-md-4">Material</td>
 										<td class="col-md-8">
-											<select name="mu_mat_<?php echo $mu_id; ?>" id="mu_mat-<?php echo $mu_id; ?>" class='form-control' 
+											<select name="<?php echo $mu_id; ?>-material" id="<?php echo $mu_id; ?>-material" class='form-control' 
 											onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 1);'>
 												<?php
 												//List all Materials that are available to that device
@@ -306,11 +309,11 @@ function exit_with_success($message, $redirect=null) {
 														$minute = ($mat_used->quantity_used - $hour) * 60; ?>
 														<span class='input-group-addon'><?php printf("<i class='$sv[currency]'></i> %.2f x ", $mat_used->material->price); ?></span>
 														<!-- hours is not set to a minimum because it is assumed staff knows what they are doing -->
-														<input class='form-control' type='number' name='mu_hour_<?php echo $mu_id; ?>' id='mu_hour-<?php echo $mu_id; ?>' autocomplete='off' tabindex='2'
+														<input class='form-control' type='number' name='<?php echo $mu_id; ?>-hour' id='<?php echo $mu_id; ?>-hour' autocomplete='off' tabindex='2'
 														value='<?php echo $hour; ?>' min='0' max='9999' step='1' style='text-align:right;' onkeyup='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 4, 1);'
 														onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 4, 1);'/>
 														<span class='input-group-addon'>Hours</span>
-														<input class='form-control' type='number' name='mu_minute_<?php echo $mu_id; ?>' id='mu_minute-<?php echo $mu_id; ?>' autocomplete='off' tabindex='2'
+														<input class='form-control' type='number' name='<?php echo $mu_id; ?>-minute' id='<?php echo $mu_id; ?>-minute' autocomplete='off' tabindex='2'
 														value='<?php echo $minute; ?>' min='0' max='9999' style='text-align:right;' onkeyup='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 4, 1);'
 														onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 4, 1);'/>
 														<span class="input-group-addon">Minutes</span>
@@ -319,7 +322,7 @@ function exit_with_success($message, $redirect=null) {
 													else { 
 													?>
 														<span class='input-group-addon'><?php printf("<i class='$sv[currency]'></i> %.2f x ", $mat_used->material->price); ?></span>
-														<input class='form-control' type='number' name='mu_quantity_<?php echo $mu_id; ?>' id='mu_quantity-<?php echo $mu_id; ?>' autocomplete='off'
+														<input class='form-control' type='number' name='<?php echo $mu_id; ?>-quantity' id='<?php echo $mu_id; ?>-quantity' autocomplete='off'
 														value='<?php echo $mat_used->quantity_used; ?>' min='0' max='9999' onkeyup='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 4, 1);'
 														style='text-align:right;' onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 4, 1);'/>
 														<span class='input-group-addon'><?php echo $mat_used->material->unit; ?></span>
@@ -331,22 +334,18 @@ function exit_with_success($message, $redirect=null) {
 									<tr>
 										<td>Material Status</td>
 										<td>
-											<select name="mu_status_<?php echo $mu_id; ?>" id="mu_status-<?php echo $mu_id; ?>" class='form-control' 
+											<select name="<?php echo $mu_id; ?>-select" id="<?php echo $mu_id; ?>-select" class='form-control' 
 											onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 1);'>
-												<?php
-												$available_statuses = Status::material_statuses();
-												$status_descriptions = Status::getList();
-												foreach($available_statuses as $available_status) {
-													$selected = $mat_used->status->status_id == $available_status ? "selected" : "";
-													echo ("<option value='$available_status' $selected>$status_descriptions[$available_status]</option>");
-												} ?>
+												<option <?php echo "value='$status[used]'".($mat_used->status->status_id == $status["used"] ? "selected" : ""); ?> >Used</option>
+												<option <?php echo "value='$status[unused]'".($mat_used->status->status_id == $status["unused"] ? "selected" : ""); ?> >Unused</option>
+												<option <?php echo "value='$status[failed_material]'".($mat_used->status->status_id == $status["failed_material"] ? "selected" : ""); ?> >Failed Material</option>
 											</select>
 										</td>
 									</tr>
 									<tr>
 										<td>Staff</td>
 										<td>
-											<input type="number" name="mu_staff_<?php echo $mu_id; ?>" id="mu_staff-<?php echo $mu_id; ?>" placeholder="1000000000" 
+											<input type="number" name="<?php echo $mu_id; ?>-staff" id="<?php echo $mu_id; ?>-staff" placeholder="1000000000" 
 											value="<?php if($mat_used->staff) echo $mat_used->staff->operator; ?>" onkeyup='restrict_size(this);' 
 											onchange='restrict_size(this);' class='form-control' <?php echo $readonly; ?>>
 										</td>
@@ -365,9 +364,9 @@ function exit_with_success($message, $redirect=null) {
 								<td class='col-sm-5'>
 									<select id='new_material' name='new_material' class='form-control'>
 										<?php
+										// allows for materials to added twice
 										foreach($ticket->device->device_group->optional_materials as $optional_material)
-											if(material_not_already_used($optional_material, $ticket->mats_used))
-												echo "<option value='$optional_material->m_id'>$optional_material->m_name</option>";
+											echo "<option value='$optional_material->m_id'>$optional_material->m_name</option>";
 										?>
 									</select>
 								</td>
@@ -667,12 +666,17 @@ function exit_with_success($message, $redirect=null) {
 	function add_new_material_used() {
 		var m_id = document.getElementById("new_material").value;
 		if(isNaN(parseInt(m_id))) return;
+		if(!confirm("Are you sure you would like to add another material to this transaction?"));
 		
+		// add_new_material: request function from page (new material instance created, return HTML)
+		// edit_request: request coming from edit.php (add functions/staff row)
 		$.ajax({
 			url: "./sub/material_ajax_requests.php",
 			type: "POST",
 			dataType: "json",
-			data: {"add_new_material" : true, "trans_id" : <?php echo $ticket->trans_id; ?>, "m_id" : m_id},
+			data: {	"add_new_material" : true, "request_from_edit_page" : true, 
+					"m_id" : m_id, "trans_id" : <?php echo $ticket->trans_id; ?>
+			},
 			success: function(response) {
 				if(response["error"]) {
 					alert(response["error"]);
@@ -681,7 +685,9 @@ function exit_with_success($message, $redirect=null) {
 
 				// add stuff to page
 				var panel = document.getElementById("mats_used_display");
-				panel.innerHTML += response["material_HTML"];
+				panel.innerHTML += `	<div class='panel-body'>
+											${response["material_HTML"]}
+										</div>`;
 				alert("Successfully added "+response["material_name"]+" to materials");
 				$(`#new_material option[value=${m_id}]`).hide();
 				$(`#new_material`).val("");

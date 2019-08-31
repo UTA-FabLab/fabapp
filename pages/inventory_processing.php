@@ -285,7 +285,7 @@ function successful_and_failed_device_group_additions($m_id, $device_group) {
 											$status_list = Status::getList();
 											foreach($mat_statuses as $mat_stat)
 												echo "<option value='$mat_stat'>$status_list[$mat_stat]</option>";
-										}?>
+										?>
 									</select>
 								</div>
 							</td>

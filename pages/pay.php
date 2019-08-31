@@ -426,6 +426,9 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 
 	var pay_window;  // hold pay window info to close window on payment confirmation
 
+
+
+
 	// ————————————————— PAYER ——————————————————
 
 	function authenticate_payer() {
@@ -499,6 +502,7 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 
 
 	function confirm_payment() {
+		if(document.getElementById("pay_button").disabled) return false;
 		if(!document.getElementById("account_select") || document.getElementById("account_select").value != 2) return true;
 
             var message = 	"Did you take payment from CSGold?\n"+

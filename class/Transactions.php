@@ -291,9 +291,9 @@ class Transactions {
 			$printer->setJustification(Printer::JUSTIFY_CENTER);
 			$printer->graphics($img);
 			$printer->feed();
-			$printer->text($ticket->t_start);
-			$printer->feed();
 			$printer->text("Ticket: $ticket->trans_id");
+			$printer->feed();
+			$printer->text($ticket->t_start);
 
 			//Body
 			$printer->feed(2);
@@ -335,7 +335,7 @@ class Transactions {
 			}
 			for($x = count($ticket->mats_used); 0 < $x; $x--) {
 				$printer->feed();
-				$printer->text(str_pad($ticket->mats_used[$x-1]->material->m_name, 20, "_"));
+				$printer->text(str_pad((count($ticket->mats_used) - $x +1).":", 5, " ").str_pad($ticket->mats_used[$x-1]->material->m_name, 20, "_"));
 			}
 
 

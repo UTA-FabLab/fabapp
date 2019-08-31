@@ -187,21 +187,14 @@ function create_material_html_block($group) {
 
 		// —— SELECT ——
 		// if(!$mu->quantity_used) $default_selection = "selected";  // if not mats used, change selected to Not Used
-		// if material is not measurable only record un/used info and don't adjust quantity
-		if($mu->material->is_measurable)
-			$select = 	"<select id='$mu->mu_id-select' class='form-control mat_used_select measurable' 
-						onchange='adjust_ticket_status(this); adjust_input_for_status(this);'>
-							<option selected hidden>SELECT</option>
-							<option value='$status[used]'>Used</option>
-							<option $default_selection value='$status[unused]'>Not Used</option>
-							<option value='$status[failed_mat]'>Failed Material</option>
-						</select>";
-		else
-			$select = 	"<select id='$mu->mu_id-select' class='form-control mat_used_select immeasurable' 
-						onchange='adjust_ticket_status(this);'>
-							<option selected value='$status[used]'>Used</option>
-							<option value='$status[unused]'>Not Used</option>
-						</select>";
+		$measurability = $mu->material->is_measurable ? "measurable" : "immeasurable";
+		$select = 	"<select id='$mu->mu_id-select' class='form-control mat_used_select $measurability' 
+					onchange='adjust_ticket_status(this); adjust_input_for_status(this);'>
+						<option selected hidden>SELECT</option>
+						<option value='$status[used]'>Used</option>
+						<option $default_selection value='$status[unused]'>Not Used</option>
+						<option value='$status[failed_mat]'>Failed Material</option>
+					</select>";
 
 		// —— MAT QUANTITY INPUT ——
 		if($mu->material->is_measurable) 
@@ -210,10 +203,11 @@ function create_material_html_block($group) {
 										".material_quantity_input($mu)."
 									</td>
 								</tr>";
-
+		// name excluding spaces for id's and classes
+		$parent_code = $mu->material->m_parent ? str_replace(" ", "_", $mu->material->m_parent->m_name) : "";
 
 		$individual_materials[] = 	"<td>
-										<table class='table' width='100%' style='margin-bottom:0px !important;'>
+										<table class='table $parent_code' width='100%' style='margin-bottom:0px !important;'>
 											<tr class='tablerow info'>
 												<td>
 													$mat->m_name".
@@ -238,7 +232,8 @@ function create_material_html_block($group) {
 function material_quantity_input($mat_used) {
 	global $sv;
 
-	$parent_code = str_replace(" ", "_", $mat_used->material->m_parent->m_name);  // name excluding spaces for id's and classes
+	// name excluding spaces for id's and classes
+	$parent_code = $mat_used->material->m_parent ? str_replace(" ", "_", $mat_used->material->m_parent->m_name) : "";
 
 	if($mat_used->material->unit == "hour(s)") {
 		$min_hours = intval($sv['minTime']);
@@ -247,7 +242,7 @@ function material_quantity_input($mat_used) {
 		$minute = ($mat_used->quantity_used - $hour) * 60;
 		return	"<div class='input-group'>
 					<span class='input-group-addon'><i class='$sv[currency]'></i> ".sprintf("%0.2f", $mat_used->material->price)." x </span>
-					<input type='number' id='$mat_used->mu_id-input' class='form-control mat_used_input $parent_code-child time' 
+					<input type='number' id='$mat_used->mu_id-input' class='form-control mat_used_input time $parent_code-child' 
 					onkeyup='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
 					onchange='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
 					autocomplete='off' style='text-align:right;' min='$min_hours' step='1' value='$hour'>
@@ -309,7 +304,7 @@ function exit_if_error($error, $redirect=null) {
 		</div>
 	</div>
 	<div class="row">
-		<div class="col-md-12">
+		<div class="col-md-10">
 			<div class="panel panel-default">
 				<div class="panel-heading">
 					<i class="fas fa-ticket-alt fa-fw"></i> Ticket #<?php echo $ticket->trans_id;?>
@@ -402,13 +397,33 @@ function exit_if_error($error, $redirect=null) {
 										</td>
 									</tr>";
 						 } ?>
-						<tr id="pickTR" hidden>
-							<td>Confirm ID</td>
-							<td>
-								<input type="text" name="pickID" class="form-control" placeholder="Enter ID #" maxlength="10" size="10">
+						 <!-- NEW MATERIAL -->
+						<tr>
+							<td colspan='2'>
+								<table class='table table-bordered table-striped'>
+									<tr>
+										<td colspan='3'> Add material </td>
+									</tr>
+									<tr>
+										<td class='col-sm-4'>Material</td>
+										<td class='col-sm-5'>
+											<select id='new_material' name='new_material' class='form-control'>
+												<?php
+												// allows for materials to added twice
+												foreach($ticket->device->device_group->optional_materials as $optional_material)
+													echo "<option value='$optional_material->m_id'>$optional_material->m_name</option>";
+												?>
+											</select>
+										</td>
+										<td class='col-sm-4'>
+											<button type='button' name='new_material_button' class='btn btn-success' onclick='add_new_material_used();'>Add Material</button>
+										</td>
+									</tr>
+								</table>
 							</td>
 						</tr>
 					</table>
+					<!------------------ COST AND SUBMIT ------------------>
 					<table width='100%'>
 						<tr>
 							<td>
@@ -563,7 +578,7 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 			this.element; 
 			this.is_time_based;
 			this.initialize_element_and_type(input);
-			this.parent = this.parent_from_classes(input.classList);
+			this.parent = this.parent_from_classes(input);
 			this.price = parseFloat(input.parentElement.children[0].innerHTML.match(/\d+(\.\d+)?/g));
 			this.status = document.getElementById(this.mu_id+"-select");
 		}
@@ -603,14 +618,13 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 
 
 		// retrieve the parent name of a class (<parent_name>-child); return null if no parent name
-		parent_from_classes(classList) {
-			for(var x = 0; x < classList.length; x++)
-				if(classList[x].includes("-child") && classList[x].length > 6) 
-					return document.getElementById(classList[x].substr(0, classList[x].indexOf('-')));
+		parent_from_classes(input) {
+			for(var x = 0; x < input.classList.length; x++)
+				if(input.classList[x].includes("-child")) 
+					return document.getElementById(input.classList[x].substr(0, input.classList[x].indexOf('-child')));
 			return null;
 		}
 	}
-
 
 
 	// {'mu_id' : quantity, etc.} to hold values before status switching causes value to equal 0
@@ -621,11 +635,14 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 
 	// as group total is changed, change individual units used proportionally for new total
 	function adjust_children_input(parent_input) {
-		var children = create_inputs_by_class_name(parent_input.id+"-child");
+		var children = children_input_objects(parent_input.id);
 		var quantity_sum = 0;
 		// get previous sum & create input objects
-		for(var x = 0; x < children.length; x++)
-			quantity_sum += children[x].quantity();
+		for(var x = 0; x < children.length; x++) {
+			if(!isNaN(children[x].quantity()))
+				quantity_sum += children[x].quantity();
+			else console.log(children[x]);  // error checking
+		}
 
 		for(var x = 0; x < children.length; x++)
 			children[x].set_val(round(children[x].quantity() / quantity_sum * parent_input.value, 2));
@@ -637,12 +654,15 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	// as individual units used are changed, change group total units for new individual; adjust statuses
 	function adjust_parent_input(child_input_element) {
 		var mu_input = new Input(child_input_element);
-		if(!mu_input.parent) return;
+		if(!mu_input.parent) return;  // ignore ungrouped elements
 
-		var children = create_inputs_by_class_name(mu_input.parent.id+"-child");
+		var children = children_input_objects(mu_input.parent.id);
 		var group_total = 0;
-		for(var x = 0; x < children.length; x++)
-			group_total += children[x].quantity();
+		for(var x = 0; x < children.length; x++) {
+			if(!isNaN(children[x].quantity()))
+				group_total += children[x].quantity();
+			else console.log(children[x]);  // error checking
+		}
 
 		mu_input.parent.value = group_total;
 	}
@@ -781,6 +801,87 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	}
 
 
+	// ————————————— ADD NEW MATERIAL USED —————————————
+
+	/* AJAX: add mat_used to DB for transaction.  If preexisting group, add material to group.
+	If preexisting (ungrouped) material, create group.  Otherwise, add material input to end
+	of table. */
+	function add_new_material_used() {
+		var m_id = document.getElementById("new_material").value;
+		if(isNaN(parseInt(m_id))) return;
+		if(!confirm("Are you sure you would like to add another material to this transaction?"));
+		
+		// add_new_material: request function from page (new material instance created, return HTML)
+		// edit_request: request coming from edit.php (add functions/staff row)
+		$.ajax({
+			url: "./sub/material_ajax_requests.php",
+			type: "POST",
+			dataType: "json",
+			data: {	"add_new_material" : true, 
+					"m_id" : m_id,
+					"trans_id" : <?php echo $ticket->trans_id; ?>
+			},
+			success: function(response) {
+				if(response["error"]) {
+					alert(response["error"]);
+					return;
+				}
+
+				// add material to preexisting parent
+				if(document.getElementById(response["parent_id"])) {
+					var parent = document.getElementById(response["parent_id"]);
+					var new_material_row = parent.closest("table").rows[1].children[1].children[0].insertRow(-1);
+					new_material_row.innerHTML = `<td style='background-color:#5CB85C'> ${response["material_HTML"]} </td>`;
+				}
+				// create new parent group, from single existing element
+				else if(document.getElementsByClassName(`${response["parent_id"]}-child`).length) {
+					var preexisting_single_element = document.getElementsByClassName(`${response["parent_id"]}-child`)[0];
+					var new_material_group = 	`<table width='100%' class='table table-bordered' style='margin-bottom:0px !important;'>
+														<tr class='tablerow info'>
+															<td colspan='2'>Vinyl (Generic)</td>
+														</tr>
+														<tr>
+															<td>
+																<div class='input-group'>
+																	<span class='input-group-addon'>MATERIAL-GROUP <i class='fas fa-dollar-sign'></i> 0.25 x </span>
+																	<input type='number' id='Vinyl_(Generic)' class='form-control' autocomplete='off' value='6' style='text-align:right;'
+																	onkeyup='adjust_children_input(this); adjust_balances();' onchange='adjust_children_input(this); adjust_balances();' >
+																	<span class='input-group-addon'>inch(es)</span>
+																</div>
+															</td>
+															<td style='padding:0px;'>
+																<table class='table table-striped' style='margin-bottom:0px !important;'>
+																	<tr>
+																		<td>
+																			${preexisting_single_element.closest("table").outerHTML}
+																		</td>
+																	</tr>
+																	<tr>
+																		<td>
+																			${response["material_HTML"]}
+																		</td>
+																	</tr>
+																</table>
+															</td>
+														</tr>
+													</table>`;
+					preexisting_single_element.closest("table").closest("tr").remove();
+					var new_mat_row = document.getElementById("material_table").insertRow(-1);
+					new_mat_row.innerHTML  = "<td style='background-color:#5CB85C'>"+new_material_group+"</td>";
+				}
+				// add material to end of table
+				else {
+					var new_mat_row = document.getElementById("material_table").insertRow(-1);
+					new_mat_row.innerHTML  = "<td style='background-color:#5CB85C'>"+response["material_HTML"]+"</td>";
+				}
+
+				alert("Successfully added "+response["material_name"]+" to materials");
+				$(`#new_material`).val("");
+			}
+		});
+	}
+
+
 	// ————————————–—— END CONFIRMATION ——————————————
 	// ———————————————————————————————————————
 
@@ -840,7 +941,7 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 
 	//  ———— MATERIALS ————
 		// — DATA COLLECTION —
-	// get materials by class, get inputs, selects, m_name, mu_id & add to dict; dict to array
+	// get materials by class; get inputs, selects, m_name, mu_id & add to dict; dict to array
 	function get_and_sort_materials() {
 		var materials = [];
 
@@ -917,7 +1018,7 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 		total_title.innerHTML = "<h5>Total</h5>";
 		total_title.colSpan = "3";
 		var total_value = total_row.insertCell(1);
-		total_value.innerHTML = `<h5><i class='<?php echo $sv[currency]; ?>'></i>${document.getElementById("total").innerHTML}</h5>`;
+		total_value.innerHTML = `<h5><i class='<?php echo $sv["currency"]; ?>'></i>${document.getElementById("total").innerHTML}</h5>`;
 
 		$("#material_confirmation_table tr td:not(:first-child)").attr("align", "center");
 	}
@@ -937,7 +1038,7 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 
 		if(!material["immeasurable"]) {
 			quantity.innerHTML = confirmation_cell_format(material['mu_id']+'-quantity', material['quantity'], material['quantity']);
-			cost.innerHTML = `<i class='<?php echo $sv[currency]; ?>'></i>${round(material['cost'], 2)}`;
+			cost.innerHTML = `<i class='<?php echo $sv["currency"]; ?>'></i>${round(material['cost'], 2)}`;
 		}
 	}
 
@@ -1003,6 +1104,16 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 		for(var x = 0; x < list.length; x++)
 			if(usage(list[x], value)) return true;
 		return false;
+	}
+
+
+	function children_input_objects(parent_id) {
+		var children = [];
+		var elements = document.getElementsByClassName(parent_id+"-child");
+		for(var x = 0; x < elements.length; x++)
+			if($(elements[x]).find("input"))
+				children.push(new Input(elements[x]));
+		return children;
 	}
 
 

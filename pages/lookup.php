@@ -283,8 +283,13 @@ function exit_with_success($message, $redirect=null) {
 					elseif($ticket->status->status_id < $status["charge_to_acct"] && $ticket->remaining_balance()) { ?>
 						<div class="panel-footer">
 							<div align="right">
-								<a href='/pages/pay.php?trans_id=<?php echo $ticket->trans_id; ?>'>
-									<button type="button" class="btn btn-primary" name="pay_button">
+								<?php 
+								if($ticket->device->device_group->is_storable)
+									echo "<a href='/pages/pickup.php?operator=".$ticket->user->operator."'>";
+								else
+									echo "<a href='/pages/pay.php?trans_id=".$ticket->trans_id."'>";
+								?>
+									<button type="button" class="btn btn-primary">
 										<?php echo $ticket->device->device_group->is_storable? "Pick Up" : "Pay"; ?>
 									</button>
 								</a>
