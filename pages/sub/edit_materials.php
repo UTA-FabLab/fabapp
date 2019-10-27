@@ -24,7 +24,7 @@ if (!empty(filter_input(INPUT_GET, "m_id"))) {
 			<form name="materialForm" method="post" action="" autocomplete="off">
 			<div class="modal-header">
 				<button type="button" class="close" data-dismiss="modal">&times;</button>
-				<h4 class="modal-title" id="materialTitle">Edit <?php echo $material->getM_name(); ?></h4>
+				<h4 class="modal-title" id="materialTitle">Edit <?php echo $material->m_name; ?></h4>
 			</div>
 			<div class="modal-body" id="materialBody">
 				<table class="table table-bordered table-striped">
@@ -33,7 +33,7 @@ if (!empty(filter_input(INPUT_GET, "m_id"))) {
 							Material
 						</td>
 						<td>
-							<?php echo $material->getM_name(); ?>
+							<?php echo $material->m_name; ?>
 						</td>
 					</tr>
 					<tr>
@@ -43,7 +43,7 @@ if (!empty(filter_input(INPUT_GET, "m_id"))) {
 						<td>
 							<div class="input-group">
 								<input type="text" class="form-control loc" value="<?php echo $quantity;?>" name="quantity" autocomplete="off"/>
-								<span class="input-group-addon"><?php echo $material->getUnit(); ?></span>
+								<span class="input-group-addon"><?php echo $material->unit; ?></span>
 							</div>
 						</td>
 					</tr>

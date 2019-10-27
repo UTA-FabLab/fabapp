@@ -10,7 +10,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/class/all_classes.php');
 $dot = 0;
 $color = "gainsboro";
 $symbol = "circle";
-if (filter_input(INPUT_GET, "d_id") && Devices::regexDID(filter_input(INPUT_GET, "d_id"))){
+if (filter_input(INPUT_GET, "d_id") && Devices::regexDeviceID(filter_input(INPUT_GET, "d_id"))){
     $d_id = filter_input(INPUT_GET, "d_id");
     
     if($result = $mysqli->query("

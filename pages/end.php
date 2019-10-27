@@ -20,6 +20,7 @@
 *	 tickets.  Displays additional transaction information
 *	FUTURE:	-Add ability to add additional materials
 *				-Add min time $sv force JS to time based mats_used
+*				-Move material HTML creation to class
 *	BUGS:
 *
 ***********************************************************************************************************/
@@ -76,7 +77,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['end_button'])) {
 	$error = $ticket->end_transaction($staff, $ticket_status);
 	exit_if_error($error, "./end.php?trans_id=$trans_id");
 
-	$ticket_notes = htmlspecialchars(filter_input(INPUT_POST, "ticket_notes"));
+	$ticket_notes = htmlspecialchars(filter_input(INPUT_POST, "ticket_notes_modal"));
 	if($ticket_notes) exit_if_error($ticket->edit_transaction_information(array("notes" => $ticket_notes)));
 
 	// completely failed ticket; nothing to pay for
@@ -95,7 +96,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['end_button'])) {
 	}
 	// already paid for; process is finished
 	elseif(!$ticket->remaining_balance()) {
-		$ticket->edit_transaction_information(array("status_id" => $status['charge_to_acct']));
+		$ticket->edit_transaction_information(array("status_id" => $status['charge_to_acct'], "notes" => $ticket_notes));
 		$_SESSION['success_msg'] = 	"There is no balance on the ticket. It is finished and ".
 											"learner is good to go.";
 		header("Location:./lookup.php?trans_id=$trans_id");
@@ -310,7 +311,7 @@ function exit_if_error($error, $redirect=null) {
 					<i class="fas fa-ticket-alt fa-fw"></i> Ticket #<?php echo $ticket->trans_id;?>
 				</div>
 				<div class="panel-body">
-					<table class="table table-striped table-bordered">
+					<table id='main_table' class="table table-striped table-bordered">
 						<tr>
 							<td class='col-md-3'>Device</td>
 							<td class='col-md-9'><?php echo $ticket->device->name;?></td>
@@ -383,8 +384,10 @@ function exit_if_error($error, $redirect=null) {
 						<tr>
 							<td><i class="fas fa-edit"></i>Notes</td>
 							<td>
-								<textarea name='ticket_notes' id='ticket_notes'
-								class="form-control"><?php echo $ticket->notes;?></textarea>
+								<form method='post'>
+									<textarea name='ticket_notes' id='ticket_notes'
+									class="form-control"><?php echo $ticket->notes;?></textarea>
+								</form>
 							</td>
 						</tr>
 					<!------------------ MATERIALS ------------------>
@@ -397,33 +400,32 @@ function exit_if_error($error, $redirect=null) {
 										</td>
 									</tr>";
 						 } ?>
-						 <!-- NEW MATERIAL -->
-						<tr>
-							<td colspan='2'>
-								<table class='table table-bordered table-striped'>
-									<tr>
-										<td colspan='3'> Add material </td>
-									</tr>
-									<tr>
-										<td class='col-sm-4'>Material</td>
-										<td class='col-sm-5'>
-											<select id='new_material' name='new_material' class='form-control'>
-												<?php
-												// allows for materials to added twice
-												foreach($ticket->device->device_group->optional_materials as $optional_material)
-													echo "<option value='$optional_material->m_id'>$optional_material->m_name</option>";
-												?>
-											</select>
-										</td>
-										<td class='col-sm-4'>
-											<button type='button' name='new_material_button' class='btn btn-success' onclick='add_new_material_used();'>Add Material</button>
-										</td>
-									</tr>
-								</table>
-							</td>
-						</tr>
 					</table>
-					<!------------------ COST AND SUBMIT ------------------>
+
+				<!--------------------------- NEW MATERIAL --------------------------->
+					<?php if($ticket->device->device_group->all_device_group_materials()) { ?>
+						<table class='table table-bordered table-striped'>
+							<tr class='warning'>
+								<td colspan='3'> Add material </td>
+							</tr>
+							<tr>
+								<td class='col-sm-4'>Material</td>
+								<td class='col-sm-5'>
+									<select id='new_material' name='new_material' class='form-control'>
+										<?php
+										// allows for materials to added twice
+										foreach($ticket->device->device_group->all_device_group_materials() as $material)
+											echo "<option value='$material->m_id'>$material->m_name</option>";
+										?>
+									</select>
+								</td>
+								<td class='col-sm-4'>
+									<button type='button' name='new_material_button' class='btn btn-info' onclick='add_new_material_used();'>Add Material</button>
+								</td>
+							</tr>
+						</table>
+					<?php } ?>
+				<!------------------ COST AND SUBMIT ------------------>
 					<table width='100%'>
 						<tr>
 							<td>
@@ -481,7 +483,10 @@ function exit_if_error($error, $redirect=null) {
 					<div id='storage_confirmation' hidden>
 						<h3 id='storage_confirmation_location'></h3>
 					</div>
-					<div id='notes_confirmation'>
+					<div id='notes_confirmation' name='notes_confirmation' hidden>
+						<strong>NOTES: </strong>
+						<textarea id='ticket_notes_modal' name='ticket_notes_modal' class='form-control' width='100%'>
+						</textarea>
 					</div>
 				</div>
 				<div class='modal-footer'>
@@ -822,6 +827,7 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 					"trans_id" : <?php echo $ticket->trans_id; ?>
 			},
 			success: function(response) {
+				console.log(response);
 				if(response["error"]) {
 					alert(response["error"]);
 					return;
@@ -831,20 +837,20 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 				if(document.getElementById(response["parent_id"])) {
 					var parent = document.getElementById(response["parent_id"]);
 					var new_material_row = parent.closest("table").rows[1].children[1].children[0].insertRow(-1);
-					new_material_row.innerHTML = `<td style='background-color:#5CB85C'> ${response["material_HTML"]} </td>`;
+					new_material_row.innerHTML = `<td style='background-color:#5CB85C;width:100%;' colspan='2'> ${response["material_HTML"]} </td>`;
 				}
 				// create new parent group, from single existing element
-				else if(document.getElementsByClassName(`${response["parent_id"]}-child`).length) {
+				else if(response["parent_id"] && document.getElementsByClassName(`${response["parent_id"]}-child`).length) {
 					var preexisting_single_element = document.getElementsByClassName(`${response["parent_id"]}-child`)[0];
 					var new_material_group = 	`<table width='100%' class='table table-bordered' style='margin-bottom:0px !important;'>
 														<tr class='tablerow info'>
-															<td colspan='2'>Vinyl (Generic)</td>
+															<td colspan='2'>${response["parent_name"]}</td>
 														</tr>
 														<tr>
 															<td>
 																<div class='input-group'>
 																	<span class='input-group-addon'>MATERIAL-GROUP <i class='fas fa-dollar-sign'></i> 0.25 x </span>
-																	<input type='number' id='Vinyl_(Generic)' class='form-control' autocomplete='off' value='6' style='text-align:right;'
+																	<input type='number' id='${response["parent_id"]}' class='form-control' autocomplete='off' value='6' style='text-align:right;'
 																	onkeyup='adjust_children_input(this); adjust_balances();' onchange='adjust_children_input(this); adjust_balances();' >
 																	<span class='input-group-addon'>inch(es)</span>
 																</div>
@@ -857,7 +863,7 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 																		</td>
 																	</tr>
 																	<tr>
-																		<td>
+																		<td style='background-color:#5CB85C;width:100%;' >
 																			${response["material_HTML"]}
 																		</td>
 																	</tr>
@@ -866,13 +872,13 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 														</tr>
 													</table>`;
 					preexisting_single_element.closest("table").closest("tr").remove();
-					var new_mat_row = document.getElementById("material_table").insertRow(-1);
-					new_mat_row.innerHTML  = "<td style='background-color:#5CB85C'>"+new_material_group+"</td>";
+					var new_mat_row = document.getElementById("main_table").insertRow(-1);
+					new_mat_row.innerHTML  = "<td colspan='2'>"+new_material_group+"</td>";
 				}
 				// add material to end of table
 				else {
-					var new_mat_row = document.getElementById("material_table").insertRow(-1);
-					new_mat_row.innerHTML  = "<td style='background-color:#5CB85C'>"+response["material_HTML"]+"</td>";
+					var new_mat_row = document.getElementById("main_table").insertRow(-1);
+					new_mat_row.innerHTML  = "<td style='background-color:#5CB85C;width:100%;' colspan='2'>"+response["material_HTML"]+"</td>";
 				}
 
 				alert("Successfully added "+response["material_name"]+" to materials");
@@ -895,8 +901,10 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 			alert("Please select a ticket status");
 			return;
 		}
-		else if(ticket_status.value == global_status["partial_fail"] && document.getElementById("ticket_notes") < 10) {
-			alert("You must state how the ticket failed")
+		else if(ticket_status.value == global_status["partial_fail"] || ticket_status.value == global_status["total_fail"]
+		&& document.getElementById("ticket_notes").value.length < 10) {
+			alert("You must state how the ticket failed");
+			return;
 		}
 		document.getElementById("ticket_status_confirmation").innerHTML = 
 			confirmation_cell_format('ticket_status', `<h5>${ticket_status_name}</h5>`, ticket_status.value);
@@ -930,9 +938,11 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 			storage_confirmation.innerHTML = confirmation_cell_format("storage", span, box_id.replace("-", ""));
 		}
 
-		if(document.getElementById("ticket_notes").value)
-			document.getElementById("notes_confirmation").innerHTML = `<b>NOTES: </b>
-			${document.getElementById("ticket_notes").value}`;
+		if(document.getElementById("ticket_notes").value) {
+			document.getElementById("notes_confirmation").hidden = false;
+			document.getElementById("ticket_notes_modal").innerHTML = 
+				document.getElementById("ticket_notes").value;
+		}
 		else document.getElementById("notes_confirmation").innerHTML = "";
 
 		$("#confirmation_modal").show();
@@ -994,6 +1004,8 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	// using the material dictionary, add values to material table in modal
 	function populate_material_table(materials) {
 		$("#material_confirmation_table tr").remove();  // clear previous entries
+		if(!materials) return;
+
 		var table = document.getElementById("material_confirmation_table");
 		
 		// create/add table headers

@@ -11,7 +11,5 @@
 	$_SESSION['cart_array'] = array_values($_SESSION['cart_array']);
     $_SESSION['co_quantity'] = array_values($_SESSION['co_quantity']);
 
- 
-	$_SESSION['success_msg'] = "Product deleted from cart";
 	header('Location: /pages/sheet_goods.php');
 ?>

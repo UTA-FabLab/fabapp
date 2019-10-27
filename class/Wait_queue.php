@@ -94,7 +94,7 @@ class Wait_queue {
                 Notifications::sendNotification($mysqli->insert_id, "FabApp Notification", "You have signed up for FabApp notifications. Your Wait Ticket number is: ".$mysqli->insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateDeviceWaitTimes();
                 //Commented out for Dev purposes
-                //Wait_queue::printTicket($operator, $dg_id);
+                Wait_queue::printTicket($operator, $dg_id);
                 return $mysqli->insert_id;
                 
             } else {
@@ -111,7 +111,7 @@ class Wait_queue {
                 Notifications::sendNotification($mysqli->insert_id, "FabApp Notification", "You have signed up for FabApp notifications. Your Wait Ticket number is: ".$mysqli->insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateWaitTimes();
                 //Commented out for Dev purposes
-                //Wait_queue::printTicket($operator, $dg_id);
+                Wait_queue::printTicket($operator, $dg_id);
                 return $mysqli->insert_id;
             } else {
                 return ("<div class='alert alert-danger'>Error2 updating contact info!</div>");

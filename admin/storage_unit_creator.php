@@ -6,7 +6,7 @@
 *
 *	@author MPZinke on 04.28.19
 *	CC BY-NC-AS UTA FabLab 2016-2019
-*	FabApp V 0.92
+*	FabApp V 0.94
 *
 *	-Admin page for editing the drawers on hand
 *	-DESCRIPTION: show current drawers, create

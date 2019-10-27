@@ -8,88 +8,80 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
 //Submit results
 $resultStr = "";
-if (!$staff || $staff->getRoleID() < $sv['minRoleTrainer']){
+if (!$staff || $staff->getRoleID() < 10){
     //Not Authorized to see this Page
     header('Location: /index.php');
-    $_SESSION['error_msg'] = "Insufficient role level to access, You must be a <a href='https://www.pokemon.com/us/pokemon-trainer-club/login'>Trainer.</a>";
+    $_SESSION['error_msg'] = "Insufficient role level to access, You must be an admin.</a>";
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    if ( isset($_POST['onboardBtn']) ){
-        $staff_id = filter_input(INPUT_POST,'operator');
-        if ($staff_id){
-            $resultStr = "Staff ID: ".$staff_id;
-            $operator = "2".substr($staff_id, 1);
-            $resultStr .= ", Learner: ".$operator." | ";
-        } else {
-            echo "no operator, ";
-        }
-        $d_id = filter_input(INPUT_POST, 'selectDevice');
-        if ($d_id){
-            $device = new Devices($d_id);
-            echo " assigned to ".$device->getDevice_desc()."<br>";
-        } else {
-            echo " no device <br>";
-        }
-
-        //Unpaid Ticket
-        $mysqli->query("INSERT INTO `transactions` (`d_id`, `operator`, `est_time`, `t_start`, `t_end`, `duration`, `status_id`, `p_id`, `staff_id`, `notes`)
-                        VALUES ('$device->d_id', '$operator', '01:00:00', '2018-05-08 12:00:00', '2018-05-08 13:00:00', '01:00:00', '$status[charge_to_acct]', '1', '$staff_id', 'Left without paying');");
-        $ins_id = $mysqli->insert_id;
-        $mysqli->query("INSERT INTO `mats_used` (`trans_id`, `m_id`, `unit_used`, `mu_date`, `status_id`, `staff_id`)
-                        VALUES ('$ins_id', '18', '-4', CURRENT_TIMESTAMP, '$status[used]', '1000000010'); ");
-        $mysqli->query("INSERT INTO `acct_charge` (`ac_id`, `a_id`, `trans_id`, `ac_date`, `operator`, `staff_id`, `amount`, `ac_notes`, `recon_date`, `recon_id`)
-                        VALUES (NULL, '1', '$ins_id', CURRENT_TIMESTAMP, $operator, '1000000010', '.20', 'Debit Charge', NULL, NULL);");
-        $resultStr .= "Outstanding: ".$ins_id;
-
-        //Ticket In Storage
-        $mysqli->query("INSERT INTO `transactions` (`d_id`, `operator`, `est_time`, `t_start`, `t_end`, `duration`, `status_id`, `p_id`, `staff_id`, `notes`)
-                        VALUES ('$device->d_id', $operator, '01:00:00', '2018-05-08 12:00:00', '2018-01-08 13:00:00', '01:00:00', '$status[stored]', '1', '1000000010', 'Object In Storage');");
-        $sto1 = $mysqli->insert_id;
-        $mysqli->query("INSERT INTO `mats_used` (`trans_id`, `m_id`, `unit_used`, `mu_date`, `status_id`, `staff_id`)
-                        VALUES ($sto1, '16', '-25', '2018-05-08 13:00:00', '$status[used]', $staff_id);");
-        $mysqli->query("UPDATE `storage_box` 
-                                SET `item_change_time` = '2018-01-08 13:00:00', `drawer` = '3', `unit` = 'F', `trans_id` = $sto1, `staff_id` = '1000000010');");
-        //Ticket in Storage2
-        $mysqli->query("INSERT INTO `transactions` (`d_id`, `operator`, `est_time`, `t_start`, `t_end`, `duration`, `status_id`, `p_id`, `staff_id`, `notes`)
-                    VALUES ('$device->d_id', $operator, '01:00:00', '2018-06-1 12:00:00', '2018-06-1 13:00:00', '01:00:00', '$status[stored]', '1', '1000000010', 'Object In Storage');");
-        $sto2 = $mysqli->insert_id;
-        $mysqli->query("INSERT INTO `mats_used` (`trans_id`, `m_id`, `unit_used`, `mu_date`, `status_id`, `staff_id`)
-                        VALUES ($sto2, '16', '-20', '2018-06-1 13:00:00', '$status[used]', $staff_id);");
-        $mysqli->query("UPDATE `storage_box` 
-                                SET `item_change_time` = '2018-01-08 13:00:00', `drawer` = '1', `unit` = 'D', `trans_id` = $sto1, `staff_id` = '1000000010');");
-        $resultStr .= ", Storage: $sto1 & $sto2";
-
-        //Live Ticket
-        $mysqli->query("INSERT INTO `transactions` (`d_id`, `operator`, `est_time`, `t_start`, `t_end`, `duration`, `status_id`, `p_id`, `staff_id`)
-                        VALUES ('$device->d_id', $operator, '01:00:00', CURRENT_TIMESTAMP, NULL, NULL, '$status[active]', '1', '1000000010');");
-        $ins_id = $mysqli->insert_id;
-        $mysqli->query("INSERT INTO `mats_used` (`trans_id`, `m_id`, `unit_used`, `mu_date`, `status_id`, `staff_id`, `mu_notes`)
-                        VALUES ('$ins_id', '14', '-4', CURRENT_TIMESTAMP, '$status[used]', '1000000010', NULL);");
-        $resultStr .= ", Live Ticket: ".$ins_id."</br></br></br>";
-    } elseif ( isset($_POST['addBtn']) ){
+    if ( isset($_POST['addBtn']) ){
         $operator = filter_input(INPUT_POST, "op2");
-        $icon_code = filter_input(INPUT_POST, "u_icon");
         $user = Users::withID($operator);
         $role_id = filter_input(INPUT_POST,'selectRole');
         $icon_code = filter_input(INPUT_POST,'icon_code');
         
-        if("" == $icon_code){
-            $_SESSION['error_msg'] = "icon stuyff";
-            header('Location: /admin/onboarding.php');
-            exit();
-        }   
         
-        if ( preg_match("/^\d{1,2}$/", $role_id) == 1 ){
-            $str = $user->insertUser($staff, $role_id);
+        if ( preg_match("/^\d{1,2}$/", $role_id) == 1  && $role_id <= $staff->getRoleID()){
+            $str = $user->insertUser($staff, $role_id, $icon_code);
             if (is_string($str)){
                 $resultStr = $str;
             } else {
-                $resultStr = "Staff ID $operator has been assigned $role_id :".Role::getTitle($role_id).".".$icon_code."    ddddd";
+                if ($mysqli->query("
+                    UPDATE `users`
+                    SET `icon` = '$icon_code'
+                    WHERE `operator` = '$operator';
+                ")) {
+                    $resultStr = "Operator ID $operator has been successfully added";
+                }
+                else {
+                    $resultStr = $mysqli->error;
+                }
             }
             
         } else {
             echo "<script>window.onload = function(){goModal('Error',\"Invalid Role\", false)}</script>";
+        }
+        
+    }
+    if ( isset($_POST['modifyBtn']) ){
+        $operator1 = filter_input(INPUT_POST, "operators");
+        $user1 = Users::withID($operator1);
+        $role_id1 = filter_input(INPUT_POST,'selectRole1');
+        $icon_code1 = filter_input(INPUT_POST,'icon_code1');
+        
+        if((filter_input(INPUT_POST,'selectRole1') == NULL && filter_input(INPUT_POST,'icon_code1') == NULL) || $role_id1 > $staff->getRoleID()){
+            echo "<script>window.onload = function(){goModal('Error',\"You must modify the 'Role' or 'Icon' to successfully run this query.\", false)}</script>";
+        }
+        else {
+            if (filter_input(INPUT_POST,'selectRole1') == NULL){
+                $role_id1 = filter_input(INPUT_POST,'u_r_id');
+            }
+
+            if ( preg_match("/^\d{1,2}$/", $role_id1) == 1 ){
+                $str = $user1->insertUser($staff, $role_id1, $icon_code1);
+                if (is_string($str)){
+                    $resultStr = $str;
+                } else {
+                    if (filter_input(INPUT_POST,'icon_code1') != NULL){
+                        if ($mysqli->query("
+                            UPDATE `users`
+                            SET `icon` = '$icon_code1'
+                            WHERE `operator` = '$operator1';
+                        ")) {
+                            $resultStr = "Operator ID $operator1 has been successfully updated";
+                        }
+                        else {
+                            $resultStr = $mysqli->error;
+                        }
+                    } else {
+                        $resultStr = "Operator ID $operator1 has been successfully updated";
+                    }
+                }
+
+            } else {
+                echo "<script>window.onload = function(){goModal('Error',\"Invalid Role\", false)}</script>";
+            }            
         }
         
     }
@@ -102,299 +94,281 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link href="\vendor\iconpicker\css\fontawesome-iconpicker.min.css" rel="stylesheet">
 </head>
 <body>
-<div id="page-wrapper">
-    
-    <!-- Page Title -->
-    <div class="row">
-        <div class="col-lg-12">
-            <h1 class="page-header">FabApp OnBoarding</h1>
-        </div>
-        <!-- /.col-lg-12 -->
-    </div>
-    <!-- /.row -->
-    
-    <?php if ($resultStr != ""){ ?>
-        <div class="alert alert-success">
-            <?php echo $resultStr; ?>
-        </div>
-    <?php } ?>
+    <div id="page-wrapper">
 
-    <div class="row">
-        <div class="col-md-7">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <i class="fas fa-user-friends"></i> FabApp Users
-                </div>
-                <!-- /.panel-heading -->
-                <div class="panel-body">
-                    <div class="table-responsive">
-                        <ul class="nav nav-tabs">
-                            <!-- Load all device groups as a tab that have at least one device in that group -->
-                            <?php if ($result = Users::getTabResult()) {
-                                $count = 0;
-                                while ($row = $result->fetch_assoc()) { ?>
-                                    <li class="<?php if ($count == 0) echo "active";?>">
-                                        <a <?php echo("href=\"#".$row["r_id"]."\""); ?>  data-toggle="tab" aria-expanded="false"> <?php echo($row["title"]); ?> </a>
-                                    </li>
-                                <?php 
-                                if ($count == 0){
-                                    //create a way to display the first wait_queue table tab by saving which dg_id it is to variable 'first_dgid'
-                                    $first_rid = $row["r_id"];  
-                                }   
-                                $count++;                                                                  
-                                }
-                            } ?>
-                        </ul>
-                        <div class="tab-content">
-                            <?php
-                            if ($Tabresult = Users::getTabResult()) {
-                                while($tab = $Tabresult->fetch_assoc()){
-                                    $number_of_user_tables++;
-                                
-
-                                    // Give all of the dynamic tables a name so they can be called when their tab is clicked ?>
-                                    <div class="tab-pane fade <?php if ($first_rid == $tab["r_id"]) echo "in active";?>" <?php echo("id=\"".$tab["r_id"]."\"") ?> >
-                                        <table class="table table-striped table-bordered table-hover" <?php echo("id=\"userTable_$number_of_user_tables\"") ?>>
-                                            <thead>
-                                                <tr class="tablerow">
-                                                    <th><i class="far fa-user"></i> Operator</th>
-                                                    <th><i class="fas fa-bullseye"></i> Icon</th>
-                                                    <!--<th><i class="far fa-flag"></i> Date Added</th> -->
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php // Display all of the students in the wait queue for a device group
-                                                if ($result = $mysqli->query("
-                                                        SELECT *
-                                                        FROM users U JOIN role R ON U.r_id = R.r_id
-                                                        WHERE U.r_id=$tab[r_id];
-                                                ")) {
-                                                    while ($row = $result->fetch_assoc()) { ?>
-                                                        <tr class="tablerow">
-
-                                                            <!-- Operator -->
-                                                            <td align="center"><?php echo($row['operator']) ?></td>
-
-                                                            <!-- Icon --> 
-                                                            <td align="center">
-                                                                <?php $user = Users::withID($row['operator']);?>
-                                                                <i class="<?php echo $user->getIcon()?> fa-lg"></i>
-                                                            </td>
-                                                            
-                                                        </tr>
-                                                    <?php }
-                                                } ?>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                <?php }
-                            } ?>
-                        </div>
-                    </div>
-                    <!-- /.table-responsive -->
-                </div>
+        <!-- Page Title -->
+        <div class="row">
+            <div class="col-lg-12">
+                <h1 class="page-header">FabApp OnBoarding</h1>
             </div>
+            <!-- /.col-lg-12 -->
         </div>
-        <!-- /.col-md-8 -->
-        <div class="col-md-5">
-            <div class="row">
+        <!-- /.row -->
+
+        <?php if ($resultStr != ""){ ?>
+            <div class="alert alert-success">
+                <?php echo $resultStr; ?>
+            </div>
+        <?php } ?>
+
+        <div class="row">
+            <div class="col-md-12">
                 <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <i class="fas fa-plus fa-fw" aria-hidden="true"></i> Add/Modify User
+                    <div class="panel-heading" style="background-color: #B5E6E6;">
+                        <i class="fas fa-users-cog"></i> User Management
                     </div>
                     <div class="panel-body">
-                        <table class="table table-bordered table-striped table-hover">
-                            <form method="POST" action="" id="myForm" autocomplete='off' onsubmit="return validateID()">
-                                <tr>
-                                    <td>
-                                        <b data-toggle="tooltip" data-placement="top" title="Select Device">Role: </b>
-                                    </td>
-                                    <td>
-                                        <select class="form-control" name="selectRole" id="selectRole">
-                                            <option hidden selected value="">Select Role</option>
-                                            <?php
-                                                $result = $mysqli->query("SELECT * FROM `role`");
-                                                while($row = $result->fetch_assoc()){
-                                                    echo "<option value=\"$row[r_id]\">$row[title]</option>";
-                                                }
-                                            ?>
-                                        </select>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <b data-toggle="tooltip" data-placement="top" title="email contact information">Operator ID: </b>
-                                    </td>
-                                    <td>
-                                        <input type="text" class="form-control" name="op2" id="op2" maxlength="10" size="10" placeholder="Enter ID #" />
-                                    </td>
-                                </tr>
-                                <tfoot>
-                                    <tr>
-                                        <td colspan="2">
-                                            <div class="pull-right">
-                                                <button type="submit" name="addBtn" class="btn btn-success" onclick="return Submitter()">Add/Modify User</button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tfoot>
-                            </form>
-                        </table>
-                    </div>
-                    <!-- /.panel-body -->
-                </div>
-                <!-- /.panel --> 
-            </div>
-            <div class="row">
-                <div class="col-md-10 col-md-offset-1">
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <i class="fas fa-user" aria-hidden="true"></i> Update User Icon
-                        </div>
-                        <div class="panel-body">
-                            <table class="table table-bordered table-striped table-hover">
-                                <form method="POST" action="" id="myForm1" autocomplete='off'>
-                                    <tr>
-                                        <td>
-                                            <b data-toggle="tooltip" data-placement="top" title="email contact information">Operator ID: </b>
-                                        </td>
-                                        <td>
-                                            <input type="text" class="form-control" name="op3" id="op3" maxlength="10" size="10" placeholder="Enter ID #" />
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="pull-left">
-                                                <a class="btn btn-default btn-xs" href="https://www.fontawesome.com/icons?d=gallery;" target="_blank" title="Click to view FontAwesome icon gallery"><i class="fas fa-info"></i></a>
-                                            </div>
-                                            &nbsp;
-                                            <b data-toggle="tooltip" data-placement="top" title="FontAwesome icon code">Icon Code: </b>
-                                        </td>
-                                        <td>
-                                            <input class="form-control icp demo" value="fas fa-anchor" type="text" id="icon_code" name="icon_code">
-                                        </td>
-                                    </tr>
-                                    <tfoot>
-                                        <tr>
-                                            <td colspan="2">
-                                                <div class="pull-right">
-                                                    <button type="submit" name="iconBtn" class="btn btn-info" onclick="return Submitter()">Update Icon</button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </tfoot>
-                                </form>
-                            </table>
-                        </div>
-                        <!-- /.panel-body -->
-                    </div>
-                    <!-- /.panel --> 
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="row">
-        <div class="row">
-            &nbsp;&nbsp;&nbsp;&nbsp;
-        </div>
-        <!-- /.row -->
-
-        <div class="row">
-            &nbsp;&nbsp;&nbsp;&nbsp;
-        </div>
-        <!-- /.row -->
-
-        <div class="row">
-            &nbsp;&nbsp;&nbsp;&nbsp;
-        </div>
-        <!-- /.row -->
-
-        <div class="row">
-            &nbsp;&nbsp;&nbsp;&nbsp;
-        </div>
-        <!-- /.row -->
-    </div>
-    
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="panel panel-default">
-                    <div class="col-lg-12">
-                            <h2 style="text-align:center;" class="page-header"> FabApp Advanced Tools <br>(For Developer Use Only)</br></h2>
-                            <div style="text-align:center;">
-                                <input class='btn btn-warning' type='button' data-toggle='collapse' data-target='.dev_tools_field'
-							  onclick='button_text(this)' aria-expanded='false' aria-controls='collapse' value='Open Tools'/>
-                            </div>
-                    </div>
-            &nbsp;&nbsp;&nbsp;&nbsp;
-                <div class="panel-body">
-                    <div class='col-md-12 dev_tools_field collapse'>
-                        <div class="col-md-8">
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    <i class="fa fa-address-card" aria-hidden="true"></i> Setup Training Tickets
+                        <div class="table">
+                            <ul class="nav nav-tabs">
+						          <li class="active"><a data-toggle="tab" aria-expanded="false" href="#2020202020202">Add User <i class="fas fa-user-plus"></i></a></li>
+						          <li><a data-toggle="tab" aria-expanded="false" href="#3030303030303">Modify User <i class="fas fa-user-edit"></i></a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div id="2020202020202" class="tab-pane fade in active">
+                                    <div class="row">
+                                        &nbsp;&nbsp;&nbsp;&nbsp;
+                                    </div>
+                                    <div class="panel panel-default">
+                                        <div class="panel-body">
+                                            <table class="table table-bordered table-striped table-hover">
+                                                <form method="POST" action="" id="myForm" autocomplete='off' onsubmit="return validateID()">
+                                                    <tr>
+                                                        <td>
+                                                            <b data-toggle="tooltip" data-placement="top" title="email contact information">Operator ID: </b>
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" class="form-control" name="op2" id="op2" maxlength="10" size="10" placeholder="1000000000" />
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <b data-toggle="tooltip" data-placement="top" title="Select Device">Role: </b>
+                                                        </td>
+                                                        <td>
+                                                            <select class="form-control" name="selectRole" id="selectRole">
+                                                                <option value="" disabled selected>Select Role</option>
+                                                                <?php
+                                                                    $staff_role = $staff->getRoleID();
+                                                                    $result = $mysqli->query("SELECT * FROM `role` WHERE `r_id`<= '$staff_role' ORDER BY `r_id` DESC;");
+                                                                    while($row = $result->fetch_assoc()){
+                                                                        echo "<option value=\"$row[r_id]\">$row[title]</option>";
+                                                                    }
+                                                                ?>
+                                                            </select>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <!-- <div class="pull-left">
+                                                                <a class="btn btn-default btn-xs" href="https://www.fontawesome.com/icons?d=gallery;" target="_blank" title="Click to view FontAwesome icon gallery"><i class="fas fa-info"></i></a>
+                                                            </div>
+                                                            &nbsp; -->
+                                                            <b data-toggle="tooltip" data-placement="top" title="FontAwesome icon code">Icon Code: </b>
+                                                            <br>Include Icon <input type="checkbox" id="iconBox" />
+                                                        </td>
+                                                        <td>
+                                                            <input class="form-control icp demo" onKeyDown="return false" value="fas fa-user" type="text" id="icon_code" name="icon_code" disabled>
+                                                        </td>
+                                                    </tr>
+                                                    <tfoot>
+                                                        <tr>
+                                                            <td colspan="2">
+                                                                <div class="pull-right">
+                                                                    <button type="submit" name="addBtn" class="btn btn-success" onclick="return Submitter()">Add User</button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </tfoot>
+                                                </form>
+                                            </table>
+                                        </div>
+                                        <!-- /.panel-body -->
+                                    </div>
+                                    <!-- /.panel --> 
                                 </div>
-                                <div class="panel-body">
-                                    <table class="table table-bordered table-striped table-hover">
-                                        <form method="POST" action="" autocomplete='off' onsubmit="return validate2()">
-                                            <tr>
-                                                <td>
-                                                    <b data-toggle="tooltip" data-placement="top" title="Select Device">Device: </b>
-                                                </td>
-                                                <td>
-                                                    <select class="form-control" name="selectDevice" id="selectDevice">
-                                                        <option hidden selected value="">Select Device</option>
-                                                        <?php
-                                                            $result = $mysqli->query(" SELECT * FROM `devices` WHERE 1 ORDER BY `device_desc`;");
-                                                            while($row = $result->fetch_assoc()){
-                                                                echo "<option value=\"$row[d_id]\">$row[device_desc]</option>";
-                                                            }
-                                                        ?>
-                                                    </select>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>
-                                                    <b data-toggle="tooltip" data-placement="top" title="email contact information">Operator ID: </b>
-                                                </td>
-                                                <td>
-                                                    <input type="text" class="form-control" name="operator" id="operator" maxlength="10" size="10" placeholder="Enter ID #" />
-                                                </td>
-                                            </tr>
-                                            <tfoot>
-                                                <tr>
-                                                    <td colspan="2">
-                                                        <div class="pull-left"><button type="submit" name="onboardBtn" class="btn btn-primary" onclick="return Submitter()">Submit</button></div>
-                                                    </td>
-                                                </tr>
-                                            </tfoot>
-                                        </form>
-                                    </table>
-                                </div>
-                                <!-- /.panel-body -->
-                            </div>
-                            <!-- /.panel --> 
-                        </div>  
-                        <div class="col-md-4">
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    <i class="fas fa-gas-pump fa-fw"></i> Fill PolyPrinters
-                                </div>
-                                <div class="panel-body">
-                                    <form method="POST" action="" autocomplete='off'>
-                                        <div style="text-align:center;"><button type="submit" name="fillBtn" class="btn btn-primary" onclick="return Submitter()">Fill All PolyPrinters</button></div>
-                                    </form>
+                                <div id="3030303030303" class="tab-pane fade">
+                                    <div class="row">
+                                        &nbsp;&nbsp;&nbsp;&nbsp;
+                                    </div>
+                                    <div class="panel panel-default">
+                                        <div class="panel-body">
+                                            <table class="table table-bordered table-striped table-hover">
+                                                <form method="POST" action="" id="myForm" autocomplete='off'>
+                                                    <tr>
+                                                        <td>
+                                                            <b data-toggle="tooltip" data-placement="top" title="Select Variant">Operator ID:</b>
+                                                        </td>
+                                                        <td>
+                                                            <div class="col-md-6">
+                                                            <select class="form-control" name="u_r_id" id="u_r_id" onchange="change_operator()" tabindex="1">
+                                                                <option value="" disabled selected>Select Role</option>
+                                                                <?php
+                                                                    $staff_role = $staff->getRoleID();
+                                                                    $result = $mysqli->query("
+                                                                    SELECT DISTINCT `role`.`r_id` , `role`.`title` 
+                                                                    FROM `role` , `users`
+                                                                    WHERE `users`.`r_id` = `role`.`r_id` AND `users`.`r_id` <= '$staff_role'
+                                                                    ORDER BY `r_id` DESC;");
+                                                                    while($row = $result->fetch_assoc()){
+                                                                        echo "<option value=\"$row[r_id]\">$row[title]</option>";
+                                                                    }
+                                                                ?>
+                                                            </select>
+                                                            </div>
+
+
+                                                            <div class="col-md-6">
+                                                            <select class="form-control" name="operators" id="operators" tabindex="1">
+                                                                <option value =""> Select Role First</option>
+                                                            </select>   
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <b data-toggle="tooltip" data-placement="top" title="Select Role">Updated Role: </b>
+                                                            <br>Don't Update <input type="checkbox" id="roleBox"/>
+                                                        </td>
+                                                        <td>
+                                                            <select class="form-control" name="selectRole1" id="selectRole1">
+                                                                <option value="" disabled selected>Select Role</option>
+                                                                <?php
+                                                                    $staff_role = $staff->getRoleID();
+                                                                    $result = $mysqli->query("SELECT * FROM `role` WHERE `r_id`<= '$staff_role' ORDER BY `r_id` DESC;");
+                                                                    while($row = $result->fetch_assoc()){
+                                                                        echo "<option value=\"$row[r_id]\">$row[title]</option>";
+                                                                    }
+                                                                ?>
+                                                            </select>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <b data-toggle="tooltip" data-placement="top" title="FontAwesome icon code">Icon Code: </b>
+                                                            <br>Don't Update <input type="checkbox" id="iconBox1" checked/>
+                                                        </td>
+                                                        <td>
+                                                            <input class="form-control icp demo" onKeyDown="return false" value="fas fa-user" type="text" id="icon_code1" name="icon_code1" disabled>
+                                                        </td>
+                                                    </tr>
+                                                    <tfoot>
+                                                        <tr>
+                                                            <td colspan="2">
+                                                                <div class="pull-right">
+                                                                    <button type="submit" name="modifyBtn" class="btn btn-success" onclick="return Submitter()">Modify User</button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </tfoot>
+                                                </form>
+                                            </table>
+                                        </div>
+                                        <!-- /.panel-body -->
+                                    </div>
+                                    <!-- /.panel --> 
                                 </div>
                             </div>
-                            <!-- /.panel -->
                         </div>
                     </div>
                 </div>
             </div>
-            <!-- /.panel --> 
+            <!-- /.col-md-12 -->
         </div>
+        <!-- /.row -->
+		
+        <div class="row">
+            &nbsp;&nbsp;&nbsp;&nbsp;
+        </div>
+        <div class="row">
+            &nbsp;&nbsp;&nbsp;&nbsp;
+        </div>
+        <div class="row">
+            &nbsp;&nbsp;&nbsp;&nbsp;
+        </div>
+		
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="fas fa-user-friends"></i> FabApp Users
+                        <div class="pull-right">
+                            <button  class="btn btn-xs" data-toggle="collapse" data-target="#userPanel"><i class="fas fa-bars"></i></i></button> 
+                        </div>
+                    </div>
+                    <!-- /.panel-heading -->
+                    <div class="panel-body collapse in" id="userPanel">
+                        <div class="table-responsive">
+                            <ul class="nav nav-tabs">
+                                <!-- Load all device groups as a tab that have at least one device in that group -->
+                                <?php if ($result = Users::getTabResult()) {
+                                    $count = 0;
+                                    while ($row = $result->fetch_assoc()) { ?>
+                                        <li class="<?php if ($count == 0) echo "active";?>">
+                                            <a <?php echo("href=\"#".$row["r_id"]."\""); ?>  data-toggle="tab" aria-expanded="false"> <?php echo($row["title"]); ?> </a>
+                                        </li>
+                                    <?php 
+                                    if ($count == 0){
+                                        //create a way to display the first wait_queue table tab by saving which dg_id it is to variable 'first_dgid'
+                                        $first_rid = $row["r_id"];  
+                                    }   
+                                    $count++;                                                                  
+                                    }
+                                } ?>
+                            </ul>
+                            <div class="tab-content">
+                                <?php
+                                if ($Tabresult = Users::getTabResult()) {
+                                    while($tab = $Tabresult->fetch_assoc()){
+                                        $number_of_user_tables++;
+
+
+                                        // Give all of the dynamic tables a name so they can be called when their tab is clicked ?>
+                                        <div class="tab-pane fade <?php if ($first_rid == $tab["r_id"]) echo "in active";?>" <?php echo("id=\"".$tab["r_id"]."\"") ?> >
+                                            <table class="table table-striped table-bordered table-hover" <?php echo("id=\"userTable_$number_of_user_tables\"") ?>>
+                                                <thead>
+                                                    <tr class="tablerow">
+                                                        <th><i class="far fa-user"></i> Operator</th>
+                                                        <th><i class="fas fa-bullseye"></i> Icon</th>
+                                                        <!--<th><i class="far fa-flag"></i> Date Added</th> -->
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php // Display all of the students in the wait queue for a device group
+                                                    if ($result = $mysqli->query("
+                                                            SELECT *
+                                                            FROM users U JOIN role R ON U.r_id = R.r_id
+                                                            WHERE U.r_id=$tab[r_id];
+                                                    ")) {
+                                                        while ($row = $result->fetch_assoc()) { ?>
+                                                            <tr class="tablerow">
+
+                                                                <!-- Operator -->
+                                                                <td align="center"><?php echo($row['operator']) ?></td>
+
+                                                                <!-- Icon --> 
+                                                                <td align="center">
+                                                                    <?php $user = Users::withID($row['operator']);?>
+                                                                    <i class="<?php echo $user->getIcon()?> fa-lg"></i>
+                                                                </td>
+
+                                                            </tr>
+                                                        <?php }
+                                                    } ?>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    <?php }
+                                } ?>
+                            </div>
+                        </div>
+                        <!-- /.table-responsive -->
+                    </div>
+                </div>
+            </div>
+            <!-- /.col-md-12 -->
+        </div>
+        <!-- /.row -->
     </div>
-    <!-- /.row -->
 </body>
 <?php
 //Standard call for dependencies
@@ -431,6 +405,25 @@ function validateID(){
     if (stdRegEx("op2", /<?php echo $sv['regexUser'];?>/, "Invalid Operator ID #") === false){
         return false;
     }
+}
+    
+function change_operator(){
+    if (window.XMLHttpRequest) {
+        // code for IE7+, Firefox, Chrome, Opera, Safari
+        xmlhttp = new XMLHttpRequest();
+    } else {
+        // code for IE6, IE5
+        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+    }
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            document.getElementById("operators").innerHTML = this.responseText;
+        }
+    };
+
+    xmlhttp.open("GET","/admin/sub/ob_getOperators.php?val="+ document.getElementById("u_r_id").value, true);
+    xmlhttp.send();
+    inUseCheck();
 }
     
 $('.demo').iconpicker();
@@ -504,7 +497,18 @@ $('.demo').iconpicker({
   }
   
 });
-     
+
+    
+document.getElementById('iconBox').onchange = function() {
+    document.getElementById('icon_code').disabled = !this.checked;
+};
+document.getElementById('iconBox1').onchange = function() {
+    document.getElementById('icon_code1').disabled = this.checked;
+};
+
+document.getElementById('roleBox').onchange = function() {
+    document.getElementById('selectRole1').disabled = this.checked;
+};
 
 var str;
 for(var i=1; i<= <?php echo $number_of_user_tables;?>; i++){
@@ -514,5 +518,7 @@ for(var i=1; i<= <?php echo $number_of_user_tables;?>; i++){
                 "order": []
                 });
 }
+    
+    
 </script>
 </html>

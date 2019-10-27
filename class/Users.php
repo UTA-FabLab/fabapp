@@ -177,10 +177,26 @@ class Users {
             SELECT DISTINCT `role`.`r_id`, `role`.`title`
             FROM `role`, `users`
             WHERE `role`.`r_id` = `users`.`r_id`
+            ORDER BY `r_id` DESC;
         ")){
             return  $result;
         } else {
             return false;
+        }
+    }
+	
+    public static function offboarding($operator){
+        global $mysqli;
+        
+        if ($mysqli->query("
+            UPDATE `users`
+            SET `r_id` = '2'
+            WHERE `operator` = '$operator';
+        ")) {
+            return 1;
+        }
+        else {
+            return 0;
         }
     }
 	
@@ -262,7 +278,7 @@ class Users {
 		global $mysqli;
 		global $sv;
 		
-		if ($staff->getRoleID() < $sv['minRoleTrainer']){
+		if ($staff->getRoleID() < 10){
 			return "Insufficient role to Modify Role";
 		}
 		$operator = $this->getOperator();

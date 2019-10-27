@@ -98,7 +98,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['new_material_button
 	elseif($status["moveable"] < $ticket->status->status_id)
 		exit_if_error("You cannot add a material to an ended ticket");
 
-	if(!is_int($mu_id = Mats_Used::insert_material_used($ticket->trans_id, $new_material, $status["used"], $staff->operator)))
+	if(!is_int($mu_id = Mats_Used::insert_material_used($ticket->trans_id, $new_material, $status["used"], $staff)))
 		exit_if_error("Problem associating materials to ticket–$mu_id");
 	exit_with_success("Material added");
 }

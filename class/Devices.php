@@ -88,12 +88,23 @@ class Devices {
 	public static function insert_device($dg_id, $public_view, $d_name, $time_limit, $d_price, $d_url){
 		global $mysqli;
 		
+		// create device with temp device_id
 		if ($mysqli->query("
 			INSERT INTO `devices` 
-			  (`device_id`, `public_view`, `device_name`, `time_limit`, `base_price`, `dg_id`, `url`) 
+			  (`device_id`, `public_view`, `device_desc`, `time_limit`, `base_price`, `dg_id`, `url`) 
 			VALUES
-				('0','$public_view','$d_name', '$time_limit', '$d_price', '$dg_id', '$d_url');"
+				('1000', '$public_view','$d_name', '$time_limit', '$d_price', '$dg_id', '$d_url');"
 		)) {
+			$new_d_id = $mysqli->insert_id;
+			// set device_id to d_is
+			if(!$mysqli->query("
+			UPDATE `devices`
+			SET `device_id` = '$new_d_id'
+			WHERE `d_id` = '$new_d_id';
+			")) {
+				return ("<div class='alert alert-danger'>".$mysqli->error."</div>");
+			}
+
 			return $mysqli->insert_id;
 		}
 		return ("<div class='alert alert-danger'>".$mysqli->error."</div>");
@@ -102,30 +113,44 @@ class Devices {
 
 	// device status dot (or X) echo to page
 	public static function printDot($staff, $device_id){
-		global $mysqli;
-		global $sv;
+		global $mysqli, $sv;
+
+		$COLORS = array("red" => "#FF0000", "yellow" => "#FFFF00", "green" => "#008000", "blue" => "#0000FF", "purple" => "#CC00FF");
 		
 		//look up current device status
-		$dot = 0;
 		$color = "white";
 		$symbol = "circle";
-		$lookup = "SELECT * FROM `service_call` WHERE `d_id` = '$device_id' AND `solved` = 'N' ORDER BY `sl_id` DESC";
-		if($service_status = $mysqli->query($lookup)){
-			while ($ticket = $service_status->fetch_assoc()) if($ticket['sl_id'] > $dot) $dot = $ticket['sl_id'];
-			if($service_status == NULL || $dot <= 1) $color = "green";
-			elseif($dot < 7) $color = "yellow";
-			else {
-				$color = "red";
+		$lookup = 	"SELECT  `status`.`variable` AS status, 
+								(SELECT `sl_id`
+								 FROM `service_call`
+								 WHERE `d_id` = '$device_id'
+								 AND `solved` = 'N'
+								 ORDER BY `sl_id` DESC
+								 LIMIT 1) AS service_issue
+					FROM `transactions`
+					LEFT JOIN `status`
+					ON `status`.`status_id` = `transactions`.`status_id`
+					WHERE `d_id` = '$device_id'
+					ORDER BY `transactions`.`t_start` DESC
+					LIMIT 1;";
+		if($result = $mysqli->query($lookup)){
+			$device_status = $result->fetch_assoc();
+			if(7 < $device_status["service_issue"]) {
 				$symbol = "times";
+				$color = "red";
 			}
+			elseif($device_status["service_issue"]) $color = "yellow";
+			elseif($device_status["status"] == "active") $color = "blue";
+			elseif($device_status["status"] == "moveable") $color = "purple";
+			else $color = "green";
 		}
 		
 		if($staff){
 			if($staff->getRoleID() >= $sv['LvlOfStaff'] || $staff->getRoleID() == $sv['serviceTechnican'])
 				echo "<a href = '/pages/sr_history.php?device_id=$device_id'><i class='fas fa-$symbol fa-lg' style='color:$color'></i></a>&nbsp;";
-			else echo "<i class='fas fa-$symbol fa-lg' style='color:".$color."'></i>&nbsp;";
+			else echo "<i class='fas fa-$symbol fa-lg' style='color:$COLORS[$color]'></i>&nbsp;";
 		} 
-		else echo "<i class='fas fa-$symbol fa-lg' style='color:".$color."'></i>&nbsp;";
+		else echo "<i class='fas fa-$symbol fa-lg' style='color:$COLORS[$color]'></i>&nbsp;";
 	}
 
 
@@ -136,7 +161,7 @@ class Devices {
 		if ($mysqli->query("
 			UPDATE `devices`
 			SET `public_view` = 'N'
-			WHERE `device_id` = $device_id;
+			WHERE `d_id` = $device_id;
 		")) {
 			return $device_id;
 		}
@@ -150,8 +175,8 @@ class Devices {
 		
 		if ($mysqli->query("
 			UPDATE `devices`
-			SET `device_name` = '$d_desc' , `time_limit` = '$time_limit' , `base_price` = '$d_price' , `dg_id` = '$dg_id' , `url` = '$d_url' , `public_view` = '$d_view'
-			WHERE `device_id` = '$device_id';"
+			SET `device_desc` = '$d_desc' , `time_limit` = '$time_limit' , `base_price` = '$d_price' , `dg_id` = '$dg_id' , `url` = '$d_url' , `public_view` = '$d_view'
+			WHERE `d_id` = '$device_id';"
 		)) {
 			return true;
 		}
@@ -278,15 +303,20 @@ class DeviceGroup {
 	}
 
 
+	public function all_device_group_materials() {
+		return array_merge($this->optional_materials, $this->required_materials);
+	}
+
+
 	// add new device group to DB
-	public static function insert_new_device_group($dg_parent, $dg_desc, $dg_pay, $dg_mat, $dg_store, $dg_juicebox, $dg_thermal, $dg_granular){
+	public static function insert_new_device_group($dg_name, $dg_parent, $dg_desc, $dg_pay, $dg_mat, $dg_store, $dg_juicebox, $dg_thermal, $dg_granular){
 		global $mysqli;
 		
 		if ($mysqli->query("
 			INSERT INTO `device_group` 
-			  (`dg_parent`,`dg_desc`, payFirst, `selectMatsFirst`, `storable`, `juiceboxManaged`, `thermalPrinterNum`, `granular_wait`) 
+			  (`dg_name`, `dg_parent`,`dg_desc`, payFirst, `selectMatsFirst`, `storable`, `juiceboxManaged`, `thermalPrinterNum`, `granular_wait`) 
 			VALUES
-				('$dg_parent', '$dg_desc', '$dg_pay', '$dg_mat', '$dg_store', '$dg_juicebox', '$dg_thermal', '$dg_granular');"
+				('$dg_name', '$dg_parent', '$dg_desc', '$dg_pay', '$dg_mat', '$dg_store', '$dg_juicebox', '$dg_thermal', '$dg_granular');"
 		)){
 			$dg_id = $mysqli->insert_id;
 			return $dg_id;

@@ -32,7 +32,7 @@ include_once (filter_input(INPUT_SERVER,'DOCUMENT_ROOT').'/class/all_classes.php
 // authenticate permission for user
 session_start();
 $staff = unserialize($_SESSION['staff']);
-if(!$staff || $staff->roleID < $role["lead"]) exit();
+if(!$staff || $staff->roleID < $role["staff"]) exit();
 
 
 if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["add_new_material"])) {
@@ -55,7 +55,31 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["add_new_material"])) {
 	echo json_encode(array(	"mu_id" => $mu_id, 
 								"material_HTML" => $mat_used_HTML, 
 								"material_name" => $mat_used->material->m_name,
-								"parent_id" => $parent_code));
+								"parent_id" => $parent_code,
+								"parent_name" => $mat_used->material->m_parent->m_name));
+}
+// inventory_processing.php call to update mats_used
+elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["update_inventory"])) {
+	$mats_used_changes = json_decode($_POST["mats_used_update"]);
+	$successes = $errors = array();
+	// $response = array("type" => gettype($mats_used_changes[0]));
+	foreach($mats_used_changes as $update) {
+		if($update->notes) $update->notes = htmlspecialchars($update->notes);
+		$outcome = Mats_Used::insert_material_used(null, $update->m_id, $update->status_id, $staff, $update->quantity_used, $update->notes);
+		if(!is_int($outcome)) $errors[$update->m_id] = array(	"m_id" => $update->m_id,
+																	"message" => $outcome,
+																	"notes" => $update->notes,
+																	"status" => $update->status_id, 
+																	"quantity" => $update->quantity_used);
+		else $successes[$update->m_id] = array(	"m_id" => $update->m_id,
+														"message" => $outcome,
+														"notes" => $update->notes,
+														"status" => $update->status_id, 
+														"quantity" => $update->quantity_used);
+	}
+
+	$response = array("successes" => $successes, "errors" => $errors);
+	echo json_encode($response);
 }
 
 
@@ -153,6 +177,7 @@ function HTML_quantity_input($mat_used) {
 		$row_format =	"<tr colspan='2'>
 							<td>";
 
+	$parent_code = $mat_used->material->m_parent ? str_replace(" ", "_", $mat_used->material->m_parent->m_name) : "";
 	// -- CREATE INPUT --
 	// time based (2 inputs for hour/minute)
 	if($mat_used->material->unit == "hour(s)") {

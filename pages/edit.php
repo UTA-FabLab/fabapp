@@ -56,7 +56,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["save_data"])) {
 		if(!$mat_status) exit_if_error("Invalid material status for mat_used #$mu_id");
 		$mat_status = new Status($mat_status);
 
-		$material_edit_staff = new Users::withID(filter_input(INPUT_POST, "$mu_id-staff"));
+		$material_edit_staff = Users::withID(filter_input(INPUT_POST, "$mu_id-staff"));
 		if($error = $mat_used->edit_material_used_information(array("quantity_used" => $quantity_used, 
 		"m_id" => $material, "status" => $mat_status, "staff" => $material_edit_staff)))
 			exit_if_error("Unable to update material used #$mat_used->mu_id: $error");
@@ -64,6 +64,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["save_data"])) {
 
 	// ticket
 	$ticket_status = filter_input(INPUT_POST, "status_id");
+	$filename = filter_input(INPUT_POST, "filename") ? htmlspecialchars(filter_input(INPUT_POST, "filename")).'⦂' : "";
 	$notes = htmlspecialchars(filter_input(INPUT_POST, "ticket_notes"));
 	// input formats should regex, but prevent SQL injection just in case
 	$start_time = htmlspecialchars(filter_input(INPUT_POST, "t_start"));
@@ -79,7 +80,8 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["save_data"])) {
 
 	exit_if_error($error = $ticket->edit_transaction_information(array(
 			"t_start" => $start_time, "t_end" => $end_time, "status" => $ticket_status,
-			"notes" => $notes, "operator" => $operator, "staff" => $staff)));
+			"notes" => $notes, "operator" => $operator, "staff" => $staff,
+			"filename" => $filename)));
 
 	if($ticket->pickup_time) {
 		$pickup_time = htmlspecialchars(filter_input(INPUT_POST, "pickup_time"));
@@ -184,7 +186,7 @@ function exit_with_success($message, $redirect=null) {
 								<tr>
 									<td>File Name</td>
 									<td>
-										<div style="word-wrap: break-word;"><?php echo $ticket->filename; ?></div>
+										<input name='filename' class='form-control' value='<?php echo $ticket->filename; ?>'>
 									</td>
 								</tr>
 							<?php } ?>
@@ -338,7 +340,7 @@ function exit_with_success($message, $redirect=null) {
 											onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 1);'>
 												<option <?php echo "value='$status[used]'".($mat_used->status->status_id == $status["used"] ? "selected" : ""); ?> >Used</option>
 												<option <?php echo "value='$status[unused]'".($mat_used->status->status_id == $status["unused"] ? "selected" : ""); ?> >Unused</option>
-												<option <?php echo "value='$status[failed_material]'".($mat_used->status->status_id == $status["failed_material"] ? "selected" : ""); ?> >Failed Material</option>
+												<option <?php echo "value='$status[failed_mat]'".($mat_used->status->status_id == $status["failed_mat"] ? "selected" : ""); ?> >Failed Material</option>
 											</select>
 										</td>
 									</tr>
