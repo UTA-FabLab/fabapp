@@ -140,10 +140,10 @@ class Materials {
 		if ($sheet_status){
 			if ($mysqli->query("
 				UPDATE `sheet_good_inventory`
-				SET `quantity` = `quantity`+'$sheet_quantity' 
+				SET `quantity` = '$sheet_quantity' 
 				WHERE `m_id`='$m_id' AND `width`='$sheet_width' AND `height` ='$sheet_height';
 			")){
-				return ("<div class='col-md-12'><div class='alert alert-success'> Successfully updated sheet inventory to database.</div</div>>");
+				return ("<div class='col-md-12'><div class='alert alert-success'> Successfully added sheet inventory to database.</div></div>");
 			}
 			return ("<div class='col-md-12'><div class='alert alert-danger'>".$mysqli->error."</div></div>");
 		}
@@ -160,6 +160,7 @@ class Materials {
 			return ("<div class='col-md-12'><div class='alert alert-danger'>".$mysqli->error."</div></div>"); 
 		}
 	}
+
 
 
 	// if the values are different then update the OBJ then DB
@@ -245,7 +246,7 @@ class Materials {
 			FROM `materials`, `sheet_good_inventory`
 			WHERE `materials`.`m_id` = `sheet_good_inventory`.`m_parent` 
 			AND `materials`.`m_parent` = '$sv_sheetgoods' 
-			AND `sheet_good_inventory`.`quantity` != 0;
+			AND `sheet_good_inventory`.`quantity` > 0;
 		")){
 			return  $result;
 		}
@@ -339,20 +340,30 @@ class Materials {
 	}
 
 
-	public static function update_sheet_quantity($inv_id, $quantity) {
+	public static function update_sheet_quantity($inv_id, $quantity, $notes) {
 		global $mysqli;
 
-		$inv_id1 = Mats_Used::regexID($inv_id);
-
-		if($inv_id1) {
-			if($mysqli->query("
-				UPDATE `sheet_good_inventory`
-				SET `quantity` = '$quantity'
-				WHERE `inv_id` = '$inv_id';
-			"))
-				return true;
-		}
-		return false;
+        $result = $mysqli->query("            
+                SELECT DISTINCT `sheet_good_inventory`.`quantity`
+                FROM `sheet_good_inventory`
+                WHERE `sheet_good_inventory`.`inv_id` = '$inv_id';");
+        while($row = $result->fetch_assoc()){
+            $current_quantity = $row[quantity];
+        }
+        
+        $calc_quantity = $current_quantity + $quantity;
+        if ($calc_quantity >= 0){
+            if($inv_id) {
+                if($mysqli->query("
+                    UPDATE `sheet_good_inventory`
+                    SET `quantity` = `quantity`+'$quantity' , `notes`='$notes'
+                    WHERE `inv_ID` = '$inv_id';
+                "))
+                    return ("<div class='col-md-12'><div class='alert alert-success'>Updated Sheet Good Quantity</div></div>");
+            }
+            return $mysqli->error;
+        }
+        return ("<div class='col-md-12'><div class='alert alert-danger'>Incorrect quantity change input, your result must not change quantity to a value below 0.</div></div>");
 	}
 
 
@@ -481,7 +492,7 @@ class Mats_Used {
 	}
 	
 	// create a new instance of material usage in DB.  Optional quanity used
-	public static function insert_material_used($trans_id, $m_id, $status_id, $staff, $quantity_used=null) {
+	public static function insert_material_used($trans_id, $m_id, $status_id, $staff, $quantity_used=null, $notes=null) {
 		global $mysqli, $role, $sv;
 		
 		//Deny if user is not staff
@@ -496,11 +507,11 @@ class Mats_Used {
 
 		if($statement = $mysqli->prepare("
 			INSERT INTO mats_used
-				(`trans_id`,`m_id`,`quantity`, `status_id`, `staff_id`) 
+				(`trans_id`,`m_id`,`quantity`, `status_id`, `staff_id`, `mu_notes`) 
 			VALUES
-				(?, ?, ?, ?, ?);
+				(?, ?, ?, ?, ?, ?);
 		")){
-			$bind_param = $statement->bind_param("iidis", $trans_id, $m_id, $quantity_used, $status_id, $staff->operator);
+			$bind_param = $statement->bind_param("iidiss", $trans_id, $m_id, $quantity_used, $status_id, $staff->operator, $notes);
 			if($statement->execute()) return $statement->insert_id;
 		}
 		return $mysqli->error;

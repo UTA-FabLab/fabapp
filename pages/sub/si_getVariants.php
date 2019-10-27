@@ -18,8 +18,13 @@ if ( !empty($_GET["val"])){
         WHERE `materials`.`m_parent` = ".$m_id."
         ORDER BY `m_name` ASC
     ")){
-        while($row = $result->fetch_assoc()){
-            echo "<option value=$row[m_id]>$row[m_name]</option>";
+        if ($result->num_rows > 0) {
+            while($row = $result->fetch_assoc()){
+                echo "<option value=$row[m_id]>$row[m_name]</option>";
+            }
+        }
+        else {
+            echo "<option value=\"\">No Sheet Childs Available</option>";
         }
     }
 } else {

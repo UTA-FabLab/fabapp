@@ -14,14 +14,14 @@ if (!$staff || $staff->getRoleID() < 10){
 } else {
     $d_id = filter_input(INPUT_GET , 'd_id', FILTER_VALIDATE_INT, false);
     if (is_int($d_id) && $result = $mysqli->query("
-        SELECT `d`.`device_desc`, `d`.`d_duration`, `d`.`base_price`, `d`.`public_view`, `d`.`dg_id`, `d`.`url`, `dg`.`dg_desc`
+        SELECT `d`.`device_desc`, `d`.`time_limit`, `d`.`base_price`, `d`.`public_view`, `d`.`dg_id`, `d`.`url`, `dg`.`dg_desc`
         FROM `devices` `d`, `device_group` `dg`
         WHERE `d`.`d_id`=$d_id AND `d`.`dg_id`=`dg`.`dg_id`;
     ")) {
         if ($result->num_rows == 1){
             $row = $result->fetch_assoc();
             $d_name = $row['device_desc'];
-            $d_duration = $row['d_duration'];
+            $d_duration = $row['time_limit'];
             $d_hour = substr($d_duration,0,2);
             $d_minute = substr($d_duration,3,2);
             $dg_id = $row['dg_id'];
@@ -72,7 +72,7 @@ $d_name1 = filter_input(INPUT_POST,'device_name');
     if(isset($_POST['device_group_id']) && preg_match('/^[0-9]+$/i', $_POST['hours']) && preg_match('/^[0-9]+$/i', $_POST['minutes']) && preg_match('/^[a-z0-9\-\_\# ]{1,100}$/i', $_POST['device_name']) && preg_match('/^[0-9\.]+$/i', $_POST['device_base_price'])){
         
         $update_status = Devices::updateDevice($d_id, $d_name1, $d_duration1, $d_price1, $dg_id1, $d_url1, $d_view1);
-        if ($update_status == 1) {
+        if ($update_status) {
             $_SESSION['success_msg'] = "Device has been successfully updated.";
             header("Location:/admin/manage_device.php");
         } else {

@@ -30,6 +30,7 @@ use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
  
 class Transactions {
 	public $cost;  // costs associated with ticket; device usage + material usage
+	public $duration;  // time a device took to complete task
 	public $est_time;  // estimated time to do transaction task
 	public $filename;  // used filename from `notes` with ⦂ following (eg my_file.gcode⦂ )
 	public $notes;  // note associated with transaction
@@ -64,6 +65,7 @@ class Transactions {
 			$row = $result->fetch_assoc();
 			$this->acct_charge = Acct_charge::byTrans_id($trans_id);
 			$this->device = new Devices($row['d_id']);  //REMOVE WITH UPDATE
+			$this->duration = $row['duration'];
 			// $this->device = new Devices($row['device_id']);  //ADD WITH UPDATE
 			$this->est_time = $row['est_time'];
 			if(substr_count($row['notes'], "⦂")) $this->filename = explode("⦂", $row['notes'])[0];
@@ -121,6 +123,7 @@ class Transactions {
 	public function edit_transaction_information($change_array){
 		if(!count($change_array)) return;
 
+		if(array_key_exists("duration", $change_array)) $this->duration = $change_array["duration"];
 		if(array_key_exists("filename", $change_array)) $this->filename = $change_array["filename"];
 		if(array_key_exists("notes", $change_array)) $this->notes = $change_array["notes"];
 		// $this->setT_end(date("Y-m-d H:i:s",strtotime($t_end)));  //KEEP as example of format for time_end format
@@ -178,9 +181,11 @@ class Transactions {
 	public function end_octopuppet(){
 		global $mysqli, $status;
 
+		$this->t_end = date("Y-m-d H:i:s", strtotime("now"));  // set t_end only for object (!DB)
+		$duration = $this->duration_string();
 		if ($mysqli->query("
 			UPDATE `transactions`
-			SET `t_end` = '$this->t_end', `status_id` = '$status[moveable]'
+			SET `duration` = '$duration', `status_id` = '$status[moveable]'
 			WHERE `trans_id` = '$this->trans_id';
 		")){
 			if ($mysqli->affected_rows == 1) return true;
@@ -329,13 +334,26 @@ class Transactions {
 			//Print Color Swap Instructions
 			$printer->feed();
 
-			if(count($ticket->mats_used) > 1) {
-				$printer->feed();
-				$printer->text("Color Swap");
-			}
-			for($x = count($ticket->mats_used); 0 < $x; $x--) {
-				$printer->feed();
-				$printer->text(str_pad((count($ticket->mats_used) - $x +1).":", 5, " ").str_pad($ticket->mats_used[$x-1]->material->m_name, 20, "_"));
+			// UPDATE FOR MULTI-MATERIAL OCTOPUPPET CHANGE
+			// if(count($ticket->mats_used) > 1) {
+			// 	$printer->feed();
+			// 	$printer->text("Color Swap");
+			// }
+			// for($x = count($ticket->mats_used); 0 < $x; $x--) {
+			// 	$printer->feed();
+			// 	$printer->text(str_pad((count($ticket->mats_used) - $x +1).":", 5, " ").str_pad($ticket->mats_used[$x-1]->material->m_name, 20, "_"));
+			// }
+			if($ticket->filename && substr_count($ticket->filename, "%")) {
+				$filename_materials = explode("%", $ticket->filename);
+				for($x = 1; $x < count($filename_materials); $x++) {
+					if(substr_count($filename_materials[$x], ".gcode"))
+						$filename_materials[$x] = substr($filename_materials[$x], 0, strpos($filename_materials[$x], ".gcode"));
+					$material = new Materials($filename_materials[$x]);
+					if(is_object($material)) {
+						$printer->text(str_pad(($x).":", 5, " ").str_pad($material->m_name, 20, "_"));
+						$printer->feed();
+					}
+				}
 			}
 
 
@@ -366,6 +384,99 @@ class Transactions {
 			echo "printer was not open";
 		}
 	}
+
+    public static function printSheetTicket($trans_id, $cart_inv_ids, $cart_quantities, $total_price){
+        global $mysqli;
+        global $tp;
+        $sheet_names = array();
+
+
+        for ($i = 0; $i < sizeof($cart_inv_ids); $i++) {
+	        if($result = $mysqli->query("
+	            SELECT `materials`.`m_name` , `sheet_good_inventory`.`width` , `sheet_good_inventory`.`height`
+	            FROM `sheet_good_inventory`, `materials`
+	            WHERE `sheet_good_inventory`.`inv_ID` = '$cart_inv_ids[$i]' AND `materials`.`m_id` = `sheet_good_inventory`.`m_ID`
+	        ")){
+	            $row = $result->fetch_assoc();
+	            $sheet_names[$i] = $row["m_name"]." - ".$row["width"]."(in)x".$row["height"]."(in)";
+	        }
+    	}
+
+        // Set up Printer Connection
+        $tp_number = 0;
+        try {
+            $connector = new NetworkPrintConnector( $tp[$tp_number][0], $tp[$tp_number][1]);
+            $printer = new Printer($connector);
+        } catch (Exception $e) {
+            return "Couldn't print to this printer: " . $e -> getMessage() . "\n";
+        }
+
+        try {
+            $img = EscposImage::load($_SERVER['DOCUMENT_ROOT']."/images/fablab2.png", 0);
+
+            $printer -> setJustification(Printer::JUSTIFY_CENTER);
+            $printer -> graphics($img);
+            $printer -> feed();
+            $printer -> setEmphasis(true);
+            $printer -> text(date("F jS Y h:i A"));
+            $printer -> setEmphasis(false);
+            $printer -> feed(2);
+
+            $printer -> setTextSize(4, 4);
+            $printer -> text($trans_id);
+            $printer -> feed(3);
+            $printer -> setJustification(Printer::JUSTIFY_LEFT);
+            $printer -> setTextSize(1, 1);
+            $printer -> setEmphasis(true);
+            $printer -> text("SALE:");
+            $printer -> setEmphasis(false);
+			$printer -> setJustification(Printer::JUSTIFY_LEFT);
+            for ($i = 0; $i < sizeof($cart_inv_ids); $i++) {
+	            $printer -> setTextSize(1, 1);
+	            $printer -> feed();
+	            $printer -> setEmphasis(true);
+	            $printer -> text($cart_quantities[$i]."");
+	            $printer -> setEmphasis(false);
+            	$printer -> text(" ".$sheet_names[$i]);
+            }
+            $printer -> setTextSize(1, 1);
+            $printer -> feed(2); 
+            $printer -> setJustification(Printer::JUSTIFY_CENTER);
+            $printer -> setEmphasis(true);
+            $printer -> text("Total: $".$total_price);
+            $printer -> setEmphasis(false);
+
+            $printer -> feed(2);  
+            
+            // Print Footer
+            $printer -> setJustification(Printer::JUSTIFY_CENTER);
+            $printer -> text("For information about FabLab's");
+            $printer -> feed();
+            $printer -> text("return policy visit:");
+            $printer -> feed();
+            $printer -> setEmphasis(true);
+            $printer -> text("http://fablab.uta.edu/policy");
+            $printer -> feed();
+            
+        } catch (Exception $print_error) {
+            //echo $print_error->getMessage();
+            $printer -> text($print_error->getMessage());
+        }
+
+        // Close Printer Connection
+        try {
+            $printer -> feed();
+            $printer -> cut();
+
+            /* Close printer */
+            $printer -> close();
+        } catch (Exception $e) {
+            echo "Couldn't print to this printer: " . $e -> getMessage() . "\n";
+        }
+    }
+    
+
+
 
 
 	// return the cost for this ticket based on materials used excluding amount
@@ -410,12 +521,14 @@ class Transactions {
 		$statement = $mysqli->prepare("UPDATE `transactions`
 											SET `d_id` = ?, `operator` = ?, `t_start` = ?, 
 											`t_end` = ?, `status_id` = ?, `staff_id` = ?, 
-											`pickup_time` = ?, `pickedup_by` = ?,  `notes` = ?
+											`pickup_time` = ?, `pickedup_by` = ?,  `notes` = ?,
+											`duration` = ?
 											WHERE `trans_id` = ?;");
 
-		$statement->bind_param("dssssdsssd", $this->device->device_id, $this->user->operator, $this->t_start, 
+		$statement->bind_param("dsssdsssssd", $this->device->device_id, $this->user->operator, $this->t_start, 
 									$this->t_end, $this->status->status_id, $this->staff->operator, 
 									$this->pickup_time, $pickedup_by, $this->filename_and_notes(), 
+									$this->duration,
 									$this->trans_id);
 
 

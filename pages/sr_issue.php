@@ -10,7 +10,7 @@ if (!isset($staff) || ($staff->getRoleID() < $sv['LvlOfStaff'] && $staff->getRol
 	// Not Authorized to see this Page
 	$_SESSION['error_msg'] = "You must be logged in to report an issue.";
 	header ( 'Location: /index.php' );
-} elseif (filter_has_var(INPUT_GET, 'd_id') && Devices::regexDID(filter_has_var(INPUT_GET, 'd_id'))) {
+} elseif (filter_has_var(INPUT_GET, 'd_id') && Devices::regexDeviceID(filter_has_var(INPUT_GET, 'd_id'))) {
 	$device = new Devices(filter_input(INPUT_GET, 'd_id'));
 }
 

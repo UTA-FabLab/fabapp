@@ -379,33 +379,33 @@ function exit_with_success($message, $redirect=null) {
 													$mat_used
 												</td>
 											</tr>";
-								 } ?>
-							 <!-- NEW MATERIAL -->
+								} ?>
+							</table>
+
+					<!--------------------------- NEW MATERIAL --------------------------->
+						<?php if($ticket->device->device_group->all_device_group_materials()) { ?>
+							<table class='table table-bordered table-striped'>
+								<tr class='warning'>
+									<td colspan='3'> Add material </td>
+								</tr>
 								<tr>
-									<td colspan='2'>
-										<table class='table table-bordered table-striped'>
-											<tr>
-												<td colspan='3'> Add material </td>
-											</tr>
-											<tr>
-												<td class='col-sm-4'>Material</td>
-												<td class='col-sm-5'>
-													<select id='new_material' name='new_material' class='form-control'>
-														<?php
-														// allows for materials to added twice
-														foreach($ticket->device->device_group->optional_materials as $optional_material)
-															echo "<option value='$optional_material->m_id'>$optional_material->m_name</option>";
-														?>
-													</select>
-												</td>
-												<td class='col-sm-4'>
-													<button type='button' name='new_material_button' class='btn btn-success' onclick='add_new_material_used();'>Add Material</button>
-												</td>
-											</tr>
-										</table>
+									<td class='col-sm-4'>Material</td>
+									<td class='col-sm-5'>
+										<select id='new_material' name='new_material' class='form-control'>
+											<?php
+											// allows for materials to added twice
+											foreach($ticket->device->device_group->all_device_group_materials() as $material)
+												echo "<option value='$material->m_id'>$material->m_name</option>";
+											?>
+										</select>
+									</td>
+									<td class='col-sm-4'>
+										<button type='button' name='new_material_button' class='btn btn-info' onclick='add_new_material_used(<?php echo $ticket->trans_id; ?>);'>Add Material</button>
 									</td>
 								</tr>
 							</table>
+						<?php } ?>
+
 						<!------------------ COST AND SUBMIT ------------------>
 							<table width='100%'>
 								<tr>
@@ -703,7 +703,7 @@ function exit_with_success($message, $redirect=null) {
 	/* AJAX: add mat_used to DB for transaction.  If preexisting group, add material to group.
 	If preexisting (ungrouped) material, create group.  Otherwise, add material input to end
 	of table. */
-	function add_new_material_used() {
+	function add_new_material_used(trans_id) {
 		var m_id = document.getElementById("new_material").value;
 		if(isNaN(parseInt(m_id))) return;
 		if(!confirm("Are you sure you would like to add another material to this transaction?"));
@@ -716,7 +716,7 @@ function exit_with_success($message, $redirect=null) {
 			dataType: "json",
 			data: {	"add_new_material" : true, 
 					"m_id" : m_id,
-					"trans_id" : <?php echo $ticket->trans_id; ?>
+					"trans_id" : trans_id
 			},
 			success: function(response) {
 				if(response["error"]) {
@@ -728,20 +728,20 @@ function exit_with_success($message, $redirect=null) {
 				if(document.getElementById(response["parent_id"])) {
 					var parent = document.getElementById(response["parent_id"]);
 					var new_material_row = parent.closest("table").rows[1].children[1].children[0].insertRow(-1);
-					new_material_row.innerHTML = `<td style='background-color:#5CB85C'> ${response["material_HTML"]} </td>`;
+					new_material_row.innerHTML = `<td style='background-color:#5CB85C;width:100%;' colspan='2'> ${response["material_HTML"]} </td>`;
 				}
 				// create new parent group, from single existing element
 				else if(document.getElementsByClassName(`${response["parent_id"]}-child`).length) {
 					var preexisting_single_element = document.getElementsByClassName(`${response["parent_id"]}-child`)[0];
 					var new_material_group = 	`<table width='100%' class='table table-bordered' style='margin-bottom:0px !important;'>
 														<tr class='tablerow info'>
-															<td colspan='2'>Vinyl (Generic)</td>
+															<td colspan='2'>${response["parent_name"]}</td>
 														</tr>
 														<tr>
 															<td>
 																<div class='input-group'>
 																	<span class='input-group-addon'>MATERIAL-GROUP <i class='fas fa-dollar-sign'></i> 0.25 x </span>
-																	<input type='number' id='Vinyl_(Generic)' class='form-control' autocomplete='off' value='6' style='text-align:right;'
+																	<input type='number' id='${response["parent_id"]}' class='form-control' autocomplete='off' value='6' style='text-align:right;'
 																	onkeyup='adjust_children_input(this); adjust_balances();' onchange='adjust_children_input(this); adjust_balances();' >
 																	<span class='input-group-addon'>inch(es)</span>
 																</div>
@@ -763,13 +763,13 @@ function exit_with_success($message, $redirect=null) {
 														</tr>
 													</table>`;
 					preexisting_single_element.closest("table").closest("tr").remove();
-					var new_mat_row = document.getElementById("material_table").insertRow(-1);
-					new_mat_row.innerHTML  = "<td style='background-color:#5CB85C'>"+new_material_group+"</td>";
+					var new_mat_row = document.getElementById("main_table").insertRow(-1);
+					new_mat_row.innerHTML  = "<td style='background-color:#5CB85C;width:100%;' colspan='2'>"+new_material_group+"</td>";
 				}
 				// add material to end of table
 				else {
-					var new_mat_row = document.getElementById("material_table").insertRow(-1);
-					new_mat_row.innerHTML  = "<td style='background-color:#5CB85C'>"+response["material_HTML"]+"</td>";
+					var new_mat_row = document.getElementById("main_table").insertRow(-1);
+					new_mat_row.innerHTML  = "<td style='background-color:#5CB85C;width:100%;' colspan='2'>"+response["material_HTML"]+"</td>";
 				}
 
 				alert("Successfully added "+response["material_name"]+" to materials");
@@ -877,14 +877,6 @@ function exit_with_success($message, $redirect=null) {
 	}
 
 
-	// ————————————— ADD NEW MATERIAL USED —————————————
-
-	function add_new_material_used() {
-		// TODO: copy from end.php
-	}
-
-
-
 	// ————————————–—— END CONFIRMATION ——————————————
 	// ———————————————————————————————————————
 
@@ -898,7 +890,8 @@ function exit_with_success($message, $redirect=null) {
 			alert("Please select a ticket status");
 			return;
 		}
-		else if(ticket_status.value == global_status["partial_fail"] && document.getElementById("ticket_notes").value.length < 10) {
+		else if(ticket_status.value == global_status["partial_fail"] || ticket_status.value == global_status["total_fail"]
+		&& document.getElementById("ticket_notes").value.length < 10) {
 			alert("You must state how the ticket failed");
 			return;
 		}

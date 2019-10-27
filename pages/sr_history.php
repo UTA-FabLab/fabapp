@@ -15,7 +15,7 @@ if (!empty(filter_input(INPUT_GET, "d_id")) && Devices::regexDID($_GET["d_id"]))
 }
 if ($_SERVER["REQUEST_METHOD"] === "POST" && filter_has_var(INPUT_POST, 'btnHistory') ){
     $d_id = explode("-", filter_input(INPUT_POST, 'devices'));
-    if (Devices::regexDID($d_id[0])){
+    if (Devices::regexDeviceID($d_id[0])){
         $device = new Devices($d_id[0]);
     }
 } elseif($_SERVER["REQUEST_METHOD"] === "POST" && filter_has_var(INPUT_POST, 'issueBtn')) {
@@ -53,44 +53,46 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && filter_has_var(INPUT_POST, 'btnHist
                             </tr>
                         </thead>
                         <?php $result = Service_call::byDevice($device);
-                        while($row = $result->fetch_assoc()){ ?>
-                        <tr>
-                            <td>
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-                                        <i class='far fa-calendar-alt' title="<?php echo date($sv['dateFormat'], strtotime($row["sc_time"])); ?>"></i>
-                                    </button>
-                                    <ul class="dropdown-menu" role="menu">
-                                        <li style="padding-left: 5px;"><?php echo date($sv['dateFormat'], strtotime($row["sc_time"])); ?></li>
-                                    </ul>
-                                </div>
-                                <?php $staff = Staff::withID($row['staff_id']); ?>
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-                                        <i class="<?php echo $staff->getIcon();?> fa-lg" title="<?php echo $staff->getOperator();?>"></i>
-                                    </button>
-                                    <ul class="dropdown-menu" role="menu">
-                                        <li style="padding-left: 5px;"><?php echo $staff->getOperator();?></li>
-                                    </ul>
-                                </div>
-                            </td>
-                            <td><?php 
-                                $sr = Service_reply::bySc_id($row['sc_id']);
-                                echo("<a href = '/pages/sr_log.php?sc_id=$row[sc_id]'>".count($sr)."</a>"); 
-                            ?></td>
-                            <td>
-                                <?php if($row['solved'] == 'Y'){
-                                    echo("<a href = '/pages/sr_log.php?sc_id=$row[sc_id]'>Complete</a>");
-                                } else {
-                                    echo("<a href = '/pages/sr_log.php?sc_id=$row[sc_id]'>Incomplete</a>");
-                                } ?>
-                            </td>
-                            <td>
-                                <?php Service_lvl::getDot($row['sl_id']);
-                                echo "<strong>" . Service_lvl::sltoMsg($row['sl_id']) . "</strong> - " . $row['sc_notes'];?>
-                            </td>
-                        </tr>
-                        <?php } ?>
+                        if($result) {
+                            while($row = $result->fetch_assoc()){ ?>
+                            <tr>
+                                <td>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                                            <i class='far fa-calendar-alt' title="<?php echo date($sv['dateFormat'], strtotime($row["sc_time"])); ?>"></i>
+                                        </button>
+                                        <ul class="dropdown-menu" role="menu">
+                                            <li style="padding-left: 5px;"><?php echo date($sv['dateFormat'], strtotime($row["sc_time"])); ?></li>
+                                        </ul>
+                                    </div>
+                                    <?php $staff = Staff::withID($row['staff_id']); ?>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                                            <i class="<?php echo $staff->getIcon();?> fa-lg" title="<?php echo $staff->getOperator();?>"></i>
+                                        </button>
+                                        <ul class="dropdown-menu" role="menu">
+                                            <li style="padding-left: 5px;"><?php echo $staff->getOperator();?></li>
+                                        </ul>
+                                    </div>
+                                </td>
+                                <td><?php 
+                                    $sr = Service_reply::bySc_id($row['sc_id']);
+                                    echo("<a href = '/pages/sr_log.php?sc_id=$row[sc_id]'>".count($sr)."</a>"); 
+                                ?></td>
+                                <td>
+                                    <?php if($row['solved'] == 'Y'){
+                                        echo("<a href = '/pages/sr_log.php?sc_id=$row[sc_id]'>Complete</a>");
+                                    } else {
+                                        echo("<a href = '/pages/sr_log.php?sc_id=$row[sc_id]'>Incomplete</a>");
+                                    } ?>
+                                </td>
+                                <td>
+                                    <?php Service_lvl::getDot($row['sl_id']);
+                                    echo "<strong>" . Service_lvl::sltoMsg($row['sl_id']) . "</strong> - " . $row['sc_notes'];?>
+                                </td>
+                            </tr>
+                        <?php }
+                        } ?>
                     </table>
                 </div>
                 <div class="panel-footer clearfix">

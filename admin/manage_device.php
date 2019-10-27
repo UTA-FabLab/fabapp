@@ -107,7 +107,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn1'])) {
     
     if(isset($_POST['device_group_parent']) && isset($_POST['dg_pay']) && isset($_POST['dg_mats']) && isset($_POST['dg_store']) && isset($_POST['dg_juicebox']) && isset($_POST['dg_thermal']) && isset($_POST['dg_granular']) && preg_match('/^[a-z0-9\-\_\# ]{1,100}$/i', $_POST['device_group_name']) && preg_match('/^[a-z0-9\-\#\_]{1,15}$/i', $_POST['device_group_abv'])){
         
-        $dg_id1 = DeviceGroup::insert_dg($device_group_abv1, $device_group_parent1, $device_group_name1, $dg_pay1, $dg_mats1, $dg_store1, $dg_juicebox1, $dg_thermal1, $dg_granular1);
+        $dg_id1 = DeviceGroup::insert_new_device_group($device_group_abv1, $device_group_parent1, $device_group_name1, $dg_pay1, $dg_mats1, $dg_store1, $dg_juicebox1, $dg_thermal1, $dg_granular1);
 
         if (is_int($dg_id1)){
             $_SESSION['dg_msg'] = "success";
@@ -231,7 +231,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
     <div class="row">
         <div class="col-md-6">
             <div class="panel panel-default">
-                <div class="panel-heading">
+                <div class="panel-heading" style="background-color: #B5E6E6;">
                     <i class="fas fa-box" aria-hidden="true"></i> Add Device
                 </div>
                 <form name="mdform" id="mdform" autocomplete="off" method="POST" action="">
@@ -309,9 +309,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
                     </div>
                     <!-- /.panel-body -->
                     <div class="panel-footer clearfix">
-                        <div class="pull-right"><input class="btn btn-primary" type="submit" name="submitBtn" id="submitBtn" onclick="return confirm(&quot;You are about to add this device to the FabApp's Database. Click OK to continue or CANCEL to quit.&quot;)" value="Add Device"></div>
-                        <button id="remove_d" name="remove_d" class='btn btn-danger' style='right: 10px;' type='button' data-toggle='collapse' data-target='.remove_collapse' 
-                          onclick="button_text(this)" aria-expanded='false' aria-controls='collapse'>Remove Device</button>
+                        <div class="pull-right"><input class="btn btn-success" type="submit" name="submitBtn" id="submitBtn" onclick="return confirm(&quot;You are about to add this device to the FabApp's Database. Click OK to continue or CANCEL to quit.&quot;)" value="Add Device"></div>
+                        <button id="remove_d" name="remove_d" class='btn' style='right: 10px;' type='button' data-toggle='collapse' data-target='.remove_collapse' 
+                          onclick="button_text(this)" aria-expanded='false' aria-controls='collapse'>Remove Device <i class="fas fa-chevron-down"></i></button>
                         <form name="mdform3" id="mdform3" autocomplete="off" method="POST" action="">
                         <div class='collapse remove_collapse'>
                             <div class="panel-body">
@@ -342,9 +342,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
                                 </table>
                             </div>
                             <div class="panel-footer clearfix">
-                                <!--<div class="pull-right"><input class="btn btn-danger" type="submit" name="submitBtn2" id="submitBtn2" value="Submit"></div>-->
                                 <div style="text-align: center">
-                                    <button class="btn btn-danger" name="submitBtn2" id="submitBtn2" onclick="return confirm(&quot;You are about to delete this device from the FabApp's Database. Click OK to continue or CANCEL to quit.&quot;)" value="Submit">
+                                    <button class="btn btn-warning" style="background-color: #FF7171;" name="submitBtn2" id="submitBtn2" onclick="return confirm(&quot;You are about to delete this device from the FabApp's Database. Click OK to continue or CANCEL to quit.&quot;)" value="Submit">
                                         Remove Device
                                     </button>
                                 </div>
@@ -357,7 +356,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
             </div>
             <!-- /.panel -->
             <div class="panel panel-default">
-                <div class="panel-heading">
+                <div class="panel-heading" style="background-color: #B5E6E6;">
                     <i class="fas fa-edit" aria-hidden="true"></i> Edit Device
                 </div>
                 <form name="mdform1" id="mdform1" autocomplete="off" method="POST" action="">
@@ -390,7 +389,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
                     </div>
                     <!-- /.panel-body -->
                     <div class="panel-footer clearfix">
-                        <div class="pull-right"><input class="btn btn-primary" type="submit" name="submitBtn3" id="submitBtn3" onclick="return confirm(&quot;You are about to be redirected to the edit device page for this device. Click OK to continue or CANCEL to quit.&quot;)" value="Edit Device"></div>
+                        <div class="pull-right"><input class="btn btn-success" type="submit" name="submitBtn3" id="submitBtn3" onclick="return confirm(&quot;You are about to be redirected to the edit device page for this device. Click OK to continue or CANCEL to quit.&quot;)" value="Edit Device"></div>
                     </div>
                 </form>
             </div>
@@ -400,7 +399,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
 
         <div class="col-md-6">
             <div class="panel panel-default">
-                <div class="panel-heading">
+                <div class="panel-heading" style="background-color: #B5E6E6;">
                     <i class="fas fa-box" aria-hidden="true"></i> Add Device Group
                 </div>
                 <form name="mdform2" id="mdform2" autocomplete="off" method="POST" action="">
@@ -493,7 +492,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
                 </div>
                 <!-- /.panel-body -->
                 <div class="panel-footer clearfix">
-                    <div class="pull-right"><input class="btn btn-primary" type="submit" name="submitBtn1" id="submitBtn1" onclick="return confirm(&quot;You are about to add this device group to the FabApp's Database. Click OK to continue or CANCEL to quit.&quot;)" value="Add Device Group"></div>
+                    <div class="pull-right"><input class="btn btn-success" type="submit" name="submitBtn1" id="submitBtn1" onclick="return confirm(&quot;You are about to add this device group to the FabApp's Database. Click OK to continue or CANCEL to quit.&quot;)" value="Add Device Group"></div>
                 </div>
                 </form>
             </div>
@@ -553,8 +552,8 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
     }
     
     function button_text(element) {
-        if(element.innerHTML == "Remove Device") element.innerHTML = "Back";
-        else { element.innerHTML = "Remove Device"; }
+        if(element.innerHTML == "Remove Device <i class=\"fas fa-chevron-down\"></i>") element.innerHTML = "Back <i class=\"fas fa-chevron-up\"></i>";
+        else { element.innerHTML = "Remove Device <i class=\"fas fa-chevron-down\"></i>"; }
     }
     
     function durationInfo(){

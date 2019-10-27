@@ -228,20 +228,30 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 									<li>
 										<a href="/pages/current_inventory.php"><i class="far fa-check-square"></i> Usable Inventory</a>
 									</li>
+									<?php } ?>
 									<li>
 										<a href="/pages/sheet_goods.php"><i class="fas fa-square"></i> Sheet Goods</a>
 									</li>
-									<?php } ?>
 								</ul>
 								<!-- /.nav-second-level -->
 							</li>
 						<?php } 
-						else { ?>
-						<li>
-							<a href="/pages/inventory.php"><i class="fas fa-warehouse"></i> Inventory</a>
-						</li>
+						else {
+							if(isset($staff) && $staff->getRoleID() >= $sv['LvlOfStaff']) { ?>
+								<li>
+									<a href="#"><i class="fas fa-warehouse"></i> Inventory<span class="fas fa-angle-left"></span></a>
+									<ul class="nav nav-second-level">
+										<li>
+											<a href="/pages/inventory.php"><i class="fas fa-box"></i> On Hand</a>
+										</li>
+										<li>
+											<a href="/pages/sheet_goods.php"><i class="fas fa-square"></i> Sheet Goods</a>
+										</li>
+									</ul>
+									<!-- /.nav-second-level -->
+								</li>
 						<!-- if role > 6 {show} -->
-						<?php }
+						<?php } }
 						if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfStaff']) { ?>
 							<li>
 								<a href="#" id="searchLink"><i class="fas fa-search"></i> Look-Up By<span class="fas fa-angle-left"></span></a>
@@ -330,7 +340,7 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 								<a href="/pages/wait_ticket.php"><i class="fas fa-list-ol"></i> Wait Queue Ticket</a>
 							</li>
 						<?php } 
-						if(isset($staff) && $staff->getRoleID() >= $sv['minRoleTrainer']) {
+						if(isset($staff) && $staff->getRoleID() >= 10) {
 						?>
 							<li>
 								<a href="#"><i class="fas fa-sitemap"></i> Admin<span class="fas fa-angle-left"></span></a>
@@ -345,11 +355,14 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 										<a href="/admin/objbox.php"><i class="fas fa-gift"></i> Objects in Storage</a>
 									</li>
 									<li>
-										<a href="/admin/onboarding.php"><i class="fas fa-clipboard"></i> OnBoarding</a>
-									</li>
-									<li>
 										<a herf="#"><i class="fas fa-users"></i> Users<span class="fas fa-angle-left"></span></a>
 										<ul class="nav nav-third-level">
+											<li>
+												<a href="/admin/onboarding.php"><i class="fas fa-user-plus"></i> OnBoarding</a>
+											</li>
+											<li>
+												<a href="/admin/offboarding.php"><i class="fas fa-user-times"></i> OffBoarding</a>
+											</li>
 											<li>
 												<a href="/admin/addrfid.php"><i class="fas fa-wifi"></i> Add RFID</a>
 											</li>
@@ -359,6 +372,9 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 								<!-- /.nav-second-level -->
 							</li>
 						<li>
+						<?php }
+						if(isset($staff) && $staff->getRoleID() >= 11) {
+						?>
 							<a href="#"><i class="fas fa-user-cog"></i> Site Tools<span class="fas fa-angle-left"></span></a>
 							<ul class="nav nav-second-level">
 								<li>

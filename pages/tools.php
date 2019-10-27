@@ -218,7 +218,12 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 		//Get File & prep Reader
 		var in_file = document.getElementById('files').files[0];
 		var reader = new FileReader();
-		var file_name = in_file.name.insert(in_file.name.length-6, "_ColorSwap");
+
+		// filename
+		var materials = document.getElementsByClassName("dm_select");
+		var material_string = "";
+		for(var x = 0; x < materials.length; x++) material_string += "%"+materials[x].value;
+		var file_name = in_file.name.insert(in_file.name.length-6, material_string);
 		
 		//Array of Z & m_id Locations
 		var filament_amts = [0];
@@ -269,7 +274,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 			// console.log("TOTAL VOLUME: ", total_filament_volume);
 
 			// insert filament volumes used; finish up file
-			gcode[gcode.length-1] = ("; filament used [cm3] = "+filament_volumes.join(', ')+"\n");
+			gcode[gcode.length-1] = ("; filament used [cm3] = "+filament_volumes.join(', ')+"\n") + gcode[gcode.length-1];
 			gcode = gcode.join("\n");
 
 			//Output File to Computer

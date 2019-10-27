@@ -43,11 +43,11 @@ class Service_call {
 		global $mysqli;
 		
 		if ($result = $mysqli->query("
-			SELECT `service_call`.`sc_id`, `staff_id`, `service_call`.`device_id`, `sl_id`, `sc_time`, `sc_notes`, `solved`, `device_name`
+			SELECT `service_call`.`sc_id`, `staff_id`, `service_call`.`d_id`, `sl_id`, `sc_time`, `sc_notes`, `solved`, `device_desc`
 			FROM `service_call`
 			LEFT JOIN `devices`
-			ON `service_call`.`device_id` = `devices`.`device_id`
-			WHERE `service_call`.`device_id` = '$device->id' ORDER BY `sc_id` ASC
+			ON `service_call`.`d_id` = `devices`.`d_id`
+			WHERE `service_call`.`d_id` = '$device->device_id' ORDER BY `sc_id` ASC
 		")){
 			return $result;
 		}
@@ -61,7 +61,7 @@ class Service_call {
 		
 		$staff_id = $staff->getOperator();
 		if (is_object($device)){
-			$device_id = $device->id;
+			$device_id = $device->device_id;
 		} elseif (is_string($device)) {
 			return $device;
 		} else {
@@ -71,10 +71,10 @@ class Service_call {
 		
 		if ($sl_id == 1){
 			//By default issues are marked complete, as they do not need require additional attention.
-			$query = "INSERT INTO `service_call` (`staff_id`, `device_id`, `sl_id`, `solved`, `sc_notes`, `sc_time`)
+			$query = "INSERT INTO `service_call` (`staff_id`, `d_id`, `sl_id`, `solved`, `sc_notes`, `sc_time`)
 				VALUES (?, ?, ?, 'Y', ?, CURRENT_TIMESTAMP);";
 		} else {
-			$query = "INSERT INTO `service_call` (`staff_id`, `device_id`, `sl_id`, `solved`, `sc_notes`, `sc_time`)
+			$query = "INSERT INTO `service_call` (`staff_id`, `d_id`, `sl_id`, `solved`, `sc_notes`, `sc_time`)
 				VALUES (?, ?, ?, 'N', ?, CURRENT_TIMESTAMP);";
 		}
 		
@@ -162,10 +162,10 @@ class Service_call {
 		global $mysqli;
 		
 		if ($result = $mysqli->query("
-			SELECT `device_name`, `sl_id`, `sc_id`, `staff_id`, `sc_time`, `sc_notes`, `solved`
+			SELECT `device_desc`, `sl_id`, `sc_id`, `staff_id`, `sc_time`, `sc_notes`, `solved`
 			FROM `service_call`
 			LEFT JOIN `devices`
-			ON `service_call`.`device_id` = `devices`.`device_id`
+			ON `service_call`.`d_id` = `devices`.`d_id`
 			WHERE `solved` = 'N'
 			ORDER BY `sc_id` ASC
 		")){

@@ -40,10 +40,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['payBtn']) && $errorMs
 
         if (is_int($result)){
             if($errorMsg == ""){
+                $cart_inv_ids = array();
+                $cart_quantities = array();
                 for ($i = 0; $i < sizeof($_SESSION['cart_array']); $i++) {
 					Materials::sold_sheet_quantity($_SESSION['cart_array'][$i], $_SESSION['co_quantity'][$i]);
 					Transactions::insertSheetTrans($sheet_ticket->getTrans_id(), $_SESSION['cart_array'][$i], $_SESSION['co_quantity'][$i]);
+                    $cart_inv_ids[$i] = $_SESSION['cart_array'][$i];
+                    $cart_quantities[$i] = $_SESSION['co_quantity'][$i];
                 }
+                Transactions::printSheetTicket($sheet_ticket->getTrans_id(), $cart_inv_ids, $cart_quantities, $_SESSION['co_price']);
                 //all good goto lookup
                 unset($_SESSION['sheet_ticket']);
                 unset($_SESSION['cart_array']);
@@ -113,7 +118,7 @@ if ($errorMsg != ""){
                                 <tr>
                                     <td>Payment </td>
                                     <td><select name="selectPay" id="selectPay" onchange="updateBtn(this.value)">
-                                        <option hidden selected>Select</option>
+                                        <option value="" disabled selected>Select</option>
                                         <?php
                                             $accounts = Accounts::listAccts($user, $staff);
                                             $ac_owed = Acct_charge::checkOutstanding($sheet_ticket->getUser()->getOperator());
@@ -128,7 +133,7 @@ if ($errorMsg != ""){
                                     </select></td>
                                 </tr>
                                 <tr>
-                                    <td><b>Payee</b></td>
+                                    <td><b>Purchaser</b></td>
                                     <td><input disabled type="text" class="form-control" name="payee" id="payee" value="<?php echo($sheet_ticket->getUser()->getOperator()); ?>"
                                             maxlength="10"></td>
                                 </tr>
@@ -245,9 +250,12 @@ if ($errorMsg != ""){
                                 <td>
                                 </td>
                                 <td>
+                                    <div class="pull-right">
+                                        <b>Total:</b>
+                                    </div>
                                 </td>
                                 <td>
-                                    <b><?php echo ("Total: $".$_SESSION['co_price']); ?></b>
+                                    <b><?php echo ("$".$_SESSION['co_price']); ?></b>
                                 </td>
                             </tr>
                             
