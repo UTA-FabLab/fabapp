@@ -668,7 +668,7 @@ function exit_with_success($message, $redirect=null) {
 	function add_new_material_used() {
 		var m_id = document.getElementById("new_material").value;
 		if(isNaN(parseInt(m_id))) return;
-		if(!confirm("Are you sure you would like to add another material to this transaction?"));
+		if(!confirm("Are you sure you would like to add another material to this transaction?")) return;
 		
 		// add_new_material: request function from page (new material instance created, return HTML)
 		// edit_request: request coming from edit.php (add functions/staff row)
@@ -676,7 +676,7 @@ function exit_with_success($message, $redirect=null) {
 			url: "./sub/material_ajax_requests.php",
 			type: "POST",
 			dataType: "json",
-			data: {	"add_new_material" : true, "request_from_edit_page" : true, 
+			data: {	"add_edit_mat_used_instance" : true, 
 					"m_id" : m_id, "trans_id" : <?php echo $ticket->trans_id; ?>
 			},
 			success: function(response) {

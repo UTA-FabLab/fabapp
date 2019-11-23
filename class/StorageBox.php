@@ -128,6 +128,22 @@ class StorageObject {
 	}
 
 
+	// find the unit currently holding the sought object; return object of unit
+	public static function get_unit_for_trans_id($trans_id) {
+		global $mysqli;
+
+		if($results = $mysqli->query(	"SELECT `drawer`, `unit`
+										FROM `storage_box`
+										WHERE `trans_id` = '$trans_id'"
+		)) {
+			$results = $results->fetch_assoc();
+			return $results["drawer"].$results["unit"];
+		}
+
+		return "Could not reach database";
+	}
+
+
 	public static function number_of_objects_in_storage() {
 		global $mysqli;
 
@@ -305,14 +321,6 @@ class StorageUnit {
 		$statement->bind_param("ss", $drawer, $unit);
 		if($statement->execute()) return null;
 		return "Failed to delete unit";
-	}
-
-
-	// find the unit currently holding the sought object; return object of unit
-	public function get_unit_for_trans_id($trans_id) {
-		global $mysqli;
-
-		return $unit;
 	}
 
 
@@ -572,7 +580,7 @@ class StorageDrawer {
 									"onclick" => "alert(\"Incorrect box\");");
 				$empty = array("style" => "background-color:#000000;color:#000000;border:solid black;border-width:2px;");
 				$selected_behavior = array("style" => "background-color:#00FF00;border:solid black;border-width:2px;", 
-									"onclick" => "storage_selected(this, \"$drawer-$unit_indicator\")");
+									"onclick" => "storage_selected(this, \"$drawer$unit_indicator\")");
 
 				$select_unit_callback = function($drawer_unit) use ($unit_indicator) {return $drawer_unit->unit_indicator == $unit_indicator;};
 				return new StorageDrawer($drawer, $basic_unit, $empty, $select_unit_callback, $selected_behavior);
