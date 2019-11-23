@@ -91,7 +91,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['end_button'])) {
 		$error = StorageObject::add_object_to_location_from_possible_previous($location, $staff, $trans_id);
 		exit_if_error($error, "./lookup.php?trans_id=$trans_id");
 		// nothing more to do for ticket; print message and go to home
-		$_SESSION['success_msg'] == "Successfully ended ticket #$trans_id";
+		$_SESSION['success_msg'] = "Successfully ended and stored ticket #$trans_id";
 		header("Location:/index.php");
 	}
 	// already paid for; process is finished
@@ -103,169 +103,10 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['end_button'])) {
 	}
 	// proceed to payment; if balance is negative, this is where they should be refunded
 	else {
-		$_SESSION['success_msg'] == "Please proceed to payment";
+		$_SESSION['success_msg'] = "Please proceed to payment";
 		header("Location:./pay.php?trans_id=$trans_id");
 	}
 }
-
-
-
-
-// ——————————— MATERIAL GROUPING AND PRINTING ———————————
-
-// function called to create inputs and statuses
-function group_materials_by_parent_and_create_inputs($mats_used) {
-	// group materials by parent
-	$m_parents = $group_quantity_used = $parentless = array();
-	foreach($mats_used as $mu) {
-		// combine with previously added 
-		if(array_key_exists($mu->material->m_parent->m_name, $m_parents)) {
-			$m_parents[$mu->material->m_parent->m_name][] = $mu;
-			$group_quantity_used[$mu->material->m_parent->m_name] += $mu->quantity_used;
-		}
-		// create new parent
-		elseif($mu->material->m_parent->m_name) {
-			$m_parents[$mu->material->m_parent->m_name] = array($mu);
-			$group_quantity_used[$mu->material->m_parent->m_name] = $mu->quantity_used;
-		}
-		else $parentless[] = $mu;
-	}
-
-	// create grouped inputs
-	$material_groups = array();
-	foreach($m_parents as $parent_name => $group)
-		if(count($group) == 1)
-			$material_groups[] =	"<table class='table table-bordered' style='margin-bottom:0px !important;'>".
-										create_material_html_block($group).
-									"</table>";
-		else
-			$material_groups[] = materials_group_table_block($group, $parent_name, $group_quantity_used[$parent_name]);
-
-	// create ungrouped inputs
-	foreach($parentless as $single_material)
-		$material_groups[] = 	"<table class='table table-bordered' style='margin-bottom:0px !important;'>".
-									create_material_html_block(array($single_material)).
-								"</table>";
-	return $material_groups;
-}
-
-
-// create a material group with a parent element and the children material blocks to the right
-function materials_group_table_block($group, $parent_name, $quantity) {
-	global $sv;
-
-	$parent_code = str_replace(" ", "_", $parent_name);  // name excluding spaces for id's and classes
-	return 	"<table width='100%' class='table table-bordered' style='margin-bottom:0px !important;'>
-				<tr class='tablerow info'>
-					<td colspan='2'>$parent_name</td>
-				</tr>
-				<tr>
-					<td>
-						<div class='input-group'>
-							<span class='input-group-addon'>MATERIAL-GROUP <i class='$sv[currency]'></i> ".sprintf("%0.2f", $group[0]->material->price)." x </span>
-							<input type='number' id='$parent_code' class='form-control' autocomplete='off' value='$quantity' style='text-align:right;'
-							onkeyup='adjust_children_input(this); adjust_balances();' onchange='adjust_children_input(this); adjust_balances();' >
-							<span class='input-group-addon'>".$group[0]->material->unit."</span>
-						</div>
-					</td>
-					<td style='padding:0px;'>
-						<table class='table table-striped' style='margin-bottom:0px !important;'>".
-							create_material_html_block($group).
-						"</table>
-					</td>
-				</tr>
-			</table>\n";
-}
-
-
-// create a <tr> for a mat used instance: include name, input, status selection
-function create_material_html_block($group) {
-	global $status, $sv;
-	$individual_materials = array();  // html blocks (rows of tables) to be imploded together
-
-	foreach($group as $mu) {
-		$mat = $mu->material;  // sugar
-
-		// —— SELECT ——
-		// if(!$mu->quantity_used) $default_selection = "selected";  // if not mats used, change selected to Not Used
-		$measurability = $mu->material->is_measurable ? "measurable" : "immeasurable";
-		$select = 	"<select id='$mu->mu_id-select' class='form-control mat_used_select $measurability' 
-					onchange='adjust_ticket_status(this); adjust_input_for_status(this);'>
-						<option selected hidden>SELECT</option>
-						<option value='$status[used]'>Used</option>
-						<option $default_selection value='$status[unused]'>Not Used</option>
-						<option value='$status[failed_mat]'>Failed Material</option>
-					</select>";
-
-		// —— MAT QUANTITY INPUT ——
-		if($mu->material->is_measurable) 
-			$quantity_input =	"<tr>
-									<td>
-										".material_quantity_input($mu)."
-									</td>
-								</tr>";
-		// name excluding spaces for id's and classes
-		$parent_code = $mu->material->m_parent ? str_replace(" ", "_", $mu->material->m_parent->m_name) : "";
-
-		$individual_materials[] = 	"<td>
-										<table class='table $parent_code' width='100%' style='margin-bottom:0px !important;'>
-											<tr class='tablerow info'>
-												<td>
-													$mat->m_name".
-													($mat->color_hex ? " <div class='color-box' style='background-color:#$mat->color_hex;' align='left'/>" : null).
-												"</td>
-											</tr>
-											<!-- row for quantity if material is measurable -->
-											$quantity_input
-											<tr class='mat_select_row'>
-												<td>
-													$select
-												</td>
-											</tr>
-										</table>
-									</td>";
-	}
-	return "<tr>".implode("</tr>\n<tr>", $individual_materials)."</tr>";
-}
-
-
-// create input html for quanities (either time or standard): used by create_material_html_block(.)
-function material_quantity_input($mat_used) {
-	global $sv;
-
-	// name excluding spaces for id's and classes
-	$parent_code = $mat_used->material->m_parent ? str_replace(" ", "_", $mat_used->material->m_parent->m_name) : "";
-
-	if($mat_used->material->unit == "hour(s)") {
-		$min_hours = intval($sv['minTime']);
-
-		$hour = floor($mat_used->quantity_used);
-		$minute = ($mat_used->quantity_used - $hour) * 60;
-		return	"<div class='input-group'>
-					<span class='input-group-addon'><i class='$sv[currency]'></i> ".sprintf("%0.2f", $mat_used->material->price)." x </span>
-					<input type='number' id='$mat_used->mu_id-input' class='form-control mat_used_input time $parent_code-child' 
-					onkeyup='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
-					onchange='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
-					autocomplete='off' style='text-align:right;' min='$min_hours' step='1' value='$hour'>
-					<span class='input-group-addon'>Hours</span>
-
-					<input type='number' id='$mat_used->mu_id-minute' class='form-control time' 
-					onkeyup='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
-					onchange='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
-					autocomplete='off' style='text-align:right;' min='0' max='59' value='$minute'>
-					<span class='input-group-addon'>Minutes</span>
-				</div>";
-	}
-	return 	"<div class='input-group'>
-				<span class='input-group-addon'><i class='$sv[currency]'></i> ".sprintf("%0.2f", $mat_used->material->price)." x </span>
-				<input type='number' id='$mat_used->mu_id-input' class='form-control mat_used_input $parent_code-child' 
-				onkeyup='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
-				onchange='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
-				autocomplete='off' value='".sprintf("%0.2f", $mat_used->quantity_used)."' style='text-align:right;' min='0'/>
-				<span class='input-group-addon'>".$mat_used->material->unit."</span>
-			</div>";
-}
-
 
 
 // —————————————————— UTILITY  ——————————————————
@@ -364,7 +205,10 @@ function exit_if_error($error, $redirect=null) {
 											<select id='ticket_status' name='ticket_status' class='form-control' onchange='adjust_materials_status(this);'>
 												<option selected hidden>SELECT</option>
 												<?php if($ticket->device->device_group->is_storable) { ?>
-													<option value='<?php echo $status['stored']; ?>'>Storage</option>
+													<option value='<?php echo $status['stored']; ?>'
+													<?php if(StorageObject::object_is_in_storage($ticket->trans_id)) echo "selected"; ?>>
+														Storage
+													</option>
 													<option value='<?php echo $status['complete']; ?>'>Pick Up</option>
 												<?php } 
 												else {?>
@@ -375,8 +219,19 @@ function exit_if_error($error, $redirect=null) {
 												<option value='<?php echo $status['cancelled']; ?>'>Cancelled</option>
 											</select>
 										</td>
-										<td id='storage_location' style='padding:4px;align:right' hidden>
-										</td>
+										<?php if(StorageObject::object_is_in_storage($ticket->trans_id)) { ?>
+											<td id='storage_location' style='padding:4px;align:right'>
+												<span onclick='reset_and_show_storage_modal();' style='background-color:#0055FF;
+												border:4px solid #0055FF;border-radius:4px;padding:8px;margin:auto;color:#FFFFFF;'>
+													<?php echo StorageObject::get_unit_for_trans_id($ticket->trans_id); ?>
+												</span>
+											</td>
+										<?php 
+										} 
+										else { ?>
+											<td id='storage_location' style='padding:4px;align:right' hidden>
+											</td>
+										<?php } ?>
 									</tr>
 								</table>
 							</td>
@@ -390,41 +245,49 @@ function exit_if_error($error, $redirect=null) {
 								</form>
 							</td>
 						</tr>
-					<!------------------ MATERIALS ------------------>
-						<?php
-						$material_groups = group_materials_by_parent_and_create_inputs($ticket->mats_used);
-						foreach($material_groups as $mat_used) {
-							echo	"<tr>
-										<td colspan='2'>
-											$mat_used
-										</td>
-									</tr>";
-						 } ?>
 					</table>
-
-				<!--------------------------- NEW MATERIAL --------------------------->
-					<?php if($ticket->device->device_group->all_device_group_materials()) { ?>
-						<table class='table table-bordered table-striped'>
-							<tr class='warning'>
-								<td colspan='3'> Add material </td>
-							</tr>
-							<tr>
-								<td class='col-sm-4'>Material</td>
-								<td class='col-sm-5'>
-									<select id='new_material' name='new_material' class='form-control'>
-										<?php
-										// allows for materials to added twice
-										foreach($ticket->device->device_group->all_device_group_materials() as $material)
-											echo "<option value='$material->m_id'>$material->m_name</option>";
-										?>
-									</select>
-								</td>
-								<td class='col-sm-4'>
-									<button type='button' name='new_material_button' class='btn btn-info' onclick='add_new_material_used();'>Add Material</button>
-								</td>
-							</tr>
-						</table>
-					<?php } ?>
+				</div>
+			</div>
+		<!------------------ MATERIALS ------------------>
+			<?php
+			// if materials associated with ticket, or materials can be associated with ticket
+			if($ticket->mats_used || $ticket->device->device_group->all_device_group_materials()) { ?>
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<i class="fas fa-ticket-alt fa-fw"></i> Materials for Ticket #<?php echo $ticket->trans_id;?>
+					</div>
+					<div class="panel-body">
+						<div id='mats_used'>
+							<?php
+							if($ticket->mats_used) 
+								echo Mats_Used::group_mats_used_HTML($ticket->mats_used); 		
+							?>
+						</div>
+						<?php if($ticket->device->device_group->all_device_group_materials()) { ?>
+							<table class='table table-bordered table-striped'>
+								<tr class='warning'>
+									<td colspan='3'> Add material </td>
+								</tr>
+								<tr>
+									<td class='col-sm-4'>Material</td>
+									<td class='col-sm-5'>
+										<select id='new_material' name='new_material' class='form-control'>
+											<?php
+											// allows for materials to added twice
+											foreach($ticket->device->device_group->all_device_group_materials() as $material)
+												echo "<option value='$material->m_id'>$material->m_name</option>";
+											?>
+										</select>
+									</td>
+									<td class='col-sm-4'>
+										<button type='button' name='new_material_button' class='btn btn-info' onclick='add_new_material_used(document.getElementById("new_material").value);'>Add Material</button>
+									</td>
+								</tr>
+							</table>
+						<?php } ?>
+					</div>
+				</div>
+			<?php } ?>
 				<!------------------ COST AND SUBMIT ------------------>
 					<table width='100%'>
 						<tr>
@@ -481,11 +344,11 @@ function exit_if_error($error, $redirect=null) {
 					<table id='material_confirmation_table' class='table'>
 					</table>
 					<div id='storage_confirmation' hidden>
-						<h3 id='storage_confirmation_location'></h3>
+						<h4 id='storage_confirmation_location' align='center'></h4>
 					</div>
 					<div id='notes_confirmation' name='notes_confirmation' hidden>
 						<strong>NOTES: </strong>
-						<textarea id='ticket_notes_modal' name='ticket_notes_modal' class='form-control' width='100%'>
+						<textarea id='ticket_notes_modal' name='ticket_notes_modal' class='form-control' width='100%' readonly>
 						</textarea>
 					</div>
 				</div>
@@ -501,7 +364,7 @@ function exit_if_error($error, $redirect=null) {
 
 
 <!-- modal for selecting storage location -->
-<div id='storage_modal' class='modal'>
+<div id='storage_modal' class='modal' style='overflow-y:auto;'>
 	<div class='modal-dialog'>
 		<div class='modal-content'>
 			<div class='modal-header'>
@@ -511,7 +374,7 @@ function exit_if_error($error, $redirect=null) {
 			<div class='modal-body'>
 				<div class='input-group'>
 					<span class='input-group-addon'>Object Type</span>
-					<select class='form-control' onchange='get_box_for_type(this);'>
+					<select id='storage_box_type_select' class='form-control' onchange ='get_box_for_type(this);' >
 						<option selected disabled hidden>—</option>
 						<?php 
 						$types = StorageUnit::types();
@@ -538,12 +401,7 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 ?>
 
 <script>
-
-	// bring status numbers (dynamically) to front end
-	var global_status = {<?php echo "'total_fail' : $status[total_fail], 'partial_fail' : $status[partial_fail], 
-										'cancelled' : $status[cancelled], 'complete' : $status[complete], 
-										'stored' : $status[stored], 'failed_mat' : $status[failed_mat], 
-										'used' : $status[used], 'unused' : $status[unused]"; ?>};
+	var COLORS = ["DD00DD", "0F8DFF", "339933", "FFFF00", "888800", "FF0000"];
 
 
 	// ————————————— INPUT-STATUS CONTROL —————————————–
@@ -583,7 +441,7 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 			this.element; 
 			this.is_time_based;
 			this.initialize_element_and_type(input);
-			this.parent = this.parent_from_classes(input);
+			this.subtotal = this.subtotal_from_classes(input);
 			this.price = parseFloat(input.parentElement.children[0].innerHTML.match(/\d+(\.\d+)?/g));
 			this.status = document.getElementById(this.mu_id+"-select");
 		}
@@ -622,11 +480,11 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 		}
 
 
-		// retrieve the parent name of a class (<parent_name>-child); return null if no parent name
-		parent_from_classes(input) {
+		// retrieve the parent name of a class (<parent_name>-input); return null if no parent name
+		subtotal_from_classes(input) {
 			for(var x = 0; x < input.classList.length; x++)
-				if(input.classList[x].includes("-child")) 
-					return document.getElementById(input.classList[x].substr(0, input.classList[x].indexOf('-child')));
+				if(input.classList[x].includes("-input"))
+					return document.getElementById(input.classList[x].substr(0, input.classList[x].indexOf('-input'))+"-subtotal");
 			return null;
 		}
 	}
@@ -640,7 +498,7 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 
 	// as group total is changed, change individual units used proportionally for new total
 	function adjust_children_input(parent_input) {
-		var children = children_input_objects(parent_input.id);
+		var children = children_input_objects(parent_input.id.substr(0, parent_input.id.indexOf("-subtotal")));
 		var quantity_sum = 0;
 		// get previous sum & create input objects
 		for(var x = 0; x < children.length; x++) {
@@ -659,9 +517,9 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	// as individual units used are changed, change group total units for new individual; adjust statuses
 	function adjust_parent_input(child_input_element) {
 		var mu_input = new Input(child_input_element);
-		if(!mu_input.parent) return;  // ignore ungrouped elements
+		if(!mu_input.subtotal) return;  // ignore ungrouped elements
 
-		var children = children_input_objects(mu_input.parent.id);
+		var children = children_input_objects(mu_input.subtotal.id.substr(0, mu_input.subtotal.id.indexOf("-subtotal")));
 		var group_total = 0;
 		for(var x = 0; x < children.length; x++) {
 			if(!isNaN(children[x].quantity()))
@@ -669,7 +527,7 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 			else console.log(children[x]);  // error checking
 		}
 
-		mu_input.parent.value = group_total;
+		mu_input.subtotal.value = group_total;
 	}
 
 
@@ -691,7 +549,7 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 		var mats_used = create_inputs_by_class_name("mat_used_input");
 		var total = 0;
 		for(var x = 0; x < mats_used.length; x++)
-			if(mats_used[x].status.value != global_status['unused'] && mats_used[x].status.value != global_status['failed_mat'])
+			if(mats_used[x].status.value != <?php echo $status['unused']; ?> && mats_used[x].status.value != <?php echo $status['failed_mat']; ?>)
 				total += mats_used[x].quantity() * mats_used[x].price;
 		return total;
 	}
@@ -715,11 +573,11 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	// material status changed: adjust ticket status
 	function adjust_ticket_status(status_element) {
 		// all materials being used (!failed) means ticket was complete
-		if(all_material_status_are(global_status['used'])) 
-			document.getElementById("ticket_status").value = global_status['complete'];
+		if(all_material_status_are(<?php echo $status['used']; ?>)) 
+			document.getElementById("ticket_status").value = <?php echo $status['complete']; ?>;
 		// if no materials were used then nothing is usable and is a total fail
-		else if(all_material_status_are(global_status['unused'])) 
-			document.getElementById("ticket_status").value = global_status['total_fail'];
+		else if(all_material_status_are(<?php echo $status['unused']; ?>)) 
+			document.getElementById("ticket_status").value = <?php echo $status['total_fail']; ?>;
 	}
 
 
@@ -729,17 +587,17 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 		var ticket_status = ticket_status_object.value;
 
 		// cancelled included b/c user more willing to check off what they didn't use
-		if(ticket_status == global_status["stored"] || ticket_status == global_status["complete"] ||
-		ticket_status == global_status["cancelled"])
+		if(ticket_status == <?php echo $status["stored"]; ?> || ticket_status == <?php echo $status["complete"]; ?> ||
+		ticket_status == <?php echo $status["cancelled"]; ?>)
 			set_status_for_all_materials_to_used_if_status_quantity_not_null();
 
 		// cancelled tickets are not allowed to have any failed_mat statuses
-		if(ticket_status == global_status['cancelled'])
-			$(`.mat_used_select option[value='${global_status['failed_mat']}']`).hide();
-		else $(`.mat_used_select option[value='${global_status['failed_mat']}']`).show();
+		if(ticket_status == <?php echo $status['cancelled']; ?>)
+			$(`.mat_used_select option[value='${<?php echo $status['failed_mat']; ?>}']`).hide();
+		else $(`.mat_used_select option[value='${<?php echo $status['failed_mat']; ?>}']`).show();
 
-		if(ticket_status == global_status["stored"])
-			$("#storage_modal").show();
+		if(ticket_status == <?php echo $status["stored"]; ?>)
+			reset_and_show_storage_modal();
 	}
 
 
@@ -749,7 +607,7 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	function adjust_input_for_status(status_element) {
 		var input = input_for_status(status_element);
 		// prevent unused materials from having any quantity
-		if(parseInt(status_element.value) == global_status['unused']) {
+		if(parseInt(status_element.value) == <?php echo $status['unused']; ?>) {
 			// store previous value into dictionary for mu_id for reverting when changing status back from unused
 			previous_mats_used_quantities[input.mu_id] = input.quantity();
 			input.set_val(0);
@@ -770,11 +628,11 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 		var mu_input = new Input(input_element);
 
 		// don't allow non-zero elements to have "unused" status
-		if(mu_input.quantity() && mu_input.status.value == global_status['unused'])
+		if(mu_input.quantity() && mu_input.status.value == <?php echo $status['unused']; ?>)
 			mu_input.status.selectedIndex = "0";
 		// don't allow zero values to have status of used or failed
 		else if(!mu_input.quantity())
-			mu_input.status.value = global_status['unused'];
+			mu_input.status.value = <?php echo $status['unused']; ?>;
 	}
 
 
@@ -802,19 +660,19 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 		for(var x = 0; x < materials_statuses.length; x++)
 			// a material is measurable && not used if its value is 0
 			if(materials_statuses[x].classList.contains("measurable") && input_for_status(materials_statuses[x]).quantity())
-				materials_statuses[x].value = global_status["used"];
+				materials_statuses[x].value = <?php echo $status["used"]; ?>;
 	}
 
 
 	// ————————————— ADD NEW MATERIAL USED —————————————
+	// ———————————————————————————————————————
 
 	/* AJAX: add mat_used to DB for transaction.  If preexisting group, add material to group.
 	If preexisting (ungrouped) material, create group.  Otherwise, add material input to end
 	of table. */
-	function add_new_material_used() {
-		var m_id = document.getElementById("new_material").value;
+	function add_new_material_used(m_id) {
 		if(isNaN(parseInt(m_id))) return;
-		if(!confirm("Are you sure you would like to add another material to this transaction?"));
+		if(!confirm("Are you sure you would like to add another material to this transaction?")) return;
 		
 		// add_new_material: request function from page (new material instance created, return HTML)
 		// edit_request: request coming from edit.php (add functions/staff row)
@@ -833,53 +691,7 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 					return;
 				}
 
-				// add material to preexisting parent
-				if(document.getElementById(response["parent_id"])) {
-					var parent = document.getElementById(response["parent_id"]);
-					var new_material_row = parent.closest("table").rows[1].children[1].children[0].insertRow(-1);
-					new_material_row.innerHTML = `<td style='background-color:#5CB85C;width:100%;' colspan='2'> ${response["material_HTML"]} </td>`;
-				}
-				// create new parent group, from single existing element
-				else if(response["parent_id"] && document.getElementsByClassName(`${response["parent_id"]}-child`).length) {
-					var preexisting_single_element = document.getElementsByClassName(`${response["parent_id"]}-child`)[0];
-					var new_material_group = 	`<table width='100%' class='table table-bordered' style='margin-bottom:0px !important;'>
-														<tr class='tablerow info'>
-															<td colspan='2'>${response["parent_name"]}</td>
-														</tr>
-														<tr>
-															<td>
-																<div class='input-group'>
-																	<span class='input-group-addon'>MATERIAL-GROUP <i class='fas fa-dollar-sign'></i> 0.25 x </span>
-																	<input type='number' id='${response["parent_id"]}' class='form-control' autocomplete='off' value='6' style='text-align:right;'
-																	onkeyup='adjust_children_input(this); adjust_balances();' onchange='adjust_children_input(this); adjust_balances();' >
-																	<span class='input-group-addon'>inch(es)</span>
-																</div>
-															</td>
-															<td style='padding:0px;'>
-																<table class='table table-striped' style='margin-bottom:0px !important;'>
-																	<tr>
-																		<td>
-																			${preexisting_single_element.closest("table").outerHTML}
-																		</td>
-																	</tr>
-																	<tr>
-																		<td style='background-color:#5CB85C;width:100%;' >
-																			${response["material_HTML"]}
-																		</td>
-																	</tr>
-																</table>
-															</td>
-														</tr>
-													</table>`;
-					preexisting_single_element.closest("table").closest("tr").remove();
-					var new_mat_row = document.getElementById("main_table").insertRow(-1);
-					new_mat_row.innerHTML  = "<td colspan='2'>"+new_material_group+"</td>";
-				}
-				// add material to end of table
-				else {
-					var new_mat_row = document.getElementById("main_table").insertRow(-1);
-					new_mat_row.innerHTML  = "<td style='background-color:#5CB85C;width:100%;' colspan='2'>"+response["material_HTML"]+"</td>";
-				}
+				update_material_display(response);
 
 				alert("Successfully added "+response["material_name"]+" to materials");
 				$(`#new_material`).val("");
@@ -888,8 +700,68 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	}
 
 
+	// split material used into two mat_used instances with the same material
+	function split(m_id) {
+		add_new_material_used(m_id);
+	}
+
+
+	// add mat_used to page
+	function update_material_display(response) {
+		// delete newly grouped prior instance from page
+		if(response["grouplength"] == 2)
+			document.getElementsByClassName(`${response["parent_id"]}-child`)[0].parentElement.closest("table").remove();
+
+		// add to table (1, 2) (3)
+		if(response["grouplength"] < 3)
+			document.getElementById("mats_used").innerHTML += response["material_HTML"];
+		else
+			document.getElementById(`${response["parent_id"]}-children_display_row`).children[0].innerHTML += response["material_HTML"];
+
+		var new_mat_used = document.getElementById(response["mu_id"]+"-table");
+		// color if new group (2) (do not need for grouplength of 1 b/c automatically highlighted)
+		if(response["grouplength"] == 2) {
+			var new_entrant = new_mat_used.parentElement.closest("table");
+			var color = COLORS[new_entrant.parentElement.children.length-1 % COLORS.length];
+			new_entrant.style["border-left"] = `#${color} 2px solid`;  // add color to part
+			new_entrant.getElementsByTagName("td")[0].style["background-color"] = `#${color}`;  // color top bar (row) of table
+		}
+
+		// highlight table and scroll to change (*)
+		new_mat_used.style.border = "#00FF00 8px solid";
+		location.href = `#${response["mu_id"]}-table`;
+	}
+
+
 	// ————————————–—— END CONFIRMATION ——————————————
 	// ———————————————————————————————————————
+
+	function table_is_not_properly_populated(materials, ticket_status) {
+		if(isNaN(ticket_status.value)) {
+			alert("Please select a ticket status");
+			return true;
+		}
+		else if((ticket_status.value == <?php echo $status["partial_fail"]; ?> || ticket_status.value == <?php echo $status["total_fail"]; ?>)
+		&& document.getElementById("ticket_notes").value.length < 10) {
+			alert("You must state how the ticket failed");
+			return true;
+		}
+
+		// mats_used listed but none accounted for: error in get_and_sort_materials()
+		if(!materials && document.getElementsByClassName("mat_used_select").length) return true;
+
+		// no material is marked as failed && not all are unused: a failed ticket requires a fail material or all to be null
+		if((ticket_status.value == <?php echo $status['partial_fail']; ?> || ticket_status.value == <?php echo $status['total_fail']; ?>)
+		&& (!any(materials, function(part, value) {return part['status'].value == value;}, <?php echo $status['failed_mat']; ?>) 
+		  && any(materials, function(part, value) {return part['status'].value != value;}, <?php echo $status['unused']; ?>))) {
+			alert(	"Ticket is marked as failed, but no failed material is indicated.\n"+
+					"Please indicate which material was failed on usage.\n"+
+					"If no materials were used, please mark all materials as unused.");
+			return true;
+		}
+		return false;
+	}
+
 
 
 	// get information from page and put into confirmation modal
@@ -897,33 +769,13 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 		// ---- ticket ----
 		var ticket_status = document.getElementById("ticket_status");
 		var ticket_status_name = ticket_status.options[ticket_status.selectedIndex].text;
-		if(isNaN(ticket_status.value)) {
-			alert("Please select a ticket status");
-			return;
-		}
-		else if(ticket_status.value == global_status["partial_fail"] || ticket_status.value == global_status["total_fail"]
-		&& document.getElementById("ticket_notes").value.length < 10) {
-			alert("You must state how the ticket failed");
-			return;
-		}
+		
 		document.getElementById("ticket_status_confirmation").innerHTML = 
 			confirmation_cell_format('ticket_status', `<h5>${ticket_status_name}</h5>`, ticket_status.value);
-		
-		// ---- materials ----
+
 		var materials = get_and_sort_materials();
-		// mats_used listed but none accounted for: error in get_and_sort_materials()
-		if(!materials && document.getElementsByClassName("mat_used_select").length) return;
 
-		// no material is marked as failed && not all are unused: a failed ticket requires a fail material or all to be null
-		if((ticket_status.value == global_status['partial_fail'] || ticket_status.value == global_status['total_fail'])
-		&& (!any(materials, function(part, value) {return part['status'].value == value;}, global_status['failed_mat']) 
-		  && any(materials, function(part, value) {return part['status'].value != value;}, global_status['unused']))) {
-			alert(	"Ticket is marked as failed, but no failed material is indicated.\n"+
-					"Please indicate which material was failed on usage.\n"+
-					"If no materials were used, please mark all materials as unused.");
-			return;
-		}
-
+		if(table_is_not_properly_populated(materials, ticket_status)) return;  // error checking
 		populate_material_table(materials);
 
 		// ---- storage ----
@@ -933,7 +785,7 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 			$("#storage_confirmation").show();
 			var box_id = document.getElementById("storage_location").children[0].innerHTML;
 			var span = 	"<span style='background-color:#0055FF;border:4px solid #0055FF;"+
-							"border-radius:4px;padding:8px;margin:auto;color:#FFFFFF;'>"+
+							"border-radius:4px;padding:8px;margin:auto;color:#FFFFFF;margin:auto'>"+
 							"Currently stored in "+box_id+"</span>";
 			storage_confirmation.innerHTML = confirmation_cell_format("storage", span, box_id.replace("-", ""));
 		}
@@ -991,7 +843,7 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 			 alert("Please select a status for "+name);
 			 return null;
 		}
-		else if(material.status.value == global_status['used'] && !material.quantity()) { 
+		else if(material.status.value == <?php echo $status['used']; ?> && !material.quantity()) { 
 			alert("Material status cannot be used with a 0 quantity for "+name);
 			return null;
 		}
@@ -1000,7 +852,7 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	}
 
 
-		// — MODAL BUILDING —
+	// — MODAL BUILDING —
 	// using the material dictionary, add values to material table in modal
 	function populate_material_table(materials) {
 		$("#material_confirmation_table tr").remove();  // clear previous entries
@@ -1026,13 +878,15 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 
 		// add total to modal
 		var total_row = table.insertRow(-1);
+		total_row.classList.add("warning");
 		var total_title = total_row.insertCell(0);
-		total_title.innerHTML = "<h5>Total</h5>";
+		total_title.innerHTML = "<h5 align='left'>Total</h5>";
 		total_title.colSpan = "3";
 		var total_value = total_row.insertCell(1);
 		total_value.innerHTML = `<h5><i class='<?php echo $sv["currency"]; ?>'></i>${document.getElementById("total").innerHTML}</h5>`;
 
-		$("#material_confirmation_table tr td:not(:first-child)").attr("align", "center");
+		if(materials.length)  // center values
+			$("#material_confirmation_table tr td").not("first-input").attr("align", "center");
 	}
 
 
@@ -1095,17 +949,29 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	}
 
 
+	function reset_and_show_storage_modal() {
+		document.getElementById("drawer_fill").innerHTML = "";
+		document.getElementById("storage_box_type_select").value = "—";
+		$("#storage_modal").show();
+	}
+
+
 	// called by box click on confirmation of object placement
 	function storage_selected(element, box_id) {
 		element.style.backgroundColor = "#0055FF";
 		element.style.color = "#FFFFFF";
+
+		// add 
 		var cell = document.getElementById("storage_location");
-		cell.innerHTML = "<span style='background-color:#0055FF;border:4px solid #0055FF;border-radius:4px;padding:8px;margin:auto;color:#FFFFFF;'>"+box_id+"</span>";
+		cell.innerHTML = 	`<span onclick='reset_and_show_storage_modal();' style='background-color:#0055FF;
+							border:4px solid #0055FF;border-radius:4px;padding:8px;margin:auto;color:#FFFFFF;'>${box_id}</span>`;
 		cell.hidden = false;
 		setTimeout(function() {
 			$('#storage_modal').fadeOut('fast');
 		}, 500);
 	}
+
+
 
 
 	// —————————————————— UTILITY —————————————————
@@ -1121,7 +987,7 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 
 	function children_input_objects(parent_id) {
 		var children = [];
-		var elements = document.getElementsByClassName(parent_id+"-child");
+		var elements = document.getElementsByClassName(parent_id+"-input");
 		for(var x = 0; x < elements.length; x++)
 			if($(elements[x]).find("input"))
 				children.push(new Input(elements[x]));

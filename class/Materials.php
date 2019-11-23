@@ -490,6 +490,88 @@ class Mats_Used {
 		return $this->update_mats_used();
 		
 	}
+
+
+	public static function grouped_materials_HTML($mats_used, $parent_name, $color="DDDDDD") {
+		$group_HTML = "";
+
+		$parent_class_name = str_replace(" ", "_", $parent_name);  // class_name
+		$group_HTML .= "\n<table id='$parent_class_name-table' class='table table-bordered' style='border-left:#".$color." 2px solid;'>
+								<tr class='tablerow' style='background-color:#".$color.";'>
+									<td>
+										$parent_name
+									</td>
+								</tr>
+								<tr id='$parent_class_name-children_display_row' style='padding-left:2px;'>
+									<td width='100%'>";
+		// add each material to HTML
+		foreach($mats_used as $mu) $group_HTML .= $mu->instance_HTML($readonly);
+
+		// get total amount used of materials in group; display sub-total
+		$total_quantity = 0;
+		foreach($mats_used as $mu) $total_quantity += $mu->quantity_used;
+		$group_HTML .= 	"	</td>
+					</tr>
+					<tr>
+						<td style='background-color:#CCCCCC;'>Sub-Total for $parent_name
+							<div class='input-group'>
+								<input type='number' id='$parent_class_name-subtotal' class='form-control' autocomplete='off' value='$total_quantity' style='text-align:right;'
+								onkeyup='adjust_children_input(this); adjust_balances();' onchange='adjust_children_input(this); adjust_balances();' >
+								<span class='input-group-addon'>".$mats_used[0]->material->unit."</span>
+							</div>	
+						</td>
+					</tr>
+				</table>";
+
+		return $group_HTML;
+	}
+
+
+	public static function group_materials_by_parent($mats_used) {
+		// group materials by parent
+		$grouped = $ungrouped = array();
+		foreach($mats_used as $mu) {
+			$parent_name = $mu->material->m_parent->m_name;
+			// combine with previously added 
+			if(array_key_exists($parent_name, $grouped))  // group already exists
+				$grouped[$parent_name][] = $mu;
+			elseif(array_key_exists($parent_name, $ungrouped)) {  // groupable; create group
+				$group = array($mu, $ungrouped[$parent_name]);
+				$grouped[$parent_name] = $group;
+				unset($ungrouped[$parent_name]);
+			}
+			else $ungrouped[$parent_name] = $mu;  // no parent
+		}
+		return array("grouped" => $grouped, "ungrouped" => $ungrouped);
+	}
+
+
+	public static function group_mats_used_HTML($mats_used, $readonly=false) {
+		$grouped_and_ungrouped = self::group_materials_by_parent($mats_used);
+		$grouped = $grouped_and_ungrouped["grouped"];
+		$ungrouped = $grouped_and_ungrouped["ungrouped"];
+
+		$colors = array("DD00DD", "0F8DFF", "339933", "FFFF00", "888800", "FF0000");
+		$HTML = "<!-- BEGIN Mats_Used::group_mats_used_HTML(./) -->";
+		$grouped_keys = array_keys($grouped);
+		$x;  // used for index of $colors array
+		for($x = 0; $x < count($grouped_keys); $x++)
+			$HTML .= self::grouped_materials_HTML($grouped[$grouped_keys[$x]], $grouped_keys[$x], $colors[$x]);
+
+		// add ungrouped materials: placed in table to allow for highlighting
+		foreach($ungrouped as $mu) {
+			$HTML .= 	"<table class='table table-bordered' style='border-left:#".$colors[$x%6]." 2px solid; '>
+							<tr>
+								<td>".
+									$mu->instance_HTML().
+								"</td>
+							</tr>
+						</table>";
+			$x++;
+		}
+		return $HTML .= "\n<!-- END Mats_Used::group_mats_used_HTML(./) -->";
+	}
+
 	
 	// create a new instance of material usage in DB.  Optional quanity used
 	public static function insert_material_used($trans_id, $m_id, $status_id, $staff, $quantity_used=null, $notes=null) {
@@ -515,6 +597,81 @@ class Mats_Used {
 			if($statement->execute()) return $statement->insert_id;
 		}
 		return $mysqli->error;
+	}
+
+
+	// create an HTML table for the input, select display of mat_used's instance
+	public function instance_HTML($readonly=false) {
+		global $status, $sv;
+
+		$parent_class_name = $this->material->m_parent ? str_replace(" ", "_", $this->material->m_parent->m_name) : "";
+
+		// color_hex ascription
+		if($this->material->color_hex)
+			$color_hex = "<div class='color-box' style='background-color:#".$this->material->color_hex.";' align='left'></div>";
+		// input acription
+		if($this->material->is_measurable) {
+			if($this->material->unit == "hour(s)" || $this->material->unit == "hours")
+				$input = 	"<tr>
+								<td>
+									<div class='input-group'>
+										<span class='input-group-addon'><i class='$sv[currency]'></i> ".sprintf("%0.2f", $this->material->price)." x </span>
+										<input type='number' id='$this->mu_id-input' class='form-control mat_used_input time $parent_class_name-input' 
+										onkeyup='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
+										onchange='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
+										autocomplete='off' style='text-align:right;' min='$min_hours' step='1' value='$hour'>
+										<span class='input-group-addon'>Hours</span>
+
+										<input type='number' id='$this->mu_id-minute' class='form-control time' 
+										onkeyup='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
+										onchange='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
+										autocomplete='off' style='text-align:right;' min='0' max='59' value='$minute'>
+										<span class='input-group-addon'>Minutes</span>
+									</div>
+								</td>
+							</tr>";
+			else $input = 	"<tr>
+								<td>
+									<div class='input-group'>
+										<span class='input-group-addon'><i class='$sv[currency]'></i> ".sprintf("%0.2f", $this->material->price)." x </span>
+										<input type='number' id='$this->mu_id-input' class='form-control mat_used_input $parent_class_name-input' 
+										onkeyup='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
+										onchange='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
+										autocomplete='off' value='".sprintf("%0.2f", $this->quantity_used)."' style='text-align:right;' min='0'/>
+										<span class='input-group-addon'>".$this->material->unit."</span>
+									</div>
+								</td>
+							</tr>";
+		}
+		$measurability = $this->material->is_measurable ? "measurable" : "immeasurable";
+
+		$HTML = 	"\n<!-- BEGIN Mats_Used::instance_HTML(/) -->
+					<table id='$this->mu_id-table' class='table table-bordered $parent_class_name-child'>
+						<tr class='info'>
+							<td>
+								".$this->material->m_name." $color_hex
+							</td>
+						</tr>
+						$input
+						<tr>
+							<td>
+								<select id='$this->mu_id-select' class='form-control mat_used_select $measurability' 
+								onchange='adjust_ticket_status(this); adjust_input_for_status(this);'>
+									<option selected hidden>SELECT</option>
+									<option value='$status[used]'>Used</option>
+									<option $default_selection value='$status[unused]'>Not Used</option>
+									<option value='$status[failed_mat]'>Failed Material</option>
+								</select>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<button class='btn btn-default' onclick='split(".$this->material->m_id.");'>Split ".$this->material->m_name."</button>
+							</td>
+						</tr>
+					</table>
+					<!-- END Mats_Used::instance_HTML(/) -->";
+		return $HTML;
 	}
 
 
@@ -574,7 +731,7 @@ class Mats_Used {
 
 	// no quanitity is a valid quantity
 	public static function regexUnit_Used($quantity_used){
-		if(!$quanitity_used || preg_match("/^\d{0,5}\.{0,1}\d{0,2}$/", $quantity_used) && $quantity_used >= 0)
+		if(!$quantity_used || preg_match("/^\d{0,5}\.{0,1}\d{0,2}$/", $quantity_used) && $quantity_used >= 0)
 			return true;
 		return false;
 	}
