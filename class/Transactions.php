@@ -446,7 +446,7 @@ class Transactions {
             }
             $printer -> setTextSize(1, 1);
             $printer -> feed(2); 
-            $printer -> setJustification(Printer::JUSTIFY_CENTER);
+            $printer -> setJustification(Printer::JUSTIFY_RIGHT);
             $printer -> setEmphasis(true);
             $printer -> text("Total: $".$total_price);
             $printer -> setEmphasis(false);
