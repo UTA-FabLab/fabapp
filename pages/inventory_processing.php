@@ -682,11 +682,12 @@ function successful_and_failed_device_group_additions($m_id, $device_group) {
                                                         <option value="" disabled selected>Sheet Child</option>
                                                         <?php
                                                             $result = $mysqli->query("            
-                                                                SELECT DISTINCT `materials`.`m_id`, `materials`.`m_name` , `sheet_good_inventory`.`inv_id` , `sheet_good_inventory`.`quantity` , `sheet_good_inventory`.`width` , `sheet_good_inventory`.`height`
+                                                                SELECT `materials`.`m_id`, `materials`.`m_name`
                                                                 FROM `materials` , `sheet_good_inventory`
-                                                                WHERE `sheet_good_inventory`.`m_ID`=`materials`.`m_id`;");
+                                                                WHERE `sheet_good_inventory`.`m_ID`=`materials`.`m_id`
+                                                                GROUP BY `materials`.`m_id`;");
                                                             while($row = $result->fetch_assoc()){
-                                                                echo "<option value=\"$row[inv_id]\">$row[m_name]</option>";
+                                                                echo "<option value=\"$row[m_id]\">$row[m_name]</option>";
                                                             }
                                                         ?>
                                                     </select>
