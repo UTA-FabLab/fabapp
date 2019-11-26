@@ -48,7 +48,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['payBtn']) && $errorMs
                     $cart_inv_ids[$i] = $_SESSION['cart_array'][$i];
                     $cart_quantities[$i] = $_SESSION['co_quantity'][$i];
                 }
-                Transactions::printSheetTicket($sheet_ticket->getTrans_id(), $cart_inv_ids, $cart_quantities, $_SESSION['co_price']);
+
+                $cart_prices = array();
+                for ($ii = 0; $ii < sizeof($_SESSION['cart_array']); $ii++) { 
+                        $temp_v = $_SESSION['cart_array'][$ii];
+                        if ($result = $mysqli->query("
+                                SELECT *
+                                FROM sheet_good_inventory SI JOIN materials M ON SI.m_id = M.m_id
+                                WHERE SI.inv_id=$temp_v AND SI.quantity != 0;
+                        ")) {
+                            while ($row = $result->fetch_assoc()) {
+                                  $cart_prices[$ii] = ("$".number_format((float)((($row["width"]*$row["height"]) * $row["price"])* $_SESSION['co_quantity'][$ii]), 2, '.', ''));
+                        } } 
+                 } 
+
+                Transactions::printSheetTicket($sheet_ticket->getTrans_id(), $cart_inv_ids, $cart_quantities, $cart_prices, $_SESSION['co_price']);
                 //all good goto lookup
                 unset($_SESSION['sheet_ticket']);
                 unset($_SESSION['cart_array']);
