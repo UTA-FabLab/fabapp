@@ -385,7 +385,7 @@ class Transactions {
 		}
 	}
 
-    public static function printSheetTicket($trans_id, $cart_inv_ids, $cart_quantities, $total_price){
+    public static function printSheetTicket($trans_id, $cart_inv_ids, $cart_quantities, $cart_prices, $total_price){
         global $mysqli;
         global $tp;
         $sheet_names = array();
@@ -434,10 +434,15 @@ class Transactions {
             for ($i = 0; $i < sizeof($cart_inv_ids); $i++) {
 	            $printer -> setTextSize(1, 1);
 	            $printer -> feed();
+	            $printer -> setJustification(Printer::JUSTIFY_LEFT);
 	            $printer -> setEmphasis(true);
 	            $printer -> text($cart_quantities[$i]."");
 	            $printer -> setEmphasis(false);
             	$printer -> text(" ".$sheet_names[$i]);
+            	$printer -> feed();
+            	$printer -> setJustification(Printer::JUSTIFY_RIGHT);
+            	$printer -> setEmphasis(true);
+            	$printer -> text($cart_prices[$i]);
             }
             $printer -> setTextSize(1, 1);
             $printer -> feed(2); 
@@ -474,8 +479,6 @@ class Transactions {
             echo "Couldn't print to this printer: " . $e -> getMessage() . "\n";
         }
     }
-    
-
 
 
 
