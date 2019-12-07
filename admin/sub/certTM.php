@@ -10,7 +10,7 @@ include_once (filter_input(INPUT_SERVER,'DOCUMENT_ROOT').'/connections/db_connec
 include_once (filter_input(INPUT_SERVER,'DOCUMENT_ROOT').'/class/all_classes.php');
 
 if (!empty(filter_input(INPUT_GET, "d_id"))) {
-    if (Devices::regexDID(filter_input(INPUT_GET, "d_id"))) {
+    if (Devices::regexDeviceID(filter_input(INPUT_GET, "d_id"))) {
         $query = "SELECT * FROM `trainingmodule` WHERE d_id = '".filter_input(INPUT_GET, "d_id")."' ORDER BY `title`";
     } else {
         echo ("<option disabled hidden selected value='ERROR'>ERROR - d</option>");
