@@ -13,7 +13,7 @@
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
 // staff clearance
-if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
+if (!$staff || $staff->getRoleID() < $sv['LvlOfLead']){
 	//Not Authorized to see this Page
 	header('Location: /index.php');
 	$_SESSION['error_msg'] = "Insufficient role level to access, You must be a Trainer.";
