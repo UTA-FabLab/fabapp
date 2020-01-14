@@ -191,7 +191,7 @@ function PrintTransaction ($operator, $device_id) {
     }
 
     if ($input_data["filename"]){
-        $filename = "|$input_data[filename]|";
+        $filename = "$input_data[filename]⦂";
     }
 
     if ($input_data["p_id"]){
@@ -216,7 +216,7 @@ function PrintTransaction ($operator, $device_id) {
         
         if ($stmt = $mysqli->prepare("
             INSERT INTO mats_used
-                (`trans_id`,`m_id`, `unit_used`, `status_id`, `mu_notes`, `mu_date`) 
+                (`trans_id`,`m_id`, `quantity`, `status_id`, `mu_notes`, `mu_date`) 
             VALUES
                 (?, ?, ?, ?, ?, CURRENT_TIMESTAMP);
         ")){

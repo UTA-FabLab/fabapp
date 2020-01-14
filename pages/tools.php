@@ -222,7 +222,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 		// filename
 		var materials = document.getElementsByClassName("dm_select");
 		var material_string = "";
-		for(var x = 0; x < materials.length; x++) material_string += "%"+materials[x].value;
+		for(var x = 0; x < materials.length; x++) material_string += "[["+materials[x].value;
 		var file_name = in_file.name.insert(in_file.name.length-6, material_string);
 		
 		//Array of Z & m_id Locations

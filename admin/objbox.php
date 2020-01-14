@@ -48,33 +48,40 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
 
 						$Drawers = StorageDrawer::get_all_drawers(array("style" => "background-color:#00FF00;border:solid;border-width:2px;"), 
 																	null, null, array("style" => "background-color:#0000FF;border:solid;border-width:2px;"));
-						// create drawer, tooltip for each box
-						foreach($Drawers as $drawer) {
-							foreach($drawer->units as $unit) {
-								$drawer->determine_selected_units(function($drawer_unit) use ($unit) {return $unit->trans_id && $drawer_unit->trans_id == $unit->trans_id;});
-								if($unit->trans_id && date('Y-m-d', strtotime("+2 week", strtotime($unit->item_change_time))) < date('Y-m-d'))
-									echo "<tr style='background-color:#FF0000;'>";
-								elseif($unit->trans_id && date('Y-m-d', strtotime("+1 week", strtotime($unit->item_change_time))) < date('Y-m-d'))
-									echo "<tr style='background-color:#FFFF00;'>";
-								elseif($unit->trans_id) echo "<tr style='background-color:#00FF00;'>";
-								else echo "<tr>";
-								echo	"<td>
-											<a href='/pages/lookup.php?trans_id=$unit->trans_id'>$unit->trans_id</a>
-										</td>
-										<td>
-											<button onclick='display_drawer_with_box(\"$drawer->drawer_indicator\", \"$unit->unit_indicator\");'
-											type='button' class='btn btn-default'>".
-												$unit->box_id.
-											"</button>
-										</td>
-										<td>
-											$unit->item_change_time
-										</td>
-										<td>
-											$unit->staff
-										</td>
-									</tr>";
-							}
+						$results = $mysqli->query(	"SELECT `drawer`, `unit`, `trans_id` FROM `storage_box`
+														WHERE `trans_id` IS NOT NULL;");
+
+						while($row = $results->fetch_assoc())
+						{
+							$unit_behavior = array("style" => "background-color:#00FF00;border:solid;border-width:2px;");
+							$trans_id = $row["trans_id"];
+							$selected_unit_callback = function($drawer_unit) use ($trans_id) {return $drawer_unit->trans_id == $trans_id;};
+							$selected_unit_behavior = array("style" => "background-color:#0000FF;border:solid;border-width:2px;");
+							$drawer = new StorageDrawer("$row[drawer]", $unit_behavior, null, $selected_unit_callback, $selected_unit_behavior);
+							// echo "<script> console.log('$row[drawer]$row[unit]');</script>";
+							$unit = $drawer->selected_units[0];
+							if($unit->trans_id && date('Y-m-d', strtotime("+2 week", strtotime($unit->item_change_time))) < date('Y-m-d'))
+								echo "<tr style='background-color:#FF0000;'>";
+							elseif($unit->trans_id && date('Y-m-d', strtotime("+1 week", strtotime($unit->item_change_time))) < date('Y-m-d'))
+								echo "<tr style='background-color:#FFFF00;'>";
+							elseif($unit->trans_id) echo "<tr style='background-color:#00FF00;'>";
+							else echo "<tr>";
+							echo	"<td>
+										<a href='/pages/lookup.php?trans_id=".$unit->trans_id."'>".$unit->trans_id."</a>
+									</td>
+									<td>
+										<button onclick='display_drawer_with_box(\"$drawer->drawer_indicator\", \"".$unit->unit_indicator."\");'
+										type='button' class='btn btn-default'>".
+											$unit->box_id.
+										"</button>
+									</td>
+									<td>
+										$unit->item_change_time
+									</td>
+									<td>
+										$unit->staff
+									</td>
+								</tr>";
 						}
 						?>
 					</table>

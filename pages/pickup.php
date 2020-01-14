@@ -23,17 +23,24 @@
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
 if($staff->roleID < $role["staff"]) exit_if_error("You do not have permission to view this page");
-elseif(!$_GET["operator"]) exit_if_error("No operator parameter supplied");
-elseif(!Users::regexUser($_GET["operator"])) exit_if_error("Operator #$_GET[operator] is not valid");
+elseif(!$_GET["operator"] && !$_GET["trans_id"]) exit_if_error("No parameters supplied");
+elseif($_GET["operator"] && !Users::regexUser($_GET["operator"])) 
+	exit_if_error("Operator #$_GET[operator] is not valid");
+elseif($_GET["trans_id"] && !Transactions::regexTrans($_GET["trans_id"]))
+	exit_if_error("Transaction #$_GET[trans_id] is not valid");
 else {
 	$operator = Users::withID($_GET["operator"]);
 	$tickets = StorageObject::all_in_storage_for_operator($operator);
 }
 
+// auto redirect if user only has 1 ticket in storage
+if(!$_GET["trans_id"] && count($tickets) == 1)
+	header("Location:./pickup.php?operator=$_GET[operator]&trans_id=".$tickets[0]->trans_id);
+
 
 // cost associated; get attributes from user
 if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['end_button'])) {
-	$ticket = new Transactions(filter_input(INPUT_POST, "chosen_ticket"));
+	$ticket = new Transactions($_GET["trans_id"]);
 	// get material status and quanity
 	$materials_values = get_material_statuses_from_page($ticket->mats_used);
 	if($ticket->mats_used && !$materials_values)  // materials to be gathered but none gathered
@@ -109,8 +116,6 @@ function exit_with_success($message, $redirect=null) {
 
 ?>
 
-
-
 <title><?php echo $sv['site_name'];?> Pickup Print</title>
 <div id="page-wrapper">
 	<div class="row">
@@ -129,176 +134,183 @@ function exit_with_success($message, $redirect=null) {
 						<a href="/pages/lookup.php?operator=<?php echo $user->operator; ?>" title="Click to look up the user's last ticket"><i class="fas fa-link"></i> Goto Last Ticket</a>
 					</div>
 				</div>
-			<?php 
+			<?php
 			}
-			foreach($tickets as $ticket) { ?>
-				<div id='ticket-<?php echo $ticket->trans_id; ?>'>
-					<div class='container' >
-						<!-- overlay to partially white out unselected ticket -->
-						<div class='overlay' onclick='remove_other_tickets(this, <?php echo $ticket->trans_id; ?>);' vertical-align='middle'>
-							<h1>SELECT TICKET #<?php echo $ticket->trans_id; ?></h1>
-						</div>
-						<div class="panel panel-default ticket">
-							<div class="panel-heading">
-								<i class="fas fa-ticket-alt fa-fw"></i> Ticket #<?php echo $ticket->trans_id;?>
-							</div>
-							<div class="panel-body ticket">
-								<table class="table table-striped table-bordered">
-									<tr>
-										<td class='col-md-3'>Device</td>
-										<td class='col-md-9'><?php echo $ticket->device->name;?></td>
-									</tr>
-									<tr>
-										<td>Operator</td>
-										<td>
-											<div class="btn-group">
-												<button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-													<i class="<?php echo $ticket->user->icon;?> fa-lg" title="<?php echo $ticket->user->operator;?>"></i>
-												</button>
-												<ul class="dropdown-menu" role="menu">
-													<li style="padding-left: 5px;"><?php echo $ticket->user->operator;?></li>
-												</ul>
-											</div>
-										</td>
-									</tr>
-									<tr>
-										<td>Ticket</td>
-										<td><?php echo $ticket->trans_id;?></td>
-									</tr>
-									<tr>
-										<td>Time</td>
-										<td><?php echo $ticket->t_start." - ".$ticket->t_end; ?></td>
-									</tr>
-									<?php if($ticket->est_time) { ?>
-										<tr>
-											<td>Estimated Time</td>	
-											<td><?php echo $ticket->est_time; ?></td>
-										</tr>
-									<?php 
-									}
-									if($ticket->duration) { ?>
-										<tr>
-											<td>Duration</td>
-											<td><?php echo $ticket->duration; ?>
-											</td>
-										</tr>
-									<?php } ?>
-									<tr>
-										<td>Current Status</td>
-										<td><?php echo $ticket->status->message; ?></td>
-									</tr>
-									<tr>
-										<td>End Status</td>
-										<td>
-											<table width="100%">
-												<tr>
-													<td>
-														<select id='ticket_status' name='ticket_status' class='form-control' onchange='adjust_materials_status(this);'>
-															<option selected hidden>SELECT</option>
-															<option value='<?php echo $status['complete']; ?>'>Complete</option>
-															<option value='<?php echo $status['partial_fail']; ?>'>Partial Fail</option>
-															<option value='<?php echo $status['total_fail']; ?>'>Total Fail</option>
-															<option value='<?php echo $status['cancelled']; ?>'>Cancelled</option>
-														</select>
-													</td>
-													<?php if(StorageObject::object_is_in_storage($ticket->trans_id)) { ?>
-														<td id='storage_location' style='padding:4px;align:right'>
-															<span onclick='reset_and_show_storage_modal();' style='background-color:#0055FF;
-															border:4px solid #0055FF;border-radius:4px;padding:8px;margin:auto;color:#FFFFFF;'>
-																<?php echo StorageObject::get_unit_for_trans_id($ticket->trans_id); ?>
-															</span>
-														</td>
-													<?php 
-													} 
-													else { ?>
-														<td id='storage_location' style='padding:4px;align:right' hidden>
-														</td>
-													<?php } ?>
-												</tr>
-											</table>
-										</td>
-									</tr>
-									<tr>
-										<td><i class="fas fa-edit"></i>Notes</td>
-										<td>
-											<textarea name='ticket_notes' id='ticket_notes' 
-											class="form-control"><?php echo $ticket->notes;?></textarea>
-										</td>
-									</tr>
-								</table>
-							</div> <!-- end pannel body -->
-						</div>  <!-- end pannel -->
-					<!------------------ MATERIALS ------------------>
-						<?php
-						// if materials associated with ticket, or materials can be associated with ticket
-						if($ticket->mats_used || $ticket->device->device_group->all_device_group_materials()) { ?>
-							<div class="panel panel-default">
-								<div class="panel-heading">
-									<i class="fas fa-ticket-alt fa-fw"></i> Materials for Ticket #<?php echo $ticket->trans_id;?>
-								</div>
-								<div class="panel-body">
-									<div id='mats_used'>
-										<?php
-										if($ticket->mats_used) 
-											echo Mats_Used::group_mats_used_HTML($ticket->mats_used); 		
-										?>
-									</div>
-									<?php if($ticket->device->device_group->all_device_group_materials()) { ?>
-										<table class='table table-bordered table-striped'>
-											<tr class='warning'>
-												<td colspan='3'> Add material </td>
-											</tr>
-											<tr>
-												<td class='col-sm-4'>Material</td>
-												<td class='col-sm-5'>
-													<select id='new_material' name='new_material' class='form-control'>
-														<?php
-														// allows for materials to added twice
-														foreach($ticket->device->device_group->all_device_group_materials() as $material)
-															echo "<option value='$material->m_id'>$material->m_name</option>";
-														?>
-													</select>
-												</td>
-												<td class='col-sm-4'>
-													<button type='button' name='new_material_button' class='btn btn-info' onclick='add_new_material_used(document.getElementById("new_material").value);'>Add Material</button>
-												</td>
-											</tr>
-										</table>
-									<?php } ?>
-								</div>  <!-- end pannel body -->
-							</div> <!-- end pannel  -->
-						<?php } ?>
-					<!------------------ COST AND SUBMIT ------------------>
-						<table width='100%'>
-							<tr>
+			// ticket selection
+			elseif(!$_GET["trans_id"] && 2 <= count($tickets)) { ?>
+				<table class='table'>
+				<?php foreach($tickets as $ticket) {
+					echo 	"<tr>
 								<td>
-									<input type="button" value="End" class="btn btn-success" onclick='populate_end_modal();'/>
+									<a href='./pickup.php?operator=$operator->operator&trans_id=$ticket->trans_id'>$ticket->trans_id</a>
 								</td>
-								<td align='right'>
-									<table>
+							</tr>";
+				}
+				echo "</table>";
+			}
+
+
+			// pickup
+			else
+			{
+				$ticket = count($tickets) == 1 ? $tickets[0] :  new Transactions($_GET["trans_id"]); ?>
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<i class="fas fa-ticket-alt fa-fw"></i> Ticket #<?php echo $ticket->trans_id;?>
+					</div>
+					<div class="panel-body ticket">
+						<table class="table table-striped table-bordered">
+							<tr>
+								<td class='col-md-3'>Device</td>
+								<td class='col-md-9'><?php echo $ticket->device->name;?></td>
+							</tr>
+							<tr>
+								<td>Operator</td>
+								<td>
+									<div class="btn-group">
+										<button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+											<i class="<?php echo $ticket->user->icon;?> fa-lg" title="<?php echo $ticket->user->operator;?>"></i>
+										</button>
+										<ul class="dropdown-menu" role="menu">
+											<li style="padding-left: 5px;"><?php echo $ticket->user->operator;?></li>
+										</ul>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td>Ticket</td>
+								<td><?php echo $ticket->trans_id;?></td>
+							</tr>
+							<tr>
+								<td>Time</td>
+								<td><?php echo $ticket->t_start." - ".$ticket->t_end; ?></td>
+							</tr>
+							<?php if($ticket->est_time) { ?>
+								<tr>
+									<td>Estimated Time</td>	
+									<td><?php echo $ticket->est_time; ?></td>
+								</tr>
+							<?php 
+							}
+							if($ticket->duration) { ?>
+								<tr>
+									<td>Duration</td>
+									<td><?php echo $ticket->duration; ?>
+									</td>
+								</tr>
+							<?php } ?>
+							<tr>
+								<td>Current Status</td>
+								<td><?php echo $ticket->status->message; ?></td>
+							</tr>
+							<tr>
+								<td>End Status</td>
+								<td>
+									<table width="100%">
 										<tr>
-											<td align='right'>Total:   <i class='<?php echo $sv['currency']; ?>'></i> </td>
-											<td id='total' align='right'> <?php echo sprintf("%0.2f", $ticket->quote_cost()); ?> </td>
+											<td>
+												<select id='ticket_status' name='ticket_status' class='form-control' onchange='adjust_materials_status(this);'>
+													<option selected hidden>SELECT</option>
+													<option value='<?php echo $status['complete']; ?>'>Complete</option>
+													<option value='<?php echo $status['partial_fail']; ?>'>Partial Fail</option>
+													<option value='<?php echo $status['total_fail']; ?>'>Total Fail</option>
+													<option value='<?php echo $status['cancelled']; ?>'>Cancelled</option>
+												</select>
+											</td>
+											<?php if(StorageObject::object_is_in_storage($ticket->trans_id)) { ?>
+												<td id='storage_location' style='padding:4px;align:right'>
+													<span onclick='reset_and_show_storage_modal();' style='background-color:#0055FF;
+													border:4px solid #0055FF;border-radius:4px;padding:8px;margin:auto;color:#FFFFFF;'>
+														<?php echo StorageObject::get_unit_for_trans_id($ticket->trans_id); ?>
+													</span>
+												</td>
+											<?php 
+											} 
+											else { ?>
+												<td id='storage_location' style='padding:4px;align:right' hidden>
+												</td>
+											<?php } ?>
 										</tr>
-										<?php if($ticket->current_transaction_credit()) { ?>
-											<tr>
-												<td align='right'> Credit:   <i class='<?php echo $sv['currency']; ?>'></i> </td>
-												<td id='credit' align='right'> <?php echo sprintf("%0.2f", $ticket->current_transaction_credit()); ?>  </td>
-											</tr>
-											<tr>
-												<td align='right'>Remaining Balance:   <i class='<?php echo $sv['currency']; ?>'></i></td>
-												<td id='remaining_balance' align='right'> <?php echo sprintf("%0.2f", $ticket->remaining_balance()); ?> </td>
-											</tr>
-										<?php } ?>
 									</table>
 								</td>
 							</tr>
+							<tr>
+								<td><i class="fas fa-edit"></i>Notes</td>
+								<td>
+									<textarea name='ticket_notes' id='ticket_notes' 
+									class="form-control"><?php echo $ticket->notes;?></textarea>
+								</td>
+							</tr>
 						</table>
-					</div>  <!-- end container -->
-				</div>  <!-- end ticket -->
+					</div> <!-- end pannel body -->
+				</div>  <!-- end pannel -->
+		<!------------------ MATERIALS ------------------>
+			<?php
+			// if materials associated with ticket, or materials can be associated with ticket
+			if($ticket->mats_used || $ticket->device->device_group->all_device_group_materials()) { ?>
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<i class="fas fa-ticket-alt fa-fw"></i> Materials
+					</div>
+					<div class="panel-body">
+						<div id='mats_used'>
+							<?php
+							if($ticket->mats_used) 
+								echo Mats_Used::group_mats_used_HTML($ticket->mats_used); 		
+							?>
+						</div>
+						<?php if($ticket->device->device_group->all_device_group_materials()) { ?>
+							<table class='table table-bordered table-striped'>
+								<tr class='warning'>
+									<td colspan='3'> Add material </td>
+								</tr>
+								<tr>
+									<td class='col-sm-4'>Material</td>
+									<td class='col-sm-5'>
+										<select id='new_material' name='new_material' class='form-control'>
+											<?php
+											// allows for materials to added twice
+											foreach($ticket->device->device_group->all_device_group_materials() as $material)
+												echo "<option value='$material->m_id'>$material->m_name</option>";
+											?>
+										</select>
+									</td>
+									<td class='col-sm-4'>
+										<button type='button' name='new_material_button' class='btn btn-info' onclick='add_new_material_used(document.getElementById("new_material").value);'>Add Material</button>
+									</td>
+								</tr>
+							</table>
+						<?php } ?>
+					</div>  <!-- end pannel body -->
+				</div> <!-- end pannel  -->
 			<?php } ?>
-		</div> <!-- end page -->
-	</div>  <!-- end row -->
+		<!------------------ COST AND SUBMIT ------------------>
+			<table width='100%'>
+				<tr>
+					<td>
+						<input type="button" value="End" class="btn btn-success" onclick='populate_end_modal();'/>
+					</td>
+					<td align='right'>
+						<table>
+							<tr>
+								<td align='right'>Total:   <i class='<?php echo $sv['currency']; ?>'></i> </td>
+								<td id='total' align='right'> <?php echo sprintf("%0.2f", $ticket->quote_cost()); ?> </td>
+							</tr>
+							<?php if($ticket->current_transaction_credit()) { ?>
+								<tr>
+									<td align='right'> Credit:   <i class='<?php echo $sv['currency']; ?>'></i> </td>
+									<td id='credit' align='right'> <?php echo sprintf("%0.2f", $ticket->current_transaction_credit()); ?>  </td>
+								</tr>
+								<tr>
+									<td align='right'>Remaining Balance:   <i class='<?php echo $sv['currency']; ?>'></i></td>
+									<td id='remaining_balance' align='right'> <?php echo sprintf("%0.2f", $ticket->remaining_balance()); ?> </td>
+								</tr>
+							<?php } ?>
+						</table>
+					</td>
+				</tr>
+			</table>
+	</div>  <!-- end ticket -->
 </div>
 
 
@@ -343,53 +355,11 @@ function exit_with_success($message, $redirect=null) {
 	</div>
 </div>
 
-
-
-<style>
-	.container {
-		overflow: hidden;
-		position: relative;
-		width: 100%;
-	}
-	.overlay {
-		color: rgb(255,255,255,0);
-		height: 100%;
-		width: 100%;
-		background:rgb(255,255,255,.8);
-		float:left;
-		position: absolute;
-		text-align: center;
-		z-index: 10;
-	}
-	.overlay:hover {
-		background-color: rgb(255,255,255,.4);
-	}
-	.overlay:hover h1{
-		background-color: rgb(92,184,92,1);
-		border:3px solid rgb(92,184,92);
-		border-radius:6px;
-		color:rgb(255,255,255,1);
-		display: inline-block;
-		padding: 8px;
-	}
-</style>
-
-
-<?php include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php'); ?>
+<?php
+}
+include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php'); ?>
 
 <script>
-	function remove_other_tickets(element, trans_id) {
-		var page = document.getElementById("page");
-		for(var x = page.children.length; 0 < x; x--) {
-			if(page.children[x-1].id == `ticket-${trans_id}`)
-				page.children[x-1].getElementsByClassName("overlay")[0].remove();
-			else page.children[x-1].remove();
-		}
-		document.getElementById("modal_title").innerHTML = "Pickup Ticket #"+trans_id;
-		document.getElementById("chosen_ticket").value = trans_id;
-	}
-
-
 
 	var COLORS = ["DD00DD", "0F8DFF", "339933", "FFFF00", "888800", "FF0000"];
 

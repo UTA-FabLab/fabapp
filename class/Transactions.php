@@ -343,8 +343,8 @@ class Transactions {
 			// 	$printer->feed();
 			// 	$printer->text(str_pad((count($ticket->mats_used) - $x +1).":", 5, " ").str_pad($ticket->mats_used[$x-1]->material->m_name, 20, "_"));
 			// }
-			if($ticket->filename && substr_count($ticket->filename, "%")) {
-				$filename_materials = explode("%", $ticket->filename);
+			if($ticket->filename && substr_count($ticket->filename, "[[")) {
+				$filename_materials = explode("[[", $ticket->filename);
 				for($x = 1; $x < count($filename_materials); $x++) {
 					if(substr_count($filename_materials[$x], ".gcode"))
 						$filename_materials[$x] = substr($filename_materials[$x], 0, strpos($filename_materials[$x], ".gcode"));
@@ -479,6 +479,8 @@ class Transactions {
             echo "Couldn't print to this printer: " . $e -> getMessage() . "\n";
         }
     }
+    
+
 
 
 

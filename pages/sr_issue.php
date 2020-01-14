@@ -25,7 +25,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn'])){
 		//display error message
 		$errorMsg = $msg;
 	} else {
-		header("Location:sr_history.php?d_id=".$devices->d_id);
+		header("Location:sr_history.php?d_id=".$devices->device_id);
 	}
 }
 ?>
@@ -81,14 +81,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn'])){
 										<div class="input-group">
 											<span class="input-group-addon" id="dot_span">
 												<?php if (is_object($device)){
-													Devices::printDot($staff, $device->d_id);
+													Devices::printDot($staff, $device->device_id);
 												} else { ?>
 													<i class='fas fa-circle fa-lg' style='color:gainsboro'></i>
 												<?php } ?>
 											</span>
 											<select class="form-control" name="devices" id="devices" tabindex="2" onchange="change_dot()">
 												<?php if (is_object($device)){
-													echo ("<option value='".$device->d_id."'>".$device->name."</option>");
+													echo ("<option value='".$device->device_id."'>".$device->name."</option>");
 												} else { ?>
 													<option value ="" hidden> Select Group First</option>
 												<?php } ?>
