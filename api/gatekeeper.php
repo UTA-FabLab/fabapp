@@ -51,12 +51,12 @@ function gatekeeper ($operator, $d_id) {
     
     //Deny Print if they have prints to pickup
     if ($result = $mysqli->query("
-        Select `objbox`.`trans_id`, `objbox`.`o_start`, `device_group`.`dg_parent`
-        FROM `objbox`
-        JOIN `transactions` ON `transactions`.`trans_id` = `objbox`.`trans_id`
+        SELECT *
+        FROM `storage_box`
+        JOIN `transactions` ON `transactions`.`trans_id` = `storage_box`.`trans_id`
         JOIN `devices` ON `transactions`.`d_id` = `devices`.`d_id`
         JOIN `device_group` ON `device_group`.`dg_id` = `devices`.`dg_id`
-        WHERE `transactions`.`operator` = '".$user->getOperator()."' AND `o_end` IS NULL
+        WHERE `transactions`.`operator` = '$user->operator'
     ")){
         if($result->num_rows > 0){
             //Current Time
@@ -64,10 +64,10 @@ function gatekeeper ($operator, $d_id) {
             while($row = $result->fetch_array()){
                 //Deny if Object in storage is from the same Device Group
                 //Deny if Object in storage is older than maxHold
-                $o_start = new DateTime($row['o_start']);
+                $o_start = new DateTime($row['item_change_time']);
                 $o_start->add(new DateInterval("P".$sv['maxHold']."D"));
                 
-                if(($device->getDg()->getDg_parent() == $row['dg_parent']) || ($now > $o_start)){
+                if(($device->getDg()->parent == $row['dg_parent']) || ($now > $o_start)){
                     return array ("status_id" => 1, "ERROR" => "Please Pay for Your Previous 3D Print. See Ticket: ".$row['trans_id'],  "authorized" => "N");
                 }
             }
