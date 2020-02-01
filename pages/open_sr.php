@@ -10,12 +10,12 @@ if (!isset($staff) || ($staff->getRoleID() < $sv['LvlOfStaff'] && $staff->getRol
     $_SESSION['error_msg'] = "Not Authorized to view this page";
     header('Location: /index.php');
 }
-if (!empty($_GET["d_id"]) && Devices::regexDID($_GET["d_id"])) {
+if (!empty($_GET["d_id"]) && Devices::regexDeviceID($_GET["d_id"])) {
     $device = new Devices(filter_input(INPUT_GET, 'd_id'));
 }
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['btnHistory'])){
     $d_id = filter_input(INPUT_POST, 'devices');
-    if (Devices::regexDID($d_id)){
+    if (Devices::regexDeviceID($d_id)){
         header("Location:/pages/sr_issue.php?d_id=$d_id");
     }
 }
