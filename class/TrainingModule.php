@@ -114,7 +114,7 @@ class TrainingModule {
 		global $sv;
 
 		if (!self::regexTMId($tm_id)) return "Invalid Training Module ID: $tm_id";
-		if ( (Devices::regexDID($d_id) || DeviceGroup::regexDgID($dg_id)) && Devices::regexDID($d_id) != DeviceGroup::regexDgID($dg_id)){} else {return "Bad Device or Group: d-$d_id dg-$dg_id";}
+		if ( (Devices::regexDeviceID($d_id) || DeviceGroup::regexDgID($dg_id)) && Devices::regexDeviceID($d_id) != DeviceGroup::regexDgID($dg_id)){} else {return "Bad Device or Group: d-$d_id dg-$dg_id";}
 		if (!self::regexSize($class_size)) return "Invalid Class Size";
 		if (!self::regexTime($duration)) {return "Bad Time - $duration";}
 		if (!self::regexTmReq($tm_required)) {return "Select Requirement";}
@@ -191,7 +191,7 @@ class TrainingModule {
 		global $mysqli;
 		global $sv;
 
-		if ( (Devices::regexDID($d_id) || DeviceGroup::regexDgID($dg_id)) && Devices::regexDID($d_id) != DeviceGroup::regexDgID($dg_id)){} else {return "Bad Device or Group: d-$d_id dg-$dg_id";}
+		if ( (Devices::regexDeviceID($d_id) || DeviceGroup::regexDgID($dg_id)) && Devices::regexDeviceID($d_id) != DeviceGroup::regexDgID($dg_id)){} else {return "Bad Device or Group: d-$d_id dg-$dg_id";}
 		if (!self::regexSize($class_size)) return "Invalid Class Size";
 		if (!self::regexTime($duration)) {return "Bad Time - $duration";}
 		if (!self::regexTmReq($tm_required)) {return "Select Requirement";}
