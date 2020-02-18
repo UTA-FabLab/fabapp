@@ -95,8 +95,9 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['pay_button'])) {
 		if(is_string($response))
 			exit_if_error($response, "pay.php?trans_id=$trans_id");
 
-		// prevent hardcoding status_IDs by having the acct ID order align with status
-		$acct_charge_status_id = $account_id - 2 + $status["charge_to_acct"];
+		// any charge out of house (not fablab) will be set to charge to account
+		// any complaints about hardcoding should be brought up with Eric
+		$acct_charge_status_id = $account_id == 3 ? $status["charge_to_fablab"] : $status["charge_to_acct"];
 		exit_if_error($ticket->edit_transaction_information(array("status" => new Status($acct_charge_status_id))));
 		$success_message = "Successfully paid for ticket #$trans_id";
 	}
@@ -169,7 +170,10 @@ function exit_with_success($message, $redirect=null) {
 						</tr>
 						<tr>
 							<td>Operator</td>
-							<td><i class="<?php echo $ticket->user->icon; ?> fa-lg" title="<?php echo $ticket->user->operator; ?>"></i></td>
+							<td>
+								<i class="<?php echo $ticket->user->icon; ?> fa-lg" 
+								title="<?php if($staff->role >= $role["admin"]) echo $ticket->user->operator; ?>"></i>
+							</td>
 						</tr>
 						<tr>
 							<td>Staff</td>
@@ -293,9 +297,9 @@ function exit_with_success($message, $redirect=null) {
 												$accounts = Accounts::listAccts($ticket->user, $staff);
 												$ac_owed = Acct_charge::checkOutstanding($ticket->user->operator);
 												foreach($accounts as $a)
-													// show accounts available ()
-													if(!$ac_owed[$ticket->trans_id] && $a->a_id != 1)
-														echo " <option value='$a->a_id' title='$a->description'>$a->name</option>";
+													// show accounts available
+													// if(!$ac_owed[$ticket->trans_id] && $a->a_id != 1)
+													echo " <option value='$a->a_id' title='$a->description'>$a->name</option>";
 											?>
 										</select>
 									</td>
