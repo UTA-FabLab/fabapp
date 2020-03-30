@@ -1,5 +1,11 @@
 
-<?php
-    // Connecting to mysql database with Role 8
-    $mysqli = new mysqli('dbhost', 'dbuser', 'dbpass', 'fabapp') or die(mysql_error());
+$dbhost = "";
+$dbuser = "";
+$dbpass = "";
+$dbdatabase = "";
+// Connecting to mysql database
+$mysqli = new mysqli($dbhost, $dbuser, $dbpass) or die(mysql_error());
+
+// Selecting database 
+$mysqli->select_db($dbdatabase) or die(mysql_error());
 ?>
