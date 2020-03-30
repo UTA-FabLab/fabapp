@@ -16,7 +16,19 @@ function AuthenticateUser($netid, $password) {
     $ldap_bindDN = "uid=$netid,cn=accounts,dc=uta,dc=edu";
     
     //switch case to return roles
-    
+    switch ($netid){
+        case "fablab_leads":
+            if ($password == $sv['backdoor_pass']){
+                return "1000000000";
+            } else {
+                return "Invalid Password";
+            }
+        case "polyprinter":
+            if ($password == $sv['service_pass']){
+                return "0009051523";
+            } else {
+                return "Invalid Password";
+            }
         default:{
             try {
                 // Connect
