@@ -5,7 +5,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
 if(!$staff) $error = exit_if_error("Please log in", "/index.php");
 elseif($staff->roleID < $role["lead"])
-	exit_if_error("You are not authorized to see this ticket", "/index.php");
+	exit_if_error("You are not authorized to see this page", "/index.php");
 
 
 $offline_transactions = array();
@@ -22,9 +22,7 @@ if($results = $mysqli->query("
 	while($row = $results->fetch_assoc()){
 		$offline_transactions[] = 	"<tr>
 										<td>
-											<a href='/pages/lookup.php?trans_id=$row[trans_id]'>
-												$row[trans_id]
-											</a>
+											<a href='/pages/lookup.php?trans_id=$row[trans_id]'>$row[trans_id]</a>
 										</td>
 										<td>
 											$row[off_trans_id]
@@ -33,7 +31,7 @@ if($results = $mysqli->query("
 											$row[device_desc]
 										</td>
 										<td>
-											<button onclick='print($row[trans_id]);'>Print Ticket</button>
+											<a href='?printForm=$row[trans_id]'>Print Receipt</a>
 										</td>
 									</tr>";
 	}
@@ -65,6 +63,11 @@ function exit_with_success($message, $redirect=null) {
 }
 
 
+if (isset($_GET['printForm'])){
+	$transId = $_GET['printForm'];
+	exit_if_error(Transactions::printTicket($transId));
+	exit_with_success("Printing ticket for ticket # $transId");
+}
 ?>
 
 <title><?php echo $sv['site_name']; ?> Ticket Detail</title>
@@ -76,16 +79,16 @@ function exit_with_success($message, $redirect=null) {
         <!-- /.col-md-12 -->
     </div>
 	<div class="row">
-		<div class="col-md-6">
+		<div class="col-md-8">
             <div class="panel panel-default">
 				<div class="panel-heading">
                 	<i class="fas fa-cubes fa-lg"></i> Current Offline Transactions
             	</div>
 		<div class="panel-body">
-			<table class='table table-striped table-bordered table-hover' id='tickets'>
+			<table class='table table-striped table-bordered table-hover' id='off_tickets'>
 				<thead>
 					<tr class="tablerow">
-						<th>Ticket ID</th>
+						<th>Ticket</th>
 						<th>Offline ID</th>
 						<th>Device</th>
 						<th>Actions</th>
@@ -95,28 +98,22 @@ function exit_with_success($message, $redirect=null) {
 					<?php foreach($offline_transactions as $ticket) {echo $ticket;} ?>
 				</tbody>
 			</table>
-
-			<form method='post' name='print_form'>
-				<input name='print_trans_id'/>
-			</form>
 		</div>
 		</div>
 	</div>
 </div>
 
-
 <?php // Standard call for dependencies
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 ?>
 
-<script>
-	$("#tickets").DataTable({
+<script type="text/javascript">
+	$("#off_tickets").DataTable({
 		"iDisplayLength": 25
 	});
 
 
 	function print(trans_id) {
-		document.getElementByID("print_trans_id").value = trans_id;
-		document.getElementByID("print_form").submit();
+		document.getElementByID("printForm").submit();
 	}
 </script>

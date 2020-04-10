@@ -169,7 +169,7 @@ function gatekeeper ($operator, $d_id) {
 			FROM `tm_enroll`
 			WHERE `tm_enroll`.`tm_id` = '$tm_id' AND `operator` = '".$user->getOperator()."'
 		")){
-			if( $results->num_rows == 1 ) {
+			if( $results->num_rows) {
 				$count++;
 			} else {
 				return array ("status_id" => 2, "ERROR" => "ID: ".$user->getOperator()." Needs ".$title, "authorized" => "N");

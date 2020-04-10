@@ -51,7 +51,7 @@ $type      = $input_data["type"];
 	
 // Check the request type
 if (strtolower($type) == "device_id") {
-	$device_id = $input_data["device"];
+	$device_id = $input_data["device_id"];
 	GetByDeviceID($device_id);
 } else {
 	$json_out["ERROR"] = "Unknown type: $type";

@@ -622,6 +622,25 @@ class Transactions {
 
 
 
+	// ————————————————— OTHER ——————————————————
+
+	public static function unended_tickets_for_user($operator)
+	{
+		if(!Users::regexUser($operator->operator)) return array();
+
+		global $mysqli, $status;
+
+		$tickets = array();
+		if($results = $mysqli->query(	"SELECT `trans_id` FROM `transactions`
+										WHERE `status_id` <= $status[moveable]
+										AND `operator` = '$operator->operator';")
+		)
+		{
+			while($row = $results->fetch_assoc()) $tickets[] = new self($row['trans_id']);
+		}
+		return $tickets;
+	}
+
 
 // —————————————— REMOVE WITH UPDATE ———————————————
 // —————————————————————————————————————————

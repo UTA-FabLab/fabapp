@@ -35,12 +35,10 @@ if(!$staff || $staff->roleID < $role["staff"]) exit();
 // get storage drawer with highlighted unit for unit type
 if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["drawer_for_type"])) {
 	$unit_type = htmlspecialchars($_POST["unit_type"]);
+
 	$drawer = StorageDrawer::get_a_drawer_and_unit_for_type($unit_type);
 
-	if(is_string($drawer)) {
-		echo json_encode(array("error" => $drawer));
-		exit();
-	}
+	if(is_string($drawer)) echo_error($drawer);
 
 	echo json_encode(array(	"drawer_HTML" => $drawer->HTML_display(), 
 								"drawer_label" => $drawer->drawer_indicator,
@@ -58,7 +56,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["choose_unit_in_drawer"]
 	$empty_behavior = array("style" => "background-color:#000000;color:#000000;border:solid black;border-width:2px;");
 	$selected_callback = function($unit) {return !$unit->trans_id;};
 	$selected_behavior = array("style" => "background-color:#00FF00;border:solid black;border-width:2px;", 
-									"onclick" => "add_to_location(this)");
+									"onclick" => "add_to_location(this, \"".$drawer_indicator."__unit__\")");
 
 	$drawer = new StorageDrawer($drawer_indicator, $standard_behavior, $empty_behavior, $selected_callback, $selected_behavior);
 
@@ -80,6 +78,13 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["move_to_new_location"])
 // move to storage
 if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["add_to_storage"])) {
 
+}
+
+
+function echo_error($error_message)
+{
+	echo json_encode(array("error" => $error_message));
+	exit();
 }
 
 ?>
