@@ -13,7 +13,7 @@
  */
 require_once ($_SERVER['DOCUMENT_ROOT']."/connections/db_connect8.php");
 
-class Error {
+class FabAppError {
     private $e_id;
     private $e_time;
     private $page;
