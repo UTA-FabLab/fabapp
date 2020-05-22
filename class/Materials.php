@@ -348,7 +348,7 @@ class Materials {
                 FROM `sheet_good_inventory`
                 WHERE `sheet_good_inventory`.`inv_id` = '$inv_id';");
         while($row = $result->fetch_assoc()){
-            $current_quantity = $row[quantity];
+            $current_quantity = $row["quantity"];
         }
         
         $calc_quantity = $current_quantity + $quantity;
