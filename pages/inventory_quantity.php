@@ -123,7 +123,7 @@ function successful_and_failed_device_group_additions($m_id, $device_group) {
 	<div class="col-md-12">
 		<div class="panel panel-default">
 			<div class="panel-heading" style="background-color: #B5E6E6;">
-				<i class="fas fa-warehouse"></i> Edit Inventory
+				<i class="fas fa-warehouse"></i> Update Inventory Quantity
 			</div>
 			<!-- /.panel-heading -->
 			<div class="panel-body">
@@ -139,180 +139,182 @@ function successful_and_failed_device_group_additions($m_id, $device_group) {
 
 <!--—————————————— UPDATE INVENTORY ——————————————-->
 					<div class="tab-content">
-					  <div id="1" class="tab-pane fade in active">
-						<div class="panel panel-default">
-							<div class="panel-body">
-								<table class="table-striped table-bordered table-responsive col-md-12" id="update_mat_table">
-									<thead>
-										<th class='col-md-2' style="text-align:center;">Material</th>
-										<th class='col-md-2' style="text-align:center;">Product Number</th>
-										<th class='col-md-2' style="text-align:center;">Status</th>
-										<th class='col-md-2' style="text-align:center;">Change In Quantity</th>
-										<th class='col-md-3' style="text-align:center;">Reason</th>
-										<th class='col-md-1'></th> <!-- for cancel row -->
-									</thead>
-									<tr class='update_rows'>
-										<td class="td_select">
-											<div>
-												<select class="form-control dm_select" onchange='__INVENTORY__update_unit(this)'>
-													<option selected='selected' value="NONE" disabled hidden>Select Material</option>
-													<?php foreach($device_mats as $dm){
-														// options have three values: m_id, unit, product number
-														echo ("<option value='$dm->m_id|$dm->unit|$dm->m_prod_number'
-																id='$dm->unit' >$dm->m_name</option>");
-													}?>
-												</select>
-											</div>
-										</td>
-										<td id='product'>
-											<div class='product_number' style='text-align:center;'>
-											</div>
-										</td>
-										<td id='status'>
-											<div>
-												<select class="form-control status_select" 
-												onchange='__INVENTORY__add_negative_sign_quantity_addon_if_reduction(this);'>
-													<option selected='selected' value="NONE" disabled hidden>Select Status</option>
-													<?php
-													$status_list = Status::getList();
-													foreach(Status::material_statuses() as $id)
-														echo "<option value='$id'>$status_list[$id]</option>";
-													?>
-												</select>
-											</div>
-										</td>
-										<td>
-											<div class="input-group">
-												<input type="number" min="0" class="form-control quantity" 
-												placeholder="1,000" max='9999999.99'/>
-												<span class="input-group-addon unit"></span>
-											</div>
-										</td>
-										<td id='reason'>
-											<input type='text' class='form-control reason' placeholder='Reason'/>
-										</td>
-										<td style='text-align:center;margin:auto;'>
-											<button class='btn' style='width:100%' onclick='__INVENTORY__delete_row(this);'>
-												&times;
-											</button>
-										</td>
-									</tr>
-								</table>
-								<button class="btn btn-info pull-right" onclick="__INVENTORY__additional_material()">
-									Additional Material Updates
-								</button>
-							</div>
-							<div class="panel-footer">
-								<div class="clearfix">
-									<button class="btn pull-right btn-success" name="to_confirmation" 
-									onclick="__INVENTORY__compile_and_populate_modal();">Submit</button>
-								</div>
-							</div>
-						</div>
-					  </div>
-
-<!--——————————————— EDIT SHEET GOOD AMOUNT ———————————————-->
-					<div id="2" class="tab-pane fade">
-						<div class="panel panel-default">
-							<div class="panel-body">
-								<table class="table table-bordered table-striped table-hover">
-									<form method="POST" action="" autocomplete='off'>
-										<tr>
-											<td class='col-md-3'>
-												<b data-toggle="tooltip" data-placement="top" title="Select type of material">
-													Sheet Parent Group
-												</b>
-											</td>
-											<td class="col-md-8">
-													<select class="form-control" name="__SHEETGOOD__sheet_parent_select" 
-													id="__SHEETGOOD__sheet_parent_select" 
-													onchange="__SHEETGOOD__get_variants();" tabindex="1">
-														<option value="" disabled selected hidden>Sheet Child</option>
+						<div id="1" class="tab-pane fade in active">
+							<div class="panel panel-default">
+								<div class="panel-body">
+									<table class="table-striped table-bordered table-responsive col-md-12" id="update_mat_table">
+										<thead>
+											<th class='col-md-2' style="text-align:center;">Material</th>
+											<th class='col-md-2' style="text-align:center;">Product Number</th>
+											<th class='col-md-2' style="text-align:center;">Status</th>
+											<th class='col-md-2' style="text-align:center;">Change In Quantity</th>
+											<th class='col-md-3' style="text-align:center;">Reason</th>
+											<th class='col-md-1'></th> <!-- for cancel row -->
+										</thead>
+										<tr class='update_rows'>
+											<td class="td_select">
+												<div>
+													<select class="form-control dm_select" onchange='__INVENTORY__update_unit(this)'>
+														<option selected='selected' value="NONE" disabled hidden>Select Material</option>
 														<?php
-															$result = $mysqli->query(
-																"SELECT `m_id`, `m_name`
-																FROM `materials`
-																WHERE `m_parent` = $sv[sheet_goods_parent]
-																GROUP BY `m_id`;");
-
-															if(!$result)
-																echo "<option> disabled selected hidden>QUERY ERROR</option>";
-															else
-															{
-																echo "<option disabled hidden selected value=''>Sheet Parent</option>";
-																while($row = $result->fetch_assoc())
-																	echo "<option value='$row[m_id]'>$row[m_name]</option>";
-															}
+															foreach($device_mats as $dm)
+																// options have three values: m_id, unit, product number
+																echo ("<option value='$dm->m_id|$dm->unit|$dm->m_prod_number'
+																		id='$dm->unit' >$dm->m_name</option>");
 														?>
 													</select>
 												</div>
 											</td>
-										</tr>
-										<tr>
-											<td>
-												<b data-toggle="tooltip" data-placement="top" title="Select which child of material group to use">
-													Sheet Variant
-												</b>
+											<td id='product'>
+												<div class='product_number' style='text-align:center;'>
+												</div>
 											</td>
-											<td class="col-md-8">
-												<select class="form-control" name="__SHEETGOOD__sheet_variant_select" 
-												id="__SHEETGOOD__sheet_variant_select" 
-												onchange="__SHEETGOOD__get_sizes();">
-													<option selected hidden disabled>Select Parent First</option>
-												</select> 
-											</td>
-										</tr>
-										<tr>
-											<td>
-												<b data-toggle="tooltip" data-placement="top" title="Select which size of the type of material">
-													Sheet Size
-												</b>
-											</td>
-											<td class="col-md-8">
-												<select id='__SHEETGOOD__varient_sizes_select' name='__SHEETGOOD__varient_sizes_select' 
-												class='form-control'>
-													<option selected hidden disabled>Select Variant First</option>
-												</select>
-											</td>
-										</tr>
-										<tr>
-											<td>
-												<b data-toggle="tooltip" data-placement="top">Change in Quantity</b>
+											<td id='status'>
+												<div>
+													<select class="form-control status_select" 
+													onchange='__INVENTORY__add_negative_sign_quantity_addon_if_reduction(this);'>
+														<option selected='selected' value="NONE" disabled hidden>Select Status</option>
+														<?php
+														$status_list = Status::getList();
+														foreach(Status::material_statuses() as $id)
+															echo "<option value='$id'>$status_list[$id]</option>";
+														?>
+													</select>
+												</div>
 											</td>
 											<td>
-												<input type="number" class="form-control"name="__SHEETGOOD__quantity_change" 
-												id="__SHEETGOOD__quantity_change" 
-												max="250" min="-250" value="1" step="1" placeholder="Enter Quantity" />
+												<div class="input-group">
+													<input type="number" min="0" class="form-control quantity" 
+													placeholder="1,000" max='9999999.99'/>
+													<span class="input-group-addon unit"></span>
+												</div>
+											</td>
+											<td id='reason'>
+												<input type='text' class='form-control reason' placeholder='Reason'/>
+											</td>
+											<td style='text-align:center;margin:auto;'>
+												<button class='btn' style='width:100%' onclick='__INVENTORY__delete_row(this);'>
+													&times;
+												</button>
 											</td>
 										</tr>
-										<tr>
-											<td>
-												<b>Notes</b>
-											</td>
-											<td>
-												<textarea rows="4" cols="50" type="text" name="__SHEETGOOD__quantity_notes" 
-												id="__SHEETGOOD__quantity_notes" 
-												class="form-control" placeholder="Enter notes regarding quantity change"></textarea>
-											</td>
-										</tr>
+									</table>
+									<button class="btn btn-info pull-right" onclick="__INVENTORY__additional_material()">
+										Additional Material Updates
+									</button>
+								</div>
+								<div class="panel-footer">
+									<div class="clearfix">
+										<button class="btn pull-right btn-success" name="to_confirmation" 
+										onclick="__INVENTORY__compile_and_populate_modal();">Submit</button>
+									</div>
+								</div>
+							</div>
+						</div>
 
-										<tfoot>
+<!--——————————————— EDIT SHEET GOOD AMOUNT ———————————————-->
+						<div id="2" class="tab-pane fade">
+							<div class="panel panel-default">
+								<div class="panel-body">
+									<table class="table table-bordered table-striped table-hover">
+										<form method="POST" action="" autocomplete='off'>
 											<tr>
-												<td colspan="2">
-													<div class="pull-right">
-														<button type="submit" name="__SHEETGOOD__quantity_button" class="btn btn-success" 
-														onclick="return __SHEETGOOD__submit_confirmation()">
-															Update Quantity
-														</button>
+												<td class='col-md-3'>
+													<b data-toggle="tooltip" data-placement="top" title="Select type of material">
+														Sheet Parent Group
+													</b>
+												</td>
+												<td class="col-md-8">
+														<select class="form-control" name="__SHEETGOOD__sheet_parent_select" 
+														id="__SHEETGOOD__sheet_parent_select" 
+														onchange="__SHEETGOOD__get_variants();" tabindex="1">
+															<option value="" disabled selected hidden>Sheet Child</option>
+															<?php
+																$result = $mysqli->query(
+																	"SELECT `m_id`, `m_name`
+																	FROM `materials`
+																	WHERE `m_parent` = $sv[sheet_goods_parent]
+																	GROUP BY `m_id`;");
+
+																if(!$result)
+																	echo "<option> disabled selected hidden>QUERY ERROR</option>";
+																else
+																{
+																	echo "<option disabled hidden selected value=''>Sheet Parent</option>";
+																	while($row = $result->fetch_assoc())
+																		echo "<option value='$row[m_id]'>$row[m_name]</option>";
+																}
+															?>
+														</select>
 													</div>
 												</td>
 											</tr>
-										</tfoot>
-									</form>
-								</table>
-							</div>  <!-- <div class="panel-body"> -->
-						</div>  <!-- <div class="panel panel-default"> -->
-					</div>  <!-- <div id="5" class="tab-pane fade"> -->
+											<tr>
+												<td>
+													<b data-toggle="tooltip" data-placement="top" title="Select which child of material group to use">
+														Sheet Variant
+													</b>
+												</td>
+												<td class="col-md-8">
+													<select class="form-control" name="__SHEETGOOD__sheet_variant_select" 
+													id="__SHEETGOOD__sheet_variant_select" 
+													onchange="__SHEETGOOD__get_sizes();">
+														<option selected hidden disabled>Select Parent First</option>
+													</select> 
+												</td>
+											</tr>
+											<tr>
+												<td>
+													<b data-toggle="tooltip" data-placement="top" title="Select which size of the type of material">
+														Sheet Size
+													</b>
+												</td>
+												<td class="col-md-8">
+													<select id='__SHEETGOOD__varient_sizes_select' name='__SHEETGOOD__varient_sizes_select' 
+													class='form-control'>
+														<option selected hidden disabled>Select Variant First</option>
+													</select>
+												</td>
+											</tr>
+											<tr>
+												<td>
+													<b data-toggle="tooltip" data-placement="top">Change in Quantity</b>
+												</td>
+												<td>
+													<input type="number" class="form-control"name="__SHEETGOOD__quantity_change" 
+													id="__SHEETGOOD__quantity_change" 
+													max="250" min="-250" value="1" step="1" placeholder="Enter Quantity" />
+												</td>
+											</tr>
+											<tr>
+												<td>
+													<b>Notes</b>
+												</td>
+												<td>
+													<textarea rows="4" cols="50" type="text" name="__SHEETGOOD__quantity_notes" 
+													id="__SHEETGOOD__quantity_notes" 
+													class="form-control" placeholder="Enter notes regarding quantity change"></textarea>
+												</td>
+											</tr>
+
+											<tfoot>
+												<tr>
+													<td colspan="2">
+														<div class="pull-right">
+															<button type="submit" name="__SHEETGOOD__quantity_button" class="btn btn-success" 
+															onclick="return __SHEETGOOD__submit_confirmation()">
+																Update Quantity
+															</button>
+														</div>
+													</td>
+												</tr>
+											</tfoot>
+										</form>
+									</table>
+								</div>  <!-- <div class="panel-body"> -->
+							</div>  <!-- <div class="panel panel-default"> -->
+						</div>  <!-- <div id="5" class="tab-pane fade"> -->
+					</div>  <!-- <div class="tab-content"> -->
 				</div>  <!-- <div class="table"> -->
 			</div>  <!-- <div class="panel-body"> -->
 		</div>  <!-- <div class="panel panel-default"> -->
@@ -320,28 +322,26 @@ function successful_and_failed_device_group_additions($m_id, $device_group) {
 </div>  <!-- <div id="page-wrapper"> -->
 
 
-<div id="update_modal" class="modal fade">
+<div id="__INVENTORY__modal" class="modal fade">
 	<div class="modal-dialog">
 		<div class="modal-content">
-			<form method='POST'>
-				<div class="modal-header" id='modal-header'>
-					<button type="button" class="close" data-dismiss="modal">&times;</button>
-					<h4 class="modal-title">Update Inventory</h4>
-				</div>
-				<div id='__INVENTORY__modal_body' class='modal-body'>
-					<table id='confirmation_table' class="table table-striped table-bordered table-responsive col-md-12">
-					</table>
-				</div>
-				<div id='__INVENTORY__modal_footer' class="modal-footer">
-					<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-					<button id='__INVENTORY__submit_button' type='button' class='btn btn-success'>
-						Update Inventory
-					</button>
-				</div>
-			</form>
+			<div class="modal-header" id='modal-header'>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h4 class="modal-title">Update Inventory</h4>
+			</div>
+			<div id='__INVENTORY__modal_body' class='modal-body'>
+				<table id='confirmation_table' class="table table-striped table-bordered table-responsive col-md-12">
+				</table>
+			</div>
+			<div id='__INVENTORY__modal_footer' class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+				<button id='__INVENTORY__submit_button' type='button' class='btn btn-success'>
+					Update Inventory
+				</button>
+			</div>
 		</div>  <!-- <div class="modal-content"> -->
 	</div>  <!-- <div class="modal-dialog"> -->
-</div>  <!-- <div id="update_modal" class="modal fade"> -->
+</div>  <!-- <div id="__INVENTORY__modal" class="modal fade"> -->
 
 
 
@@ -605,7 +605,7 @@ function successful_and_failed_device_group_additions($m_id, $device_group) {
 		{
 			__INVENTORY__submit_update(materials);
 		};
-		$('#update_modal').modal('show');
+		$('#__INVENTORY__modal').modal('show');
 	}
 
 
@@ -655,7 +655,7 @@ function successful_and_failed_device_group_additions($m_id, $device_group) {
 				__INVENTORY__remove_inventory_update_instance_from_page(response["successes"]);
 				alert("Successfully updated all materials");
 				__INVENTORY__additional_material(material_options, material_statuses);  // add clean row
-				$('#update_modal').modal('hide');
+				$('#__INVENTORY__modal').modal('hide');
 			},
 			error: function(XMLHttpRequest, textStatus, errorThrown) {
 				alert("Error in query submission");

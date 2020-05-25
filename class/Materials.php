@@ -29,7 +29,8 @@ class Materials {
 	public $unit;  // str—unit the material uses
 	public $color_hex;  // str—color of material in a hex form
 	public $is_measurable;  // bool—if DB.measurable == Y
-	public $m_prod_number;  // str—assigned product number of material
+	public $product_number;  // str—assigned product number of material
+	public $is_current;
 	
 	public function __construct($m_id) {
 		global $mysqli;
@@ -51,7 +52,8 @@ class Materials {
 			$this->unit = $row['unit'];
 			$this->color_hex = $row['color_hex'] ? $row['color_hex'] : null;
 			$this->is_measurable = $row['measurable'] == "Y";
-			$this->m_prod_number = $row['product_number'];
+			$this->is_current = $row['current'] == "Y";
+			$this->product_number = $row['product_number'];
 		}
 	}
 	
@@ -169,12 +171,13 @@ class Materials {
 
 		if(array_key_exists("color_hex", $change_array)) $this->color_hex = $change_array["color_hex"];
 		if(array_key_exists("is_measurable", $change_array)) $this->is_measurable = $change_array["is_measurable"];
+		if(array_key_exists("is_current", $change_array)) $this->is_current = $change_array["is_current"];
 		if(array_key_exists("m_name", $change_array)) $this->m_name = $change_array["m_name"];
-		if(array_key_exists("m_prod_number", $change_array)) $this->m_prod_number = $change_array["m_prod_number"];
+		if(array_key_exists("product_number", $change_array)) $this->product_number = $change_array["product_number"];
 		if(array_key_exists("price", $change_array)) $this->price = $change_array["price"];
 		if(array_key_exists("unit", $change_array)) $this->unit = $change_array["unit"];
 
-		return $this->update_transactions();
+		return $this->update_material();
 	}
 
 
@@ -325,16 +328,19 @@ class Materials {
 	// Writes all variables to the DB for a given Transaction
 	public function update_material(){
 		global $mysqli;
+		$is_measurable = $this->is_measurable ? "Y" : "N";
+		$is_current = $this->is_current ? "Y" : "N";
 
 		// update transaction info
-		$statement = $mysqli->prepare("UPDATE `transactions`
-											SET `color_hex` = ?, `is_measurable` = ?, `m_name` = ?, 
-											`m_prod_number` = ?, `price` = ?, `unit` = ?
+		$statement = $mysqli->prepare("UPDATE `materials`
+											SET `color_hex` = ?, `measurable` = ?, `m_name` = ?, 
+											`product_number` = ?, `price` = ?, `unit` = ?, `current` = ?
 											WHERE `m_id` = ?;");
-		$statement->bind_param("ssssdsd", $this->color_hex, $this->is_measurable, $this->m_name, 
-									$this->m_prod_number, $this->price, $this->unit, 
+		$statement->bind_param("ssssdssd", substr($this->color_hex, 1), $is_measurable, $this->m_name, 
+									$this->product_number, $this->price, $this->unit, $is_current,
 									$this->m_id);
-		if(!$statement->execute()) return "Could not update transaction values";
+		if(!$statement) return "Bad parameter passed in updating material";
+		if(!$statement->execute()) return $mysqli->error;
 
 		return null;  // no errors
 	}

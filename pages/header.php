@@ -222,11 +222,11 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 										<a href="/pages/inventory.php"><i class="fas fa-box"></i> On Hand</a>
 									</li>
 									<li>
-										<a href="/pages/inventory_processing.php"><i class="fas fa-shipping-fast"></i> Edit Inventory</a>
+										<a href="/pages/inventory_quantity.php"><i class="fas fa-shipping-fast"></i> Edit Inventory</a>
 									</li>
 									<?php if(isset($staff) && $staff->getRoleID() >= $sv['minRoleTrainer']) { ?>
 									<li>
-										<a href="/pages/current_inventory.php"><i class="far fa-check-square"></i> Usable Inventory</a>
+										<a href="/pages/inventory_materials.php"><i class="far fa-check-square"></i> Inventory Materials</a>
 									</li>
 									<?php } ?>
 									<li>

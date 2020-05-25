@@ -117,6 +117,18 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["add_edit_mat_used_i
 								"material_name" => $mat_used->material->m_name));
 }
 
+elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["material_info"]))
+{
+	if(!Materials::regexID($_POST["material_info"])) exit();
+	$mat = new Materials($_POST["material_info"]);
+
+	$attributes = array(
+			"m_name" => $mat->m_name, "m_parent" => $mat->m_parent->m_id, "price" => $mat->price, 
+			"unit" => $mat->unit, "color_hex" => "#$mat->color_hex", "is_measurable" => $mat->is_measurable, 
+			"product_number" => $mat->product_number, "is_current" => $mat->is_current);
+	echo json_encode($attributes);
+}
+
 
 // if passed values do not match formatting, exit from system
 function check_posted_values($m_id, $trans_id) {
