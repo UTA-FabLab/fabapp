@@ -34,7 +34,6 @@ if(!$staff || $staff->getRoleID() < $sv['minRoleTrainer'])
 
 
 $failure_message = "";
-$device_mats = Materials::get_all_materials();
 
 // edit material update code
 // get desired update material ID & check if valid. get all material values. if value changed, add it to list of 
@@ -47,13 +46,16 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["__EDITINV__submit_butto
 		echo "Bad m_id: $selected_material";
 		exit();
 	}
-	$material = new Materials($selected_material);
+	$material = new Materials($selected_material);  // current state; used for comparison
 
 	// pull values
 	$attributes = array(	"m_name", "product_number", "m_parent", "price", "unit",
 							"is_measurable", "is_current", "color_hex")	;
 	$posted_values = array();
 	foreach($attributes as $attribute) $posted_values[$attribute] = $_POST["__EDITINV__${attribute}_input"];
+
+	// check that there will be no m_parent recursion overflow
+	if($posted_values["m_parent"] == $material->m_id) exit_from_error("A material cannot be its own parent");
 
 	// get changes
 	$changed_values = array();
@@ -68,121 +70,140 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["__EDITINV__submit_butto
 }
 
 // new materials
-elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['new_mat']))
+elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['__NEWINV__submit_button']))
 {
-	// check inputs
-	if(!$name = Materials::regexName(filter_input(INPUT_POST, "item_name"))) $failure = "Name too long for creating new material";
+	// validate inputs
+	if(!$name = filter_input(INPUT_POST, "__NEWINV__name_input"))
+		exit_from_error("Name too long for creating new material");
+	if($prior_id = Materials::mat_exists($name)) exit_from_error("Material: $name already exists");
 
-	$product_number = Materials::regexProductNum(filter_input(INPUT_POST, "product_number"));
+	$parent = filter_input(INPUT_POST, "__NEWINV__m_parent_select");
+	if($parent && !Materials::regexID($parent)) exit_from_error("Parent material ID $parent is not valid");
+	$product_number = filter_input(INPUT_POST, "__NEWINV__product_number_input");
+	$price = filter_input(INPUT_POST, "__NEWINV__product_number_input");
+	if(!$measurability = Materials::regexMeasurability(filter_input(INPUT_POST, "__NEWINV__measurable_select"))) 
+		exit_from_error("Bad measurability data $measurability for creating new material");
+	$unit = Materials::regexUnit(filter_input(INPUT_POST, "__NEWINV__unit_input"));
+	$color = filter_input(INPUT_POST, "__NEWINV__color_input");
+	$device_groups = __NEWINV__get_populate_values("__NEWINV__device_group_input");
+	foreach($device_groups as $group)
+		if(!DeviceGroup::regexDgID($group)) exit_from_error("Device group $group is not valid");
 
-	$price = filter_input(INPUT_POST, "item_price");
-	if($price && !Materials::regexPrice($price)) $failure = "Bad price for creating new material";
-	elseif(!$price) $price = NULL;
-	
-	if(!$measurability = Materials::regexMeasurability(filter_input(INPUT_POST, "item_measurability"))) 
-		$failure = "Bad measurability data for creating new material";
-	
-	$unit = filter_input(INPUT_POST, "item_unit");
-	if($unit && !$unit = Materials::regexUnit($unit)) $failure = "Unit too long for creating new material";
-	elseif(!$unit) $unit = "";
-	
-	$color = substr(filter_input(INPUT_POST, "item_color"), 1);  // ignore '#'
-	if($color && !$color = Materials::regexColor($color)) $failure = " Bad color for creating new material";
-	elseif(!$color) $color = NULL;
-	
-	$device_group = get_populated_values("item_device_group");
-	if($device_group && !Materials::regexDeviceGroup($device_group)) $failure = "One or more device group ID is/are incorrect";
-
-	if($failure)
-	{
-		$_SESSION['error_msg'] = $failure;
-		header("Location:inventory_processing.php");  // assumed to be malicious; zero everything
-	}
-
-	// commence query
-	$prior_id = Materials::mat_exists($name);  // material already exists
-	// if((material exists and successfully update) || (material !exists and successfully created))
-	if(($prior_id && Materials::update_mat($color, $prior_id, $measurability, $price, $product_number, $unit)) 
-		|| (!$prior_id && Materials::create_new_mat($color, $measurability, $name, $price, $product_number, $unit)))
-	{
-			$m_id = ($prior_id ? $prior_id : Materials::mat_exists($name));  // id to assign device groups
-		$outcome = "S".str_replace(' ', '_', $name).successful_and_failed_device_group_additions($m_id, $device_group);  // S for success, F for failed
-	}
-	else {  // update or create material failed
-		$outcome = "F".str_replace(' ', '_', $name);
-	}
-	header("Location:inventory_processing.php?outcome=".$outcome);
-}
-
-
-else if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['variantBtn']) ){
-	if(!preg_match('/^[a-z0-9\-\_\# ]{1,100}$/i', $_POST['sheet_name']))
-		$error_message = "Incorrect input: $_POST[sheet_name] on Sheet Good Material Name row."; 
-	elseif(!preg_match('/^([1-9][0-9]*|0)(\.[0-9]{2})?$/', $_POST['sheet_cost']))
-		$error_message = "Incorrect input: $_POST[cost] on Sheet Cost row."; 
+	// create material
+	if(!$insert_id = Materials::create_new_material(substr($color, 1), $measurability, $name, $parent, $price, 
+	$product_number, $unit))
+		exit_from_error("Failed to create material $name");
 	else
 	{
-		$sheet_name = filter_input(INPUT_POST, "sheet_name");
-		$sheet_cost = filter_input(INPUT_POST, "sheet_cost");
-
-		$error_message = Materials::create_new_material($sheet_name, $sv["sheet_goods_parent"], $sheet_cost, "NULL", "sq_inch(es)", "", "Y");
-	}
-}
-
-
-elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['variantBtn1'])){
-	$color = substr(filter_input(INPUT_POST, "sheet_color"), 1);  // ignore '#'
-	if(!preg_match('/^[a-z0-9\-\_\# ]{1,100}$/i', $_POST['sheet_name1']))
-		$error_message = "Incorrect input: ". $_POST['sheet_name1'] ." on Sheet Good Material Name row."; 
-	elseif($color && !$color = Materials::regexColor($color))
-		$error_message = "Bad color for creating Sheet Variant."; 
-	elseif(!preg_match('/^([1-9][0-9]*|0)(\.[0-9]{2})?$/', $_POST['m_id1']))
-		$error_message = "You must properly fill the Sheet Parent row."; 
-	elseif(!preg_match('/^[a-f0-9]{6}$/', $_POST['sheet_color_hex']) && $_POST['sheet_color_hex'] != "")
-		$error_message = "Incorrect input: ". $_POST['sheet_color_hex'] ." on Color HEX row."; 
-	else
-	{
-		$sheet_parent1 = filter_input(INPUT_POST, "m_id1");
-		
-		if($result1 = $mysqli->query("   
-			SELECT `materials`.`price`
-			FROM `materials`
-			WHERE `materials`.`m_id` = '$sheet_parent1';"))
+		foreach($device_groups as $group)
 		{
-			while($row = $result1->fetch_assoc())
-				$sheet_cost1 = $row["price"];
+			if(!Materials::assign_device_group($group, $insert_id))
+				exit_from_error("Unable to assign $insert_id to device group $group");
 		}
-		$sheet_name1 = filter_input(INPUT_POST, "sheet_name1");
-
-		$error_message = Materials::create_new_material($sheet_name1, $sheet_parent1, $sheet_cost1, "NULL", "sq_inch(es)", $color, "Y");
 	}
+	exit_with_success("Successfully created Material $name");
 }
 
-elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
-{
-	if(!isset($_POST['m_id']))
-		$error_message = "You must properly fill the Sheet Material field.";
-	elseif(!preg_match('/^[0-9]+$/i', $_POST['variants']))
-		$error_message = "You must properly fill the Sheet Material field.";
-	elseif(!preg_match('#^\d+(?:\.\d{1,2})?$#', $_POST['sheet_width']))
-		$error_message = "Incorrect input: ". $_POST['width'] ." on Width field.";
-	elseif(!preg_match('#^\d+(?:\.\d{1,2})?$#', $_POST['sheet_height']))
-		$error_message = "Incorrect input: ". $_POST['height'] ." on Height field."; 
-	elseif(!preg_match('/^[0-9]+$/i', $_POST['sheet_quantity']))
-		$error_message = "Incorrect input: ". $_POST['sheet_quantity'] ." on Sheet Quantity field."; 
-	else
+
+else if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['__SHEETPAR__submit_button']) ){
+	if(!preg_match('/^[a-z0-9\-\_\# ]{1,100}$/i', $_POST['__SHEETPAR__name_input']))
+		exit_from_error("Incorrect input: $_POST[sheet_name] on Sheet Good Material Name row.");
+	elseif(!preg_match('/^([1-9][0-9]*|0)(\.[0-9]{2})?$/', $_POST['__SHEETPAR_cost_input']))
+		exit_from_error("Incorrect input: $_POST[cost] on Sheet Cost row.");
+
+	$sheet_name = filter_input(INPUT_POST, "__SHEETPAR__name_input");
+	$sheet_cost = filter_input(INPUT_POST, "__SHEETPAR_cost_input");
+
+	// add to DB
+	if(!Materials::create_new_material(none, "Y", $sheet_name, $sv["sheet_goods_parent"], $sheet_cost, none, 
+	"in<sup>2</sup>"))
+		exit_from_error("Unable to create new sheetgood parent");
+
+	exit_with_success("Successfully created Sheetgood group $sheet_name");
+}
+
+
+elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['__SHEETVAR__submit_button'])){
+	$color = substr(filter_input(INPUT_POST, "__SHEETVAR__color_input"), 1);  // ignore '#'
+	if(!preg_match('/^[a-z0-9\-\_\# ]{1,100}$/i', $_POST['__SHEETVAR__name_input']))
+		exit_from_error("Incorrect input: $_POST[__SHEETVAR__name_input] on Sheet Good Material Name row.");
+	elseif($color && !$color = Materials::regexColor($color))
+		exit_from_error("Bad color for creating Sheet Variant.");
+	elseif(!preg_match('/^([1-9][0-9]*|0)(\.[0-9]{2})?$/', $_POST['__SHEETVAR__m_parent_select']))
+		exit_from_error("You must properly fill the Sheet Parent row.");
+
+
+	$sheet_parent1 = filter_input(INPUT_POST, "__SHEETVAR__m_parent_select");
+	if($result1 = $mysqli->query("   
+		SELECT `materials`.`price`
+		FROM `materials`
+		WHERE `materials`.`m_id` = '$sheet_parent1';"))
 	{
-		$m_id = filter_input(INPUT_POST, "variants");
-		$sheet_parent = filter_input(INPUT_POST, "m_id");
-		$sheet_width = filter_input(INPUT_POST, "sheet_width");
-		$sheet_height = filter_input(INPUT_POST,"sheet_height");
-		$sheet_quantity = filter_input(INPUT_POST, "sheet_quantity");
-	
-		$error_message = Materials::create_new_sheet_inventory($m_id, $sheet_parent, $sheet_width, $sheet_height, $sheet_quantity);
+		while($row = $result1->fetch_assoc())
+			$sheet_cost1 = $row["price"];
 	}
+	$sheet_name1 = filter_input(INPUT_POST, "__SHEETVAR__name_input");
+
+	// add to DB
+	if(!Materials::create_new_material($color, "Y", $sheet_name1, $sheet_parent1, $sheet_cost1, none, 
+	"in<sup>2</sup>"))
+		exit_from_error("Unable to create new sheetgood variant");
+
+	exit_with_success("Successfully created Sheetgood variant with color $color");
 }
 
 
+elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['__SHEETSIZE__submit_button']))
+{
+	if(!preg_match('/^[0-9]+$/i', $_POST['__SHEETSIZE__parent_select']))
+		exit_from_error("You must properly fill the Sheet Material field.");
+	elseif(!preg_match('/^[0-9]+$/i', $_POST['__SHEETSIZE__variant_select']))
+		exit_from_error("You must properly fill the Sheet Material field.");
+	elseif(!preg_match('#^\d+(?:\.\d{1,2})?$#', $_POST['__SHEETSIZE__width_input']))
+		exit_from_error("Incorrect input: $_POST[__SHEETSIZE__width_input] on Width field.");
+	elseif(!preg_match('#^\d+(?:\.\d{1,2})?$#', $_POST['__SHEETSIZE__height_input']))
+		exit_from_error("Incorrect input: $_POST[__SHEETSIZE__height_input] on Height field.");
+	elseif(!preg_match('/^[0-9]+$/i', $_POST['__SHEETSIZE__quantity_input']))
+		exit_from_error("Incorrect input: $_POST[__SHEETSIZE__quantity_input] on Sheet Quantity field.");
+
+
+	$m_id = filter_input(INPUT_POST, "__SHEETSIZE__variant_select");
+	$sheet_parent = filter_input(INPUT_POST, "__SHEETSIZE__parent_select");
+	$sheet_width = filter_input(INPUT_POST, "__SHEETSIZE__width_input");
+	$sheet_height = filter_input(INPUT_POST,"__SHEETSIZE__height_input");
+	$sheet_quantity = filter_input(INPUT_POST, "__SHEETSIZE__quantity_input");
+
+	// add to DB
+	$error_message = Materials::create_new_sheet_inventory($m_id, $sheet_parent, $sheet_width, $sheet_height, 
+			$sheet_quantity);
+	if($error_message) exit_from_error($error_message);
+	exit_with_success("Successfully created Sheetgood variant size $sheet_width x $sheet_height");
+}
+
+
+function exit_from_error($error_message)
+{
+	if(!$error_message) return;
+
+	$_SESSION["error_msg"] = $error_message;
+	header("Location:./inventory_materials.php");
+	exit();
+}
+
+
+function exit_with_success($success_message)
+{
+	$_SESSION["success_msg"] = $success_message;
+	header("Location:./inventory_materials.php");
+}
+
+
+function __NEWINV__get_populate_values($name)
+{
+	$device_groups = array();
+	for($x = 0; $_POST["$name-$x"]; $x++) $device_groups[] = $_POST["$name-$x"];
+	return $device_groups;
+}
 
 ?>
 
@@ -194,8 +215,9 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 		</div>
 	</div>
 	
+	<!-- error message display (if exists) -->
 	<?php
-		if($error_message)
+		if(isset($error_message))
 		{
 			?>
 			<div class='col-md-12'>
@@ -206,6 +228,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 			<?php
 		} 
 	?>
+
 
 	<div class="col-md-12">
 		<div class="panel panel-default">
@@ -232,7 +255,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 						</li>
 					</ul>
 
-<!--—————————————— EDIT MATERIAL ——————————————-->
+<!--———————————————————— EDIT MATERIAL ————————————————————-->
 					<div class="tab-content">
 						<div id="1" class="tab-pane fade active in">
 							<form method='POST'>
@@ -243,10 +266,11 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 											<select id='__EDITINV__material_select' name='__EDITINV__material_select'
 											class='form-control' onchange='__EDITINV__data_for_material(this);'>
 												<?php
-													if(!count($device_mats)) echo "<option>NONE</option>";
+													$__EDITINV__all_materials = Materials::get_all_materials();
+													if(!count($__EDITINV__all_materials)) echo "<option>NONE</option>";
 													else
 													{
-														foreach($device_mats as $mat)
+														foreach($__EDITINV__all_materials as $mat)
 															echo "<option value='$mat->m_id'>$mat->m_name</option>";
 													}
 												?>
@@ -255,9 +279,8 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 										<table id='__EDITINV__data_table' class='table' hidden>
 											<?php
 												$__EDITINV__text_attributes = array(
-																				"Name" => "m_name", "Product Number" => "product_number",
-																				"Parent" => "m_parent", "Price" => "price", 
-																				"Unit" => "unit");
+														"Name" => "m_name", "Product Number" => "product_number",
+														"Parent" => "m_parent", "Price" => "price", "Unit" => "unit");
 
 												foreach($__EDITINV__text_attributes as $script => $var)
 												{
@@ -296,6 +319,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 													<?php
 												}
 											?>
+											<!-- TODO: allow editing device groups -->
 											</table>
 										</div>  <!-- <div class="panel-body"> -->
 									<div class="panel-footer">
@@ -307,7 +331,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 							</div>  <!-- <div class="panel panel-default"> -->
 						</div>  <!-- <div id="5" class="tab-pane fade"> -->
 
-<!--—————————————— NEW MATERIAL ——————————————-->
+<!--——————————————————— NEW MATERIAL ————————————————————-->
 						<div id="2" class="tab-pane fade">
 							<div class="panel panel-default">
 								<div class='panel-body'>
@@ -315,19 +339,34 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 										<tr>
 											<td class='col-md-4'>Item Name</td>   
 											<td class='col-md-8'>
-												<input id='__NEWINV__name_input' class='form-control' type='text' placeholder='New Material' maxlength='50' /> 
+												<input id='__NEWINV__name_input' class='form-control' type='text' placeholder='New Material' 
+												maxlength='50' onchange='__NEWINV__validate_inputs();' onkeyup='__NEWINV__validate_inputs();'> 
+											</td>
+										</tr>
+										<tr>
+											<td>Parent Material</td>
+											<td>
+												<select id='__NEWINV__m_parent_select' class='form-control'>
+													<option value=''>NONE</option>
+													<?php
+														$__NEWINV__all_materials = Materials::get_all_materials();
+														foreach($__NEWINV__all_materials as $mat)
+															echo "<option value='$mat->m_id'>$mat->m_name</option>";
+													?>
+												</select>
 											</td>
 										</tr>
 										<tr>
 											<td class='col-md-4'>Product Number</td>
 											<td class='col-md-8'>
-												<input id='__NEWINV__product_number_input' class='form-control' type='text' placeholder='3D ABS-1KG1.75-BLK' maxlength='30' /> 
+												<input id='__NEWINV__product_number_input' class='form-control' type='text' 
+												placeholder='3D ABS-1KG1.75-BLK' maxlength='30' /> 
 											</td>
 										</tr>
 										<tr>
 											<td>Measurable</td>
 											<td>
-												<select id='__NEWINV__measurable_select' name='measureable_select' class='form-control'>
+												<select id='__NEWINV__measurable_select' class='form-control'>
 													<option value='Y'>Y</option>
 													<option value='N'>N</option>
 												</select>
@@ -338,14 +377,15 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 											<td>
 												<div class="input-group">
 													<span class="input-group-addon unit">$</span>
-													<input id='__NEWINV__price_input' type="number" min="0" step='0.01' class="form-control" placeholder="0.10"/>
+													<input id='__NEWINV__price_input' type="number" min="0" step='0.01' class="form-control"
+													placeholder="0.10" onchange='__NEWINV__validate_inputs();' onkeyup='__NEWINV__validate_inputs();'>
 												</div>
 											</td>
 										</tr>
 										<tr>
 											<td>Unit</td>
 											<td>
-												<input id='__NEWINV_unit_input' list='units' class='form-control'/>
+												<input id='__NEWINV__unit_input' list='units' class='form-control'/>
 												<datalist id='units'>
 													<?php 
 														if($autofills = $mysqli->query(
@@ -401,8 +441,8 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 								</div>  <!-- <div class="panel-body"> -->
 								<div class="panel-footer">
 									<div class="clearfix">
-										<button class="btn pull-right btn-success" name="to_confirmation" 
-										onclick="__NEWINV__compile_and_populate_modal();">
+										<button id='__NEWINV__modal_button' class="btn pull-right btn-success" 
+										onclick="__NEWINV__compile_and_populate_modal();" disabled>
 											Create New Item
 										</button>
 									</div>
@@ -411,7 +451,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 						</div>  <!-- <div id="5" class="tab-pane fade"> -->
 
 
-<!--—————————————— CREATE SHEETGOOD PARENT ——————————————-->
+<!--———————————————— CREATE SHEETGOOD PARENT ————————————————-->
 						<div id="3" class="tab-pane fade">
 							<div class="panel panel-default">
 								<div class="panel-body">
@@ -419,10 +459,13 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 										<form method="POST" action="" autocomplete='off'>
 											<tr>
 												<td>
-													<b data-toggle="tooltip" data-placement="top" title="email contact information">Sheet Good Material Name </b>
+													<b data-toggle="tooltip" data-placement="top" title="email contact information">
+														Sheet Good Material Name
+													</b>
 												</td>
 												<td>
-													<input type="text" class="form-control"name="sheet_name" id="sheet_name" maxlength="50" size="50" placeholder="Enter Name" />
+													<input type="text" class="form-control"name="__SHEETPAR__name_input" id="__SHEETPAR__name_input" 
+													maxlength="50" size="50" placeholder="Enter Name" />
 												</td>
 											</tr>
 											<tr>
@@ -432,7 +475,8 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 												<td>
 													<div class="input-group">
 														<span class="input-group-addon unit">$</span>
-														<input type="number" name="sheet_cost" id="sheet_cost" min="0" step='0.01' class="form-control" max="99.99" min="0.00" value="0.00" step="0.01" tabindex="1"/>
+														<input type="number" name="__SHEETPAR_cost_input" id="__SHEETPAR_cost_input" min="0" step='0.01' 
+														class="form-control" max="99.99" min="0.00" value="0.00" step="0.01" tabindex="1"/>
 													</div>
 												</td>
 											</tr>
@@ -440,7 +484,8 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 												<tr>
 													<td colspan="2">
 														<div class="pull-right">
-															<button type="submit" name="variantBtn" class="btn btn-success" onclick="return Submitter()">Create Sheet Parent</button>
+															<button type="submit" name="__SHEETPAR__submit_button" class="btn btn-success" 
+															onclick="return __SHEETGOOD__submit_confirmation()">Create Sheet Parent</button>
 														</div>
 													</td>
 												</tr>
@@ -451,7 +496,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 							</div>  <!-- <div class="panel panel-default"> -->
 						</div>  <!-- <div id="3" class="tab-pane fade"> -->
 
-<!--—————————————— CREATE SHEETGOOD CHILD ——————————————-->
+<!--———————————————— CREATE SHEETGOOD CHILD —————————————————-->
 						<div id="4" class="tab-pane fade">
 							  <div class="panel panel-default">
 								<div class="panel-body">
@@ -459,10 +504,10 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 										<form method="POST" action="" autocomplete='off'>
 											<tr>
 												<td>
-													<b data-toggle="tooltip" data-placement="top" title="Select Parent">Sheet Parent </b>
+													<b data-toggle="tooltip" data-placement="top" title="Select Parent">Sheet Parent</b>
 												</td>
 												<td>
-													<select class="form-control" name="m_id1" id="m_id1">
+													<select class="form-control" name="__SHEETVAR__m_parent_select" id="__SHEETVAR__m_parent_select">
 														<?php
 															$result = $mysqli->query(
 																	"SELECT DISTINCT `materials`.`m_id`, `materials`.`m_name`
@@ -482,20 +527,26 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 											</tr>
 											<tr>
 												<td>
-													<b data-toggle="tooltip" data-placement="top" title="Enter the name of the sheet material">Sheet Good Name </b>
+													<b data-toggle="tooltip" data-placement="top" title="Enter the name of the sheet material">
+														Sheet Good Name
+													</b>
 												</td>
 												<td>
-													<input type="text" class="form-control"name="sheet_name1" id="sheet_name1" maxlength="50" size="50" placeholder="Enter Name" />
+													<input type="text" class="form-control"name="__SHEETVAR__name_input" id="__SHEETVAR__name_input" 
+													maxlength="50" size="50" placeholder="Enter Name" />
 												</td>
 											</tr>
 											<tr>
 												<td>
-													<b data-toggle="tooltip" data-placement="top" title="Choose or input the color of the material">Color Hex </b>
+													<b data-toggle="tooltip" data-placement="top" title="Choose or input the color of the material">
+														Color Hex
+													</b>
 													<br>Include Color <input type="checkbox" id="colorBox" />
 												</td>
 												<td>
 													<div style="text-align:center;">
-														<input disabled type="color" name="sheet_color" id="sheet_color" value="#000000" style="width: 500px;height: 30px;">
+														<input disabled type="color" name="__SHEETVAR__color_input" id="__SHEETVAR__color_input" 
+														value="#000000" style="width: 500px;height: 30px;">
 													</div>
 												</td>
 											</tr>
@@ -503,7 +554,8 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 												<tr>
 													<td colspan="2">
 														<div class="pull-right">
-															<button type="submit" name="variantBtn1" class="btn btn-success" onclick="return Submitter()">Create Sheet Child</button>
+															<button type="submit" name="__SHEETVAR__submit_button" class="btn btn-success" 
+															onclick="return __SHEETGOOD__submit_confirmation()">Create Sheet Child</button>
 														</div>
 													</td>
 												</tr>
@@ -514,7 +566,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 							</div>  <!-- <div class="panel panel-default"> -->
 						</div>  <!-- <div id="4" class="tab-pane fade"> -->
 
-<!--—————————————— CREATE SHEETGOOD SIZE ——————————————-->
+<!--————————————————— CREATE SHEETGOOD SIZE —————————————————-->
 						<div id="5" class="tab-pane fade">
 							<div class="panel panel-default">
 								<div class="panel-body">
@@ -526,29 +578,30 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 												</td>
 												<td>
 													<div class="col-md-6">
-													<select class="form-control" name="m_id" id="m_id" onchange="change_m_id()" tabindex="1">
-														<?php
-															$result = $mysqli->query("	  
-																SELECT DISTINCT `materials`.`m_id`, `materials`.`m_name`
-																FROM `materials`
-																WHERE `materials`.`m_parent` = '$sv[sheet_goods_parent]';");
-															if(!$result)
-																echo "<option> disabled selected hidden>QUERY ERROR</option>";
-															else
-															{
-																echo "<option disabled hidden selected value=''>Sheet Parent</option>";
-																while($row = $result->fetch_assoc())
-																	echo "<option value='$row[m_id]''>$row[m_name]</option>";
-															}
-														?>
-													</select>
-													</div>
+														<select class="form-control" id="__SHEETSIZE__parent_select" tabindex="1"
+														name='__SHEETSIZE__parent_select' onchange="__SHEETGOOD__get_variants()">
+															<?php
+																$result = $mysqli->query("	  
+																	SELECT DISTINCT `materials`.`m_id`, `materials`.`m_name`
+																	FROM `materials`
+																	WHERE `materials`.`m_parent` = '$sv[sheet_goods_parent]';");
+																if(!$result)
+																	echo "<option> disabled selected hidden>QUERY ERROR</option>";
+																else
+																{
+																	echo "<option disabled hidden selected value=''>Sheet Parent</option>";
+																	while($row = $result->fetch_assoc())
+																		echo "<option value='$row[m_id]''>$row[m_name]</option>";
+																}
+															?>
+														</select>
+														</div>
 
-
-													<div class="col-md-6">
-													<select class="form-control" name="variants" id="variants" tabindex="1">
-														<option value =""> Select Parent First</option>
-													</select>   
+														<div class="col-md-6">
+														<select class="form-control" name="__SHEETSIZE__variant_select"
+														id="__SHEETSIZE__variant_select" tabindex="1">
+															<option value =""> Select Parent First</option>
+														</select>   
 													</div>
 												</td>
 											</tr>
@@ -563,7 +616,8 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 														</div>
 														<div class="col-md-11">
 															<div class="input-group">
-																<input type="number" class="form-control"name="sheet_width" id="sheet_width" max="500" min="1" value="0" step="0.1" placeholder="Enter Width" />
+																<input type="number" class="form-control" name="__SHEETSIZE__width_input"
+																max="500" min="1" value="0" step="0.1" placeholder="Enter Width" />
 																<span class="input-group-addon unit">inch(es)</span>
 															</div>
 														</div>
@@ -574,7 +628,8 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 														</div>
 														<div class="col-md-11">
 															<div class="input-group">
-																<input type="number" class="form-control"name="sheet_height" id="sheet_height" max="500" min="1" value="0" step="0.1" placeholder="Enter Height" />
+																<input type="number" class="form-control" name="__SHEETSIZE__height_input"
+																max="500" min="1" value="0" step="0.1" placeholder="Enter Height" />
 																<span class="input-group-addon unit">inch(es)</span>
 															</div>
 														</div>
@@ -586,7 +641,8 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 													<b data-toggle="tooltip" data-placement="top">Quantity </b>
 												</td>
 												<td>
-													<input type="number" class="form-control"name="sheet_quantity" id="sheet_quantity" max="250" min="1" value="1" step="1" placeholder="Enter Quantity" />
+													<input type="number" class="form-control" name="__SHEETSIZE__quantity_input" max="250" 
+													min="1" value="1" step="1" placeholder="Enter Quantity" />
 												</td>
 											</tr>
 
@@ -594,7 +650,8 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 												<tr>
 													<td colspan="2">
 														<div class="pull-right">
-															<button type="submit" name="inventoryBtn" class="btn btn-success" onclick="return Submitter()">Create Sheet Inventory</button>
+															<button type="submit" name="__SHEETSIZE__submit_button" class="btn btn-success" 
+															onclick="return __SHEETGOOD__submit_confirmation()">Create Sheet Inventory</button>
 														</div>
 													</td>
 												</tr>
@@ -622,13 +679,12 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 					<h4 class="modal-title">Update Inventory</h4>
 				</div>
 				<div id='__NEWINV__modal_body' class='modal-body'>
-					<table id='confirmation_table' class="table table-striped table-bordered table-responsive col-md-12">
-					</table>
+					<!-- populated with material attributes -->
 				</div>
 				<div id='__NEWINV__modal_footer' class="modal-footer">
 					<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-					<button id='__NEWINV__submit_button' type='button' class='btn btn-success'>
-						Update Inventory
+					<button name='__NEWINV__submit_button' type='submit' class='btn btn-success'>
+						Create
 					</button>
 				</div>
 			</form>
@@ -676,6 +732,8 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 
 	// ——————————————————— NEW INVENTORY ———————————————–————
 	// ———————————————————————————————————————————————
+
+	// ———————————————————— PAGE MANIP —————————————————————
 	
 	// add more device group rows 
 	function __NEWINV__additional_device_group()
@@ -683,8 +741,8 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 		var row = document.getElementById("__NEWINV__device_group_table").insertRow(-1);
 		var innerdata =	`<td>
 								<div class='input-group'>
-									<select tabindex="2" class='form-control __NEWINV__device_group'>
-										<option selected disabled hidden>SELECT</option>
+									<select tabindex="2" class='form-control __NEWINV__device_group_select'>
+										<option selected disabled hidden value=''>SELECT</option>
 										<?php
 											if($devices = $mysqli->query(
 												"SELECT `dg_id`, `dg_name`, `dg_desc`
@@ -723,7 +781,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 	// checks against the listed materials in update inventory select div
 	function __NEWINV__name_already_used(material_name)
 	{
-		var created_materials = document.getElementsById("__EDITINV__material_select");
+		var created_materials = document.getElementById("__EDITINV__material_select");
 		var name = material_name.toLowerCase();
 		for(var x = 0; x < created_materials.options.length; x++)
 			if(created_materials.options[x].text.toLowerCase() == name) return true;
@@ -731,40 +789,75 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 	}
 
 
+	function __NEWINV__validate_inputs()
+	{
+		var name_input = document.getElementById("__NEWINV__name_input");
+		var price_input = document.getElementById("__NEWINV__price_input");
+
+		// check that inputs are populated
+		if(!name_input.value || !String(price_input.value).length)
+			document.getElementById("__NEWINV__modal_button").disabled = true;
+		else document.getElementById("__NEWINV__modal_button").disabled = false;
+
+		// check that name is not repeat
+		if(!__NEWINV__name_already_used(name_input.value)) name_input.style["background-color"] = "#EEE";
+		else 
+		{
+			document.getElementById("__NEWINV__modal_button").disabled = true;
+			name_input.style["background-color"] = "#CC5555";
+		}
+	}
+
+
+	// ————————————————————— MODAL ————————————————–——————
+
 	// populate modal with info for new item
 	function __NEWINV__compile_and_populate_modal()
 	{
 		var new_material_value_table = __NEWINV__HTML_value_table();
+		var new_material_device_groups = __NEWINV__HTML_device_group_table();
+		if(!new_material_device_groups) var data_table = new_material_value_table;
+		else var data_table = new_material_value_table + '\n' + new_material_device_groups;
 
-		// device groups: front end allows for double submission; back end doesn't
-		var dg_instances = document.querySelectorAll(".device_group");
-		var populated_dg_count = 0;
-		for(var x = 0; x < dg_instances.length; x++)
-		{
-			var group = dg_instances[x].options[dg_instances[x].selectedIndex];
-			if(!group.value) continue;  // ignore blank rows
-
-			var information = "<input name='item_device_group-"+populated_dg_count++
-						+"' value='"+group.value+"' hidden/>" + group.text;  // not a typo
-			material_attributes.push(["Device Group", information]);
-		}
-
-		populate_modal("All Data Is Correct", "new_mat", material_attributes, "New Material");
-		// display warning if name is already chosen (case insensitive, remove white space)
-		__NEWINV__name_already_used(document.getElementById("__NEWINV__name_input").value.toLowerCase().replace(/^\s+|\s+$/g, ''));
+		__NEWINV__populate_modal(data_table);
 	}
 
 
 	function __NEWINV__HTML_device_group_table()
 	{
+		// collect device groups
+		var device_group_elements = document.getElementsByClassName("__NEWINV__device_group_select");
+		var populated_device_groups = [];
+		for(var x = 0; x < device_group_elements.length; x++) 
+			if(device_group_elements[x].value) populated_device_groups.push(device_group_elements[x]);
+		if(!populated_device_groups.length) return null;  // none are populated; ignore rest of process
 
+		// create table
+		var table_HTML =	`<table class='table'>
+								<tr>
+									<th><b>Device Groups</b></th>
+								</tr>`;
+		for(var x = 0; x < populated_device_groups.length; x++)
+		{
+			var current_device_group = populated_device_groups[x];
+			var device_group_name = current_device_group.options[current_device_group.selectedIndex].text;
+			table_HTML +=	`<tr>
+									<td>
+										${device_group_name}
+										<input name='__NEWINV__device_group_input-${x}' hidden
+										value='${current_device_group.value}'>
+									</td>
+								</tr>`;
+		}
+
+		return table_HTML;
 	}
 
 
 	function __NEWINV__HTML_value_table()
 	{
-		var titles = ["Item Name", "Product Number", "Measurable", "Price", "Unit", "Color Hex"];
-		var ids =	["name_input", "product_number_input", "measurable_select", "price_input", "unit_input"];
+		var titles = ["Item Name", "Parent Material", "Product Number", "Measurable", "Price", "Unit", "Color Hex"];
+		var ids =	["name_input", "m_parent_select", "product_number_input", "measurable_select", "price_input", "unit_input"];
 		if(__NEWINV__INCLUDE_COLOR) ids.push("color_input");  // otherwise color is not selected
 
 		// get values from page
@@ -773,16 +866,20 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 
 		// validate first 3
 		// require fields populated
-		var required_fields = [0, 2, 3];
+		var required_fields = [0, 3, 4];
 		for(var x = 0; x < required_fields.length; x++)
 			if(values[required_fields[x]] == "") return alert(`${titles[required_fields[x]]} requires a value`);
 
+		// create table
 		var table_HTML = `<table class='table'>\n`;
 		for(var x = 0; x < values.length; x++)
 		{
 			table_HTML +=	`<tr>
 									<td>${titles[x]}</td>
-									<td>\n${value[x]}\n<input name='' value='${value} hidden></td>\n
+									<td>
+										${values[x]}
+										<input name='__NEWINV__${ids[x]}' value='${values[x]}' hidden>
+									</td>\n
 								</tr>\n`;
 		}
 		
@@ -790,7 +887,50 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['inventoryBtn']))
 	}
 
 
-	// ------------------------------------- COLOR PICKING -------------------------------------
+	function __NEWINV__populate_modal(display_table)
+	{
+		document.getElementById("__NEWINV__modal_body").innerHTML = display_table;
+
+		$('#__NEWINV__modal').modal('show');
+	}
+
+
+	// ———————————————————— SHEETGOODS ————————————————————
+	// ———————————————————————————————————————————————
+
+	// get user confirmation of sheetgood submission
+	// call confirm().
+	// if user confirmeed return true (to submit form). else return false
+	function __SHEETGOOD__submit_confirmation()
+	{
+		if(confirm("You are about to submit this query. Click OK to continue or CANCEL to quit.")) return true;
+		return false;
+	}
+
+
+	// ajax request to si_getVariants.php to get variants of sheet good parent group.
+	// makes a GET request to page passing selected parent. populates variants select.
+	function __SHEETGOOD__get_variants()
+	{
+		// code for IE7+, Firefox, Chrome, Opera, Safari
+		if(window.XMLHttpRequest) xmlhttp = new XMLHttpRequest();
+		else xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");  // code for IE6, IE5
+
+		xmlhttp.onreadystatechange = function()
+		{
+			if(this.readyState == 4 && this.status == 200)
+				document.getElementById("__SHEETSIZE__variant_select").innerHTML = this.responseText;
+			else if(this.status >= 400) alert("Unable to get sheetgood variants");
+		};
+		
+		var sheet_id = document.getElementById("__SHEETSIZE__parent_select").value;
+		xmlhttp.open("GET", `/pages/sub/si_getVariants.php?val=${sheet_id}`, true);
+		xmlhttp.send();
+	} 
+
+
+	// ——————————————————— COLOR PICKING ———————————————–————
+	// ———————————————————————————————————————————————
 
 	var __NEWINV__INCLUDE_COLOR = false;  // bool to determine if to include color
 

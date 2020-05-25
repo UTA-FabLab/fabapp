@@ -309,19 +309,22 @@ class DeviceGroup {
 
 
 	// add new device group to DB
-	public static function insert_new_device_group($dg_name, $dg_parent, $dg_desc, $dg_pay, $dg_mat, $dg_store, $dg_juicebox, $dg_thermal, $dg_granular){
+	public static function insert_new_device_group($dg_name, $dg_parent, $dg_desc, $dg_pay, $dg_mat, $dg_store, 
+	$dg_juicebox, $dg_thermal, $dg_granular)
+	{
 		global $mysqli;
 		
-		if ($mysqli->query("
-			INSERT INTO `device_group` 
-			  (`dg_name`, `dg_parent`,`dg_desc`, payFirst, `selectMatsFirst`, `storable`, `juiceboxManaged`, `thermalPrinterNum`, `granular_wait`) 
-			VALUES
-				('$dg_name', '$dg_parent', '$dg_desc', '$dg_pay', '$dg_mat', '$dg_store', '$dg_juicebox', '$dg_thermal', '$dg_granular');"
-		)){
-			$dg_id = $mysqli->insert_id;
-			return $dg_id;
-		}
-		return ("<div class='alert alert-danger'>".$mysqli->error."</div>");
+		$statement = $mysqli->prepare(
+			"INSERT INTO `device_group` (`dg_name`, `dg_parent`,`dg_desc`, payFirst, `selectMatsFirst`, `storable`,
+			`juiceboxManaged`, `thermalPrinterNum`, `granular_wait`) VALUES
+			(?, ?, ?, ?, ?, ?, ?, ?, ?);");
+
+		if(!$statement) return "SQL syntax statement error";
+		$statement->bind_param("sdsssssds", $dg_name, $dg_parent, $dg_desc, $dg_pay, $dg_mat, $dg_store,
+		$dg_juicebox, $dg_thermal, $dg_granular);
+		if($statement) return "SQL binding error";
+		if(!$statement->execute()) return "SQL execution error";
+		return $mysqli->insert_id;
 	}
 
 

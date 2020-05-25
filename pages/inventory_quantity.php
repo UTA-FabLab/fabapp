@@ -31,70 +31,45 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfLead']){
 	$_SESSION['error_msg'] = "Insufficient role level to access, You must be a Lead.";
 }
 
-// fire off modal & timer
-if($_SESSION['type'] == 'success')
-{
-	echo "<script type='text/javascript'> window.onload = function(){success()}</script>";
-}
 
 // -------------------------------------- PAGE FUNCTIONALITY --------------------------------------
-$failure_message = "";
 $device_mats = Materials::getDeviceMats();
 
 // sheet goods
-if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['__SHEETGOOD__quantity_button'])){
-	if(isset($_POST['__SHEETGOOD__varient_sizes_select'])
-	&& preg_match('/^[\s\S]{9,999}$/', $_POST['__SHEETGOOD__quantity_notes'])
-	&& preg_match('/^-?[0-9]+$/i', $_POST['__SHEETGOOD__quantity_change']) )
-	{
-		$sheet_id = filter_input(INPUT_POST, "__SHEETGOOD__varient_sizes_select");
-		$quantity_notes = filter_input(INPUT_POST, "__SHEETGOOD__quantity_notes");
-		$quantity_change = filter_input(INPUT_POST,"__SHEETGOOD__quantity_change");
-		$failure_message = Materials::update_sheet_quantity($sheet_id, $quantity_change, $quantity_notes); 
-	}
-	else {
-		if (!isset($_POST['__SHEETGOOD__varient_sizes_select'])) {
-			$failure_message = $failure_message.("Incorrect input on Sheet Good selection field.</div></div>");
-		}
-		if (!preg_match('/^[\s\S]{9,999}$/', $_POST['__SHEETGOOD__quantity_notes'])) {
-			$failure_message = $failure_message.("Incorrect input on Sheet Good notes field: input is too short.</div></div>"); 
-		}
-		if (!preg_match('/^[0-9]+$/i', $_POST['__SHEETGOOD__quantity_change'])) {
-			$failure_message = $failure_message.("Incorrect input on Change in Quantity field.</div></div>"); 
-		}
-	}
+if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['__SHEETGOOD__quantity_button']))
+{
+	if(!isset($_POST['__SHEETGOOD__varient_sizes_select']))
+		exit_from_error("Incorrect input on Sheet Good selection field");
+	if(!preg_match('/^[\s\S]{9,999}$/', $_POST['__SHEETGOOD__quantity_notes']))
+		exit_from_error("Incorrect input on Sheet Good notes field: input is too short");
+	if(!preg_match('/^[0-9]+$/i', $_POST['__SHEETGOOD__quantity_change']))
+		exit_from_error("Incorrect input on Change in Quantity field");
+
+
+	$sheet_id = filter_input(INPUT_POST, "__SHEETGOOD__varient_sizes_select");
+	$quantity_notes = filter_input(INPUT_POST, "__SHEETGOOD__quantity_notes");
+	$quantity_change = filter_input(INPUT_POST,"__SHEETGOOD__quantity_change");
+	exit_from_error(Materials::update_sheet_quantity($sheet_id, $quantity_change, $quantity_notes));
+	exit_with_success("Successfully updated material quantity");
 }
 
 
-// get values for possible instances, return values in array (eg device groups or update rows)
-function get_populated_values($tag_name) {
-	$count = 0;
-	$values = array();
-	while(true) {
-		$data = filter_input(INPUT_POST, $tag_name."-".$count++);
-		if(!$data || $count > 100) return $values;  // 100 to failsafe
-		
-		if($instances = substr_count($data, '|')) $values[] = explode('|', $data, $instances+1);
-		else $values[] = $data;
-	}
+
+function exit_from_error($error_message)
+{
+	if(!$error_message) return;
+
+	$_SESSION["error_msg"] = $error_message;
+	header("Location:./inventory_quantity.php");
+	exit();
 }
 
 
-// add already non-existing device groups to material
-function successful_and_failed_device_group_additions($m_id, $device_group) {
-	foreach($device_group as $dg) {
-		$prior_dgs = Materials::get_device_material_group($m_id);  // called each time to prevent double submission in 1 attempt
-		if(in_array($dg, $prior_dgs)) continue;  // don't create duplicate
-		if(Materials::assign_device_group($dg, $m_id)) {
-			$outcome .= "|SDevice:_".$dg;
-		}
-		else {
-			$outcome .= "|FDevice:_".$dg;   
-		}
-	}
-	return $outcome;
+function exit_with_success($success_message)
+{
+	$_SESSION["success_msg"] = $success_message;
+	header("Location:./inventory_quantity.php");
 }
-
 
 ?>
 
@@ -330,8 +305,7 @@ function successful_and_failed_device_group_additions($m_id, $device_group) {
 				<h4 class="modal-title">Update Inventory</h4>
 			</div>
 			<div id='__INVENTORY__modal_body' class='modal-body'>
-				<table id='confirmation_table' class="table table-striped table-bordered table-responsive col-md-12">
-				</table>
+				<!-- populated with inventory attributes -->
 			</div>
 			<div id='__INVENTORY__modal_footer' class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>

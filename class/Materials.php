@@ -82,84 +82,53 @@ class Materials {
 
 
 	// create a new material in DB taking parameters
-	public static function create_new_mat($color, $measurability, $name, $price, $product_number, $unit) {
+	public static function create_new_material($color, $measurability, $name, $parent, $price, $product_number, $unit) {
 		global $mysqli;
 
-		if ($statement = $mysqli->prepare(" 
-			INSERT INTO `materials`
+		if ($statement = $mysqli->prepare(
+			"INSERT INTO `materials`
 				(`m_name`, `m_parent`, `price`, `product_number`, `unit`, `color_hex`, `measurable`)
 			VALUES
-				(?, NULL, ?, ?, ?, ?, ?);
-		")) {
-			$statement->bind_param("sdssss", $name, floatval($price), $product_number, $unit, $color, $measurability);
-			if ($statement->execute() === true){
-				$row = $statement->affected_rows;
-				// Success, only one row was updated
-				if ($row == 1) return $mysqli->commit();
-				// Error More then one row was affected
-				elseif ($row > 1) $mysqli->rollback();
-			}
+				(?, ?, ?, ?, ?, ?, ?);"
+		))
+		{
+			$statement->bind_param("sddssss", $name, $parent, floatval($price), $product_number, $unit, $color, 
+			$measurability);
+			if(!$statement) return false;
+			if(!$statement->execute()) return false;
+			return $mysqli->insert_id;
 		}
 		return false;
 	}
 
-
-	public static function create_new_material($m_name, $m_parent, $price, $product_number, $unit, $color_hex, $measurable) {
-		global $mysqli;
-		
-		
-		if (!preg_match('/^[a-f0-9]{6}$/i', $color_hex)){
-			if ($mysqli->query("
-				INSERT INTO `materials`
-					(`m_name`, `m_parent`, `price`, `product_number`, `unit`, `color_hex`, `measurable`)
-				VALUES
-					('$m_name', '$m_parent', '$price', $product_number, '$unit', NULL, '$measurable');
-
-			")){		
-				return ("<div class='col-md-12'><div class='alert alert-success'> Successfully added sheet good material to database: ".$m_name."</div></div>");
-			}
-			return ("<div class='col-md-12'><div class='alert alert-danger'>".$mysqli->error."</div></div>");
-		}
-		else{
-			if ($mysqli->query("
-				INSERT INTO `materials`
-					(`m_name`, `m_parent`, `price`, `product_number`, `unit`, `color_hex`, `measurable`)
-				VALUES
-					('$m_name', '$m_parent', '$price', $product_number, '$unit', '$color_hex', '$measurable');
-
-			")){		
-				return ("<div class='col-md-12'><div class='alert alert-success'> Successfully added sheet good material to database: ".$m_name."</div></div>");
-			}
-			return ("<div class='col-md-12'><div class='alert alert-danger'>".$mysqli->error."</div></div>");
-		}
-	}
 	
 	public static function create_new_sheet_inventory($m_id, $m_parent, $sheet_width, $sheet_height, $sheet_quantity) {
+		//MPZinke: I am currently cleaning this up to prevent passing of HTML strings and prevents SQL injections.  In 
+		// the future I should update it so that it strictly does what its name does (ie creates a new material), and move
+		// updating feature to its own function.
+
 		global $mysqli;
 
-		$sheet_status = Materials::hasInventory($m_id , $sheet_width, $sheet_height);
-		
-		if ($sheet_status){
-			if ($mysqli->query("
-				UPDATE `sheet_good_inventory`
-				SET `quantity` = '$sheet_quantity' 
-				WHERE `m_id`='$m_id' AND `width`='$sheet_width' AND `height` ='$sheet_height';
-			")){
-				return ("<div class='col-md-12'><div class='alert alert-success'> Successfully added sheet inventory to database.</div></div>");
-			}
-			return ("<div class='col-md-12'><div class='alert alert-danger'>".$mysqli->error."</div></div>");
+		if(self::hasInventory($m_id , $sheet_width, $sheet_height))
+		{
+			$statement = $mysqli->prepare(	"UPDATE `sheet_good_inventory` SET `quantity` = ? 
+												WHERE `m_id`= ? AND `width`= ? AND `height` = ?;");
+			if(!$statement) return "Error creating update statement";
+			$statement->bind_param("dddd", $sheet_quantity, $m_id, $sheet_width, $sheet_height);
+			if(!$statement) return "Bad param binding: $mysqli->error";
+			if(!$statement->execute()) return "Bad execution: $mysqli->error";
+			return false;  // no errors
 		}
-		else {
-			if ($mysqli->query("
-				INSERT INTO `sheet_good_inventory` 
-				  (`m_id`, `m_parent`, `width`, `height`, `quantity`) 
-				VALUES
-					('$m_id', '$m_parent', '$sheet_width', '$sheet_height', '$sheet_quantity');
-
-			")){	 
-				return ("<div class='col-md-12'><div class='alert alert-success'> Successfully added sheet inventory to database: ".$sheet_width."x".$sheet_height."</div></div>");
-			}
-			return ("<div class='col-md-12'><div class='alert alert-danger'>".$mysqli->error."</div></div>"); 
+		else
+		{
+			$statement = $mysqli->prepare(	"INSERT INTO `sheet_good_inventory` 
+												(`m_id`, `m_parent`, `width`, `height`, `quantity`) VALUES
+												(?, ?, ?, ?, ?);");
+			if(!$statement) return "Error creating update statement";
+			$statement->bind_param("ddddd", $m_id, $m_parent, $sheet_width, $sheet_height, $sheet_quantity);
+			if(!$statement) return "Bad param binding: $mysqli->error";
+			if(!$statement->execute()) return "Bad execution: $mysqli->error";
+			return false;  // no errors
 		}
 	}
 
@@ -332,7 +301,7 @@ class Materials {
 		$is_current = $this->is_current ? "Y" : "N";
 
 		// update transaction info
-		$statement = $mysqli->prepare("UPDATE `materials`
+		$statement = $mysqli->prepare(	"UPDATE `materials`
 											SET `color_hex` = ?, `measurable` = ?, `m_name` = ?, 
 											`product_number` = ?, `price` = ?, `unit` = ?, `current` = ?
 											WHERE `m_id` = ?;");
@@ -349,27 +318,27 @@ class Materials {
 	public static function update_sheet_quantity($inv_id, $quantity, $notes) {
 		global $mysqli;
 
-        $result = $mysqli->query("            
-                SELECT DISTINCT `sheet_good_inventory`.`quantity`
-                FROM `sheet_good_inventory`
-                WHERE `sheet_good_inventory`.`inv_id` = '$inv_id';");
-        while($row = $result->fetch_assoc()){
-            $current_quantity = $row["quantity"];
-        }
-        
-        $calc_quantity = $current_quantity + $quantity;
-        if ($calc_quantity >= 0){
-            if($inv_id) {
-                if($mysqli->query("
-                    UPDATE `sheet_good_inventory`
-                    SET `quantity` = `quantity`+'$quantity' , `notes`='$notes'
-                    WHERE `inv_ID` = '$inv_id';
-                "))
-                    return ("<div class='col-md-12'><div class='alert alert-success'>Updated Sheet Good Quantity</div></div>");
-            }
-            return $mysqli->error;
-        }
-        return ("<div class='col-md-12'><div class='alert alert-danger'>Incorrect quantity change input, your result must not change quantity to a value below 0.</div></div>");
+		$result = $mysqli->query(
+			"SELECT DISTINCT `sheet_good_inventory`.`quantity`
+			FROM `sheet_good_inventory`
+			WHERE `sheet_good_inventory`.`inv_id` = '$inv_id';");
+		while($row = $result->fetch_assoc()){
+			$current_quantity = $row["quantity"];
+		}
+		
+		$calc_quantity = $current_quantity + $quantity;
+		if ($calc_quantity >= 0){
+			if($inv_id) {
+				if($mysqli->query("
+					UPDATE `sheet_good_inventory`
+					SET `quantity` = `quantity`+'$quantity' , `notes`='$notes'
+					WHERE `inv_ID` = '$inv_id';
+				"))
+					return false;
+			}
+			return $mysqli->error;
+		}
+		return "Incorrect quantity change input, your result must not change quantity to a value below 0";
 	}
 
 
@@ -381,7 +350,7 @@ class Materials {
 	}
 
 	public static function regexColor($color) {
-		if(preg_match('/^[0-9A-Fa-f]{1,6}/', $color)) return $color;
+		if(preg_match('/^#[0-9A-Fa-f]{0,6}/', $color)) return $color;
 		return false;
 	}
 
@@ -397,7 +366,7 @@ class Materials {
 	}
 
 	public static function regexProductNum($product_number) {
-		if(strlen($product_number) > 30 || strlen($product_number) == 0) return false;
+		if(strlen($product_number) > 30) return false;
 		return htmlspecialchars($product_number);
 	}
 
