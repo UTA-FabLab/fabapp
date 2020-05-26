@@ -7,12 +7,8 @@
 *   EDITED by: MPZinke on 04.03.19 added product number
 *   EDITED by: MPZinke on 10.08.19 to make AJAX request for material updates
 *   CC BY-NC-AS UTA FabLab 2016-2019
-*   FabApp V 0.94
-*	  -Multiple Materials
-*	  -Off-line Mode
-*	  -Sheet Goods
-*	  -Storage Box
-*	  -House Keeping (DB cleanup, $status variable, class syntax)
+*   FabApp V0.95
+*	  -Maintenence
 *
 *   DESCRIPTION:	-Allow ability for lvl lead to edit inventory
 *				  -Allow ability for admin to add new material to inventory
@@ -54,7 +50,9 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['__SHEETGOOD__quantity_b
 }
 
 
-
+// adds error message to session variable, redirects & stops current processes
+// takes an error string to add to session variable
+// adds error message. redirects page. ends future processes.
 function exit_from_error($error_message)
 {
 	if(!$error_message) return;
@@ -65,10 +63,14 @@ function exit_from_error($error_message)
 }
 
 
+// adds success message to session variable, redirects & stops current processes
+// takes an success string to add to session variable
+// adds success message. redirects page. ends future processes.
 function exit_with_success($success_message)
 {
 	$_SESSION["success_msg"] = $success_message;
 	header("Location:./inventory_quantity.php");
+	exit();
 }
 
 ?>

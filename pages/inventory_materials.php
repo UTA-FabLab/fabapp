@@ -2,22 +2,19 @@
 
 /***********************************************************************************************************
 * 
-*   @author MPZinke
-*   created on 12.08.18
-*   EDITED by: MPZinke on 04.03.19 added product number
-*   EDITED by: MPZinke on 10.08.19 to make AJAX request for material updates
-*   CC BY-NC-AS UTA FabLab 2016-2019
-*   FabApp V 0.94
-*	  -Multiple Materials
-*	  -Off-line Mode
-*	  -Sheet Goods
-*	  -Storage Box
-*	  -House Keeping (DB cleanup, $status variable, class syntax)
-*
-*   DESCRIPTION:	-Allow ability for lvl lead to edit inventory
-*				  -Allow ability for admin to add new material to inventory
-*   FUTURE: 
-*   BUGS: 
+*	@author MPZinke
+*	created on 12.08.18
+*	EDITED by: MPZinke on 2020.05.22 split into different feature pages. improved commenting.
+*		fixed bugs
+*	EDITED by: MPZinke on 04.03.19 added product number
+*	EDITED by: MPZinke on 10.08.19 to make AJAX request for material updates
+*	CC BY-NC-AS UTA FabLab 2016-2019
+*	FabApp V0.95
+*	  -Maintenence
+*	DESCRIPTION:	-Allow ability for lvl lead to edit inventory
+*				 		-Allow ability for admin to add new material to inventory
+*	FUTURE:	-allow material names to be same if only 1 is current.
+*	BUGS: 
 *
 ***********************************************************************************************************/
 
@@ -127,8 +124,6 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['__SHEETVAR__submit_
 	$color = substr(filter_input(INPUT_POST, "__SHEETVAR__color_input"), 1);  // ignore '#'
 	if(!preg_match('/^[a-z0-9\-\_\# ]{1,100}$/i', $_POST['__SHEETVAR__name_input']))
 		exit_from_error("Incorrect input: $_POST[__SHEETVAR__name_input] on Sheet Good Material Name row.");
-	elseif($color && !$color = Materials::regexColor($color))
-		exit_from_error("Bad color for creating Sheet Variant.");
 	elseif(!preg_match('/^([1-9][0-9]*|0)(\.[0-9]{2})?$/', $_POST['__SHEETVAR__m_parent_select']))
 		exit_from_error("You must properly fill the Sheet Parent row.");
 
@@ -181,6 +176,9 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['__SHEETSIZE__submit
 }
 
 
+// adds error message to session variable, redirects & stops current processes
+// takes an error string to add to session variable
+// adds error message. redirects page. ends future processes.
 function exit_from_error($error_message)
 {
 	if(!$error_message) return;
@@ -191,13 +189,21 @@ function exit_from_error($error_message)
 }
 
 
+// adds success message to session variable, redirects & stops current processes
+// takes an success string to add to session variable
+// adds success message. redirects page. ends future processes.
 function exit_with_success($success_message)
 {
 	$_SESSION["success_msg"] = $success_message;
 	header("Location:./inventory_materials.php");
+	exit();
 }
 
 
+// pulls iterative, consecutive posted values from page for base tag
+// takes base tag to concatenate with iterative suffix
+// iterates selecting posted values while values are not null, adding value to list.
+// return list of pulled values
 function __NEWINV__get_populate_values($name)
 {
 	$device_groups = array();
@@ -214,21 +220,6 @@ function __NEWINV__get_populate_values($name)
 			<h1 class="page-header">Edit Inventory</h1>
 		</div>
 	</div>
-	
-	<!-- error message display (if exists) -->
-	<?php
-		if(isset($error_message))
-		{
-			?>
-			<div class='col-md-12'>
-				<div class='alert alert-danger'>
-					<?php echo $error_message; ?>
-				</div>
-			</div>
-			<?php
-		} 
-	?>
-
 
 	<div class="col-md-12">
 		<div class="panel panel-default">
@@ -541,11 +532,10 @@ function __NEWINV__get_populate_values($name)
 													<b data-toggle="tooltip" data-placement="top" title="Choose or input the color of the material">
 														Color Hex
 													</b>
-													<br>Include Color <input type="checkbox" id="colorBox" />
 												</td>
 												<td>
 													<div style="text-align:center;">
-														<input disabled type="color" name="__SHEETVAR__color_input" id="__SHEETVAR__color_input" 
+														<input type="color" name="__SHEETVAR__color_input" id="__SHEETVAR__color_input" 
 														value="#000000" style="width: 500px;height: 30px;">
 													</div>
 												</td>
@@ -669,7 +659,7 @@ function __NEWINV__get_populate_values($name)
 </div>  <!-- <div id="page-wrapper"> -->
 
 
-
+<!-- holds data from new material section and allows for final confirmation. data is added by JS.  -->
 <div id="__NEWINV__modal" class="modal fade">
 	<div class="modal-dialog">
 		<div class="modal-content">
@@ -703,6 +693,9 @@ function __NEWINV__get_populate_values($name)
 	// ——————————————————— EDIT INVENTORY ———————————————–————
 	// ———————————————————————————————————————————————
 
+	// AJAX call to populate material data to edit.
+	// takes reference to calling element (__EDITINV__material_select) for selected material.
+	// calls page, posting the m_id of desired material. populate fields with echoed JSON data. show table.
 	function __EDITINV__data_for_material(element)
 	{
 		$.ajax({
@@ -735,7 +728,8 @@ function __NEWINV__get_populate_values($name)
 
 	// ———————————————————— PAGE MANIP —————————————————————
 	
-	// add more device group rows 
+	// add more device group rows.
+	// on function call, add HTML tr to table with select with values for device groups.
 	function __NEWINV__additional_device_group()
 	{
 		var row = document.getElementById("__NEWINV__device_group_table").insertRow(-1);
@@ -769,6 +763,9 @@ function __NEWINV__get_populate_values($name)
 	}
 
 
+	// remove the selected device group from page on x button click
+	// takes reference to x button that was clicked.
+	// finds the ancestor row for the referenced element. removes row and all sub elements.
 	function __NEWINV__delete_device_group(element)
 	{
 		var row = element.closest("tr");
@@ -777,8 +774,10 @@ function __NEWINV__get_populate_values($name)
 	}
 
 
-	// check if name already exists and warn of overriding
+	// check if name already exists (case insensitive).
+	// takes a string of the name to check.
 	// checks against the listed materials in update inventory select div
+	// returns bool of if any match.
 	function __NEWINV__name_already_used(material_name)
 	{
 		var created_materials = document.getElementById("__EDITINV__material_select");
@@ -789,6 +788,9 @@ function __NEWINV__get_populate_values($name)
 	}
 
 
+	// check that inputs are properly filled and en/disables modal button based on validity.
+	// pulls values & checks that they are populated. checks whether material name is a duplicate. if it is, disables 
+	// button and highlights input red(ish). if all data valid, enables button.
 	function __NEWINV__validate_inputs()
 	{
 		var name_input = document.getElementById("__NEWINV__name_input");
@@ -812,6 +814,7 @@ function __NEWINV__get_populate_values($name)
 	// ————————————————————— MODAL ————————————————–——————
 
 	// populate modal with info for new item
+	// calls functions to pull & organize data into HTML tables. puts tables into modal and displays modal.
 	function __NEWINV__compile_and_populate_modal()
 	{
 		var new_material_value_table = __NEWINV__HTML_value_table();
@@ -819,10 +822,15 @@ function __NEWINV__get_populate_values($name)
 		if(!new_material_device_groups) var data_table = new_material_value_table;
 		else var data_table = new_material_value_table + '\n' + new_material_device_groups;
 
-		__NEWINV__populate_modal(data_table);
+		document.getElementById("__NEWINV__modal_body").innerHTML = data_table;
+
+		$('#__NEWINV__modal').modal('show');
 	}
 
 
+	// creates an HTML table for the selected device groups for the new material.
+	// pulls all elements with classname for device group. adds all that have a value to list. all values in list are dressed 
+	// in HTML and added to table string.
 	function __NEWINV__HTML_device_group_table()
 	{
 		// collect device groups
@@ -850,10 +858,12 @@ function __NEWINV__get_populate_values($name)
 								</tr>`;
 		}
 
-		return table_HTML;
+		return table_HTML + `</table>`;
 	}
 
 
+	// creates an HTML table for the attributes for the new material.
+	// pulls elements. adds all to list. all values in list are dressed in HTML and added to table string.
 	function __NEWINV__HTML_value_table()
 	{
 		var titles = ["Item Name", "Parent Material", "Product Number", "Measurable", "Price", "Unit", "Color Hex"];
@@ -884,14 +894,6 @@ function __NEWINV__get_populate_values($name)
 		}
 		
 		return table_HTML + `</table>\n`;
-	}
-
-
-	function __NEWINV__populate_modal(display_table)
-	{
-		document.getElementById("__NEWINV__modal_body").innerHTML = display_table;
-
-		$('#__NEWINV__modal').modal('show');
 	}
 
 
@@ -954,11 +956,10 @@ function __NEWINV__get_populate_values($name)
 	}, false);
 
 
-	// button action to hide/show activate/deactivate color input ability
+	// button action to hide/show activate/deactivate color input ability.
+	// flips visability of ability to see color choosing option.
 	function __NEWINV__switch_color_active()
 	{
-		$("#__NEWINV__RGB_td").hide();
-		$("#__NEWINV__color_td").hide();
 		__NEWINV__INCLUDE_COLOR = !__NEWINV__INCLUDE_COLOR;
 		if(__NEWINV__INCLUDE_COLOR)
 		{
@@ -976,6 +977,8 @@ function __NEWINV__get_populate_values($name)
 
 
 	// when enter or tab pressed, change color to HEX equivalent of RGB value in input
+	// takes keyboard event press.
+	// checks type of keystroke. if enter key, sets color in colorpicker to RGB value.
 	function __NEWINV__submit_on_enter(e)
 	{
 		keyboardKey = e.which || e.keyCode;
@@ -984,6 +987,7 @@ function __NEWINV__get_populate_values($name)
 
 
 	// get value in RGB input, change to HEX, set HTML5 input color to HEX equiv.
+	// converts rgb input to hex valued color. sets color picker input to hex values
 	function __NEWINV__set_full_color()
 	{
 		var color_field = document.getElementById("rgb_input");
@@ -998,7 +1002,8 @@ function __NEWINV__get_populate_values($name)
 	}
 
 
-	// change RGB input to equivalent of HEX value from HTML5 color picker
+	// change RGB input to equivalent of HEX value from HTML5 color picker.
+	// takes initial hex value html version. on bad html version, alerts user of incapability to user picker.
 	function __NEWINV__click_color(hex, html5)
 	{
 		var color;

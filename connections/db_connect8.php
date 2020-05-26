@@ -1,8 +1,8 @@
 <?php
-$dbhost = "localhost";
-$dbuser = "root";
-$dbpass = "mysql";
-$dbdatabase = "fabapp-inventoryrepair";
+$dbhost = "";
+$dbuser = "";
+$dbpass = "";
+$dbdatabase = "";
 // Connecting to mysql database
 $mysqli = new mysqli($dbhost, $dbuser, $dbpass) or die(mysql_error());
 
