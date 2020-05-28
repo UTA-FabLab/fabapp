@@ -60,7 +60,8 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["choose_unit_in_drawer"]
 
 	$drawer = new StorageDrawer($drawer_indicator, $standard_behavior, $empty_behavior, $selected_callback, $selected_behavior);
 
-	echo json_encode(array("drawer_HTML" => $drawer->HTML_display()));
+	echo json_encode(array(	"drawer_HTML" => $drawer->HTML_display(),
+								'drawer_label' => $drawer->drawer_indicator));
 }
 
 

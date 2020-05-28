@@ -1045,12 +1045,17 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 					alert(response["error"]);
 					return;
 				}
+				console.log(response);
 
 				// add stuff to page
 				var message =	`Please place the object into a box in drawer ${response["drawer_label"]}, `+ 
 									`then confirm its placement by clicking the box on the screen`;
 				var drawer_title = 	`<h3>Drawer ${response["drawer_label"]} </h3>`;
 				document.getElementById("drawer_fill").innerHTML = message + drawer_title + response["drawer_HTML"];
+			},
+			error: function(error)
+			{
+				console.log(error);
 			}
 		});		
 	}
@@ -1078,6 +1083,10 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 									`then confirm its placement by clicking the highlighted box on the screen`;
 				var drawer_title = 	`<h3>Drawer ${response["drawer_label"]} </h3>`;
 				document.getElementById("drawer_fill").innerHTML = message + drawer_title + response["drawer_HTML"];
+			},
+			error: function(error)
+			{
+				console.log(error);
 			}
 		});
 	}
