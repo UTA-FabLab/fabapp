@@ -27,7 +27,7 @@ else
 		ORDER BY `m_name` ASC"
 	))
 	{
-		if($result->num_rows == 0) echo "<option disabled hidden selected>NONE</option>";
+		if(!$result->num_rows) echo "<option disabled hidden selected>NONE</option>";
 		else
 		{
 			$options = "<option disabled hidden selected>Select Variant</option>";

@@ -27,10 +27,14 @@ else
 			WHERE `sheet_good_inventory`.`m_ID`=$m_id;")
 	)
 	{
-		$options = "<option disabled selected hidden>Select Variant</option>";
-		while($row = $result->fetch_assoc())
-			$options .= "<option value='$row[inv_id]'>$row[quantity] On Hand: $row[width]in x $row[height]in</option>";
-		echo $options;
+		if(!$result->num_rows) echo "<option disabled hidden selected>NONE</option>";
+		else 
+		{
+			$options = "<option disabled selected hidden>Select Variant</option>";
+			while($row = $result->fetch_assoc())
+				$options .= "<option value='$row[inv_id]'>$row[quantity] On Hand: $row[width]in x $row[height]in</option>";
+			echo $options;
+		}
 	}
 	else echo "<option selected disabled hidden>SQL ERROR</option>";
 }

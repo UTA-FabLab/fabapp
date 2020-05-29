@@ -76,7 +76,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["update_inventory"])
 	// $response = array("type" => gettype($mats_used_changes[0]));
 	foreach($mats_used_changes as $update) {
 		if($update->notes) $update->notes = htmlspecialchars($update->notes);
-		$outcome = Mats_Used::insert_material_used(null, $update->m_id, $update->status_id, $staff, $update->quantity_used, $update->notes);
+		$outcome = Mats_Used::insert_material_used(null, $update->m_id, $update->status_id, $staff, $update->quantity, $update->notes);
 		if(!is_int($outcome)) $errors[$update->m_id] = array(	"m_id" => $update->m_id,
 																	"message" => $outcome,
 																	"notes" => $update->notes,

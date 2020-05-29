@@ -559,7 +559,7 @@ class Mats_Used {
 		// optional trans_id
 		if($trans_id && !Transactions::regexTrans($trans_id)) return "Bad transaction ID given to create material usage entry";
 		if(!Materials::regexID($m_id)) return "Bad material ID #$m_id given to create material usage entry";
-		if(!self::regexUnit_Used($quantity_used)) return "Bad quantity used given to create material usage entry";
+		if(!is_numeric($quantity_used)) return "Bad quantity used $quantity_used given to create material usage entry";
 		$quantity_used = -$quantity_used;  // invert amount to show consumption
 
 		if($statement = $mysqli->prepare("
@@ -706,7 +706,7 @@ class Mats_Used {
 
 	// no quanitity is a valid quantity
 	public static function regexUnit_Used($quantity_used){
-		if(!$quantity_used || preg_match("/^\d{0,5}\.{0,1}\d{0,2}$/", $quantity_used) && $quantity_used >= 0)
+		if(!$quantity_used || preg_match("/^-?\d{0,5}\.{0,1}\d{0,2}$/", $quantity_used) && $quantity_used >= 0)
 			return true;
 		return false;
 	}

@@ -83,19 +83,6 @@ function exit_with_success($success_message)
 		</div>
 	</div>
 	
-	<?php
-		if($failure_message)
-		{
-			?>
-			<div class='col-md-12'>
-				<div class='alert alert-danger'>
-					<?php echo $failure_message; ?>
-				</div>
-			</div>
-			<?php
-		} 
-	?>
-	
 	<!-- Update inventory -->
 	<div class="col-md-12">
 		<div class="panel panel-default">
@@ -441,9 +428,11 @@ function exit_with_success($success_message)
 			var failures_string = `\n material ${failures["m_id"]} `+
 					`with a status of ${failures["status"]}, quantity of ${failures["quantity"]} and `+
 					`notes: '${failures["notes"]}'`;
-		if(failures.length) 
-			alert(	"Unable to refresh page of updated materials.  Please note that these "+
-					"materials were updated despite remaining in the list:" + failures_string);
+		if(!failures.length) return true;
+
+		alert(	"Unable to refresh page of updated materials.  Please note that these "+
+				"materials were updated despite remaining in the list:" + failures_string);
+		return false;
 	}
 
 
@@ -519,7 +508,7 @@ function exit_with_success($success_message)
 		var input_rows = document.getElementsByClassName("update_rows");
 		var materials = [];  // list to hold dict values for data from each row
 		for(var x = 0; x < input_rows.length; x++) {
-			var quantity = input_rows[x].getElementsByClassName("quantity")[0].value;
+			var display_quantity = input_rows[x].getElementsByClassName("quantity")[0].value;
 			var reason = input_rows[x].getElementsByClassName("reason")[0].value.replace(/\|/g, ";");
 			
 			var mat = input_rows[x].getElementsByClassName("dm_select")[0];
@@ -532,12 +521,18 @@ function exit_with_success($success_message)
 			var status_text = status.options[status.selectedIndex].text;			
 
 			// check if all information filled or empty (product is not passed to backend, so no need to check)
-			if(quantity === "" && mat_id === "NONE" && reason === "" && status_id === "NONE") continue;  //TODO: delete row
+			if(display_quantity === "" && mat_id === "NONE" && reason === "" && status_id === "NONE") continue;  //TODO: delete row
+
+			// insert_mat_used assumes consumption. inverse value to do negative consumption (gainnzzz)
+			if(status_id == <?php echo $status["unused"]; ?> || status_id == <?php echo $status["updated"]; ?>
+			|| status_id == <?php echo $status["received"]; ?>)
+				var quantity = display_quantity * -1;
+			else var quantity = display_quantity;
 			
 			if(!__INVENTORY__update_instance_is_valid(mat_id, quantity, reason, status_id)) return;
 			var instance =	{
-								"quantity_used" : quantity, "m_id" : mat_id, "name" : name,
-								"status_id" : status_id, "status_text" : status_text,
+								"display_quantity" : display_quantity, "m_id" : mat_id, "name" : name,
+								"quantity" : quantity, "status_id" : status_id, "status_text" : status_text,
 								"product" : product, "notes" : reason
 							};
 			materials.push(instance);
@@ -564,7 +559,7 @@ function exit_with_success($success_message)
 		{
 			var row = table.insertRow(-1);
 			row.innerHTML =  `<td>${data[x]["name"]}</td> <td>${data[x]["product"]}</td>
-								<td>${data[x]["status_text"]}</td> <td>${data[x]["quantity_used"]}</td>
+								<td>${data[x]["status_text"]}</td> <td>${data[x]["display_quantity"]}</td>
 								<td>${data[x]["notes"]}</td>`;
 		}
 		return table;
@@ -621,6 +616,7 @@ function exit_with_success($success_message)
 			data: {"update_inventory" : true, "mats_used_update" : JSON.stringify(materials)},
 			success: function(response)
 			{
+				console.log(response["errors"]);  //DEV
 				// get statuses and options before removal
 				var material_options =		document.getElementsByClassName("update_rows")[0]
 												.getElementsByClassName("dm_select")[0].innerHTML;
@@ -628,9 +624,12 @@ function exit_with_success($success_message)
 												.getElementsByClassName("status_select")[0].innerHTML;
 
 				// remove successful updates
-				__INVENTORY__remove_inventory_update_instance_from_page(response["successes"]);
-				alert("Successfully updated all materials");
-				__INVENTORY__additional_material(material_options, material_statuses);  // add clean row
+				if(__INVENTORY__remove_inventory_update_instance_from_page(response["successes"]))
+				{
+					alert("Successfully updated all materials");
+					__INVENTORY__additional_material(material_options, material_statuses);  // add clean row
+				}
+
 				$('#__INVENTORY__modal').modal('hide');
 			},
 			error: function(XMLHttpRequest, textStatus, errorThrown) {
