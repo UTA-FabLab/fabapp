@@ -58,7 +58,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['end_button'])) {
 	if($ticket_status >= $status['charge_to_acct']) exit_if_error("Ticket status is invalid.");
 	exit_if_error($ticket->end_transaction($staff, $ticket_status), "./pickup.php?trans_id=$ticket->trans_id");
 
-	$ticket_notes = htmlspecialchars(filter_input(INPUT_POST, "ticket_notes"));
+	$ticket_notes = htmlspecialchars(filter_input(INPUT_POST, "ticket_notes_textarea_modal"));
 	if($ticket_notes) exit_if_error($ticket->edit_transaction_information(array("notes" => $ticket_notes)));
 
 	// completely failed ticket; nothing to pay for
@@ -991,11 +991,11 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php'); ?>
 	function failed_ticket_material_statuses_are_invalid(materials, ticket_status)
 	{
 		// make sure a note is stated
-		if(document.getElementById("ticket_notes").value.length < 10)
+		if(document.getElementById("ticket_notes_textarea").value.length < 10)
 			return alert_and_return_true("You must state how the ticket failed");
 		// require 1 failed material: none found
 		if(!any(	materials,
-				function(mat, value){return mat["status"] == value;},
+				function(mat, value){return mat["status"].value == value;},
 				<?php echo $status["failed_mat"]; ?>)
 		) return alert_and_return_true("Any failed ticket requires at least 1 failed material");
 

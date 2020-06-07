@@ -978,11 +978,12 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	function failed_ticket_material_statuses_are_invalid(materials, ticket_status)
 	{
 		// make sure a note is stated
-		if(document.getElementById("ticket_notes").value.length < 10)
+		if(document.getElementById("ticket_notes_textarea").value.length < 10)
 			return alert_and_return_true("You must state how the ticket failed");
 		// require 1 failed material: none found
+		console.log(materials);
 		if(!any(	materials,
-				function(mat, value){return mat["status"] == value;},
+				function(mat, value){return mat["status"].value == value;},
 				<?php echo $status["failed_mat"]; ?>)
 		) return alert_and_return_true("Any failed ticket requires at least 1 failed material");
 
