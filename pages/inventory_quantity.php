@@ -38,7 +38,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['__SHEETGOOD__quantity_b
 		exit_from_error("Incorrect input on Sheet Good selection field");
 	if(!preg_match('/^[\s\S]{9,999}$/', $_POST['__SHEETGOOD__quantity_notes']))
 		exit_from_error("Incorrect input on Sheet Good notes field: input is too short");
-	if(!preg_match('/^[0-9]+$/i', $_POST['__SHEETGOOD__quantity_change']))
+	if(!preg_match('/^-?[0-9]+$/i', $_POST['__SHEETGOOD__quantity_change']))
 		exit_from_error("Incorrect input on Change in Quantity field");
 
 
