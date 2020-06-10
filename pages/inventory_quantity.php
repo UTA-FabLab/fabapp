@@ -34,13 +34,12 @@ $device_mats = Materials::getDeviceMats();
 // sheet goods
 if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['__SHEETGOOD__quantity_button']))
 {
-	if(!isset($_POST['__SHEETGOOD__varient_sizes_select']))
+	if(!is_numeric($_POST['__SHEETGOOD__varient_sizes_select']))
 		exit_from_error("Incorrect input on Sheet Good selection field");
 	if(!preg_match('/^[\s\S]{9,999}$/', $_POST['__SHEETGOOD__quantity_notes']))
 		exit_from_error("Incorrect input on Sheet Good notes field: input is too short");
 	if(!preg_match('/^-?[0-9]+$/i', $_POST['__SHEETGOOD__quantity_change']))
 		exit_from_error("Incorrect input on Change in Quantity field");
-
 
 	$sheet_id = filter_input(INPUT_POST, "__SHEETGOOD__varient_sizes_select");
 	$quantity_notes = filter_input(INPUT_POST, "__SHEETGOOD__quantity_notes");

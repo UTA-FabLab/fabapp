@@ -311,34 +311,31 @@ class Materials {
 		if(!$statement) return "Bad parameter passed in updating material";
 		if(!$statement->execute()) return $mysqli->error;
 
-		return null;  // no errors
+		return NULL;  // no errors
 	}
 
 
 	public static function update_sheet_quantity($inv_id, $quantity, $notes) {
 		global $mysqli;
 
-		$result = $mysqli->query(
-			"SELECT DISTINCT `sheet_good_inventory`.`quantity`
-			FROM `sheet_good_inventory`
-			WHERE `sheet_good_inventory`.`inv_id` = '$inv_id';");
-		while($row = $result->fetch_assoc()){
-			$current_quantity = $row["quantity"];
-		}
-		
-		$calc_quantity = $current_quantity + $quantity;
-		if ($calc_quantity >= 0){
-			if($inv_id) {
-				if($mysqli->query("
-					UPDATE `sheet_good_inventory`
-					SET `quantity` = `quantity`+'$quantity' , `notes`='$notes'
-					WHERE `inv_ID` = '$inv_id';
-				"))
-					return false;
-			}
-			return $mysqli->error;
-		}
-		return "Incorrect quantity change input, your result must not change quantity to a value below 0";
+		// check that quantity will not be set to a negative value; if negative; return error message
+		$result = $mysqli->query(	"SELECT `quantity`
+									FROM `sheet_good_inventory`
+									WHERE `inv_id` = '$inv_id';");  // cannot affectively SQL inject at this point
+		if(!$result) return "Materials::update_sheet_quantity: ".$mysqli->error;
+		if($result->fetch_assoc()["quantity"] + $quantity < 0)
+			return "Incorrect quantity change input, your result must not change quantity to a value below 0";
+
+		// update quantity
+		$statement = $mysqli->prepare(	"UPDATE `sheet_good_inventory`
+											SET `quantity` = `quantity` + ?, `notes` = ? 
+											WHERE `inv_ID` = ?;");
+		if(!$statement) return "Materials::update_sheet_quantity: ".$mysqli->error;
+
+		$statement->bind_param("dsd", $quantity, $notes, $inv_id);
+		if(!$statement) return "Materials::update_sheet_quantity: ".$mysqli->error;
+		if(!$statement->execute()) return "Materials::update_sheet_quantity: ".$mysqli->error;
+		return NULL;
 	}
 
 

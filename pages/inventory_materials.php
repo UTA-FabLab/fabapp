@@ -400,8 +400,9 @@ function __NEWINV__get_populate_values($name)
 														<td style="width:50%;" id='__NEWINV__RGB_td' hidden>
 															<div class="input-group">
 																<span class="input-group-addon unit">RGB</span>
-																<input id="rgb_input" type="text" class='form-control' placeholder="rgb(80,0,0)"
-																  onchange="__NEWINV__set_full_color()" onkeydown="__NEWINV__submit_on_enter(event)">
+																<input id="rgb_input" type="text" class='form-control' value="80,0,0"
+																  onchange="__NEWINV__validate_rgb_color(this); __NEWINV__set_full_color(this)"
+																  onkeyup="__NEWINV__validate_rgb_color(this); __NEWINV__set_full_color(this)">
 															</div>
 														</td>
 														<td style="width:30%;" id="__NEWINV__color_td" hidden>
@@ -936,24 +937,23 @@ function __NEWINV__get_populate_values($name)
 
 	var __NEWINV__INCLUDE_COLOR = false;  // bool to determine if to include color
 
-	var previous_value = "rgb(80,0,0)";  // store string of rgb; default on if bad string entered
-	var color_field = document.getElementById("rgb_input");
-	color_field.value = previous_value;
-	color_field.addEventListener('keyup', function(evt){
+	function __NEWINV__validate_rgb_color(element)
+	{
+		var value = element.value;  // sugar
 		// no "rgb(", ")", values > 255
-		var rgb = this.value.substring(4, this.value.length-1).split(',');
-		// you're bad at this: reset string punishment
-		if(this.value.length < 8)
+		var rgb = value.split(',');
+		if(rgb.length != 3) element.value = "80,0,0";
+
+		for(var x = 0; x < rgb.length; x++)
 		{
-			this.value = "rgb(80,0,0)";
+			if(parseInt(rgb[x]) == "NaN" && rgb[x] != "") rgb[x] = "0";  // not an integer or blank
+			else if(parseInt(rgb[x]) > 255) rgb[x] = rgb[x].substring(0, rgb[x].length -1);  // larger than 255
+
+			// remove leading 0's
+			if(parseInt(rgb[x]) > 0 && rgb[x].substring(0, 1) == "0") rgb[x] = rgb[x].substring(1);
 		}
-		else if(this.value.match(/,/g).length != 2 || this.value.substring(0,4) != "rgb(" || this.value.charAt(this.value.length-1) != ')' ||
-		  parseInt(rgb[0]) > 255 || parseInt(rgb[1]) > 255 || parseInt(rgb[2]) > 255)
-		{
-			this.value = previous_value;
-		}
-		else previous_value = this.value;  // update value to default on
-	}, false);
+		element.value = rgb.join(",");
+	}
 
 
 	// button action to hide/show activate/deactivate color input ability.
@@ -976,25 +976,16 @@ function __NEWINV__get_populate_values($name)
 	}
 
 
-	// when enter or tab pressed, change color to HEX equivalent of RGB value in input
-	// takes keyboard event press.
-	// checks type of keystroke. if enter key, sets color in colorpicker to RGB value.
-	function __NEWINV__submit_on_enter(e)
-	{
-		keyboardKey = e.which || e.keyCode;
-		if(keyboardKey == 13) __NEWINV__set_full_color();
-	}
-
-
 	// get value in RGB input, change to HEX, set HTML5 input color to HEX equiv.
 	// converts rgb input to hex valued color. sets color picker input to hex values
 	function __NEWINV__set_full_color()
 	{
-		var color_field = document.getElementById("rgb_input");
-		var color = color_field.value.substring(4, color_field.value.length-1).split(',');
+		var rgb = document.getElementById("rgb_input");
+		var color = rgb.value.split(',');
 		var hex = "#";
 		for(var x = 0; x < color.length; x++)
 		{
+			if(color[x] == "") color[x] = 0;
 			var temp = parseInt(color[x]).toString(16);
 			hex += temp.length == 1 ? "0" + temp : temp;
 		}
@@ -1021,6 +1012,17 @@ function __NEWINV__get_populate_values($name)
 		g = parseInt(color.substr(3,2), 16);
 		b = parseInt(color.substr(5), 16);
 		document.getElementById("rgb_input").value = "rgb(" + r + ',' + g + ',' + b + ')';
+	}
+
+
+
+	function any(list, comparitor, value)
+	{
+		for(var x = 0; x < list.length; x++)
+		{
+			if(comparitor(list[x], value)) return true;
+		}
+		return false;
 	}
 
 
