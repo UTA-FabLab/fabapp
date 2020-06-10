@@ -226,7 +226,6 @@ function exit_with_success($message, $redirect=null) {
 													<?php } ?>
 													<option value='<?php echo $status['partial_fail']; ?>'>Partial Fail</option>
 													<option value='<?php echo $status['total_fail']; ?>'>Total Fail</option>
-													<option value='<?php echo $status['cancelled']; ?>'>Cancelled</option>
 												</select>
 											</td>
 											<!-- current or selected storage information -->
