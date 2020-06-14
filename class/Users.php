@@ -45,22 +45,24 @@ class Users
 		if(!self::regex_id($id)) throw new Exception("Bad user id: $id");  // be extra catious
 
 		$this->id = $id;
-		if(!$result = $mysqli->query(	"SELECT * FROM `users` 
-										LEFT JOIN `rfid` ON `users`.`id` = `rfid`.`user_id`
-										WHERE `id` = '$id';"
-		)) throw new Exception("Users::__construct: Bad query: $mysqli->error");
+		if(!$user_result = $mysqli->query("SELECT * FROM `users` WHERE `id` = '$id';"))
+			throw new Exception("Users::__construct: Bad query: $mysqli->error");
 
 		// user does not exist in DB
-		if(!$result->num_rows) $this->role_id = 2;
+		if(!$user_result->num_rows) $this->role_id = 2;
 		// user exists in DB
 		else
 		{
 			$row = $result->fetch_assoc();
 
-			$attributes = array("adj_date", "exp_date", "icon", "notes", "role_id", "rfid_no");
+			$attributes = array("adj_date", "exp_date", "icon", "notes", "role_id");
 			foreach($attributes as $attribute) $this->$attribute = $row[$attribute];
 			$this->set_accounts();
 		}
+
+		if($rfid_result = $mysqli->query("SELECT `rfid_no` FROM `rfid` WHERE `id` = '$id';"))
+			$this->rfid_no = $rfid_result->fetch_assoc()["rfid_no"];
+		else throw new Exception("Users::__construct: Bad query: $mysqli->error");
 
 		if(!$this->icon) $this->icon = "fas fa-user";
 	}
@@ -120,57 +122,6 @@ class Users
 	}
 
 
-	// ————————————————————— GETTERS —————————————————————
-
-	public function __get($property)
-	{
-		return $this->$property ? $this->$property : NULL;
-	}
-
-
-	public function __toString()
-	{
-		return $this->id;
-	}
-
-	
-	// formerly: public static function getTabResult().
-	// gets number of roles currenly in use.
-	// creates array. queries for used roles & adds them to array.
-	// returns array of currently used roles.
-	public static function getTabResult()
-	{
-		global $mysqli;
-
-		$used_roles = array();
-		if($result = $mysqli->query(	"SELECT `r_id`, `title` FROM `role` 
-										WHERE `r_id` IN (SELECT DISTINCT `r_id` FROM `users`);"
-		))
-		{
-			while($row = $result->fetch_assoc())
-			{
-				$used_roles[$row["r_id"]] = $row["title"];
-			}
-		}
-
-		return $used_roles;
-	}
-
-
-	// check that a 
-	public static function is_staff_in_DB($id)
-	{
-		global $mysqli, $ROLE;
-
-		if(!self::regex_id($id)) return false;
-
-		$result = $mysqli->query("SELECT `r_id` FROM `users` WHERE `id` = '$id';")
-		if(!$result || !$result->num_rows) return false;
-
-		return $ROLE["staff"] <= $result->fetch_assoc()['r_id'];
-	}
-
-
 	// ———————————————————— PERMISSION —————————————————————
 
 	// validates if user has sufficient permission or role.
@@ -221,10 +172,82 @@ class Users
 		if(!is_int($role)) throw new Exception("Users::validate_role: Bad value: $role");
 		return $role <= $this->role_id;
 	}
+
+
+	// ————————————————————— GETTERS —————————————————————
+
+	// gets the property of the object
+	// takes property name as a string
+	// returns value for property if it is set: otherwise NULL
+	public function __get($property)
+	{
+		return isset($this->$property) ? $this->$property : NULL;
+	}
+
+
+	// "PHP magic function" acts as sugar to return user ID
+	public function __toString()
+	{
+		return $this->id;
+	}
+
 	
+	// formerly: public static function getTabResult().
+	// gets number of roles currenly in use.
+	// creates array. queries for used roles & adds them to array.
+	// returns array of currently used roles.
+	public static function getTabResult()
+	{
+		global $mysqli;
 
-	// ————————————————————— SETTERS —————————————————————
+		$used_roles = array();
+		if($result = $mysqli->query(	"SELECT `r_id`, `title` FROM `role` 
+										WHERE `r_id` IN (SELECT DISTINCT `r_id` FROM `users`);"
+		))
+		{
+			while($row = $result->fetch_assoc())
+			{
+				$used_roles[$row["r_id"]] = $row["title"];
+			}
+		}
 
+		return $used_roles;
+	}
+
+
+	// checks if passed user is same as this object
+	// takes string ID or user object
+	// returns is they are the same
+	public function is_same_as($user)
+	{
+		if(is_object($user)) return $this->id == $user->id;
+		if(is_string($user) && self::regex_id($user)) return $this->id == $user;
+		return false;
+	}
+
+
+	public function is_staff()
+	{
+		global $ROLE;
+		return $ROLE["staff"] <= $this->role_id;
+	}
+
+
+	// check that user is staff in DB.
+	// takes user ID.
+	// queries DB.
+	// returns if in DB && role is greater or equal to staff.
+	public static function is_staff_in_DB($id)
+	{
+		global $mysqli, $ROLE;
+
+		if(!self::regex_id($id)) return false;
+
+		$result = $mysqli->query("SELECT `r_id` FROM `users` WHERE `id` = '$id';");
+		if(!$result || !$result->num_rows) return false;
+
+		return $ROLE["staff"] <= $result->fetch_assoc()['r_id'];
+	}
 
 
 	public function history()
@@ -247,132 +270,20 @@ class Users
 		return $tickets;
 	}
 
-	
-	public function insertUser($staff, $role_id){
-		global $mysqli;
-		global $sv;
-		
-		if($staff->getRoleID() < 10){
-			return "Insufficient role to Modify Role";
-		}
-		$operator = $this->getOperator();
-		$staff_id = $staff->getOperator();
-		//Check if User is already in table
-		if($result = $mysqli->query("
-			SELECT *
-			FROM `users`
-			WHERE `operator` = $operator;
-		")){
-			if($result->num_rows == 0){
-				//Define User in table and assign default Role
-				if($stmt = $mysqli->prepare("
-					INSERT INTO `users` (`operator`, `r_id`, `adj_date`, `notes`, `long_close`) 
-					VALUES (?, ?, CURRENT_TIME(), ?, 'N');
-				")){
-					$stmt->bind_param("sss", $this->operator, $role_id, $staff_id);
-					if($stmt->execute() === true ){
-						$row = $stmt->affected_rows;
-						$stmt->close();
-						if($row == 1){
-							$this->setRoleID($role_id);
-							return true;
-						} else {
-							return "Users: insertUser Count Error ".$row;
-						}
-					} else
-						return "Users: insertUser Execute Error";
-				} else {
-					return "Error in preparing Users: insertUser statement";
-				}
-			} else{
-				//User is in table, lets modify & update adjustment date
-				if($stmt = $mysqli->prepare("
-					UPDATE `users` SET `r_id` = ?, `adj_date` = CURRENT_TIME(), `notes` = ? WHERE `users`.`operator` = ?;
-				")){
-					$stmt->bind_param("sss", $role_id, $staff_id, $this->operator);
-					if($stmt->execute() === true ){
-						$row = $stmt->affected_rows;
-						$stmt->close();
-						if($row == 1){
-							$this->setRoleID($role_id);
-							return true;
-						} else {
-							return "Users: insertUser Update Error ".$row;
-						}
-					} else
-						return "Users: insertUser: Update Execute Error";
-				} else {
-					return "Error in preparing Users Update: insertUser statement";
-				}
-			}
-		} else {
-			return "Error in searching Users.";
-		}
-	}
-	public function modifyRoleID($staff, $notes){
-		global $mysqli;
-		global $sv;
 
-		if($this->operator == $staff->getOperator()){
-			return "Staff can not modify their own Role ID";
-		}
-
-		//concat staff ID onto notes for record keeping
-		$notes = "|".$staff->getOperator()."| ".$notes;
-		
-		if($staff->getRoleID() >= $sv['editRole']){
-			//Staff must have high enough role
-			if($stmt = $mysqli->prepare("
-				UPDATE `users`
-				SET `r_id` = ?, `adj_date` = CURRENT_TIMESTAMP, `notes`= ?
-				WHERE `operator` = ?;
-			")){
-				$stmt->bind_param("iss", $r_id, $notes, $this->operator);
-				if($stmt->execute() === true ){
-					$row = $stmt->affected_rows;
-					$stmt->close();
-					$this->roleID = $r_id;
-					return $row;
-				} else
-					return "Users: updateRoleID Error";
-			} else {
-				return "Error in preparing Users: modifyRoleID statement";
-			}
-		} else {
-			return "Insufficient Role to modify Role ID";
-		}
-	}
+	// ————————————————————— SETTERS —————————————————————
 
 
 	// —————————————————————— REGEX ——————————————————————
 
-	//  The RFID must exist in the table
-	public static function regexRFID($rfid_no) {
-		global $mysqli;
 
-		if(preg_match("/^\d{4,12}$/",$rfid_no) == 0) {
-			return false;
-		}
-		return true;
-	}
-
-
-	public static function rfidExist($rfid_no)
+	// formerly: public static function regexRFID($rfid_no)
+	public static function regex_rfid($rfid_no)
 	{
-		global $mysqli;
-		
-		if($result = $mysqli->query("
-			SELECT *
-			FROM `rfid`
-			WHERE `rfid`.`rfid_no` = '$rfid_no';
-		")){
-			if($result->num_rows == 1){
-				return true;
-			}
-			return false;
-		}
+		return boolval(preg_match("/^\d{4,12}$/",$rfid_no));
 	}
-	
+
+
 	// formerly regexUser($operator)
 	public static function regex_id($id)
 	{
@@ -385,7 +296,7 @@ class Users
 	}
 
 
-	public static function RFIDtoID ($rfid_no) {
+	public static function RFIDtoID($rfid_no) {
 		global $mysqli;
 		
 		if(!preg_match("/^\d+$/",$rfid_no) == 0) return false;
@@ -648,7 +559,7 @@ class Staff extends Users
 	// formerly: public function insertRFID($staff, $rfid_no){
 	public function new_rfid($rfid_no, $user)
 	{
-		global $mysqli, $sv;
+		global $mysqli;
 
 		// validate data
 		if(!$this->validate("edit_rfid"))
@@ -665,11 +576,8 @@ class Staff extends Users
 		// check if RFID already exists: if it does, return false
 		if(!$result = $mysqli->query("SELECT `id` FROM `rfid` WHERE `rfid_no` = $rfid_no;"))
 			throw new Exception("Users::new_rfid: bad query: $mysqli->error");
-		elseif($result->num_rows)
-		{
-			$_SESSION["error_msg"] = "Staff::new_rfid: RFID $rfid_no already exists for $row[id]";
-			return false;
-		}
+
+		if($result->num_rows) return self::update_rfid($rfid_no, $user);
 
 		$statement = $mysqli->prepare("INSERT INTO `rfid` (`rfid_no`, `id`) VALUES (?, ?);");
 		if(!$statement) throw new Exception("Users::new_rfid: bad query: $mysqli->error");
@@ -678,12 +586,56 @@ class Staff extends Users
 		if(!$statement) throw new Exception("Users::new_rfid: bad parameter binding: $mysqli->error");
 
 		// submit & return outcome
-		if(!$statement->execute())
+		return $statement->execute();
+	}
+
+	
+	// formerly: public function insertUser($staff, $role_id)
+	public function new_user($new_user_id, $notes, $role_id)
+	{
+		global $mysqli, $ROLE;
+
+		if($this->validate($ROLE["admin"]))
 		{
-			$_SESSION["error_msg"] = " Users::new_rfid: could not add RFID to user";
-			return false
+			$_SESSION["error_msg"] = "Insufficient role to Modify Role";
+			return false;
 		}
-		return true;
+		if($this->is_same_as($new_user_id))
+		{
+			$_SESSION["error_msg"] = "Staff can not modify their own Role ID";
+			return false;
+		}
+
+		// check if user already exists
+		if(!$result = $mysqli->query("SELECT * FROM `users` WHERE `id` = '$new_user_id';"))
+			throw new Exception("Users::new_user: bad query: $mysqli->error");
+
+		if($result->num_rows) return self::modify_role_id();  // already exists; update
+
+		if(!$statement = $mysqli->prepare("INSERT INTO `users` (`id`, `r_id`, `staff_id`) VALUES (?, ?, ?);"))
+			throw new Exception("Users::new_user: bad prepare: $mysqli->query");
+
+		if(!$statement->bind_param("sds", $role_id, $this->id, $new_user_id))
+			throw new Exception("Users::new_user: bad bind: $mysqli->query");
+
+		return $statement->execute();
+	}
+
+
+
+	// ————————————————————— SETTERS —————————————————————
+
+	// formerly: public static function rfidExist($rfid_no)
+	public static function rfid_exist($rfid_no)
+	{
+		global $mysqli;
+		
+		if($result = $mysqli->query("SELECT * FROM `rfid` WHERE `rfid_no` = '$rfid_no';"))
+		{
+			return boolval($result->num_rows);
+		}
+
+		throw new Exception("Users::rfid_exist: bad query: $mysqli->error");
 	}
 
 
@@ -703,6 +655,72 @@ class Staff extends Users
 		// revoke permissions
 		if($mysqli->query("UPDATE `users_permissions` SET `valid` = FALSE WHERE `id` = '$id';")) return false;
 		return true;
+	}
+
+
+	public function update_rfid($rfid_no, $user)
+	{
+		global $mysqli;
+
+		// validate data
+		if(!$this->validate("edit_rfid"))
+		{
+			$_SESSION["error_msg"] = "Insufficient role to add new RFID";
+			return false;
+		}
+		if(!self::regex_rfid($rfid_no))
+		{
+			$_SESSION["error_msg"] = "Invalid RFID number: $rfid_no";
+			return false;
+		}
+		
+		// check if RFID already exists: if it does, return false
+		if(!$result = $mysqli->query("SELECT `id` FROM `rfid` WHERE `rfid_no` = $rfid_no;"))
+			throw new Exception("Users::new_rfid: bad query: $mysqli->error");
+
+		if(!$result->num_rows) return self::new_rfid($rfid_no, $user);  // check if exists; if not, create new
+
+		// update
+		$statement = $mysqli->prepare("UPDATE `rfid` SET `rfid_no` = ? WHERE `id` = ?;");
+		if(!$statement) throw new Exception("Users::new_rfid: bad query: $mysqli->error");
+
+		$statement->bind_param("ss", $rfid_no, $user->id);
+		if(!$statement) throw new Exception("Users::new_rfid: bad parameter binding: $mysqli->error");
+
+		// submit & return outcome
+		return $statement->execute();
+	}
+
+
+	// formerly: public function modifyRoleID($staff, $notes)
+	public function update_role_id($notes, $role_id, $user_id)
+	{
+		global $mysqli, $ROLE;
+
+		if($this->validate($ROLE["admin"]))
+		{
+			$_SESSION["error_msg"] = "Insufficient role to Modify Role";
+			return false;
+		}
+		if($this->is_same_as($new_user_id))
+		{
+			$_SESSION["error_msg"] = "Staff can not modify their own Role ID";
+			return false;
+		}
+
+		if(!$results = $mysqli->query("SELECT `id` FROM `users` WHERE `id` = '$id';"))
+			throw new Exception("Users::new_user: bad query: $mysqli->error");
+
+		if(!$result->num_rows) return self::new_user($user_id, $notes, $role_id);  // does not exist; add
+
+		if(!$statement = $mysqli->prepare(	"UPDATE `users` SET  `notes` = ?, `r_id` = ?, `staff_id` = ?
+												WHERE `id` = ?;"
+		)) throw new Exception("Users::new_user: bad prepare: $mysqli->query");
+
+		if(!$statement->bind_param("sdss", $notes, $role_id, $this->id, $new_user_id))
+			throw new Exception("Users::new_user: bad bind: $mysqli->query");
+
+		return $statement->execute();
 	}
 }
 

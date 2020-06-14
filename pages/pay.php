@@ -54,19 +54,19 @@ if($staff->roleID < $role['staff'] || ($staff->operator == $ticket->user->operat
 
 
 // check that ticket is ended and not pay first
-if($ticket->status->status_id < $status['moveable'] && !$ticket->device->device_group->is_pay_first)
+if($ticket->status->status_id < $STATUS['moveable'] && !$ticket->device->device_group->is_pay_first)
 	exit_if_error("The ticket is still active and must be ended first", "./end.php?trans_id=$trans_id");
 // total failed: can't do anything to total failed tickets
-elseif($ticket->status->status_id == $status['total_fail']) 
+elseif($ticket->status->status_id == $STATUS['total_fail']) 
 	exit_if_error("Ticket #$trans_id is marked as a complete fail and cannot be payed for");
 elseif(!StorageObject::object_is_in_storage($trans_id)) {
 	// ticket already payed && not in FabLab
-	if($ticket->status->status_id >= $status['charge_to_acct'])
+	if($ticket->status->status_id >= $STATUS['charge_to_acct'])
 		exit_if_error("Ticket #$trans_id already payed");
 	// ticket has no debit (or credit) && not in FabLab
 	elseif($ticket->no_associated_materials_have_a_price() || !$ticket->remaining_balance()) {
 		// if there is a cost associated, but already paid and status is not charge_to_acct: change status to charge_to_acct
-		if($ticket->quote_cost()) exit_if_error($ticket->edit_transaction_information(array("status_id" => new Status($status["charge_to_acct"]))));
+		if($ticket->quote_cost()) exit_if_error($ticket->edit_transaction_information(array("status_id" => new Status($STATUS["charge_to_acct"]))));
 		exit_with_success("There is no cost associated with this ticket and nothing in storage. There is nothing else to do for ticket #$trans_id");
 	}
 }
@@ -97,7 +97,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['pay_button'])) {
 
 		// any charge out of house (not fablab) will be set to charge to account
 		// any complaints about hardcoding should be brought up with Eric
-		$acct_charge_status_id = $account_id == 3 ? $status["charge_to_fablab"] : $status["charge_to_acct"];
+		$acct_charge_status_id = $account_id == 3 ? $STATUS["charge_to_fablab"] : $STATUS["charge_to_acct"];
 		exit_if_error($ticket->edit_transaction_information(array("status" => new Status($acct_charge_status_id))));
 		$success_message = "Successfully paid for ticket #$trans_id";
 	}

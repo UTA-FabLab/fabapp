@@ -73,7 +73,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['undo_button'])) {
 	// double check that ticket may be ended
 	if($staff->roleID < $role["staff"])
 		exit_if_error("You do not have permission to unend this ticket");
-	elseif($ticket->status->status_id <= $status["moveable"])
+	elseif($ticket->status->status_id <= $STATUS["moveable"])
 		exit_if_error("Ticket cannot be unended because it has not been ended");
 	elseif($staus["charge_to_acct"] <= $ticket->status->status_id)
 		exit_if_error("Ticket cannot be unended because it has been paid for");
@@ -81,12 +81,12 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['undo_button'])) {
 		exit_if_error("More than 30 minutes have passed. Ticket must now be edited to change this information");
 
 	// unend ticket
-	$revert_status = $ticket->device->device_group->is_storable ? new Status($status["moveable"]) : new Status($status["active"]);
+	$revert_status = $ticket->device->device_group->is_storable ? new Status($STATUS["moveable"]) : new Status($STATUS["active"]);
 	exit_if_error($ticket->edit_transaction_information(array("t_end" => null, "status" => $revert_status)));
 
 	// assume that all materials are used
 	foreach($ticket->mats_used as $mat_used)
-		exit_if_error($mat_used->edit_material_used_informations(array("status" => new Status($status["used"]))));
+		exit_if_error($mat_used->edit_material_used_informations(array("status" => new Status($STATUS["used"]))));
 }
 elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['new_material_button'])) {
 	$new_material = filter_input(INPUT_POST, "new_material");
@@ -95,10 +95,10 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['new_material_button
 		exit_if_error("You do not have permission to unend this ticket");
 	elseif(!Materials::regexID($new_material))
 		exit_if_error("Material ID $new_material is not valid");
-	elseif($status["moveable"] < $ticket->status->status_id)
+	elseif($STATUS["moveable"] < $ticket->status->status_id)
 		exit_if_error("You cannot add a material to an ended ticket");
 
-	if(!is_int($mu_id = Mats_Used::insert_material_used($ticket->trans_id, $new_material, $status["used"], $staff)))
+	if(!is_int($mu_id = Mats_Used::insert_material_used($ticket->trans_id, $new_material, $STATUS["used"], $staff)))
 		exit_if_error("Problem associating materials to ticket–$mu_id");
 	exit_with_success("Material added");
 }
@@ -139,7 +139,7 @@ function exit_with_success($message, $redirect=null) {
 	<div class="row">
 		<div class="col-lg-12">
 			<?php // ticket finished && not sheetgood device, allow shortcut to make new ticket 
-			if($ticket->status->status_id >= $status['total_fail'] && $ticket->device->device_id != $sv["sheet_device"]) {
+			if($ticket->status->status_id >= $STATUS['total_fail'] && $ticket->device->device_id != $sv["sheet_device"]) {
 			?>
 				<h1 class="page-header">Ticket Details
 					<!-- //ADD WITH UPDATE -->
@@ -270,7 +270,7 @@ function exit_with_success($message, $redirect=null) {
 						</table>
 					</div>
 					<!-- /.panel-body -->
-					<?php if($ticket->status->status_id <= $status['moveable']) { ?>
+					<?php if($ticket->status->status_id <= $STATUS['moveable']) { ?>
 						<div class="panel-footer">
 							<div align="right">
 								<a href='/pages/end.php?trans_id=<?php echo $ticket->trans_id; ?>'>
@@ -280,7 +280,7 @@ function exit_with_success($message, $redirect=null) {
 						</div>
 					<?php 
 					}
-					elseif($ticket->status->status_id < $status["charge_to_acct"] && $ticket->remaining_balance()) { ?>
+					elseif($ticket->status->status_id < $STATUS["charge_to_acct"] && $ticket->remaining_balance()) { ?>
 						<div class="panel-footer">
 							<div align="right">
 								<?php 
@@ -433,7 +433,7 @@ function exit_with_success($message, $redirect=null) {
 							</table>
 						<?php } ?> 
 					</div> <!-- /.panel-body -->
-					<?php if($staff->roleID >= $role["staff"] && $ticket->status->status_id <= $status["moveable"] &&
+					<?php if($staff->roleID >= $role["staff"] && $ticket->status->status_id <= $STATUS["moveable"] &&
 							count($ticket->device->device_group->optional_materials) 
 							+ count($ticket->device->device_group->required_materials) > count($ticket->mats_used)) { ?>
 						<div class="panel-body">
@@ -470,7 +470,7 @@ function exit_with_success($message, $redirect=null) {
 
 		<div class="col-lg-5">
 			<?php // rework to rollback transaction, mats_used, ac_charge...user gets to put it back in storage manually (limit 30 minutes)
-			if($sv['LvlOfStaff'] <= $staff->roleID && -1800 < (date("Y-m-d H:i:s") - strtotime($ticket->t_end)) && $ticket->status->status_id > $status["moveable"]) {
+			if($sv['LvlOfStaff'] <= $staff->roleID && -1800 < (date("Y-m-d H:i:s") - strtotime($ticket->t_end)) && $ticket->status->status_id > $STATUS["moveable"]) {
 				if($ticket->device->device_id != $sv["sheet_device"]) { ?>
 				<div class="panel panel-default">
 					<div class="panel-heading">
@@ -488,8 +488,8 @@ function exit_with_success($message, $redirect=null) {
 
 			// —————— REPORT ISSUE ——————
 
-			if($staff->roleID >= $sv['LvlOfStaff'] && ($ticket->status->status_id == $status['total_fail'] 
-			|| $ticket->status->status_id == $status['partial_fail'])) { ?>
+			if($staff->roleID >= $sv['LvlOfStaff'] && ($ticket->status->status_id == $STATUS['total_fail'] 
+			|| $ticket->status->status_id == $STATUS['partial_fail'])) { ?>
 				<div class="panel panel-default">
 					<div class="panel-heading">
 						<i class="fas fa-wrench fa-lg" title="Undo"></i> Service Ticket

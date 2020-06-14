@@ -602,7 +602,7 @@ class Mats_Used {
 
 	// create an HTML table for the input, select display of mat_used's instance
 	public function instance_HTML($readonly=false) {
-		global $status, $sv;
+		global $STATUS, $sv;
 
 		$parent_class_name = $this->material->m_parent ? str_replace(" ", "_", $this->material->m_parent->m_name) : "";
 
@@ -658,9 +658,9 @@ class Mats_Used {
 								<select id='$this->mu_id-select' class='form-control mat_used_select $measurability' 
 								onchange='adjust_ticket_status(this); adjust_input_for_status(this);'>
 									<option selected hidden>SELECT</option>
-									<option value='$status[used]'>Used</option>
-									<option $default_selection value='$status[unused]'>Not Used</option>
-									<option value='$status[failed_mat]'>Failed Material</option>
+									<option value='$STATUS[used]'>Used</option>
+									<option $default_selection value='$STATUS[unused]'>Not Used</option>
+									<option value='$STATUS[failed_mat]'>Failed Material</option>
 								</select>
 							</td>
 						</tr>

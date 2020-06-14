@@ -70,15 +70,14 @@ class Devices {
 	
 	// check DB if desired device is not being used
 	public static function is_open($device_id){
-		global $mysqli, $status;
+		global $mysqli, $STATUS;
 		
-		if($result = $mysqli->query("
-			SELECT * 
-			FROM `transactions`
-			WHERE device_id = '$device_id' AND `status_id` < $status[total_fail]
-		")){
-			if ($result->num_rows > 0) return true;
-			return false;
+		if($result = $mysqli->query(
+			"SELECT * FROM `transactions`
+			WHERE device_id = '$device_id' AND `status_id` < $STATUS[total_fail]
+		"))
+		{
+			return $result->num_rows > 0;
 		}
 		return false;
 	}
@@ -113,7 +112,7 @@ class Devices {
 
 	// device status dot (or X) echo to page
 	public static function printDot($staff, $device_id){
-		global $mysqli, $sv;
+		global $mysqli, $ROLE;
 
 		$COLORS = array("red" => "#FF0000", "yellow" => "#FFFF00", "green" => "#008000", "blue" => "#0000FF", "purple" => "#CC00FF");
 		
@@ -146,7 +145,7 @@ class Devices {
 		}
 		
 		if($staff){
-			if($staff->getRoleID() >= $sv['LvlOfStaff'] || $staff->getRoleID() == $sv['serviceTechnican'])
+			if($staff->is_staff() || $staff->validate("service"))
 				echo "<a href = '/pages/sr_history.php?device_id=$device_id'><i class='fas fa-$symbol fa-lg' style='color:$color'></i></a>&nbsp;";
 			else echo "<i class='fas fa-$symbol fa-lg' style='color:$COLORS[$color]'></i>&nbsp;";
 		} 

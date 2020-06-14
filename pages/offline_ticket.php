@@ -16,8 +16,8 @@ if($results = $mysqli->query("
 								ON `offline_transactions`.`trans_id` = `transactions`.`trans_id`
 								JOIN `devices`
 								ON `devices`.`d_id` = `transactions`.`d_id`
-								WHERE `status_id` = '$status[offline]'
-								OR `status_id` = '$status[moveable]';
+								WHERE `status_id` = '$STATUS[offline]'
+								OR `status_id` = '$STATUS[moveable]';
 ")){
 	while($row = $results->fetch_assoc()){
 		$offline_transactions[] = 	"<tr>

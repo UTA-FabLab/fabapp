@@ -48,7 +48,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["add_new_material"])) {
 	check_posted_values($m_id, $trans_id);  // regex passed valued; exit if invalid
 
 	// add to DB
-	$mu_id = Mats_Used::insert_material_used($trans_id, $m_id, $status["used"], $staff);
+	$mu_id = Mats_Used::insert_material_used($trans_id, $m_id, $STATUS["used"], $staff);
 	if(!is_int($mu_id)) {
 		echo json_encode(array("error" => "Error associating material with ticket—$mu_id"));
 		exit();
@@ -100,7 +100,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["add_edit_mat_used_i
 	check_posted_values($m_id, $trans_id);  // regex passed valued; exit if invalid
 
 	// add to DB
-	$mu_id = Mats_Used::insert_material_used($trans_id, $m_id, $status["used"], $staff);
+	$mu_id = Mats_Used::insert_material_used($trans_id, $m_id, $STATUS["used"], $staff);
 	if(!is_int($mu_id)) {
 		echo json_encode(array("error" => "Error associating material with ticket—$mu_id"));
 		exit();
@@ -237,9 +237,9 @@ function edit_page_new_mat_used_HTML($mat_used) {
 					<td>
 						<select name='$mu_id-select' id='$mu_id-select' class='form-control' 
 						onchange='change_edit_staff(this, \"$staff->operator\", 3, 1);'>
-							<option value='$status[used]'".($mat_used->status->status_id == $status["used"] ? "selected" : "").">Used</option>
-							<option value='$status[unused]'".($mat_used->status->status_id == $status["unused"] ? "selected" : "").">Unused</option>
-							<option value='$status[failed_mat]'".($mat_used->status->status_id == $status["failed_mat"] ? "selected" : "").">Failed Material</option>
+							<option value='$STATUS[used]'".($mat_used->status->status_id == $STATUS["used"] ? "selected" : "").">Used</option>
+							<option value='$STATUS[unused]'".($mat_used->status->status_id == $STATUS["unused"] ? "selected" : "").">Unused</option>
+							<option value='$STATUS[failed_mat]'".($mat_used->status->status_id == $STATUS["failed_mat"] ? "selected" : "").">Failed Material</option>
 						</select>
 					</td>
 				</tr>

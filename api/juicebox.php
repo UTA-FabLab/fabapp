@@ -231,7 +231,7 @@ function RFIDtoUTAID ($rfid_no) {
         $insID = $stmt->insert_id;
         $stmt->close();
     } else {
-        Error::insertError($_SERVER['PHP_SELF'],  $mysqli->error, "");
+        FabAppError::insertError($_SERVER['PHP_SELF'],  $mysqli->error, "");
     }
     
     $user = Users::withRF($rfid_no);
@@ -251,7 +251,7 @@ function end_transaction( $d_id ){
 	// Check for deviceID value
     if (! (preg_match("/^\d*$/", $d_id))) {
         $json_out["ERROR"] = "Invalid device number";
-        Error::insertError($_SERVER['PHP_SELF'],  $json_out["ERROR"], "");
+        FabAppError::insertError($_SERVER['PHP_SELF'],  $json_out["ERROR"], "");
         ErrorExit(1);
     }
     
@@ -274,7 +274,7 @@ function end_transaction( $d_id ){
         $json_out["success"] = "Y";
     } else {
         $json_out["success"] = "N";
-        Error::insertError($_SERVER['PHP_SELF'],  $msg, "");
+        FabAppError::insertError($_SERVER['PHP_SELF'],  $msg, "");
         ErrorExit(1);
     }
 }
@@ -287,9 +287,9 @@ function ErrorExit ($exit_status) {
     
     if(isset($input_data["device"])){
         $device = new Devices($input_data['device']);
-        Error::insertError("JuiceBox: ".$device->getDevice_desc(), $json_out['ERROR'], "");
+        FabAppError::insertError("JuiceBox: ".$device->getDevice_desc(), $json_out['ERROR'], "");
     } else {
-        Error::insertError("JuiceBox", $json_out['ERROR'], "");
+        FabAppError::insertError("JuiceBox", $json_out['ERROR'], "");
     }
     echo json_encode($json_out);
     $mysqli->close();

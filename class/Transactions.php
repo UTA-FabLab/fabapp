@@ -165,27 +165,27 @@ class Transactions {
 	
 
 	public function end_juicebox(){
-		global $mysqli, $status;
+		global $mysqli, $STATUS;
 		
 		$total = $this->quote_cost();
 		//Status = Moveable
 		//Intended to block additional Power On Until Learner Pays Balance
 		// Alt logic, payments get placed into a "tab"
-		if (abs($total - 0.001) > .005) $this->status = new Status($status["moveable"]);
-		else $this->status = new Status($status["complete"]);
+		if (abs($total - 0.001) > .005) $this->status = new Status($STATUS["moveable"]);
+		else $this->status = new Status($STATUS["complete"]);
 		// null for no error, string for error
 		return $this->update_transaction();
 	}
 	
 
 	public function end_octopuppet(){
-		global $mysqli, $status;
+		global $mysqli, $STATUS;
 
 		$this->t_end = date("Y-m-d H:i:s", strtotime("now"));  // set t_end only for object (!DB)
 		$duration = $this->duration_string();
 		if ($mysqli->query("
 			UPDATE `transactions`
-			SET `duration` = '$duration', `status_id` = '$status[moveable]'
+			SET `duration` = '$duration', `status_id` = '$STATUS[moveable]'
 			WHERE `trans_id` = '$this->trans_id';
 		")){
 			if ($mysqli->affected_rows == 1) return true;
@@ -195,10 +195,10 @@ class Transactions {
 
 
 	public function endSheetTicket($trans_id, $sheet_good_status){
-		global $mysqli, $status;
+		global $mysqli, $STATUS;
 		
 		// 1 for complete, 2 for failed
-		$status_id = $sheet_good_status == 1 ? $status["complete"] : $status["total_fail"];
+		$status_id = $sheet_good_status == 1 ? $STATUS["complete"] : $STATUS["total_fail"];
 		
 		
 		if ($mysqli->query("
@@ -230,7 +230,7 @@ class Transactions {
 
 	// create a new transaction in DB and return trans_id to associate with
 	public static function insert_new_transaction($operator, $device_id, $est_time, $p_id, $status_id, $staff, $note=null) {
-		global $mysqli, $status;
+		global $mysqli, $STATUS;
 
 		//Validate input variables
 		if(!Devices::regexDeviceID($device_id))return "Bad Device";
@@ -242,7 +242,7 @@ class Transactions {
 		
 		if($error = Wait_queue::transferFromWaitQueue($operator->operator, $device_id)) return $error;
 		
-		$t_end = $status_id == $status["sheet_sale"] ? "CURRENT_TIMESTAMP" : "NULL";  // sheet goods
+		$t_end = $status_id == $STATUS["sheet_sale"] ? "CURRENT_TIMESTAMP" : "NULL";  // sheet goods
 		// $note is intentionally left without '' so that if it is null, it will be entered as a null value
 		if ($mysqli->query("INSERT INTO transactions 
 							(`operator`, `d_id`, `t_start`, `t_end`, `status_id`, `p_id`, `est_time`, `staff_id`, `notes`) 
@@ -486,12 +486,12 @@ class Transactions {
 
 	// return the cost for this ticket based on materials used excluding amount
 	public function quote_cost() {
-		global $status;
+		global $STATUS;
 
 		$cost = 0;
 		// sum materials costs that are not failed
 		foreach($this->mats_used as $mu) {
-			if($mu->status->status_id != $status['failed_mat'])  // failed materials are not charged to user
+			if($mu->status->status_id != $STATUS['failed_mat'])  // failed materials are not charged to user
 				$cost += abs($mu->quantity_used) * $mu->material->price;
 		}
 		return (0 <= $cost && $cost < .005) ? 0 : $cost;
@@ -628,11 +628,11 @@ class Transactions {
 	{
 		if(!Users::regexUser($operator->operator)) return array();
 
-		global $mysqli, $status;
+		global $mysqli, $STATUS;
 
 		$tickets = array();
 		if($results = $mysqli->query(	"SELECT `trans_id` FROM `transactions`
-										WHERE `status_id` <= $status[moveable]
+										WHERE `status_id` <= $STATUS[moveable]
 										AND `operator` = '$operator->operator';")
 		)
 		{

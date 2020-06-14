@@ -55,14 +55,14 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['end_button'])) {
 	// end ticket
 	$ticket_status = filter_input(INPUT_POST, "ticket_status");  // update ticket
 	// prevent frontend changing of variables to cheat backend
-	if($ticket_status >= $status['charge_to_acct']) exit_if_error("End: Ticket status is invalid.");
+	if($ticket_status >= $STATUS['charge_to_acct']) exit_if_error("End: Ticket status is invalid.");
 	exit_if_error($ticket->end_transaction($staff, $ticket_status), "./end.php?trans_id=$ticket->trans_id");
 
 	$ticket_notes = htmlspecialchars(filter_input(INPUT_POST, "ticket_notes"));
 	if($ticket_notes) exit_if_error($ticket->edit_transaction_information(array("notes" => $ticket_notes)));
 
 	// completely failed ticket; nothing to pay for
-	if($ticket_status == $status['total_fail']) {
+	if($ticket_status == $STATUS['total_fail']) {
 		$_SESSION['success_msg'] = "Ticket successfully ended.";
 		header("Location:./lookup.php?trans_id=$ticket->trans_id");
 	}
@@ -70,7 +70,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['end_button'])) {
 	elseif(!$ticket->remaining_balance()) {
 		$storage_obj = new StorageObject($ticket->trans_id);
 
-		exit_if_error($ticket->edit_transaction_information(array("status_id" => new Status($status['charge_to_acct']))));
+		exit_if_error($ticket->edit_transaction_information(array("status_id" => new Status($STATUS['charge_to_acct']))));
 		$_SESSION['success_msg'] = "There is no balance on the ticket. Retrieve object from $storage_obj->box_id";
 		header("Location:./pay.php?trans_id=$ticket->trans_id");
 	}
@@ -220,14 +220,14 @@ function exit_with_success($message, $redirect=null) {
 														<?php if(StorageObject::object_is_in_storage($ticket->trans_id)) echo "selected"; ?>>
 															Storage
 														</option>
-														<option value='<?php echo $status['complete']; ?>'>Pick Up</option>
+														<option value='<?php echo $STATUS['complete']; ?>'>Pick Up</option>
 													<?php } 
 													else {?>
-														<option value='<?php echo $status['complete']; ?>'>Complete</option>
+														<option value='<?php echo $STATUS['complete']; ?>'>Complete</option>
 													<?php } ?>
-													<option value='<?php echo $status['partial_fail']; ?>'>Partial Fail</option>
-													<option value='<?php echo $status['total_fail']; ?>'>Total Fail</option>
-													<option value='<?php echo $status['cancelled']; ?>'>Cancelled</option>
+													<option value='<?php echo $STATUS['partial_fail']; ?>'>Partial Fail</option>
+													<option value='<?php echo $STATUS['total_fail']; ?>'>Total Fail</option>
+													<option value='<?php echo $STATUS['cancelled']; ?>'>Cancelled</option>
 												</select>
 											</td>
 											<!-- current or selected storage information -->
@@ -551,7 +551,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php'); ?>
 		var mats_used = create_inputs_by_class_name("mat_used_input");
 		var total = 0;
 		for(var x = 0; x < mats_used.length; x++)
-			if(mats_used[x].status.value != <?php echo $status['unused']; ?> && mats_used[x].status.value != <?php echo $status['failed_mat']; ?>)
+			if(mats_used[x].status.value != <?php echo $STATUS['unused']; ?> && mats_used[x].status.value != <?php echo $STATUS['failed_mat']; ?>)
 				total += mats_used[x].quantity() * mats_used[x].price;
 		return total;
 	}
@@ -587,15 +587,15 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php'); ?>
 	function adjust_materials_status(ticket_status_object) {
 		var ticket_status = ticket_status_object.value;
 
-		if(ticket_status == <?php echo $status["partial_fail"]; ?>
-		|| ticket_status == <?php echo $status["total_fail"]; ?>)
+		if(ticket_status == <?php echo $STATUS["partial_fail"]; ?>
+		|| ticket_status == <?php echo $STATUS["total_fail"]; ?>)
 			default_all_material_statuses_to_status();
 		// stored, cancelled, complete
 		// cancelled included b/c user more willing to check off what they didn't use
 		else
 		{
-			default_all_material_statuses_to_status(<?php echo $status["used"]; ?>);
-			if(ticket_status == <?php echo $status["stored"]; ?>) alert("Error with status selected as stored.  How'd you do that?!?");
+			default_all_material_statuses_to_status(<?php echo $STATUS["used"]; ?>);
+			if(ticket_status == <?php echo $STATUS["stored"]; ?>) alert("Error with status selected as stored.  How'd you do that?!?");
 		}
 	}
 
@@ -605,11 +605,11 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php'); ?>
 	function adjust_ticket_status(status_element) {
 		return;
 		// // all materials being used (!failed) means ticket was complete
-		// if(all_material_status_are(<?php echo $status['used']; ?>)) 
-		// 	document.getElementById("ticket_status_select").value = <?php echo $status['complete']; ?>;
+		// if(all_material_status_are(<?php echo $STATUS['used']; ?>)) 
+		// 	document.getElementById("ticket_status_select").value = <?php echo $STATUS['complete']; ?>;
 		// // if no materials were used then nothing is usable and is a total fail
-		// else if(all_material_status_are(<?php echo $status['unused']; ?>)) 
-		// 	document.getElementById("ticket_status_select").value = <?php echo $status['total_fail']; ?>;
+		// else if(all_material_status_are(<?php echo $STATUS['unused']; ?>)) 
+		// 	document.getElementById("ticket_status_select").value = <?php echo $STATUS['total_fail']; ?>;
 	}
 
 
@@ -619,7 +619,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php'); ?>
 	function adjust_input_for_status(status_element) {
 		var input = input_for_status(status_element);
 		// prevent unused materials from having any quantity
-		if(parseInt(status_element.value) == <?php echo $status['unused']; ?>) {
+		if(parseInt(status_element.value) == <?php echo $STATUS['unused']; ?>) {
 			// store previous value into dictionary for mu_id for reverting when changing status back from unused
 			previous_mats_used_quantities[input.mu_id] = input.quantity();
 			input.set_val(0);
@@ -640,11 +640,11 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php'); ?>
 		var mu_input = new Input(input_element);
 
 		// don't allow non-zero elements to have "unused" status
-		if(mu_input.quantity() && mu_input.status.value == <?php echo $status['unused']; ?>)
+		if(mu_input.quantity() && mu_input.status.value == <?php echo $STATUS['unused']; ?>)
 			mu_input.status.selectedIndex = "0";
 		// don't allow zero values to have status of used or failed
 		else if(!mu_input.quantity())
-			mu_input.status.value = <?php echo $status['unused']; ?>;
+			mu_input.status.value = <?php echo $STATUS['unused']; ?>;
 	}
 
 
@@ -686,7 +686,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php'); ?>
 		for(var x = 0; x < materials_statuses.length; x++)
 			// a material is measurable && not used if its value is 0
 			if(materials_statuses[x].classList.contains("measurable") && input_for_status(materials_statuses[x]).quantity())
-				materials_statuses[x].value = <?php echo $status["used"]; ?>;
+				materials_statuses[x].value = <?php echo $STATUS["used"]; ?>;
 	}
 
 	function default_all_material_statuses_to_status(status=null)
@@ -891,7 +891,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php'); ?>
 			 alert("Please select a status for "+name);
 			 return null;
 		}
-		else if(material.status.value == <?php echo $status['used']; ?> && !material.quantity()) { 
+		else if(material.status.value == <?php echo $STATUS['used']; ?> && !material.quantity()) { 
 			alert("Material status cannot be used with a 0 quantity for "+name);
 			return null;
 		}
@@ -911,14 +911,14 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php'); ?>
 		if(!materials && document.getElementsByClassName("mat_used_select").length)
 			return true;
 		// check that all material statuses are valid
-		if(!all_material_status_are([<?php echo $status["failed_mat"]; ?>, 
-									<?php echo $status["used"]; ?>,
-									<?php echo $status["unused"]; ?>])
+		if(!all_material_status_are([<?php echo $STATUS["failed_mat"]; ?>, 
+									<?php echo $STATUS["used"]; ?>,
+									<?php echo $STATUS["unused"]; ?>])
 		) return alert_and_return_true("One or more materials' status is not populated");
 
 		// check material statuses for failed tickets
-		if(ticket_status == <?php echo $status["partial_fail"]; ?>
-		|| ticket_status == <?php echo $status["total_fail"]; ?>)
+		if(ticket_status == <?php echo $STATUS["partial_fail"]; ?>
+		|| ticket_status == <?php echo $STATUS["total_fail"]; ?>)
 			return failed_ticket_material_statuses_are_invalid(materials, ticket_status);
 		else return nonfailed_ticket_material_statuses_are_invalid();
 	}
@@ -932,11 +932,11 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php'); ?>
 		// require 1 failed material: none found
 		if(!any(	materials,
 				function(mat, value){return mat["status"] == value;},
-				<?php echo $status["failed_mat"]; ?>)
+				<?php echo $STATUS["failed_mat"]; ?>)
 		) return alert_and_return_true("Any failed ticket requires at least 1 failed material");
 
 		// cover paritally failed ticket specific requirements
-		if(ticket_status == <?php echo $status["partial_fail"]; ?>)
+		if(ticket_status == <?php echo $STATUS["partial_fail"]; ?>)
 		{
 			// require 2 or more materials (otherwise one failed material sold is complete)
 			if(materials.length < 2) 
@@ -944,11 +944,11 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php'); ?>
 			// check that one material is marked as used to make it sellable
 			if(!any(	materials,
 					function(mat, value){return mat["status"] == value;},
-					<?php echo $status["used"]; ?>)
+					<?php echo $STATUS["used"]; ?>)
 			) return alert_and_return_true("To be sellable, a partially failed material must have a used material");
 		}
 		// cover totally failed ticket specific requirements: all mats are unused or failed
-		else if(!all_material_status_are([<?php echo $status["failed_mat"]; ?> , <?php echo $status["unused"]; ?>]))
+		else if(!all_material_status_are([<?php echo $STATUS["failed_mat"]; ?> , <?php echo $STATUS["unused"]; ?>]))
 			return alert_and_return_true("Failed materials may only have a status of failed or unused");
 	}
 
@@ -956,7 +956,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php'); ?>
 	function nonfailed_ticket_material_statuses_are_invalid(materials, ticket_status)
 	{
 		// materials are either used or unused
-		return !all_material_status_are([<?php echo $status["used"]; ?>, <?php echo $status["unused"]; ?>]);
+		return !all_material_status_are([<?php echo $STATUS["used"]; ?>, <?php echo $STATUS["unused"]; ?>]);
 	}
 
 

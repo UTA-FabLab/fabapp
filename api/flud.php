@@ -110,7 +110,7 @@ exit(0);
 //   state of device
 
 function get_printer_status($device_id) {
-    global $input_data, $json_out, $mysqli, $status;
+    global $input_data, $json_out, $mysqli;
 
     // select status, service_level from transactions for current device
     if($results = $mysqli->query(   "SELECT  `status`.`variable` AS status, 

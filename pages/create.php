@@ -104,7 +104,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['ticketBtn'])) {
 
 // ticket requires payment beforehand; pass details and move to pay.php
 function pay_first_ticket($operator, $device, $p_id, $staff) {
-	global $status;
+	global $STATUS;
 
 	$required = get_tags(array("required", "required-amount", "required-hour", "required-minute"));  // get material amounts & IDs
 	if(count($required) != count($device->device_group->required_materials))  // check for inconsistency in required vs gathered
@@ -120,13 +120,13 @@ function pay_first_ticket($operator, $device, $p_id, $staff) {
 			exit_if_errro("Invalid material quantity–$material[amount]");
 
 	// create new transaction
-	$trans_id = Transactions::insert_new_transaction($operator, $device->device_id, null, $p_id, $status['active'], $staff);
+	$trans_id = Transactions::insert_new_transaction($operator, $device->device_id, null, $p_id, $STATUS['active'], $staff);
 	if(!is_int($trans_id))
 		exit_if_error("Can not create a new ticket–$trans_id");
 
 	// create new mats_used instance for material
 	foreach($materials as $material)
-		if(!is_int($mu_id = Mats_Used::insert_material_used($trans_id, $material["m_id"], $status["used"], $staff, $material["amount"])))
+		if(!is_int($mu_id = Mats_Used::insert_material_used($trans_id, $material["m_id"], $STATUS["used"], $staff, $material["amount"])))
 			exit_if_error("Problem associating materials to ticket–$mu_id");
 
 	header("Location:pay.php?trans_id=$trans_id");
@@ -135,9 +135,9 @@ function pay_first_ticket($operator, $device, $p_id, $staff) {
 
 // new transaction: no materials; no initial payment
 function ticket_without_materials($operator, $device, $p_id, $staff) {
-	global $status;
+	global $STATUS;
 
-	if(!is_int($trans_id = Transactions::insert_new_transaction($operator, $device->device_id, null, $p_id, $status['active'], $staff)))
+	if(!is_int($trans_id = Transactions::insert_new_transaction($operator, $device->device_id, null, $p_id, $STATUS['active'], $staff)))
 		exit_if_error("Can not create a new ticket–$trans_id");
 	header("Location:lookup.php?trans_id=$trans_id");  // trans_id is not error message; proceed to next part
 }
@@ -145,7 +145,7 @@ function ticket_without_materials($operator, $device, $p_id, $staff) {
 
 // start a ticket with materials chosen first
 function select_materials_first_ticket($operator, $device, $p_id, $staff) {
-	global $status;
+	global $STATUS;
 
 	$required = get_tags(array("required"));
 	if(count($required) != count($device->device_group->required_materials))
@@ -160,7 +160,7 @@ function select_materials_first_ticket($operator, $device, $p_id, $staff) {
 			exit_if_error("Problem reading material id–$material[m_id]");
 
 	// create new transaction
-	if(!is_int($trans_id = Transactions::insert_new_transaction($operator, $device->device_id, null, $p_id, $status['active'], $staff)))
+	if(!is_int($trans_id = Transactions::insert_new_transaction($operator, $device->device_id, null, $p_id, $STATUS['active'], $staff)))
 		exit_if_error("Can not create a new ticket–$trans_id");
 
 	// create new mats_used instance for material

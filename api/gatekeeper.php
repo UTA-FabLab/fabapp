@@ -12,7 +12,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/class/Users.php');
 //
 
 function gatekeeper ($operator, $d_id) {
-	global $mysqli, $status, $sv;
+	global $mysqli, $STATUS, $sv;
 	
 	if (is_a($operator, "Users")){
 		$user = $operator;
@@ -38,7 +38,7 @@ function gatekeeper ($operator, $d_id) {
 		FROM `transactions`
 		LEFT JOIN devices
 		ON devices.d_id = transactions.d_id
-		WHERE devices.d_id = $d_id AND status_id < $status[total_fail]
+		WHERE devices.d_id = $d_id AND status_id < $STATUS[total_fail]
 		LIMIT 1;
 	")){
 		if( $result->num_rows > 0){
@@ -157,7 +157,7 @@ function gatekeeper ($operator, $d_id) {
 		// If device has no training modules, no need to check further
 		// so exit the function.
 		//echo "No Training Required";
-		return array ("status_id" => $status["active"], "authorized" => "Y");
+		return array ("status_id" => $STATUS["active"], "authorized" => "Y");
 	}
 
 	// Check if user has completed the necessary training modules

@@ -218,7 +218,7 @@ class Database_Query {
 
 	// return query statement, headers and filename based on request, start, end & device
 	public static function prebuilt_query($end, $function, $start, $device_id) {
-		global $status;
+		global $STATUS;
 
 		$device_condition = $device_id != "*" ? "AND `d_id` = '$device_id'" : "";
 
@@ -287,7 +287,7 @@ class Database_Query {
 			$head = array("Count");
 			$statement = "SELECT COUNT(*) as Count
 							FROM `transactions`
-							WHERE `status_id` = $status[total_fail]
+							WHERE `status_id` = $STATUS[total_fail]
 							AND '$start' <= `t_start` 
 		  					AND `t_start` < '$end'
 		  					$device_condition;";

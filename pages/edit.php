@@ -338,9 +338,9 @@ function exit_with_success($message, $redirect=null) {
 										<td>
 											<select name="<?php echo $mu_id; ?>-select" id="<?php echo $mu_id; ?>-select" class='form-control' 
 											onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 1);'>
-												<option <?php echo "value='$status[used]'".($mat_used->status->status_id == $status["used"] ? "selected" : ""); ?> >Used</option>
-												<option <?php echo "value='$status[unused]'".($mat_used->status->status_id == $status["unused"] ? "selected" : ""); ?> >Unused</option>
-												<option <?php echo "value='$status[failed_mat]'".($mat_used->status->status_id == $status["failed_mat"] ? "selected" : ""); ?> >Failed Material</option>
+												<option <?php echo "value='$STATUS[used]'".($mat_used->status->status_id == $STATUS["used"] ? "selected" : ""); ?> >Used</option>
+												<option <?php echo "value='$STATUS[unused]'".($mat_used->status->status_id == $STATUS["unused"] ? "selected" : ""); ?> >Unused</option>
+												<option <?php echo "value='$STATUS[failed_mat]'".($mat_used->status->status_id == $STATUS["failed_mat"] ? "selected" : ""); ?> >Failed Material</option>
 											</select>
 										</td>
 									</tr>
@@ -829,14 +829,14 @@ function exit_with_success($message, $redirect=null) {
 			// quantity
 			if(document.getElementById("mu_quantity-"+mu_id) && 
 			!parseFloat(document.getElementById("mu_quantity-"+mu_id).value) &&
-			document.getElementById("mu_status-"+mu_id).value != <?php echo $status["unused"]; ?>) {
+			document.getElementById("mu_status-"+mu_id).value != <?php echo $STATUS["unused"]; ?>) {
 				alert("A ticket cannot have a non zero value with a status other than unused");
 				return false;
 			}
 			else if(document.getElementById("mu_hour-"+mu_id))
 				if(!parseFloat(document.getElementById("mu_hour-"+mu_id).value) 
 				&& (!parseFloat(document.getElementById("mu_minute-"+mu_id).value)
-				&& document.getElementById("mu_status-"+mu_id).value != <?php echo $status["unused"]; ?>)) {
+				&& document.getElementById("mu_status-"+mu_id).value != <?php echo $STATUS["unused"]; ?>)) {
 					alert("A ticket cannot have a non zero value with a status other than unused");
 					return false;
 				}

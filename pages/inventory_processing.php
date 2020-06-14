@@ -813,18 +813,18 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	function add_negative_sign_quantity_addon_if_reduction(element) {
 		var ancestor = element.parentElement.parentElement.parentElement;
 		var input_group = ancestor.children[3].children[0];
-		if((element.value == <?php echo $status["removed"]; ?> ||
-		element.value == <?php echo $status["failed_mat"] ?> ||
-		element.value == <?php echo $status["used"]; ?>) && 
+		if((element.value == <?php echo $STATUS["removed"]; ?> ||
+		element.value == <?php echo $STATUS["failed_mat"] ?> ||
+		element.value == <?php echo $STATUS["used"]; ?>) && 
 		!input_group.getElementsByClassName("negative").length) {
 			var negative_span = document.createElement("span");
 			negative_span.classList.add("negative", "input-group-addon");
 			negative_span.innerHTML = "–";
 			input_group.insertBefore(negative_span, input_group.firstChild);
 		}
-		else if(element.value != <?php echo $status["removed"]; ?> &&
-		element.value != <?php echo $status["failed_mat"] ?> &&
-		element.value != <?php echo $status["used"]; ?> && 
+		else if(element.value != <?php echo $STATUS["removed"]; ?> &&
+		element.value != <?php echo $STATUS["failed_mat"] ?> &&
+		element.value != <?php echo $STATUS["used"]; ?> && 
 		input_group.getElementsByClassName("negative").length) {
 			input_group.children[0].remove();
 		}

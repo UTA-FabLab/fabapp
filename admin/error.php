@@ -37,7 +37,7 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
                             </tr>
                         </thead>
                         <?php
-                        foreach ( Error::getErrors() as $er ){
+                        foreach ( FabAppError::getErrors() as $er ){
                             echo "<tr>";
                                 echo "<td>".$er->getE_time()."</td>";
                                 echo "<td>".$er->getPage()."</td>";
