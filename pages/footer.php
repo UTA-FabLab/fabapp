@@ -39,7 +39,7 @@
 
 <script type="text/javascript">
 <?php if (isset($staff)){?>
-    setTimeout(function(){window.location.href = "<?php echo $_SESSION['loc']?>"}, <?php echo (1+$_SESSION["timeOut"]-time())*1000; ?>);
+   // setTimeout(function(){window.location.href = "<?php echo $_SESSION['loc']?>"}, <?php echo (1+$_SESSION["timeOut"]-time())*1000; ?>);
 <?php } elseif (isset($auto_off)) { ?>
     //no auto refresh timer
 <?php } else {?>

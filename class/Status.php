@@ -19,13 +19,11 @@
 *
 ***********************************************************************************************************/
 
-$status = array();
-if($results = $mysqli->query("SELECT `status_id`, `variable`
-								FROM `status`;"
-))
-	while($row = $results->fetch_assoc())
-		$status[$row['variable']] = $row['status_id'];
-else $message = $mysqli->error;
+
+$STATUS = array();
+if(!$results = $mysqli->query("SELECT `status_id`, `variable` FROM `status`;"))
+	throw new Exception("Status.php: Bad query: $mysqli->error");
+else while($row = $results->fetch_assoc()) $STATUS[$row['variable']] = $row['status_id'];
 
 
 class Status {
@@ -67,13 +65,13 @@ class Status {
 
 
 	public static function device_and_transaction_statuses() {
-		global $mysqli, $status;
+		global $mysqli, $STATUS;
 
 		if($results = $mysqli->query("	SELECT `status_id`
 										FROM `status`
 										WHERE `message` IS NOT NULL
-										AND `status_id` != '$status[sheet_sale]'
-										AND '$status[active]' <= `status_id`
+										AND `status_id` != '$STATUS[sheet_sale]'
+										AND '$STATUS[active]' <= `status_id`
 										AND `status_id` <= '30';"
 		)) {
 			$ticket_statuses = array();
@@ -86,13 +84,13 @@ class Status {
 
 
 	public static function material_statuses() {
-		global $mysqli, $status;
+		global $mysqli, $STATUS;
 
 		if($results = $mysqli->query("	SELECT `status_id`
 										FROM `status`
 										WHERE `message` IS NOT NULL
 										AND `status_id` <= '10'
-										AND `status_id` != '$status[sheet_sale]';"
+										AND `status_id` != '$STATUS[sheet_sale]';"
 		)) {
 			$ticket_statuses = array();
 			while($row = $results->fetch_assoc())

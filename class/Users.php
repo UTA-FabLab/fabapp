@@ -14,7 +14,7 @@ include_once ($_SERVER['DOCUMENT_ROOT']."/class/site_variables.php");
 $ROLE = array();
 if(!$results = $mysqli->query("SELECT `r_id`, `variable` FROM `role`;"))
 	throw new Exception("Users.php: Bad query: $mysqli->error");
-else while($row = $results->fetch_assoc()) $ROLE[$row['variable']] = $row['r_id'];
+else while($row = $results->fetch_assoc()) $ROLE[$row['variable']] = intval($row['r_id']);
 
 
 class Users
@@ -29,11 +29,15 @@ class Users
 	private $exp_date;  // string—time role expires
 	private $icon;  // string—fontawesome code for icon
 	private $notes;  // string—notes...
-	private $role_id;  // int—assigned role to staff member
+	private $r_id;  // int—assigned role to staff member
 
 	// other tables
 	private $accounts;  // array<Account>—accounts available to user
 	private $rfid_no;  // string—rfid number assocated with ID
+	private $permissions = array();  // array<string>—the permission codes for user
+
+	// other
+	private $time_limit;  // int—number of seconds before JS logout
 
 
 	// ——————————————————— OBJECT CREATION ———————————————————
@@ -45,26 +49,36 @@ class Users
 		if(!self::regex_id($id)) throw new Exception("Bad user id: $id");  // be extra catious
 
 		$this->id = $id;
-		if(!$user_result = $mysqli->query("SELECT * FROM `users` WHERE `id` = '$id';"))
+		if(!$user_result = $mysqli->query("SELECT * FROM `users` WHERE `user_id` = '$id';"))
 			throw new Exception("Users::__construct: Bad query: $mysqli->error");
 
 		// user does not exist in DB
-		if(!$user_result->num_rows) $this->role_id = 2;
+		if(!$user_result->num_rows) $this->r_id = 2;
 		// user exists in DB
 		else
 		{
-			$row = $result->fetch_assoc();
+			$row = $user_result->fetch_assoc();
 
-			$attributes = array("adj_date", "exp_date", "icon", "notes", "role_id");
+			$attributes = array("adj_date", "exp_date", "icon", "notes", "r_id");
 			foreach($attributes as $attribute) $this->$attribute = $row[$attribute];
 			$this->set_accounts();
 		}
 
-		if($rfid_result = $mysqli->query("SELECT `rfid_no` FROM `rfid` WHERE `id` = '$id';"))
+		// rfid
+		if($rfid_result = $mysqli->query("SELECT `rfid_no` FROM `rfid` WHERE `user_id` = '$id';"))
 			$this->rfid_no = $rfid_result->fetch_assoc()["rfid_no"];
 		else throw new Exception("Users::__construct: Bad query: $mysqli->error");
 
 		if(!$this->icon) $this->icon = "fas fa-user";
+
+		// permissions
+		if(!$permission_results = $mysqli->query(	"SELECT `perm_id` FROM `user_permissions`
+														WHERE `user_id` = '$id'
+														UNION SELECT `perm_id` FROM `permissions`
+														WHERE `r_id` >= '$this->r_id';"
+		)) throw new Exception("Users::__construct: Bad query: $mysqli->error");
+		
+		while($row = $permission_results->fetch_assoc()) $permissions[] = $row["perm_id"];
 	}
 
 
@@ -132,9 +146,9 @@ class Users
 	{
 		if(!$role_or_permission) return false;
 
-		if(is_int($role_or_permission)) return $role <= $this->role_id;
+		if(is_int($role_or_permission)) return $role <= $this->r_id;
 		else if(is_string($role_or_permission))
-			return in_array($permissions, $this->permissions);
+			return in_array($role_or_permission, $this->permissions);
 		return false;
 	}
 
@@ -170,7 +184,7 @@ class Users
 		if(!$role) return false;
 
 		if(!is_int($role)) throw new Exception("Users::validate_role: Bad value: $role");
-		return $role <= $this->role_id;
+		return $role <= $this->r_id;
 	}
 
 
@@ -229,7 +243,8 @@ class Users
 	public function is_staff()
 	{
 		global $ROLE;
-		return $ROLE["staff"] <= $this->role_id;
+
+		return $ROLE["staff"] <= $this->r_id;
 	}
 
 
@@ -243,7 +258,7 @@ class Users
 
 		if(!self::regex_id($id)) return false;
 
-		$result = $mysqli->query("SELECT `r_id` FROM `users` WHERE `id` = '$id';");
+		$result = $mysqli->query("SELECT `r_id` FROM `users` WHERE `user_id` = '$id';");
 		if(!$result || !$result->num_rows) return false;
 
 		return $ROLE["staff"] <= $result->fetch_assoc()['r_id'];
@@ -273,6 +288,11 @@ class Users
 
 	// ————————————————————— SETTERS —————————————————————
 
+	public function set_user_time_limit($time_limit)
+	{
+		if(is_int($time_limit) || is_numeric($time_limit)) $this->time_limit = $time_limit;
+	}
+
 
 	// —————————————————————— REGEX ——————————————————————
 
@@ -290,7 +310,7 @@ class Users
 		global $mysqli, $sv;
 
 		if(!preg_match("/$sv[regexUser]/",$id)) return self::BAD_ID;
-		if(!$result = $mysqli->query("SELECT * FROM `users` WHERE `id` = '$id';" || !$result->num_rows))
+		if(!$result = $mysqli->query("SELECT * FROM `users` WHERE `user_id` = '$id';" || !$result->num_rows))
 			return self::UNKNOWN_USER;
 		return self::KNOWN_USER;
 	}
@@ -536,21 +556,17 @@ class Role{
 
 class Staff extends Users
 {
-	public $timeLimit;
-
-
 	// ————————————————————— CREATION —————————————————————
 	
 	public function __construct($id)
 	{
-		global $ROLE, $SITE_VARIABLES;
+		global $ROLE;
 
 		// create staff
 		parent::__construct($id);
-		$this->time_limit = $SITE_VARIABLES["limit"];
 
 		// validate staff level
-		if($ROLE["staff"] <= $this->role_id) throw new Exception("Staff::__construct: user is not staff");
+		if($ROLE["staff"] > $this->r_id) throw new Exception("Staff::__construct: user is not staff");
 	}
 
 
@@ -590,8 +606,8 @@ class Staff extends Users
 	}
 
 	
-	// formerly: public function insertUser($staff, $role_id)
-	public function new_user($new_user_id, $notes, $role_id)
+	// formerly: public function insertUser($staff, $r_id)
+	public function new_user($new_user_id, $notes, $r_id)
 	{
 		global $mysqli, $ROLE;
 
@@ -607,15 +623,15 @@ class Staff extends Users
 		}
 
 		// check if user already exists
-		if(!$result = $mysqli->query("SELECT * FROM `users` WHERE `id` = '$new_user_id';"))
+		if(!$result = $mysqli->query("SELECT * FROM `users` WHERE `user_id` = '$new_user_id';"))
 			throw new Exception("Users::new_user: bad query: $mysqli->error");
 
-		if($result->num_rows) return self::modify_role_id();  // already exists; update
+		if($result->num_rows) return self::modify_r_id();  // already exists; update
 
 		if(!$statement = $mysqli->prepare("INSERT INTO `users` (`id`, `r_id`, `staff_id`) VALUES (?, ?, ?);"))
 			throw new Exception("Users::new_user: bad prepare: $mysqli->query");
 
-		if(!$statement->bind_param("sds", $role_id, $this->id, $new_user_id))
+		if(!$statement->bind_param("sds", $r_id, $this->id, $new_user_id))
 			throw new Exception("Users::new_user: bad bind: $mysqli->query");
 
 		return $statement->execute();
@@ -649,11 +665,11 @@ class Staff extends Users
 		global $mysqli;
 		
 		// revoke role
-		$mysqli->query("UPDATE `users` SET `r_id` = 2 WHERE `id` = '$id';");
+		$mysqli->query("UPDATE `users` SET `r_id` = 2 WHERE `user_id` = '$id';");
 		if(!$mysqli->affected_rows) return false;
 
 		// revoke permissions
-		if($mysqli->query("UPDATE `users_permissions` SET `valid` = FALSE WHERE `id` = '$id';")) return false;
+		if($mysqli->query("UPDATE `users_permissions` SET `valid` = FALSE WHERE `user_id` = '$id';")) return false;
 		return true;
 	}
 
@@ -693,7 +709,7 @@ class Staff extends Users
 
 
 	// formerly: public function modifyRoleID($staff, $notes)
-	public function update_role_id($notes, $role_id, $user_id)
+	public function update_r_id($notes, $r_id, $user_id)
 	{
 		global $mysqli, $ROLE;
 
@@ -708,16 +724,16 @@ class Staff extends Users
 			return false;
 		}
 
-		if(!$results = $mysqli->query("SELECT `id` FROM `users` WHERE `id` = '$id';"))
+		if(!$results = $mysqli->query("SELECT `id` FROM `users` WHERE `user_id` = '$id';"))
 			throw new Exception("Users::new_user: bad query: $mysqli->error");
 
-		if(!$result->num_rows) return self::new_user($user_id, $notes, $role_id);  // does not exist; add
+		if(!$result->num_rows) return self::new_user($user_id, $notes, $r_id);  // does not exist; add
 
 		if(!$statement = $mysqli->prepare(	"UPDATE `users` SET  `notes` = ?, `r_id` = ?, `staff_id` = ?
 												WHERE `id` = ?;"
 		)) throw new Exception("Users::new_user: bad prepare: $mysqli->query");
 
-		if(!$statement->bind_param("sdss", $notes, $role_id, $this->id, $new_user_id))
+		if(!$statement->bind_param("sdss", $notes, $r_id, $this->id, $new_user_id))
 			throw new Exception("Users::new_user: bad bind: $mysqli->query");
 
 		return $statement->execute();

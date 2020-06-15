@@ -45,9 +45,12 @@ if( isset($_SESSION['staff']) ){
 	}
 	else {
 		//echo $_SESSION["timeOut"] ." - ". time();
-		$_SESSION["timeOut"] = (intval(time()) + $staff->getTimeLimit());
+		$_SESSION["timeOut"] = (intval(time()) + $staff->time_limit);
 	}
 }
+
+foreach($ROLE as $role => $value) echo "$role:$value ";
+echo $ROLE["staff"];
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 	if( isset($_POST['signBtn']) ){
@@ -59,22 +62,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 		}
 		else {
 			//Remove 3rd argument, define attribute in ldap.php
-			$operator = AuthenticateUser($_POST["netID"],$_POST["pass"]);
+			$user_id = AuthenticateUser($_POST["netID"],$_POST["pass"]);
 			if (array_key_exists('netID', $_SESSION)){
 				if ($_SESSION['netID'] != $_POST["netID"]){
 					unset($_SESSION['loc']);
 				}
 				$_SESSION['netID'] = $_POST["netID"];
 			}
-			if (Users::regexUser($operator)) {
-				$staff = Staff::withID($operator);
+			if (Users::regex_id($user_id)) {
+				$staff = Users::with_id($user_id);
 				//staff get either limit or limit_long as their auto logout timer
-				if ($staff->getRoleID() > $sv["LvlOfStaff"])
-					$staff->setTimeLimit( $sv["limit_long"] );
-				else
-					$staff->setTimeLimit( $sv["limit"] );
+				$staff->set_user_time_limit(($staff->validate($ROLE["lead"]) ? $SITE_VARS["limit_long"] : $SITE_VARS["limit"]));
+
 				//set the timeOut = current + limit of login
-				$_SESSION["timeOut"] = (intval(time()) + $staff->getTimeLimit());
+				$_SESSION["timeOut"] = (intval(time()) + $staff->time_limit);
 				$_SESSION["staff"] = serialize($staff);
 				if ( isset($_SESSION['loc']) ){
 					header("Location:$_SESSION[loc]");
@@ -99,8 +100,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 					header("location:/pages/lookup.php?trans_id=$trans_id");
 				}
 				elseif (strcmp($searchType, "s_operator") == 0){
-					$operator = $searchField;
-					header("location:/pages/lookup.php?operator=$operator");
+					$user_id = $searchField;
+					header("location:/pages/lookup.php?operator=$user_id");
 				}
 				else {
 					echo "<script type='text/javascript'> window.onload = function(){goModal('Invalid','Illegal Search Condition', false)}</script>";
@@ -116,12 +117,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 	}
 	elseif( filter_input(INPUT_POST, 'pickBtn') !== null ){
 		if( filter_input(INPUT_POST, 'pickField') !== null){
-			if(!Users::regexUser(filter_input(INPUT_POST, 'pickField'))){
-				echo "<script>window.onload = function(){goModal('Success',\"Invalid ID # ".filter_input(INPUT_POST, pickField)."\", true)}</script>";
+			if(!Users::regex_id(filter_input(INPUT_POST, 'pickField'))){
+				echo "<script>window.onload = function(){goModal('Success',\"Invalid ID # ".filter_input(INPUT_POST, "pickField")."\", true)}</script>";
 			}
 			else {
-				$operator = filter_input(INPUT_POST, 'pickField');
-				header("location:/pages/pickup.php?operator=$operator");
+				$user_id = filter_input(INPUT_POST, 'pickField');
+				header("location:/pages/pickup.php?operator=$user_id");
 			}
 		}
 	}
@@ -178,7 +179,7 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 								<div class="col-sm-12 col-sm-offset-1">
 									<button type="submit" class="btn btn-primary btn-sm" name="signBtn" onclick="loadingModal()">
 										Sign In</button>
-									<a href="http://<?php echo $sv["forgotten"];?>">Forgot your password?</a>
+									<a href="http://<?php echo $SITE_VARS["forgotten"];?>">Forgot your password?</a>
 								</div>
 							</div>
 							</form>
@@ -190,7 +191,7 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 				else {?>
 					<li class="dropdown">
 						<a class="dropdown-toggle" data-toggle="dropdown" href="#">
-							<i class="<?php echo $staff->getIcon();?> fa-2x"></i> <i class="fas fa-caret-down"></i>
+							<i class="<?php echo $staff->icon; ?> fa-2x"></i> <i class="fas fa-caret-down"></i>
 						</a>
 						<ul class="dropdown-menu dropdown-user">
 							<li><a href="/pages/info.php" onclick="loadingModal()"><i class="fas fa-info"></i> Information</a></li>
@@ -209,12 +210,12 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 						<li>
 							<a href="/index.php"><i class="fas fa-ticket-alt"></i> FabApp</a>
 						</li>
-						<?php if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfStaff']) { ?>
+						<?php if (isset($staff) && $staff->is_staff()) { ?>
 							<li>
 								<a href="/admin/error.php"><i class="fas fa-bolt"></i> Error</a>
 							</li>
 						<?php } 
-						if(isset($staff) && $staff->getRoleID() >= $sv['LvlOfLead']) { ?>
+						if(isset($staff) && $staff->validate("inventory")) { ?>
 							<li>
 								<a href="#"><i class="fas fa-warehouse"></i> Inventory<span class="fas fa-angle-left"></span></a>
 								<ul class="nav nav-second-level">
@@ -224,7 +225,7 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 									<li>
 										<a href="/pages/inventory_processing.php"><i class="fas fa-shipping-fast"></i> Edit Inventory</a>
 									</li>
-									<?php if(isset($staff) && $staff->getRoleID() >= $sv['minRoleTrainer']) { ?>
+									<?php if(isset($staff) && $staff->validate("create_inventory")) { ?>
 									<li>
 										<a href="/pages/current_inventory.php"><i class="far fa-check-square"></i> Usable Inventory</a>
 									</li>
@@ -237,7 +238,7 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 							</li>
 						<?php } 
 						else {
-							if(isset($staff) && $staff->getRoleID() >= $sv['LvlOfStaff']) { ?>
+							if(isset($staff) && $staff->is_staff()) { ?>
 								<li>
 									<a href="#"><i class="fas fa-warehouse"></i> Inventory<span class="fas fa-angle-left"></span></a>
 									<ul class="nav nav-second-level">
@@ -252,7 +253,7 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 								</li>
 						<!-- if role > 6 {show} -->
 						<?php } }
-						if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfStaff']) { ?>
+						if (isset($staff) && $staff->is_staff()) { ?>
 							<li>
 								<a href="#" id="searchLink"><i class="fas fa-search"></i> Look-Up By<span class="fas fa-angle-left"></span></a>
 								<ul class="nav nav-second-level">
@@ -298,7 +299,7 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 							<?php 
 							}
 						}
-						if (isset($staff) && ($staff->getRoleID() >=  $sv['LvlOfStaff'] || $staff->getRoleID() ==  $sv['serviceTechnican'])) { ?>
+						if (isset($staff) && ($staff->is_staff() || $staff->validate($ROLE["service"]))) { ?>
 							<li>
 								<a href="#"><i class="fa fa-wrench"></i> Service<span class="fa arrow"></span></a>
 								<ul class="nav nav-second-level">
@@ -319,7 +320,7 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 								<a href="/pages/tools.php"><i class="fas fa-toolbox"></i> Tools</a>
 							</li>
 						<?php
-						if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfLead']) { ?>
+						if (isset($staff) && $staff->validate("training")) { ?>
 							<li>
 								<a herf="#"><i class="fas fa-book"></i> Training<span class="fas fa-angle-left"></span></a>
 								<ul class="nav nav-third-level">
@@ -335,12 +336,12 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 								</ul>
 							</li>
 						<?php }
-						if(isset($staff) && $staff->getRoleID() >=  $sv['LvlOfStaff'] && $sv['wait_system'] == "new"){ ?>
+						if(isset($staff) && $staff->is_staff() && $SITE_VARS['wait_system'] == "new"){ ?>
 							<li>
 								<a href="/pages/wait_ticket.php"><i class="fas fa-list-ol"></i> Wait Queue Ticket</a>
 							</li>
 						<?php } 
-						if(isset($staff) && $staff->getRoleID() >= 10) {
+						if(isset($staff) && $staff->validate($ROLE["admin"])) {
 						?>
 							<li>
 								<a href="#"><i class="fas fa-sitemap"></i> Admin<span class="fas fa-angle-left"></span></a>
@@ -373,7 +374,7 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 							</li>
 						<li>
 						<?php }
-						if(isset($staff) && $staff->getRoleID() >= 11) {
+						if(isset($staff) && $staff->validate($ROLE["super"])) {
 						?>
 							<a href="#"><i class="fas fa-user-cog"></i> Site Tools<span class="fas fa-angle-left"></span></a>
 							<ul class="nav nav-second-level">

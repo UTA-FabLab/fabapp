@@ -73,13 +73,13 @@ class Transactions {
 			$this->notes = substr_count($row['notes'], "⦂") ? explode("⦂", $row['notes'])[1] : $row['notes'];
 			$this->purpose = new Purpose($row['p_id']);
 			$this->pickup_time = $row['pickup_time'];
-			$this->pickedup_by = Users::withID($row['pickedup_by']);
-			$this->staff = Users::withID($row['staff_id']);
+			$this->pickedup_by = Users::with_id($row['pickedup_by']);
+			$this->staff = Users::with_id($row['staff_id']);
 			$this->status = new Status($row['status_id']);
 			$this->t_end = $row['t_end'];
 			$this->t_start = $row['t_start'];
 			$this->trans_id = $row['trans_id'];
-			$this->user = Users::withID($row['operator']);
+			$this->user = Users::with_id($row['user_id']);
 		}
 	}
 

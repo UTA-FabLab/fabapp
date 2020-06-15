@@ -141,7 +141,7 @@ function advanceNum($i, $str){
 																<!-- Operator ID --> 
 																<?php if($staff && $staff->is_staff()) { ?>
 																	<td>
-																		<a class="<?php echo $user->getIcon()?> fa-lg" title="<?php echo($row['user_id']); ?>"  href="/pages/waitUserInfo.php?q_id=<?php echo $row["Q_id"]; ?>&loc=0"></a>
+																		<a class="<?php echo $user->icon; ?> fa-lg" title="<?php echo($row['user_id']); ?>"  href="/pages/waitUserInfo.php?q_id=<?php echo $row["Q_id"]; ?>&loc=0"></a>
 																		<?php if(!empty($row['Op_phone'])) { ?> <i class="fas fa-mobile"   title="<?php echo ($row['Op_phone']); ?>"></i> <?php } ?>
 																		<?php if(!empty($row['Op_email'])) { ?> <i class="fas fa-envelope" title="<?php echo ($row['Op_email']); ?>"></i> <?php } ?>
 																	</td>
@@ -252,7 +252,7 @@ function advanceNum($i, $str){
 															SELECT DISTINCT D.`device_desc`, D.`dg_id`, D.`d_id`
 															FROM `devices` D 
 															JOIN `wait_queue` WQ on D.`dg_id` = WQ.`Devgr_id`
-															LEFT JOIN (SELECT trans_id, t_start, t_end, d_id, operator, status_id FROM transactions WHERE status_id < $STATUS[total_fail] ORDER BY trans_id DESC) as t
+															LEFT JOIN (SELECT trans_id, t_start, t_end, d_id, user_id, status_id FROM transactions WHERE status_id < $STATUS[total_fail] ORDER BY trans_id DESC) as t
 															ON D.`d_id` = t.`d_id`
 															WHERE WQ.`valid`='Y' AND (WQ.`Devgr_id` = 2 OR D.`d_id` = WQ.`Dev_id`) AND t.`trans_id` IS NULL AND D.`d_id` NOT IN (
 																SELECT `d_id`
@@ -328,7 +328,7 @@ function advanceNum($i, $str){
 												echo $ticket->getDevice()->getDevice_desc();
 											} ?>
 										</td>
-										<?php if($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'] || $staff->getOperator() == $ticket->getUser()->getOperator())) { ?>
+										<?php if($staff && ($staff->is_staff() || $staff->is_same_as($ticket->getUser()))) { ?>
 											<td align="center">
 												<?php if($row["status_id"] == $STATUS["moveable"]) { ?>
 													<button class="btn btn-primary" onclick="endTicket(<?php echo "$row[trans_id],'$row[device_desc]','".$staff->getLong_close()."'"; ?>)">End</button>
@@ -362,12 +362,12 @@ function advanceNum($i, $str){
 											} ?>
 										</td>
 										<?php if($row["url"] && $staff){
-											if($staff->getRoleID() > 6){?>
+											if($staff->is_staff()){?>
 												<td  align="center"><?php echo ("<a href=\"http://".$row["url"]."\">New Ticket</a>"); ?></td>
 											<?php } else
 												echo("<td align=\"center\">-</td>");
 										} elseif($staff) {
-											if($staff->getRoleID() > 6){?>
+											if($staff->is_staff()){?>
 												<td align="center"><div id="est"><a href="\pages\create.php?<?php echo("d_id=".$row["d_id"])?>">New Ticket</a></div></td>
 											<?php } else
 												echo("<td align=\"center\">-</td>");
@@ -392,7 +392,7 @@ function advanceNum($i, $str){
 					<div class="panel-body" id="now_serving_panel">
 						<div align="center" ><a href='http://fablab.uta.edu/policy/' style='color:blue'>UTA FabLab's Wait Policy</a></div>
 						<table class="table table-striped table-bordered" >
-							<?php if(is_object($staff) && $staff->getRoleID() >= $sv['LvlOfStaff']){ ?> <form method="post" action="">
+							<?php if(is_object($staff) && $staff->is_staff()){ ?> <form method="post" action="">
 								<tr>
 									<td>Equipment</td>
 									<td>Now Serving</td>

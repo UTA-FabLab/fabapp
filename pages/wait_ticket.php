@@ -222,7 +222,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                                         echo "<option value=". "DG_" . $rows ['dg_id'] . "-" . $rows ['d_id'].">" . $rows ['device_desc'] . "</option>";
                                                     }
                                                 } else {
-                                                    die ("There was an error loading the device groups.");
+                                                    die ("There was an error loading the device groups [wait_ticket].");
                                                 } ?> 
                                         </select>
                                     </td>

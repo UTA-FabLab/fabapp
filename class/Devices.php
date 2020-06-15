@@ -145,7 +145,7 @@ class Devices {
 		}
 		
 		if($staff){
-			if($staff->is_staff() || $staff->validate("service"))
+			if($staff->is_staff() || $staff->validate($ROLE["service"]))
 				echo "<a href = '/pages/sr_history.php?device_id=$device_id'><i class='fas fa-$symbol fa-lg' style='color:$color'></i></a>&nbsp;";
 			else echo "<i class='fas fa-$symbol fa-lg' style='color:$COLORS[$color]'></i>&nbsp;";
 		} 
