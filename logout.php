@@ -7,7 +7,7 @@
 session_start();
 
 //Remove Staff From Memory
-unset($_SESSION['staff']);
+unset($_SESSION['user']);
 $_SESSION["timeOut"] = 0;
 if (!empty($_GET["n"])){
     $_SESSION['netID'] = null;

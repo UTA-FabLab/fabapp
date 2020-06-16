@@ -15,27 +15,36 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
 		$_SESSION['myNum'] = $myNum;
 	}
 	//print new wait tab and advance the number
-	if( isset($_POST['print_s']) ){
+	if(isset($_POST['print_s']))
+	{
 		$i = $sv['next']+1;
 		wait($i);
 		advanceNum($i, "next");
 		
-	} elseif( isset($_POST['print_e']) ){
+	}
+	elseif(isset($_POST['print_e']))
+	{
 		$i = $sv['eNext']+1;
 		wait("E".$i);
 		advanceNum($i, "eNext");
 		
-	} elseif( isset($_POST['print_b']) ){
+	}
+	elseif(isset($_POST['print_b']))
+	{
 		$i = $sv['bNext']+1;
 		wait("B".$i);
 		advanceNum($i, "bNext");
 		
-	} elseif( isset($_POST['print_m']) ){
+	}
+	elseif(isset($_POST['print_m']))
+	{
 		$i = $sv['mNext']+1;
 		wait("M".$i);
 		advanceNum($i, "mNext");
 	}
 }
+
+
 function advanceNum($i, $str){
 	global $mysqli;
 	
@@ -43,15 +52,21 @@ function advanceNum($i, $str){
 	  UPDATE site_variables
 	  SET value = $i
 	  WHERE site_variables.name = '$str';
-	")){
+	"))
+	{
 		header("Location: /index.php");
-	} else {
+	}
+	else
+	{
 		$_SESSION['error_msg'] = "SQL Error";
 		header("Location: /index.php");
 	}
 	exit();
 }
+
 ?>
+
+
 <title><?php echo $sv['site_name'];?> Dashboard</title>
 <div id="page-wrapper">
 	<div class="row">
@@ -76,34 +91,44 @@ function advanceNum($i, $str){
 						<div class="table-responsive">
 							<ul class="nav nav-tabs">
 								<!-- Load all device groups as a tab that have at least one device in that group -->
-								<?php if($result = Wait_queue::getTabResult()) {
-									$count = 0;
-									while ($row = $result->fetch_assoc()) { ?>
-										<li class="<?php if($count == 0) echo "active";?>">
-											<a <?php echo("href=\"#".$row["dg_id"]."\""); ?>  data-toggle="tab" aria-expanded="false"> <?php echo($row["dg_desc"]); ?> </a>
-										</li>
-										<?php //create a way to display the first wait_queue table tab by saving which dg_id it is to variable 'first_dgid'
-										if($count == 0){
-											$first_dgid = $row["dg_id"];  
-										}   
-										$count++;																  
+								<?php
+									if($result = Wait_queue::getTabResult())
+									{
+										$count = 0;
+										while ($row = $result->fetch_assoc())
+										{
+											?>
+											<li class="<?php if($count == 0) echo "active";?>">
+												<a <?php echo("href=\"#".$row["dg_id"]."\""); ?>  data-toggle="tab" aria-expanded="false"> <?php echo($row["dg_desc"]); ?> </a>
+											</li>
+											<?php //create a way to display the first wait_queue table tab by saving which dg_id it is to variable 'first_dgid'
+											if($count == 0){
+												$first_dgid = $row["dg_id"];  
+											}   
+											$count++;																  
+										}
 									}
-								} ?>
+								?>
 							</ul>
 							<div class="tab-content">
 								<?php
-								if($Tabresult = Wait_queue::getTabResult()) {
-									while($tab = $Tabresult->fetch_assoc()){
+								if($Tabresult = Wait_queue::getTabResult())
+								{
+									while($tab = $Tabresult->fetch_assoc())
+									{
 										$number_of_queue_tables++;
 										
 										// Calculate the wait queue timer by granular wait of a device group
 										if($tab["granular_wait"] == 'Y'){
 											Wait_queue::calculateDeviceWaitTimes(); 
-										} else {
+										}
+										else
+										{
 											Wait_queue::calculateWaitTimes();
 										} 
 										
-										// Give all of the dynamic tables a name so they can be called when their tab is clicked ?>
+										// Give all of the dynamic tables a name so they can be called when their tab is clicked
+										?>
 										<div class="tab-pane fade <?php if($first_dgid == $tab["dg_id"]) echo "in active";?>" <?php echo("id=\"".$tab["dg_id"]."\"") ?> >
 											<table class="table table-striped table-bordered table-hover" <?php echo("id=\"waitTable_$number_of_queue_tables\"") ?>>
 												<thead>
@@ -113,9 +138,14 @@ function advanceNum($i, $str){
 														<?php if($tab["dg_id"]==2) { ?> <th><i class="far fa-flag"></i> Device Group</th><?php } ?>
 														<?php if($tab["dg_id"]!=2) { ?> <th><i class="far fa-flag"></i> Device</th><?php } ?>
 														<th><i class="far fa-clock"></i> Time Left</th>
-														<?php if($staff && $staff->is_staff()) { ?> 
-															<th><i class="far fa-flag"></i> Alerts</th>
-														<?php } ?>
+														<?php
+															if($user && $user->is_staff())
+															{
+																?> 
+																	<th><i class="far fa-flag"></i> Alerts</th>
+																<?php 
+															}
+														?>
 													</tr>
 												</thead>
 												<tbody>
@@ -127,9 +157,8 @@ function advanceNum($i, $str){
 															WHERE valid = 'Y' and WQ.devgr_id=$tab[dg_id]
 															ORDER BY Q_id;
 													")) {
-   
-
-														while ($row = $result->fetch_assoc()) {
+														while ($row = $result->fetch_assoc())
+														{
 															$user = Users::with_id($row['user_id']);?>
 															<tr class="tablerow">
 
@@ -139,13 +168,15 @@ function advanceNum($i, $str){
 																</td>
 
 																<!-- Operator ID --> 
-																<?php if($staff && $staff->is_staff()) { ?>
+																<?php if($user && $user->is_staff()) { ?>
 																	<td>
 																		<a class="<?php echo $user->icon; ?> fa-lg" title="<?php echo($row['user_id']); ?>"  href="/pages/waitUserInfo.php?q_id=<?php echo $row["Q_id"]; ?>&loc=0"></a>
 																		<?php if(!empty($row['Op_phone'])) { ?> <i class="fas fa-mobile"   title="<?php echo ($row['Op_phone']); ?>"></i> <?php } ?>
 																		<?php if(!empty($row['Op_email'])) { ?> <i class="fas fa-envelope" title="<?php echo ($row['Op_email']); ?>"></i> <?php } ?>
 																	</td>
-																<?php } else { ?>
+																<?php }
+																else
+																{ ?>
 																	<td>
 																		<i class="<?php echo $user->icon; ?> fa-lg"/>
 																	</td>
@@ -159,32 +190,38 @@ function advanceNum($i, $str){
 																<!-- Start Time, Estimated Time, Last Contact Time -->
 																<td>
 																	<!-- Start Time -->
-																	<i class="far fa-calendar-alt" align="center" title="Started @ <?php echo( date($sv['dateFormat'],strtotime($row['Start_date'])) ) ?>"></i>
+																	<i class="far fa-calendar-alt" align="center" title="Started @ <?php echo( date($sv['dateFormat'],strtotime($row['Start_date']))) ?>"></i>
 																<!-- Estimated Time -->
 																<?php if(isset($row['estTime'])) {
 																	$str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $row["estTime"]);
 																	sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
 																	$time_seconds = $hours * 3600 + $minutes * 60 + $seconds + $sv["grace_period"];
 																	$temp_time = $hours * 3600 + $minutes * 60 + $seconds;
-																	if(isset($row['last_contact'])){
-																		$time_seconds = $sv["wait_period"] - (time() - strtotime($row['last_contact']) );
+																	if(isset($row['last_contact']))
+																	{
+																		$time_seconds = $sv["wait_period"] - (time() - strtotime($row['last_contact']));
 																		if($time_seconds <= 0 ){
 																			echo("<span style=\"color:red\" align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
-																		} else {
+																		}
+																		else
+																		{
 																			echo("<span style=\"color:orange\" align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
 																		}
 																		array_push($device_array, array("q".$row["Q_id"], $time_seconds));
-																	} elseif($temp_time == "00:00:00") {
+																	}
+																	elseif($temp_time == "00:00:00") {
 																		echo("<span align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
 																		//do nothing keeping time at 00:00:00
-																	} else {
+																	}
+																	else
+																	{
 																		echo("<span align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
 																		array_push($device_array, array("q".$row["Q_id"], $time_seconds));
 																	}
 																} ?>
 
 																	<!-- Last Contact Time -->
-																<?php if($staff && $staff->is_staff()) { ?>
+																<?php if($user && $user->is_staff()) { ?>
 																	<?php if(isset($row['last_contact'])) { ?> 
 																		<i class="far fa-bell" align="center" title="Last Alerted @ <?php echo(date($sv['dateFormat'], strtotime($row['last_contact']))) ?>"></i> <?php
 																	} ?>
@@ -192,20 +229,23 @@ function advanceNum($i, $str){
 																</td>
 
 																<!-- Send an Alert -->
-																<?php if($staff && $staff->is_staff()) { ?>
+																<?php if($user && $user->is_staff()) { ?>
 																<td> 
 																	<?php if(!empty($row['Op_phone']) || !empty($row['Op_email'])) { ?> 
 																		<div style="text-align: center">
 																			<?php //prepare message
-																			if( $row['device_desc'] == ""){
+																			if($row['device_desc'] == ""){
 																				//datetime is added within the AJAX file endWaitList
 																				$msg = "A $row[dg_desc] is now available. Please make your way to the FabLab. You have until ";
-																			} else {
+																			}
+																			else
+																			{
 																				//datetime is added within the AJAX file endWaitList
 																				$msg = "$row[device_desc] is now available. Please make your way to the FabLab. You have until ";
 																			}
 																			?>
-																			<button class="<?php if(isset($row['last_contact'])){echo "btn btn-xs btn-warning";} else{echo "btn btn-xs btn-primary";}?>" data-target="#removeModal" data-toggle="modal" 
+																			<button class="<?php if(isset($row['last_contact'])){echo "btn btn-xs btn-warning";}
+																			else{echo "btn btn-xs btn-primary";}?>" data-target="#removeModal" data-toggle="modal" 
 																					onclick="sendManualMessage(<?php echo $row["Q_id"]?>, '<?php echo $msg;?>', 0)">
 																				<!-- make note that adding explanation points may cause errors with notifications -->
 																					Send Alert
@@ -229,7 +269,7 @@ function advanceNum($i, $str){
 				</div>
 			</div>
 			<!-- /.col-md-8 -->
-			<?php if($staff && $staff->is_staff()) { ?>
+			<?php if($user && $user->is_staff()) { ?>
 				<div class="col-md-4">
 					<div class="panel panel-default">
 						<div class="panel-heading">
@@ -260,11 +300,13 @@ function advanceNum($i, $str){
 																WHERE `solved` = 'N' AND `sl_id` >= 7
 															)
 													")) {
-														while ( $rows = mysqli_fetch_array ( $result ) ) {
+														while ( $rows = mysqli_fetch_array ( $result )) {
 															// Create value in the form of DG_dgID-dID
 															echo "<option value=". "DG_" . $rows ['dg_id'] . "-" . $rows ['d_id'].">" . $rows ['device_desc'] . "</option>";
 														}
-													} else {
+													}
+													else
+													{
 														die ("There was an error loading the device groups.");
 													} ?> 
 											</select>
@@ -299,7 +341,7 @@ function advanceNum($i, $str){
 							<tr class="tablerow">
 								<th align="right">Ticket</th>
 								<th>Device</th>
-								<?php if($staff) { ?> <th>Action</th><?php } ?>
+								<?php if($user) { ?> <th>Action</th><?php } ?>
 								<th>Start Time</th>
 								<th>Est Remaining Time</th>
 							</tr>
@@ -314,62 +356,79 @@ function advanceNum($i, $str){
 							WHERE public_view = 'Y'
 							ORDER BY `trans_id` DESC, `device_desc` ASC
 						")){
-							while ( $row = $result->fetch_assoc() ){ ?>
+							while ( $row = $result->fetch_assoc())
+							{ ?>
 								<tr class="tablerow">
 									<?php if($row["t_start"]) {
 										$ticket = new Transactions($row['trans_id']); ?>
 										<td align="right"><?php echo ("<a href=\"pages/lookup.php?trans_id=$row[trans_id]\">$row[trans_id]</a>"); ?></td>
 										<td>
-											<?php if($ticket->getDevice()->getUrl() && (preg_match($sv['ip_range_1'],getenv('REMOTE_ADDR')) || preg_match($sv['ip_range_2'],getenv('REMOTE_ADDR'))) ){
-												Devices::printDot($staff, $ticket->getDevice()->getD_id());
+											<?php if($ticket->getDevice()->getUrl() && (preg_match($sv['ip_range_1'],getenv('REMOTE_ADDR')) || preg_match($sv['ip_range_2'],getenv('REMOTE_ADDR'))))
+											{
+												Devices::printDot($user, $ticket->getDevice()->getD_id());
 												echo ("<a href=\"http://".$ticket->getDevice()->getUrl()."\">".$ticket->getDevice()->getDevice_desc()."</a>");
-											} else {
-												Devices::printDot($staff, $ticket->getDevice()->getD_id());
+											}
+											else
+											{
+												Devices::printDot($user, $ticket->getDevice()->getD_id());
 												echo $ticket->getDevice()->getDevice_desc();
 											} ?>
 										</td>
-										<?php if($staff && ($staff->is_staff() || $staff->is_same_as($ticket->getUser()))) { ?>
+										<?php if($user && ($user->is_staff() || $user->is_same_as($ticket->user))) { ?>
 											<td align="center">
 												<?php if($row["status_id"] == $STATUS["moveable"]) { ?>
-													<button class="btn btn-primary" onclick="endTicket(<?php echo "$row[trans_id],'$row[device_desc]','".$staff->getLong_close()."'"; ?>)">End</button>
-												<?php } else { ?>
-													<button class="btn btn-basic" onclick="endTicket(<?php echo "$row[trans_id],'$row[device_desc]','".$staff->getLong_close()."'"; ?>)">End</button>
+													<button class="btn btn-primary" onclick="endTicket(<?php echo "$row[trans_id],'$row[device_desc]','".$user->validate("long_close")."'"; ?>)">End</button>
+												<?php }
+												else
+												{ ?>
+													<button class="btn btn-basic" onclick="endTicket(<?php echo "$row[trans_id],'$row[device_desc]','".$user->validate("long_close")."'"; ?>)">End</button>
 												<?php } ?>
 											</td>
-										<?php } elseif($staff) { ?>
+										<?php }
+										elseif($user) { ?>
 											<td align='center'></td>
 										<?php }
-										echo("<td>".date( 'M d g:i a',strtotime($row["t_start"]) )."</td>" );
-										if( $row["status_id"] == $STATUS["moveable"]) {
+										echo("<td>".date( 'M d g:i a',strtotime($row["t_start"]))."</td>" );
+										if($row["status_id"] == $STATUS["moveable"]) {
 											echo("<td align='center'>".$ticket->getStatus()->getMsg()."</td>");
-										} elseif(isset($row["est_time"])) {
+										}
+										elseif(isset($row["est_time"])) {
 											echo("<td align='center'><div id=\"t$row[trans_id]\">$row[est_time] </div></td>" );
 											$str_time = preg_replace("/^([\d]{1,2})\:([\d]{2})$/", "00:$1:$2", $row["est_time"]);
 											sscanf($str_time, "%d:%d:%d", $hours, $minutes, $seconds);
-											$time_seconds = $hours * 3600 + $minutes * 60 + $seconds- (time() - strtotime($row["t_start"]) ) + $sv["grace_period"];
+											$time_seconds = $hours * 3600 + $minutes * 60 + $seconds- (time() - strtotime($row["t_start"])) + $sv["grace_period"];
 											array_push($device_array, array("t".$row["trans_id"], $time_seconds));
-										} else 
+										}
+										else 
 											echo("<td align=\"center\">-</td>");
-									} else { ?>
+									}
+									else
+									{ ?>
 										<td align="right"></td>
 										<td>
-											<?php if($row['url'] && (preg_match($sv['ip_range_1'],getenv('REMOTE_ADDR')) || preg_match($sv['ip_range_2'],getenv('REMOTE_ADDR'))) ){ 
-												Devices::printDot($staff, $row['d_id']);
+											<?php if($row['url'] && (preg_match($sv['ip_range_1'],getenv('REMOTE_ADDR')) || preg_match($sv['ip_range_2'],getenv('REMOTE_ADDR'))))
+											{ 
+												Devices::printDot($user, $row['d_id']);
 												echo ("<a href=\"http://".$row["url"]."\">".$row["device_desc"]."</a>");
-											} else {
-												Devices::printDot($staff, $row['d_id']);
+											}
+											else
+											{
+												Devices::printDot($user, $row['d_id']);
 												echo $row['device_desc'];
 											} ?>
 										</td>
-										<?php if($row["url"] && $staff){
-											if($staff->is_staff()){?>
+										<?php if($row["url"] && $user){
+											if($user->is_staff()){?>
 												<td  align="center"><?php echo ("<a href=\"http://".$row["url"]."\">New Ticket</a>"); ?></td>
-											<?php } else
+											<?php }
+											else
 												echo("<td align=\"center\">-</td>");
-										} elseif($staff) {
-											if($staff->is_staff()){?>
+										}
+										elseif($user) {
+											if($user->is_staff()){?>
 												<td align="center"><div id="est"><a href="\pages\create.php?<?php echo("d_id=".$row["d_id"])?>">New Ticket</a></div></td>
-											<?php } else
+											<?php }
+											else
 												echo("<td align=\"center\">-</td>");
 										} ?>
 										<td align="center"> - </td>
@@ -392,7 +451,7 @@ function advanceNum($i, $str){
 					<div class="panel-body" id="now_serving_panel">
 						<div align="center" ><a href='http://fablab.uta.edu/policy/' style='color:blue'>UTA FabLab's Wait Policy</a></div>
 						<table class="table table-striped table-bordered" >
-							<?php if(is_object($staff) && $staff->is_staff()){ ?> <form method="post" action="">
+							<?php if(is_object($user) && $user->is_staff()){ ?> <form method="post" action="">
 								<tr>
 									<td>Equipment</td>
 									<td>Now Serving</td>
@@ -422,7 +481,9 @@ function advanceNum($i, $str){
 									<td align="center"><button class="btn btn-basic" title="Click to issue the next Wait-Tab"
 											name='print_m' onclick="loadingModal()">M<?php echo $sv['mNext']+1; ?> <i class="fas fa-print"> </button></td>
 								</tr><?php } ?>
-							</form><?php } else { ?>
+							</form><?php }
+							else
+							{ ?>
 								<tr>
 									<td>Equipment</td>
 									<td>Now Serving</td>
@@ -479,13 +540,15 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 		"iDisplayLength": 25,
 		"order": []
 	});
-<?php if(!is_object($staff) && ($sv['next'] >= 1 || $sv['eNext'] >= 1 || $sv['bNext'] >= 1 || $sv['mNext'] >= 1)) { ?>
+<?php if(!is_object($user) && ($sv['next'] >= 1 || $sv['eNext'] >= 1 || $sv['bNext'] >= 1 || $sv['mNext'] >= 1)) { ?>
 	//Update page if number changes, check every
 	setInterval(function(){
 		if(window.XMLHttpRequest) {
 			// code for IE7+, Firefox, Chrome, Opera, Safari
 			xmlhttp = new XMLHttpRequest();
-		} else {
+		}
+		else
+		{
 			// code for IE6, IE5
 			xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
 		}
@@ -537,7 +600,9 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 		if(window.XMLHttpRequest) {
 			// code for IE7+, Firefox, Chrome, Opera, Safari
 			xmlhttp = new XMLHttpRequest();
-		} else {
+		}
+		else
+		{
 			// code for IE6, IE5
 			xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
 		}

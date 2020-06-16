@@ -12,6 +12,13 @@ if($result = $mysqli->query("
 	$message = $mysqli->error;
 }
 
+// used to phase out above global
+$SITE_VARS = array();
+if(!$results = $mysqli->query("SELECT `name`, `value` FROM `site_variables`;"))
+    throw new Exception("site_variables.php: Bad query: $mysqli->error");
+else while($row = $results->fetch_assoc()) $SITE_VARS[$row['name']] = $row['value'];
+
+
 class Site_Variables {
     private $id;
     private $name;

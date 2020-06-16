@@ -9,6 +9,7 @@
  * Pull all attributes relevant to a User
  * @author Jon Le
  */
+
 include_once ($_SERVER['DOCUMENT_ROOT']."/class/site_variables.php");
 
 $ROLE = array();
@@ -75,10 +76,10 @@ class Users
 		if(!$permission_results = $mysqli->query(	"SELECT `perm_id` FROM `user_permissions`
 														WHERE `user_id` = '$id'
 														UNION SELECT `perm_id` FROM `permissions`
-														WHERE `r_id` >= '$this->r_id';"
+														WHERE `r_id` <= $this->r_id;"
 		)) throw new Exception("Users::__construct: Bad query: $mysqli->error");
 		
-		while($row = $permission_results->fetch_assoc()) $permissions[] = $row["perm_id"];
+		while($row = $permission_results->fetch_assoc()) $this->permissions[] = $row["perm_id"];
 	}
 
 
