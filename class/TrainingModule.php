@@ -66,13 +66,12 @@ class TrainingModule {
 	}
 
 	
-	public function certify_training($operator, $staff){
-		global $mysqli;
-		global $sv;
+	public function certify_training($operator_id, $staff){
+		global $mysqli, $ROLE;
 		
-		if (!Users::regexUser($operator)) return "Invalid Operator ID";
+		if (!Users::regexUser($operator_id)) return "Invalid Operator ID";
 
-		if ($sv['LvlOfLead'] > $staff->getRoleID()){
+		if ($staff->validate("issue_training")){
 			return ("Staff Member Lacks Authority to Issue Certificate");
 		}
 	
@@ -82,7 +81,7 @@ class TrainingModule {
 			FROM `tm_enroll`
 			WHERE tm_id = $this->tm_id AND operator = ".$staff->getOperator()." AND `current` = 'Y'
 		")){
-			if( $results->num_rows == 0 && $staff->getRoleID() < $sv['LvlOfLead']) {
+			if( $results->num_rows == 0) {
 				//True when they have the related training
 				//Or when they are Admin
 				return "Staff Member Lacks Training";
@@ -98,7 +97,7 @@ class TrainingModule {
 			INSERT INTO `tm_enroll` 
 				(`tm_id`, `operator`, `completed`, `staff_id`, `current`) 
 			VALUES
-				('$this->tm_id', '$operator', CURRENT_TIME(), '".$staff->getOperator()."', 'Y');
+				('$this->tm_id', '$operator_id', CURRENT_TIME(), '$staff->id', 'Y');
 		")){
 			return true;
 		} elseif ( strpos($mysqli->error, "Duplicate") === 0) {
@@ -111,14 +110,13 @@ class TrainingModule {
 	//Edit an exisiting Training Module
 	public static function editTM($tm_id, $title, $tm_desc, $duration, $d_id, $dg_id, $tm_required, $class_size, $staff) {
 		global $mysqli;
-		global $sv;
 
 		if (!self::regexTMId($tm_id)) return "Invalid Training Module ID: $tm_id";
 		if ( (Devices::regexDeviceID($d_id) || DeviceGroup::regexDgID($dg_id)) && Devices::regexDeviceID($d_id) != DeviceGroup::regexDgID($dg_id)){} else {return "Bad Device or Group: d-$d_id dg-$dg_id";}
 		if (!self::regexSize($class_size)) return "Invalid Class Size";
 		if (!self::regexTime($duration)) {return "Bad Time - $duration";}
 		if (!self::regexTmReq($tm_required)) {return "Select Requirement";}
-		if ($staff->getRoleID() < $sv['minRoleTrainer']) {return "Staff Member Is Unable To Edit Training Modules";}
+		if ($staff->validate("edit_training")) {return "Staff Member Is Unable To Edit Training Modules";}
 
 		if($d_id){
 			$mysqli->autocommit(FALSE);
@@ -195,7 +193,7 @@ class TrainingModule {
 		if (!self::regexSize($class_size)) return "Invalid Class Size";
 		if (!self::regexTime($duration)) {return "Bad Time - $duration";}
 		if (!self::regexTmReq($tm_required)) {return "Select Requirement";}
-		if ($staff->getRoleID() < $sv['minRoleTrainer']) {return "Staff Member Is Unable To Add Training Modules";}
+		if ($staff->validate("edit_training")) {return "Staff Member Is Unable To Add Training Modules";}
 
 		if($d_id){
 			if ($mysqli->query("

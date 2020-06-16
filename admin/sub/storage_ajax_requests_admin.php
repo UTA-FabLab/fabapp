@@ -27,8 +27,8 @@ include_once (filter_input(INPUT_SERVER,'DOCUMENT_ROOT').'/class/all_classes.php
 
 // authenticate permission for user
 session_start();
-$staff = unserialize($_SESSION['staff']);
-if(!$staff || $staff->roleID < $role["staff"]) exit();
+$user = unserialize($_SESSION['user']);
+if(!$user || !$user->is_staff()) exit();
 
 if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["display_unit"])) {
 	$drawer_indicator = htmlspecialchars($_POST["drawer"]);

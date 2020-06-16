@@ -44,9 +44,9 @@ class FabAppError {
         global $mysqli;
         
         if (strcmp($staff_id, "") == 0) {
-            $staff_id = "NULL";
+            $staff_id = NULL;
         } else {
-            $staff_id = "'$staff_id'";
+            $staff_id = "$staff_id";
         }
         
         if ($stmt = $mysqli->prepare("
@@ -121,7 +121,7 @@ class FabAppError {
     }
 
     public function setStaffWId($staff_id) {
-        $this->staff = Users::withID($staff_id);
+        $this->staff = Users::with_id($staff_id);
     }
 
     public function setStaff($staff) {

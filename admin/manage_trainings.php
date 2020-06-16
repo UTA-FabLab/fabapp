@@ -5,7 +5,8 @@
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
-if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
+if (!$user || $user->validate("edit_training"))
+{
     //Not Authorized to see this Page
     header('Location: /index.php');
     $_SESSION['error_msg'] = "Insufficient role level to access, You must be a Trainer.";
@@ -17,7 +18,7 @@ if($_SESSION['type'] == 'success'){
 }
 
 //add or edit html argument
-if ( !empty($_GET['add']) && $staff){
+if ( !empty($_GET['add']) && $user){
     //declare empty fields
     $title = $tm_desc = $duration = $tm_required = $file_name = $class_size = $device = $tm_stamp = "";
     $input = explode("=", $_GET['add']);
@@ -51,7 +52,7 @@ if ( !empty($_GET['add']) && $staff){
         $_SESSION['type'] = 'ERROR';
     }
 
-} elseif ( !empty($_GET['edit']) && $staff ){
+} elseif ( !empty($_GET['edit']) && $user ){
     $_SESSION['type'] = 'input_edit';
 	
     //verify if the input is all numbers
@@ -113,7 +114,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $d_id = $input[1];
         }
         
-        $result = TrainingModule::insertTM($title, $tm_desc, $duration, $d_id, $dg_id, $tm_required, $class_size, $staff);
+        $result = TrainingModule::insertTM($title, $tm_desc, $duration, $d_id, $dg_id, $tm_required, $class_size, $user);
         if (is_int($result)){
             echo "<script> alert('insert id is $result')</script>";
             $_SESSION['type'] = 'success';
@@ -131,7 +132,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $tm_required = $_POST['tm_required'];
         $class_size = $_POST['class_size'];
         
-        $result = TrainingModule::editTM($tm_id, $title, $tm_desc, $duration, $d_id, $dg_id, $tm_required, $class_size, $staff);
+        $result = TrainingModule::editTM($tm_id, $title, $tm_desc, $duration, $d_id, $dg_id, $tm_required, $class_size, $user);
         if (is_int($result)){
             if ($result == 1){
                 echo "<script> alert('insert id is $result')</script>";
@@ -160,8 +161,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <!-- /.col-lg-12 -->
     </div>
     <!-- /.row -->
-    <?php //Check if logged in
-    if($staff){
+    <?php
         //Check if page needs to display an input form
         if( preg_match('(input_)', $_SESSION['type']) ){ ?>
             <div class="row">
@@ -248,11 +248,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                             <?php if( preg_match('(input_edit)', $_SESSION['type']) ){
                                                 echo "Updated On ".date( 'M d, Y g:i a',strtotime($tm_stamp) )."&ensp;";
                                             } 
-                                            if($staff->getRoleID() >= $sv['minRoleTrainer']){ ?>
+                                            ?>
+                                            <!-- Edited: only those with permission can see this page -->
+                                            <!-- This could be changed in brower's dev tools anyway -->
                                                 <button type="button" class="btn btn-basic btn-md" onclick="editTM()" tabindex="8" id="editBtn">Edit</button>
-                                            <?php } else { ?>
-                                                <button type="button" class="btn btn-basic btn-md" tabindex="8" disabled>Edit</button>
-                                            <?php } ?>
                                         </td>
                                     </tr>
                                 </tfoot>
@@ -341,11 +340,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <div class="panel-heading">
                             <i class="fas fa-edit fa-lg"></i> Training Modules
                             <div class="pull-right">
-                                <?php if($staff->getRoleID() >= $sv['minRoleTrainer']){ ?>
-                                    <button type="button" id="addBtn" onclick="addTM()">Add</button>
-                                <?php } else { ?>
-                                    Add
-                                <?php } ?>
+                                <button type="button" id="addBtn" onclick="addTM()">Add</button>
                             </div>
                         </div>
                         <div class="panel-body">
@@ -408,16 +403,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <!-- /.col-md-3 -->
             </div>
             <!-- /.row -->
-        <?php }   
-    } else { ?>
-        <div align="center">
-            <div class="col-md-4 col-md-offset-4">
-                <img src="/images/hal.png" class="img-responsive" alt="I'm Sorry I can't do that for you">
-                <i>I'm sorry, I cant do that for you</i>
-            </div>
-        </div>
-        <!-- /.row -->
-    <?php }?>
+        <?php } ?>
 </div>
 <!-- /#page-wrapper -->
 <?php
@@ -427,13 +413,13 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 <script type="text/javascript">
     var device = "";
     var list = ["title", "tm_desc", "hours", "minutes", "tm_required", "class_size"];
-<?php if($staff && !preg_match('(input_)', $_SESSION['type']) ) { ?>
+<?php if(!preg_match('(input_)', $_SESSION['type']) ) { ?>
     window.onload = function(){
         document.getElementById("dg_id").selectedIndex = 0;
         document.getElementById("d_id").selectedIndex = 0;
     };
 <?php } ?>
-<?php if ( $staff && strcmp( $_SESSION['type'], "input_add") == 0){ ?>
+<?php if(strcmp( $_SESSION['type'], "input_add") == 0){ ?>
     var addBtn = document.getElementById("editBtn");
     //change the button
     addBtn.firstChild.data = "Save";

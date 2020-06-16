@@ -8,7 +8,8 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
 //Submit results
 $resultStr = "";
-if (!$staff || $staff->getRoleID() < 10){
+if (!$user || !$user->validate($ROLE["admin"]))
+{
     //Not Authorized to see this Page
     header('Location: /index.php');
     $_SESSION['error_msg'] = "Insufficient role level to access, You must be an admin.</a>";
@@ -72,11 +73,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <select class="form-control" name="u_r_id" id="u_r_id" onchange="change_operator()" tabindex="1">
                                             <option value="" disabled selected>Select Role</option>
                                             <?php
-                                                $staff_role = $staff->getRoleID();
                                                 $result = $mysqli->query("
                                                 SELECT DISTINCT `role`.`r_id` , `role`.`title` 
                                                 FROM `role` , `users`
-                                                WHERE `users`.`r_id` = `role`.`r_id` AND `users`.`r_id` <= '$staff_role' AND `users`.`r_id` > 2
+                                                WHERE `users`.`r_id` = `role`.`r_id` AND `users`.`r_id` <= $user->r_id AND `users`.`r_id` > 2
                                                 ORDER BY `r_id` DESC;");
                                                 while($row = $result->fetch_assoc()){
                                                     echo "<option value=\"$row[r_id]\">$row[title]</option>";

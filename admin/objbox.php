@@ -14,7 +14,9 @@
 
 
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
-if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
+
+if (!$user || $user->validate("storage"))
+{
 	//Not Authorized to see this Page
 	$_SESSION['error_msg'] = "You are unable to view this page.";
 	header('Location: /index.php');
