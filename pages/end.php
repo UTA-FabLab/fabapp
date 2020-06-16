@@ -740,8 +740,10 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	{
 		var materials_statuses = document.getElementsByClassName("mat_used_select");
 		for(var x = 0; x < materials_statuses.length; x++)
+		{
 			if(status) materials_statuses[x].value = status;
 			else materials_statuses[x].selectedIndex = 0;
+		}
 	}
 
 
@@ -834,8 +836,17 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 		populate_material_table(materials);
 
 		// ---- storage ----
+		// status is not storage
 		if(ticket_status != <?php echo $status["stored"] ?>) $("#storage_location_div_modal").hide();
-		else $("#storage_location_div_modal").show();
+		// status is storage and location selected
+		else if(document.getElementById("storage_location_input_modal").value)
+			$("#storage_location_div_modal").show();
+		// status is storage but location not selected
+		else
+		{
+			ticket_status_select.selectedIndex = 0;
+			return alert("Status marked as storage but no location was selected");
+		}
 
 		// ---- notes ----
 		document.getElementById("ticket_notes_textarea_modal").value = 
