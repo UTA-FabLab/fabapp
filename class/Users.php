@@ -591,12 +591,12 @@ class Staff extends Users
 		}
 		
 		// check if RFID already exists: if it does, return false
-		if(!$result = $mysqli->query("SELECT `id` FROM `rfid` WHERE `rfid_no` = $rfid_no;"))
+		if(!$result = $mysqli->query("SELECT `user_id` FROM `rfid` WHERE `rfid_no` = $rfid_no;"))
 			throw new Exception("Users::new_rfid: bad query: $mysqli->error");
 
 		if($result->num_rows) return self::update_rfid($rfid_no, $user);
 
-		$statement = $mysqli->prepare("INSERT INTO `rfid` (`rfid_no`, `id`) VALUES (?, ?);");
+		$statement = $mysqli->prepare("INSERT INTO `rfid` (`rfid_no`, `user_id`) VALUES (?, ?);");
 		if(!$statement) throw new Exception("Users::new_rfid: bad query: $mysqli->error");
 
 		$statement->bind_param("ss", $rfid_no, $user->id);
@@ -629,7 +629,7 @@ class Staff extends Users
 
 		if($result->num_rows) return self::modify_r_id();  // already exists; update
 
-		if(!$statement = $mysqli->prepare("INSERT INTO `users` (`id`, `r_id`, `staff_id`) VALUES (?, ?, ?);"))
+		if(!$statement = $mysqli->prepare("INSERT INTO `users` (`user_id`, `r_id`, `staff_id`) VALUES (?, ?, ?);"))
 			throw new Exception("Users::new_user: bad prepare: $mysqli->query");
 
 		if(!$statement->bind_param("sds", $r_id, $this->id, $new_user_id))
@@ -640,7 +640,7 @@ class Staff extends Users
 
 
 
-	// ————————————————————— SETTERS —————————————————————
+	// ————————————————————— GETTERS —————————————————————
 
 	// formerly: public static function rfidExist($rfid_no)
 	public static function rfid_exist($rfid_no)
@@ -692,13 +692,13 @@ class Staff extends Users
 		}
 		
 		// check if RFID already exists: if it does, return false
-		if(!$result = $mysqli->query("SELECT `id` FROM `rfid` WHERE `rfid_no` = $rfid_no;"))
+		if(!$result = $mysqli->query("SELECT `user_id` FROM `rfid` WHERE `rfid_no` = $rfid_no;"))
 			throw new Exception("Users::new_rfid: bad query: $mysqli->error");
 
 		if(!$result->num_rows) return self::new_rfid($rfid_no, $user);  // check if exists; if not, create new
 
 		// update
-		$statement = $mysqli->prepare("UPDATE `rfid` SET `rfid_no` = ? WHERE `id` = ?;");
+		$statement = $mysqli->prepare("UPDATE `rfid` SET `rfid_no` = ? WHERE `user_id` = ?;");
 		if(!$statement) throw new Exception("Users::new_rfid: bad query: $mysqli->error");
 
 		$statement->bind_param("ss", $rfid_no, $user->id);
@@ -725,13 +725,13 @@ class Staff extends Users
 			return false;
 		}
 
-		if(!$results = $mysqli->query("SELECT `id` FROM `users` WHERE `user_id` = '$id';"))
+		if(!$results = $mysqli->query("SELECT `user_id` FROM `users` WHERE `user_id` = '$id';"))
 			throw new Exception("Users::new_user: bad query: $mysqli->error");
 
 		if(!$result->num_rows) return self::new_user($user_id, $notes, $r_id);  // does not exist; add
 
 		if(!$statement = $mysqli->prepare(	"UPDATE `users` SET  `notes` = ?, `r_id` = ?, `staff_id` = ?
-												WHERE `id` = ?;"
+												WHERE `user_id` = ?;"
 		)) throw new Exception("Users::new_user: bad prepare: $mysqli->query");
 
 		if(!$statement->bind_param("sdss", $notes, $r_id, $this->id, $new_user_id))

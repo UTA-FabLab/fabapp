@@ -77,7 +77,7 @@ if($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['signBtn']))
 			if(!headers_sent()) echo "<script>window.location.href='/index.php';</script>";
 			exit();
 		}
-		else __index__echo_go_modal("Invalid user name and/or password!", "Invalid");
+		else __header__echo_go_modal("Invalid user name and/or password!", "Invalid");
 	}
 }
 
@@ -100,11 +100,11 @@ elseif($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['searchBtn']))
 				$user_id = $searchField;
 				header("location:/pages/lookup.php?operator=$user_id");
 			}
-			else __index__echo_go_modal("Illegal Search Condition", "Invalid");
+			else __header__echo_go_modal("Illegal Search Condition", "Invalid");
 		}
-		else __index__echo_go_modal("Illegal Search Condition", "Invalid");
+		else __header__echo_go_modal("Illegal Search Condition", "Invalid");
 	}
-	else __index__echo_go_modal("Please enter a number", "Invalid");
+	else __header__echo_go_modal("Please enter a number", "Invalid");
 }
 
 // pickup item
@@ -112,7 +112,7 @@ elseif($_SERVER["REQUEST_METHOD"] === "POST"
 && filter_input(INPUT_POST, 'pickBtn') !== null && filter_input(INPUT_POST, 'pickField') !== null)
 {
 	if(!Users::regex_id(filter_input(INPUT_POST, 'pickField'))) 
-		__index__echo_go_modal($_POST["pickField"], "Success", "true");
+		__header__echo_go_modal($_POST["pickField"], "Success", "true");
 	else
 	{
 		$user_id = filter_input(INPUT_POST, 'pickField');
@@ -123,17 +123,17 @@ elseif($_SERVER["REQUEST_METHOD"] === "POST"
 // Display a Successful message from a previous page
 if(isset($_SESSION['success_msg']) && $_SESSION['success_msg']!= "")
 {
-	__index__echo_go_modal($_SESSION["success_msg"], "Success", "true");
+	__header__echo_go_modal($_SESSION["success_msg"], "Success", "true");
 	unset($_SESSION['success_msg']);
 }
 elseif(isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= "")
 {
-	__index__echo_go_modal($_SESSION["error_msg"], "Error");
+	__header__echo_go_modal($_SESSION["error_msg"], "Error");
 	unset($_SESSION['error_msg']);
 }
 
 
-function __index__echo_go_modal($message, $type, $disappear="false")
+function __header__echo_go_modal($message, $type, $disappear="false")
 {
 	echo	"<script type='text/javascript'>
 				window.onload = function()
