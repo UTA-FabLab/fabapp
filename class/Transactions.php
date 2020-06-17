@@ -54,13 +54,10 @@ class Transactions {
 		if (!preg_match("/^\d+$/", $trans_id))
 			throw new Exception("Invalid Ticket Number : $trans_id");
 		
-		if ($result = $mysqli->query("
-			SELECT *
-			FROM transactions
-			WHERE trans_id = $trans_id
-			LIMIT 1;
-		")){
-			if ($result->num_rows == 0 ) throw new Exception("Ticket Not Found : $trans_id");
+		if($result = $mysqli->query("SELECT * FROM transactions WHERE trans_id = $trans_id LIMIT 1;"))
+		{
+			if($result->num_rows == 0)
+				throw new Exception("Transactions::__construct: Ticket Not Found : $trans_id");
 
 			$row = $result->fetch_assoc();
 			$this->acct_charge = Acct_charge::byTrans_id($trans_id);
@@ -147,16 +144,16 @@ class Transactions {
 	specific material statuses (if some but not all failed/succeeded/cancelled)
 	*/
 	public function end_transaction($staff, $status_id){
-		global $mysqli, $role, $sv;
+		global $mysqli, $ROLE;
 
 		$this->staff = $staff;
 		$this->status = new Status($status_id);
 
 		// only staff may close the ticket
-		if($staff->roleID < $role["staff"]) return "Please ask a staff member to close this ticket. $staff->roleID";
+		if($staff->validate($ROLE["staff"])) return "Please ask a staff member to close this ticket. $staff->r_id";
 
-		// restrict users below editTrans level from ending own tickets
-		if($staff->operator == $this->user->operator && $staff->getRoleID() < $sv['editTrans'])
+		// restrict users below admin level from ending own tickets
+		if($staff->is_same_as($this->user) && !$staff->validate($ROLE["admin"]))
 			return "Please ask a fellow staff member to close this ticket.";
 
 		$this->t_end = date("Y-m-d H:i:s");
@@ -201,12 +198,11 @@ class Transactions {
 		$status_id = $sheet_good_status == 1 ? $STATUS["complete"] : $STATUS["total_fail"];
 		
 		
-		if ($mysqli->query("
-			UPDATE `transactions`
+		if($mysqli->query(
+			"UPDATE `transactions`
 			SET `t_end` = CURRENT_TIMESTAMP , `status_id` = '$status_id'
-			WHERE `trans_id` = '$trans_id';
-		"))
-			return 1;
+			WHERE `trans_id` = '$trans_id';"
+		)) return 1;
 		return 0;
 	
 	}
@@ -221,10 +217,10 @@ class Transactions {
 				VALUES
 					('$trans_id', '$inv_id', '$quantity', CURRENT_TIMESTAMP);
 		")){
-                return true;
-            } else {
-                return false;
-            }
+				return true;
+			} else {
+				return false;
+			}
 	}
 
 
@@ -240,15 +236,15 @@ class Transactions {
 		if($status_id && !Status::regexID($status_id)) return "Invalid Status";
 		$note = $note ? "'".self::regexNotes($note)."'" : "NULL";
 		
-		if($error = Wait_queue::transferFromWaitQueue($operator->operator, $device_id)) return $error;
+		if($error = Wait_queue::transferFromWaitQueue($operator->id, $device_id)) return $error;
 		
 		$t_end = $status_id == $STATUS["sheet_sale"] ? "CURRENT_TIMESTAMP" : "NULL";  // sheet goods
 		// $note is intentionally left without '' so that if it is null, it will be entered as a null value
 		if ($mysqli->query("INSERT INTO transactions 
-							(`operator`, `d_id`, `t_start`, `t_end`, `status_id`, `p_id`, `est_time`, `staff_id`, `notes`) 
+							(`user_id`, `d_id`, `t_start`, `t_end`, `status_id`, `p_id`, `est_time`, `staff_id`, `notes`) 
 							-- (`operator`,`device_id`,`t_start`,`status_id`,`p_id`,`est_time`,`staff_id`, `notes`) 
 							VALUES
-							('$operator->operator', '$device_id', CURRENT_TIMESTAMP, $t_end, '$status_id', '$p_id', '$est_time', '$staff->operator', $note);"
+							('$operator', '$device_id', CURRENT_TIMESTAMP, $t_end, '$status_id', '$p_id', '$est_time', '$staff', $note);"
 		)){
 			return $mysqli->insert_id;
 		}
@@ -385,101 +381,101 @@ class Transactions {
 		}
 	}
 
-    public static function printSheetTicket($trans_id, $cart_inv_ids, $cart_quantities, $cart_prices, $total_price){
-        global $mysqli;
-        global $tp;
-        $sheet_names = array();
+	public static function printSheetTicket($trans_id, $cart_inv_ids, $cart_quantities, $cart_prices, $total_price){
+		global $mysqli;
+		global $tp;
+		$sheet_names = array();
 
 
-        for ($i = 0; $i < sizeof($cart_inv_ids); $i++) {
-	        if($result = $mysqli->query("
-	            SELECT `materials`.`m_name` , `sheet_good_inventory`.`width` , `sheet_good_inventory`.`height`
-	            FROM `sheet_good_inventory`, `materials`
-	            WHERE `sheet_good_inventory`.`inv_ID` = '$cart_inv_ids[$i]' AND `materials`.`m_id` = `sheet_good_inventory`.`m_ID`
-	        ")){
-	            $row = $result->fetch_assoc();
-	            $sheet_names[$i] = $row["m_name"]." - ".$row["width"]."(in)x".$row["height"]."(in)";
-	        }
-    	}
+		for ($i = 0; $i < sizeof($cart_inv_ids); $i++) {
+			if($result = $mysqli->query("
+				SELECT `materials`.`m_name` , `sheet_good_inventory`.`width` , `sheet_good_inventory`.`height`
+				FROM `sheet_good_inventory`, `materials`
+				WHERE `sheet_good_inventory`.`inv_ID` = '$cart_inv_ids[$i]' AND `materials`.`m_id` = `sheet_good_inventory`.`m_ID`
+			")){
+				$row = $result->fetch_assoc();
+				$sheet_names[$i] = $row["m_name"]." - ".$row["width"]."(in)x".$row["height"]."(in)";
+			}
+		}
 
-        // Set up Printer Connection
-        $tp_number = 0;
-        try {
-            $connector = new NetworkPrintConnector( $tp[$tp_number][0], $tp[$tp_number][1]);
-            $printer = new Printer($connector);
-        } catch (Exception $e) {
-            return "Couldn't print to this printer: " . $e -> getMessage() . "\n";
-        }
+		// Set up Printer Connection
+		$tp_number = 0;
+		try {
+			$connector = new NetworkPrintConnector( $tp[$tp_number][0], $tp[$tp_number][1]);
+			$printer = new Printer($connector);
+		} catch (Exception $e) {
+			return "Couldn't print to this printer: " . $e -> getMessage() . "\n";
+		}
 
-        try {
-            $img = EscposImage::load($_SERVER['DOCUMENT_ROOT']."/images/fablab2.png", 0);
+		try {
+			$img = EscposImage::load($_SERVER['DOCUMENT_ROOT']."/images/fablab2.png", 0);
 
-            $printer -> setJustification(Printer::JUSTIFY_CENTER);
-            $printer -> graphics($img);
-            $printer -> feed();
-            $printer -> setEmphasis(true);
-            $printer -> text(date("F jS Y h:i A"));
-            $printer -> setEmphasis(false);
-            $printer -> feed(2);
+			$printer -> setJustification(Printer::JUSTIFY_CENTER);
+			$printer -> graphics($img);
+			$printer -> feed();
+			$printer -> setEmphasis(true);
+			$printer -> text(date("F jS Y h:i A"));
+			$printer -> setEmphasis(false);
+			$printer -> feed(2);
 
-            $printer -> setTextSize(4, 4);
-            $printer -> text($trans_id);
-            $printer -> feed(3);
-            $printer -> setJustification(Printer::JUSTIFY_LEFT);
-            $printer -> setTextSize(1, 1);
-            $printer -> setEmphasis(true);
-            $printer -> text("SALE:");
-            $printer -> setEmphasis(false);
+			$printer -> setTextSize(4, 4);
+			$printer -> text($trans_id);
+			$printer -> feed(3);
 			$printer -> setJustification(Printer::JUSTIFY_LEFT);
-            for ($i = 0; $i < sizeof($cart_inv_ids); $i++) {
-	            $printer -> setTextSize(1, 1);
-	            $printer -> feed();
-	            $printer -> setJustification(Printer::JUSTIFY_LEFT);
-	            $printer -> setEmphasis(true);
-	            $printer -> text($cart_quantities[$i]."");
-	            $printer -> setEmphasis(false);
-            	$printer -> text(" ".$sheet_names[$i]);
-            	$printer -> feed();
-            	$printer -> setJustification(Printer::JUSTIFY_RIGHT);
-            	$printer -> setEmphasis(true);
-            	$printer -> text($cart_prices[$i]);
-            }
-            $printer -> setTextSize(1, 1);
-            $printer -> feed(2); 
-            $printer -> setJustification(Printer::JUSTIFY_RIGHT);
-            $printer -> setEmphasis(true);
-            $printer -> text("Total: $".$total_price);
-            $printer -> setEmphasis(false);
+			$printer -> setTextSize(1, 1);
+			$printer -> setEmphasis(true);
+			$printer -> text("SALE:");
+			$printer -> setEmphasis(false);
+			$printer -> setJustification(Printer::JUSTIFY_LEFT);
+			for ($i = 0; $i < sizeof($cart_inv_ids); $i++) {
+				$printer -> setTextSize(1, 1);
+				$printer -> feed();
+				$printer -> setJustification(Printer::JUSTIFY_LEFT);
+				$printer -> setEmphasis(true);
+				$printer -> text($cart_quantities[$i]."");
+				$printer -> setEmphasis(false);
+				$printer -> text(" ".$sheet_names[$i]);
+				$printer -> feed();
+				$printer -> setJustification(Printer::JUSTIFY_RIGHT);
+				$printer -> setEmphasis(true);
+				$printer -> text($cart_prices[$i]);
+			}
+			$printer -> setTextSize(1, 1);
+			$printer -> feed(2); 
+			$printer -> setJustification(Printer::JUSTIFY_RIGHT);
+			$printer -> setEmphasis(true);
+			$printer -> text("Total: $".$total_price);
+			$printer -> setEmphasis(false);
 
-            $printer -> feed(2);  
-            
-            // Print Footer
-            $printer -> setJustification(Printer::JUSTIFY_CENTER);
-            $printer -> text("For information about FabLab's");
-            $printer -> feed();
-            $printer -> text("return policy visit:");
-            $printer -> feed();
-            $printer -> setEmphasis(true);
-            $printer -> text("http://fablab.uta.edu/policy");
-            $printer -> feed();
-            
-        } catch (Exception $print_error) {
-            //echo $print_error->getMessage();
-            $printer -> text($print_error->getMessage());
-        }
+			$printer -> feed(2);  
+			
+			// Print Footer
+			$printer -> setJustification(Printer::JUSTIFY_CENTER);
+			$printer -> text("For information about FabLab's");
+			$printer -> feed();
+			$printer -> text("return policy visit:");
+			$printer -> feed();
+			$printer -> setEmphasis(true);
+			$printer -> text("http://fablab.uta.edu/policy");
+			$printer -> feed();
+			
+		} catch (Exception $print_error) {
+			//echo $print_error->getMessage();
+			$printer -> text($print_error->getMessage());
+		}
 
-        // Close Printer Connection
-        try {
-            $printer -> feed();
-            $printer -> cut();
+		// Close Printer Connection
+		try {
+			$printer -> feed();
+			$printer -> cut();
 
-            /* Close printer */
-            $printer -> close();
-        } catch (Exception $e) {
-            echo "Couldn't print to this printer: " . $e -> getMessage() . "\n";
-        }
-    }
-    
+			/* Close printer */
+			$printer -> close();
+		} catch (Exception $e) {
+			echo "Couldn't print to this printer: " . $e -> getMessage() . "\n";
+		}
+	}
+	
 
 
 
@@ -520,18 +516,18 @@ class Transactions {
 		global $mysqli;
 
 		// prevent error from accessing null's attributes
-		$pickedup_by = $this->pickedup_by ? $this->pickedup_by->operator : null;
+		$pickedup_by = $this->pickedup_by ? $this->pickedup_by->id : null;
 
 		// update transaction info
 		$statement = $mysqli->prepare("UPDATE `transactions`
-											SET `d_id` = ?, `operator` = ?, `t_start` = ?, 
+											SET `d_id` = ?, `user_id` = ?, `t_start` = ?, 
 											`t_end` = ?, `status_id` = ?, `staff_id` = ?, 
 											`pickup_time` = ?, `pickedup_by` = ?,  `notes` = ?,
 											`duration` = ?
 											WHERE `trans_id` = ?;");
 
-		$statement->bind_param("dsssdsssssd", $this->device->device_id, $this->user->operator, $this->t_start, 
-									$this->t_end, $this->status->status_id, $this->staff->operator, 
+		$statement->bind_param("dsssdsssssd", $this->device->device_id, $this->user->id, $this->t_start, 
+									$this->t_end, $this->status->status_id, $this->staff->id, 
 									$this->pickup_time, $pickedup_by, $this->filename_and_notes(), 
 									$this->duration,
 									$this->trans_id);
@@ -626,14 +622,14 @@ class Transactions {
 
 	public static function unended_tickets_for_user($operator)
 	{
-		if(!Users::regexUser($operator->operator)) return array();
+		if(!Users::regex_id($operator)) return array();
 
 		global $mysqli, $STATUS;
 
 		$tickets = array();
 		if($results = $mysqli->query(	"SELECT `trans_id` FROM `transactions`
 										WHERE `status_id` <= $STATUS[moveable]
-										AND `operator` = '$operator->operator';")
+										AND `user_id` = '$operator';")
 		)
 		{
 			while($row = $results->fetch_assoc()) $tickets[] = new self($row['trans_id']);

@@ -277,7 +277,7 @@ class Users
 										LEFT JOIN `devices` ON `transactions`.`d_id` = `devices`.`d_id`
 										LEFT JOIN `status` ON `transactions`.`status_id` = `status`.`status_id`
 										LEFT JOIN `acct_charge` ON `transactions`.`trans_id` = `acct_charge`.`trans_id`
-										WHERE `transactions`.`operator` = '$this->id'
+										WHERE `transactions`.`user_id` = '$this'
 										ORDER BY `trans_id` DESC;"
 		))
 		{

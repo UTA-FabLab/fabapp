@@ -97,7 +97,7 @@ class TrainingModule {
 			INSERT INTO `tm_enroll` 
 				(`tm_id`, `operator`, `completed`, `staff_id`, `current`) 
 			VALUES
-				('$this->tm_id', '$operator_id', CURRENT_TIME(), '$staff->id', 'Y');
+				('$this->tm_id', '$operator_id', CURRENT_TIME(), '$staff', 'Y');
 		")){
 			return true;
 		} elseif ( strpos($mysqli->error, "Duplicate") === 0) {
