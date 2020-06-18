@@ -50,7 +50,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 									</tr>
 								</thead>
 								<?php
-									foreach ($user->history() as $ticket)
+									foreach($user->transaction_history() as $ticket)
 									{
 										?>
 										<tr>
@@ -79,19 +79,19 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 							<table class="table table-striped table-bordered table-hover">
 								<tr>
 									<td align="Center">Total Tickets</td>
-									<td><p title="<?php echo "$sv[rank_period] Month Rank : ".$user->ticketsTotalRank(); ?>">
-										<?php echo $user->ticketsTotal(); ?></p>
+									<td><p title="Ranking: <?php echo $user->total_transactions_rank(); ?>">
+										<?php echo $user->total_transactions(); ?></p>
 									</td>
 								</tr>
 								<tr>
 									<td align="Center">Tickets Assisted</td>
-									<td><p title="<?php echo "$sv[rank_period] Month Rank : ".$user->ticketsAssistRank(); ?>">
-										<?php echo $user->ticketsAssist(); ?></p>
+									<td><p title="Ranking: <?php echo $user->transaction_assists_rank(); ?>">
+										<?php echo $user->transaction_assists(); ?></p>
 									</td>
 								</tr>
 								<tr>
 									<td align="Center">Assigned Role</td>
-									<td><p><?php echo Role::getTitle($user->r_id); ?></p></td>
+									<td><p><?php echo Role::to_title($user->r_id); ?></p></td>
 								</tr>
 								<tr>
 									<!-- TODO: permissions -->

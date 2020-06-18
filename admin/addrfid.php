@@ -5,7 +5,7 @@
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
-if(!$user || !$user->validate($ROLE["admin"]))
+if(!$user || !$user->validate("edit_rfid"))
 {
 	header('Location: /index.php');
 	$_SESSION['error_msg'] = "Insufficient role level to access, sorry.";
@@ -98,74 +98,52 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["matchBtn"]))
 	<!-- /.row -->
 	<div class="row">
 		<div class="col-md-7">
-			<?php
-				if($user->validate("edit_rfid"))
-				{
-					?>
-					<div class="panel panel-default">
-						<div class="panel-heading">
-							<i class="fas fa-wifi fa-lg"></i> Assign an RFID to a Learner
-						</div>
-						<div class="panel-body">
-							<form onsubmit="return validateForm()" id="rfForm" method="post" autocomplete="off" action="">
-								<table class="table table-bordered table-striped table-hover">
-									<tr>
-										<td>ID Number</td>
-										<td>
-											<input type="text" name="operator" id="operator" placeholder="1000000000" 
-												value="<?php if(isset($operator_id)) echo $operator_id;?>" maxlength="10" 
-												size="10" autofocus tabindex="1" onkeyup="checkForRFID(this, this.value)"
-												class='form-control'>
-										</td>
-									</tr>
-									<tr>
-										<td>RFID (HEX)</td>
-										<td>
-											<input type="text" name="rfid_h" id="rfid_h" placeholder="RFID HEX Value" 
-											value="<?php if(isset($rfid_h)) echo $rfid_h;?>" tabindex="2" onkeyup="convertRFID(this, this.value, 'rfid')"
-											size="11" maxlength="8" class='form-control'>
-										</td>
-									</tr>
-									<tr>
-										<td>RFID (Decimal)</td>
-										<td id="rfid_td">
-											<input type="text" name="rfid" id="rfid" placeholder="RFID Number" 
-											value="<?php if(isset($operator)){echo $operator->rfid_no;} elseif(isset($rfid_no)) {echo $rfid_no;}?>" tabindex="3" 
-											title="Enter the HEX value above, this field is the converted value." class='form-control'>
-											<?php if(isset($operator) && is_object($operator) && $operator->rfid_no){ ?>
-												<label for="override">Overwrite Existing RFID? </label>
-												<input type="checkbox" name="override" id="override" tabindex="4" value="yes"
-												class='form-control'>
-											<?php } ?>
-										</td>
-									</tr>
-									<tr>
-										<td colspan="2">
-											<button class="btn btn-basic pull-right" name="rfBtn" tabindex="5">Add RFID</button>
-										</td>
-									</tr>
-								</table>
-							</form>
-						</div>
-					</div>  <!-- /.panel-body -->
-					<?php
-				}
-				else
-				{
-					?>
-					<div class="panel panel-default">
-						<div class="panel-heading">
-							<i class="fas fa-wifi fa-lg"></i> Assign an RFID to a Learner
-						</div>
-						<div class="panel-body">
-							<?php
-								echo ("To Add/Edit an RFID, you must be logged in as ".ROLE::getTitle($sv['editRfid'])." or higher.");
-							?>
-						</div>
-					</div>  <!-- /.panel-body -->
-					<?php
-				}
-			?>
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<i class="fas fa-wifi fa-lg"></i> Assign an RFID to a Learner
+				</div>
+				<div class="panel-body">
+					<form onsubmit="return validateForm()" id="rfForm" method="post" autocomplete="off" action="">
+						<table class="table table-bordered table-striped table-hover">
+							<tr>
+								<td>ID Number</td>
+								<td>
+									<input type="text" name="operator" id="operator" placeholder="1000000000" 
+										value="<?php if(isset($operator_id)) echo $operator_id;?>" maxlength="10" 
+										size="10" autofocus tabindex="1" onkeyup="checkForRFID(this, this.value)"
+										class='form-control'>
+								</td>
+							</tr>
+							<tr>
+								<td>RFID (HEX)</td>
+								<td>
+									<input type="text" name="rfid_h" id="rfid_h" placeholder="RFID HEX Value" 
+									value="<?php if(isset($rfid_h)) echo $rfid_h;?>" tabindex="2" onkeyup="convertRFID(this, this.value, 'rfid')"
+									size="11" maxlength="8" class='form-control'>
+								</td>
+							</tr>
+							<tr>
+								<td>RFID (Decimal)</td>
+								<td id="rfid_td">
+									<input type="text" name="rfid" id="rfid" placeholder="RFID Number" 
+									value="<?php if(isset($operator)){echo $operator->rfid_no;} elseif(isset($rfid_no)) {echo $rfid_no;}?>" tabindex="3" 
+									title="Enter the HEX value above, this field is the converted value." class='form-control'>
+									<?php if(isset($operator) && is_object($operator) && $operator->rfid_no){ ?>
+										<label for="override">Overwrite Existing RFID? </label>
+										<input type="checkbox" name="override" id="override" tabindex="4" value="yes"
+										class='form-control'>
+									<?php } ?>
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2">
+									<button class="btn btn-basic pull-right" name="rfBtn" tabindex="5">Add RFID</button>
+								</td>
+							</tr>
+						</table>
+					</form>
+				</div>
+			</div>  <!-- /.panel-body -->
 		</div>
 		<!-- /.col-md-7 -->
 		<div class="col-md-5">

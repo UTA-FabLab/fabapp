@@ -174,7 +174,7 @@ function submitTM($tm_id, $operator, $staff){
 					</div>
 					<div class="panel-body">
 						<?php
-							echo ("To issue a certificate, you must be logged in as ".ROLE::getTitle($sv['minRoleTrainer'])." or higher.");
+							echo "You do not have permission to assign a training";
 						?>
 					</div>
 					<!-- /.panel-body -->

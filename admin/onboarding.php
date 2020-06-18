@@ -8,85 +8,92 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
 //Submit results
 $resultStr = "";
-if (!$user || $user->getRoleID() < 10){
+if(!$user || !$user->validate($ROLE["admin"]))
+{
 	//Not Authorized to see this Page
 	header('Location: /index.php');
 	$_SESSION['error_msg'] = "Insufficient role level to access, You must be an admin.</a>";
 }
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-	if ( isset($_POST['addBtn']) ){
-		$operator = filter_input(INPUT_POST, "op2");
-		$new_user = Users::withID($operator);
-		$role_id = filter_input(INPUT_POST,'selectRole');
-		$icon_code = filter_input(INPUT_POST,'icon_code');
-		
-		
-		if ( preg_match("/^\d{1,2}$/", $role_id) == 1  && $role_id <= $user->getRoleID()){
-			$str = $new_user->insertUser($user, $role_id, $icon_code);
-			if (is_string($str)){
-				$resultStr = $str;
-			} else {
-				if ($mysqli->query("
-					UPDATE `users`
-					SET `icon` = '$icon_code'
-					WHERE `operator` = '$operator';
-				")) {
-					$resultStr = "Operator ID $operator has been successfully added";
-				}
-				else {
-					$resultStr = $mysqli->error;
-				}
-			}
-			
-		}
-		else {
-			echo "<script>window.onload = function(){goModal('Error',\"Invalid Role\", false)}</script>";
-		}
-		
-	}
-	if ( isset($_POST['modifyBtn']) ){
-		$operator1 = filter_input(INPUT_POST, "operators");
-		$new_user1 = Users::withID($operator1);
-		$role_id1 = filter_input(INPUT_POST,'selectRole1');
-		$icon_code1 = filter_input(INPUT_POST,'icon_code1');
-		
-		if((filter_input(INPUT_POST,'selectRole1') == NULL && filter_input(INPUT_POST,'icon_code1') == NULL) || $role_id1 > $user->getRoleID()){
-			echo "<script>window.onload = function(){goModal('Error',\"You must modify the 'Role' or 'Icon' to successfully run this query.\", false)}</script>";
-		}
-		else {
-			if (filter_input(INPUT_POST,'selectRole1') == NULL){
-				$role_id1 = filter_input(INPUT_POST,'u_r_id');
-			}
 
-			if ( preg_match("/^\d{1,2}$/", $role_id1) == 1 ){
-				$str = $new_user1->insertUser($user, $role_id1, $icon_code1);
-				if (is_string($str)){
-					$resultStr = $str;
-				} else {
-					if (filter_input(INPUT_POST,'icon_code1') != NULL){
-						if ($mysqli->query("
-							UPDATE `users`
-							SET `icon` = '$icon_code1'
-							WHERE `operator` = '$operator1';
-						")) {
-							$resultStr = "Operator ID $operator1 has been successfully updated";
-						}
-						else {
-							$resultStr = $mysqli->error;
-						}
-					} else {
-						$resultStr = "Operator ID $operator1 has been successfully updated";
-					}
-				}
+if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['addBtn']))
+{
+	$new_user_id = filter_input(INPUT_POST, "__NEWUSER__user_id");
+	$role_id = filter_input(INPUT_POST, '__NEWUSER__role_select');
+	$icon = filter_input(INPUT_POST, '__NEWUSER__icon');
 
-			} else {
-				echo "<script>window.onload = function(){goModal('Error',\"Invalid Role\", false)}</script>";
-			}		 
-		}
-		
+	if(!Role::regex_id($role_id))
+		exit_with_error("Role: $role_id is invalid");
+	else if($user->validate($role_id))
+		exit_with_error("You do not have high enough access to set a role of level $role_id");
+
+	if(!$user->new_user($new_user_id, $role_id))
+		exit_with_error("Failed to add Staff $new_user_id");
+	else 
+	{
+		if($_POST["iconBox"] && $user->update_icon($icon, $new_user_id))
+			exit_with_success("Staff $new_user_id was successfully added with icon");
+		elseif($_POST["iconBox"])
+			exit_with_error("Staff $new_user_id was added but failed to add icon");
+		else exit_with_success("Staff $new_user_id was successfully added");		
 	}
 }
+
+elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['modifyBtn']))
+{
+	$mod_user_id = filter_input(INPUT_POST, "__MODUSER__user_id");
+	$role_id = filter_input(INPUT_POST,'__MODUSER__role_select');
+	$icon = filter_input(INPUT_POST,'__MODUSER__icon');
+
+	// create user to compare data with
+	$mod_user = Users::with_id($mod_user_id);
+	if(!$mod_user) exit_with_error("onboarding.php: Unable to create user object for ID: $mod_user_id");
+	
+	if(!$role_id && !$icon) exit_with_error("onboarding.php: You did not choose modify either the role or icon");
+	if(!$user->validate($role_id))
+		exit_with_error("onboarding.php: You do not have high enough access to set a role of level $role_id");
+
+	if(!Users::is_in_DB($mod_user_id))
+		exit_with_error("onboarding.php: user id: $mod_user_id not found in DB");
+
+	if(!Role::regex_id($role_id))
+		exit_with_error("Role: $role_id is invalid");
+
+	// update
+	if($role_id != $mod_user->r_id && $icon != $mod_user->icon)
+	{
+		// update both
+	}
+	elseif($role_id != $mod_user->r_id)
+	{
+		// update role 
+	}
+	elseif($icon != $mod_user->icon)
+	{
+		// update icon
+	}
+	else exit_with_error("onboarding.php: You did not choose modify either the role or icon");
+}
+
+
+function exit_with_error($message, $redirect=NULL)
+{
+	$_SESSION["error_msg"] = $message;
+	if($redirect) header("Location:./$redirect");
+	else header("Location:./onboarding.php");
+	exit();
+}
+
+
+function exit_with_success($message, $redirect=NULL)
+{
+	$_SESSION["success_msg"] = $message;
+	if($redirect) header("Location:./$redirect");
+	else header("Location:./onboarding.php");
+	exit();
+}
+
+
 ?>
 
 <html>
@@ -105,13 +112,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 			<!-- /.col-lg-12 -->
 		</div>
 		<!-- /.row -->
-
-		<?php if ($resultStr != ""){ ?>
-			<div class="alert alert-success">
-				<?php echo $resultStr; ?>
-			</div>
-		<?php } ?>
-
 		<div class="row">
 			<div class="col-md-12">
 				<div class="panel panel-default">
@@ -132,13 +132,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 									<div class="panel panel-default">
 										<div class="panel-body">
 											<table class="table table-bordered table-striped table-hover">
-												<form method="POST" action="" id="myForm" autocomplete='off' onsubmit="return validateID()">
+												<form method="POST" action="" autocomplete='off' onsubmit="return validateID()">
 													<tr>
 														<td>
 															<b data-toggle="tooltip" data-placement="top" title="email contact information">Operator ID: </b>
 														</td>
 														<td>
-															<input type="text" class="form-control" name="op2" id="op2" maxlength="10" size="10" placeholder="1000000000" />
+															<input type="text" class="form-control" name="__NEWUSER__user_id" id="__NEWUSER__user_id" maxlength="10" size="10" placeholder="1000000000" />
 														</td>
 													</tr>
 													<tr>
@@ -146,11 +146,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 															<b data-toggle="tooltip" data-placement="top" title="Select Device">Role: </b>
 														</td>
 														<td>
-															<select class="form-control" name="selectRole" id="selectRole">
+															<select class="form-control" name="__NEWUSER__role_select" id="__NEWUSER__role_select">
 																<option value="" disabled selected>Select Role</option>
 																<?php
-																	$result = $mysqli->query("SELECT * FROM `role` WHERE `r_id`<= '$user->r_id' ORDER BY `r_id` DESC;");
-																	while($row = $result->fetch_assoc()){
+																	$result = $mysqli->query("SELECT * FROM `role` WHERE `r_id`<= $user->r_id ORDER BY `r_id` DESC;");
+																	while($row = $result->fetch_assoc())
+																	{
 																		echo "<option value=\"$row[r_id]\">$row[title]</option>";
 																	}
 																?>
@@ -167,7 +168,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 															<br>Include Icon <input type="checkbox" id="iconBox" />
 														</td>
 														<td>
-															<input class="form-control icp demo" onKeyDown="return false" value="fas fa-user" type="text" id="icon_code" name="icon_code" disabled>
+															<input class="form-control icp demo" onKeyDown="return false" value="fas fa-user" type="text" id="__NEWUSER__icon" name="__NEWUSER__icon" disabled>
 														</td>
 													</tr>
 													<tfoot>
@@ -209,7 +210,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 																	WHERE `users`.`r_id` = `role`.`r_id` AND `users`.`r_id` <= $user->r_id
 																	ORDER BY `r_id` DESC;");
 																	//TODO: fix so it checks that query executed properly (thanks Sammy)
-																	while($row = $result->fetch_assoc()){
+																	while($row = $result->fetch_assoc())
+																	{
 																		echo "<option value=\"$row[r_id]\">$row[title]</option>";
 																	}
 																?>
@@ -218,7 +220,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 
 															<div class="col-md-6">
-															<select class="form-control" name="operators" id="operators" tabindex="1">
+															<select class="form-control" name="__MODUSER__user_id" id="__MODUSER__user_id" tabindex="1">
 																<option value =""> Select Role First</option>
 															</select>   
 															</div>
@@ -230,11 +232,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 															<br>Don't Update <input type="checkbox" id="roleBox"/>
 														</td>
 														<td>
-															<select class="form-control" name="selectRole1" id="selectRole1">
+															<select class="form-control" name="__MODUSER__role_select" id="__MODUSER__role_select">
 																<option value="" disabled selected>Select Role</option>
 																<?php
 																	$result = $mysqli->query("SELECT * FROM `role` WHERE `r_id`<= $user->r_id ORDER BY `r_id` DESC;");
-																	while($row = $result->fetch_assoc()){
+																	while($row = $result->fetch_assoc())
+																	{
 																		echo "<option value=\"$row[r_id]\">$row[title]</option>";
 																	}
 																?>
@@ -247,7 +250,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 															<br>Don't Update <input type="checkbox" id="iconBox1" checked/>
 														</td>
 														<td>
-															<input class="form-control icp demo" onKeyDown="return false" value="fas fa-user" type="text" id="icon_code1" name="icon_code1" disabled>
+															<input class="form-control icp demo" onKeyDown="return false" value="fas fa-user" type="text" id="__MODUSER__icon" name="__MODUSER__icon" disabled>
 														</td>
 													</tr>
 													<tfoot>
@@ -299,65 +302,78 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 						<div class="table-responsive">
 							<ul class="nav nav-tabs">
 								<!-- Load all device groups as a tab that have at least one device in that group -->
-								<?php if ($result = Users::getTabResult()) {
-									$count = 0;
-									while ($row = $result->fetch_assoc()) { ?>
-										<li class="<?php if ($count == 0) echo "active";?>">
-											<a <?php echo("href=\"#".$row["r_id"]."\""); ?>  data-toggle="tab" aria-expanded="false"> <?php echo($row["title"]); ?> </a>
-										</li>
-									<?php 
-									if ($count == 0){
-										//create a way to display the first wait_queue table tab by saving which dg_id it is to variable 'first_dgid'
-										$first_rid = $row["r_id"];  
-									}   
-									$count++;												  
+								<?php
+									if($tab_result = Role::current_used_roles())
+									{
+										$count = 0;
+										foreach($tab_result as $r_id => $title)
+										{
+											?>
+											<li class="<?php if($count == 0) echo "active";?>">
+												<a href='<?php echo "#$r_id"; ?>' data-toggle="tab" aria-expanded="false"><?php echo $title; ?></a>
+											</li>
+											<?php
+
+											//create a way to display the first wait_queue table tab by saving which dg_id it is to variable 'first_dgid'
+											$count++;												  
+										}
 									}
-								} ?>
+								?>
 							</ul>
 							<div class="tab-content">
 								<?php
-								if ($Tabresult = Users::getTabResult()) {
-									while($tab = $Tabresult->fetch_assoc()){
-										$number_of_user_tables++;
+									if($tab_result = Role::current_used_roles())
+									{
+										$count = 0;
+										foreach($tab_result as $r_id => $title)
+										{
+											$count++;
 
+											// Give all of the dynamic tables a name so they can be called when their tab is clicked
+											?>
+											<div class="tab-pane fade <?php if($count == 1) echo "in active";?>" id='<?php echo $r_id; ?>'>
+												<table class="table table-striped table-bordered table-hover" id='<?php echo "userTable_$count"; ?>'>
+													<thead>
+														<tr class="tablerow">
+															<th><i class="far fa-user"></i> Operator</th>
+															<th><i class="fas fa-bullseye"></i> Icon</th>
+															<!--<th><i class="far fa-flag"></i> Date Added</th> -->
+														</tr>
+													</thead>
+													<tbody>
+														<?php // Display all of the students in the wait queue for a device group
+															if($result = $mysqli->query(
+																"SELECT * FROM users U JOIN role R ON U.r_id = R.r_id
+																WHERE U.r_id = $r_id;"
+															))
+															{
+																while ($row = $result->fetch_assoc())
+																{
+																	?>
+																	<tr class="tablerow">
+																		<td align="center">
+																			<?php
+																				echo $row["user_id"];
+																			?>
+																		</td>
 
-										// Give all of the dynamic tables a name so they can be called when their tab is clicked ?>
-										<div class="tab-pane fade <?php if ($first_rid == $tab["r_id"]) echo "in active";?>" <?php echo("id=\"".$tab["r_id"]."\"") ?> >
-											<table class="table table-striped table-bordered table-hover" <?php echo("id=\"userTable_$number_of_user_tables\"") ?>>
-												<thead>
-													<tr class="tablerow">
-														<th><i class="far fa-user"></i> Operator</th>
-														<th><i class="fas fa-bullseye"></i> Icon</th>
-														<!--<th><i class="far fa-flag"></i> Date Added</th> -->
-													</tr>
-												</thead>
-												<tbody>
-													<?php // Display all of the students in the wait queue for a device group
-													if ($result = $mysqli->query("
-															SELECT *
-															FROM users U JOIN role R ON U.r_id = R.r_id
-															WHERE U.r_id=$tab[r_id];
-													")) {
-														while ($row = $result->fetch_assoc()) { ?>
-															<tr class="tablerow">
-
-																<!-- Operator -->
-																<td align="center"><?php echo($row['operator']) ?></td>
-
-																<!-- Icon --> 
-																<td align="center">
-																	<?php $new_user = Users::withID($row['operator']);?>
-																	<i class="<?php echo $new_user->getIcon()?> fa-lg"></i>
-																</td>
-
-															</tr>
-														<?php }
-													} ?>
-												</tbody>
-											</table>
-										</div>
-									<?php }
-								} ?>
+																		<!-- Icon --> 
+																		<td align="center">
+																			<i class="<?php echo $row["icon"]; ?>"></i>
+																		</td>
+																	</tr>
+																	<?php 
+																}
+															}
+															else echo "<tr><td colspan='2'>Unable to get results: $mysqli->error</td></tr>";
+														?>
+													</tbody>
+												</table>
+											</div>
+											<?php
+										}
+									}
+								?>
 							</div>
 						</div>
 						<!-- /.table-responsive -->
@@ -376,47 +392,62 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 <script src="\vendor\iconpicker\js\fontawesome-iconpicker.js"></script>
 <script type="text/javascript">
 
-function validate2(){
-	if (stdRegEx("operator", /<?php echo $sv['regexUser'];?>/, "Invalid Operator ID #") === false){
+function validate2()
+{
+	if(stdRegEx("operator", /<?php echo $sv['regexUser'];?>/, "Invalid Operator ID #") === false)
+	{
 		return false;
 	}
-	if (stdRegEx("selectDevice", /^\d{1,}$/, "Select a Device") === false){
+	if(stdRegEx("selectDevice", /^\d{1,}$/, "Select a Device") === false)
+	{
 		return false;
 	}
 }
 	
-function button_text(element) {
+function button_text(element)
+{
 	element.value = (element.value == "Open Tools") ? "Hide Tools" : "Open Tools";
 }
 	
-function Submitter(){
+function Submitter()
+{
 
-	if (confirm("You are about to submit this query. Click OK to continue or CANCEL to quit.")){
+	if(confirm("You are about to submit this query. Click OK to continue or CANCEL to quit."))
+	{
 		return true;
 	}
 	return false;
 } 
 	
-function validateID(){
-	if (stdRegEx("selectRole", /^\d{1,2}$/, "Select a Role") === false){
+function validateID()
+{
+	if(stdRegEx("__NEWUSER__role_select", /^\d{1,2}$/, "Select a Role") === false)
+	{
 		return false;
 	}
-	if (stdRegEx("op2", /<?php echo $sv['regexUser'];?>/, "Invalid Operator ID #") === false){
+	if(stdRegEx("__NEWUSER__user_id", /<?php echo $sv['regexUser'];?>/, "Invalid Operator ID #") === false)
+	{
 		return false;
 	}
 }
 	
-function change_operator(){
-	if (window.XMLHttpRequest) {
+function change_operator()
+{
+	if(window.XMLHttpRequest)
+	{
 		// code for IE7+, Firefox, Chrome, Opera, Safari
 		xmlhttp = new XMLHttpRequest();
-	} else {
+	}
+	else
+	{
 		// code for IE6, IE5
 		xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
 	}
-	xmlhttp.onreadystatechange = function() {
-		if (this.readyState == 4 && this.status == 200) {
-			document.getElementById("operators").innerHTML = this.responseText;
+	xmlhttp.onreadystatechange = function()
+	{
+		if(this.readyState == 4 && this.status == 200)
+		{
+			document.getElementById("__MODUSER__user_id").innerHTML = this.responseText;
 		}
 	};
 
@@ -466,7 +497,8 @@ $('.demo').iconpicker({
   // list of icon classes 
   icons: [], 
 
-  fullClassFormatter: function(val) {
+  fullClassFormatter: function(val)
+  {
 	  return 'fa ' + val;
   },
 
@@ -498,19 +530,23 @@ $('.demo').iconpicker({
 });
 
 	
-document.getElementById('iconBox').onchange = function() {
-	document.getElementById('icon_code').disabled = !this.checked;
+document.getElementById('iconBox').onchange = function()
+{
+	document.getElementById('__NEWUSER__icon').disabled = !this.checked;
 };
-document.getElementById('iconBox1').onchange = function() {
-	document.getElementById('icon_code1').disabled = this.checked;
+document.getElementById('iconBox1').onchange = function()
+{
+	document.getElementById('__MODUSER__icon').disabled = this.checked;
 };
 
-document.getElementById('roleBox').onchange = function() {
-	document.getElementById('selectRole1').disabled = this.checked;
+document.getElementById('roleBox').onchange = function()
+{
+	document.getElementById('__MODUSER__role_select').disabled = this.checked;
 };
 
 var str;
-for(var i=1; i<= <?php echo $number_of_user_tables;?>; i++){
+for(var i=1; i<= <?php echo $count; ?>; i++)
+{
 	str = "#userTable_"+i
 	$(str).DataTable({
 				"iDisplayLength": 20,
