@@ -67,8 +67,6 @@ if($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['signBtn']))
 		if(Users::regex_id($user_id))
 		{
 			$user = Users::with_id($user_id);
-			// staff get either limit or limit_long as their auto logout timer
-			$user->set_user_time_limit(($user->validate($ROLE["lead"]) ? $SITE_VARS["limit_long"] : $SITE_VARS["limit"]));
 
 			//set the timeOut = current + limit of login
 			$_SESSION["timeOut"] = (intval(time()) + $user->time_limit);

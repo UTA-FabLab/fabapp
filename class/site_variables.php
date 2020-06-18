@@ -18,6 +18,18 @@ if(!$results = $mysqli->query("SELECT `name`, `value` FROM `site_variables`;"))
     throw new Exception("site_variables.php: Bad query: $mysqli->error");
 else while($row = $results->fetch_assoc()) $SITE_VARS[$row['name']] = $row['value'];
 
+// used to phase out $sv global
+$MAKERSPACE_VARS = array();
+if(!$results = $mysqli->query("SELECT `name`, `value` FROM `site_variables`;"))
+    throw new Exception("site_variables.php: Bad query: $mysqli->error");
+else while($row = $results->fetch_assoc()) $MAKERSPACE_VARS[$row['name']] = $row['value'];
+
+// used to phase out $sv global
+$KEYS = array();
+if(!$results = $mysqli->query("SELECT `name`, `value` FROM `site_variables`;"))
+    throw new Exception("site_variables.php: Bad query: $mysqli->error");
+else while($row = $results->fetch_assoc()) $KEYS[$row['name']] = $row['value'];
+
 
 class Site_Variables {
     private $id;

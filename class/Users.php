@@ -25,6 +25,10 @@ if(!$results = $mysqli->query("SELECT `r_id`, `variable` FROM `role`;"))
 else while($row = $results->fetch_assoc()) $ROLE[$row['variable']] = intval($row['r_id']);
 
 
+// holds data about a user based on ID number.
+// queries from `users`, `accounts`, `permissions`, `rfid` tables.
+// used by transactional, material, and metrical operations.
+// has static functions to safely create user objects based on ID, RFID. 
 class Users
 {
 	const BAD_ID = 0;  // bad user ID
@@ -40,9 +44,9 @@ class Users
 	private $r_id;  // int—assigned role to staff member
 
 	// other tables
-	private $accounts;  // array<Account>—accounts available to user
-	private $rfid_no;  // string—rfid number assocated with ID
+	private $accounts = array();  // array<Account>—accounts available to user
 	private $permissions = array();  // array<string>—the permission codes for user
+	private $rfid_no;  // string—rfid number assocated with ID
 
 	// other
 	private $time_limit;  // int—number of seconds before JS logout
@@ -54,7 +58,7 @@ class Users
 	{
 		if(!self::regex_id($id)) throw new Exception("Bad user id: $id");  // be extra catious
 
-		// —— USERS ATTRIBUTES ——
+		// —— USERS TABLE ATTRIBUTES ——
 		$this->id = $id;
 
 		global $mysqli;
@@ -68,17 +72,15 @@ class Users
 
 			$attributes = array("adj_date", "exp_date", "icon", "notes", "r_id");
 			foreach($attributes as $attribute) $this->$attribute = $row[$attribute];
-			$this->set_accounts();
 		}
 
 		$this->set_user_time_limit();
 
-		// —— OTHER ATTRIBUTES ——
-		// rfid
-		if($rfid_result = $mysqli->query("SELECT `rfid_no` FROM `rfid` WHERE `user_id` = '$id';"))
-			$this->rfid_no = $rfid_result->fetch_assoc()["rfid_no"];
-		else throw new Exception("Users::__construct: Bad query: $mysqli->error");
+		// —— OTHER TABLES ATTRIBUTES ——
+		// accounts
+		$this->set_accounts();
 
+		// icon
 		if(!$this->icon) $this->icon = "fas fa-user";
 
 		// permissions
@@ -87,8 +89,12 @@ class Users
 														UNION SELECT `perm_id` FROM `permissions`
 														WHERE `r_id` <= $this->r_id;"
 		)) throw new Exception("Users::__construct: Bad query: $mysqli->error");
-		
 		while($row = $permission_results->fetch_assoc()) $this->permissions[] = $row["perm_id"];
+
+		// rfid
+		if($rfid_result = $mysqli->query("SELECT `rfid_no` FROM `rfid` WHERE `user_id` = '$id';"))
+			$this->rfid_no = $rfid_result->fetch_assoc()["rfid_no"];
+		else throw new Exception("Users::__construct: Bad query: $mysqli->error");
 	}
 
 
@@ -147,6 +153,27 @@ class Users
 
 
 	// ———————————————————— PERMISSION —————————————————————
+
+	// checks if passed user is same as this object
+	// takes string ID or user object
+	// returns is they are the same
+	public function is_same_as($user)
+	{
+		if(is_object($user)) return $this->id == $user->id;
+		if(is_string($user) && self::regex_id($user)) return $this->id == $user;
+		return false;
+	}
+
+
+	// SUGAR: compare this r_id with global ROLE list.
+	// return if this object is r_id.
+	public function is_staff()
+	{
+		global $ROLE;
+
+		return $ROLE["staff"] <= $this->r_id;
+	}
+
 
 	// validates if user has sufficient permission or role.
 	// takes a single role or a single permission.
@@ -230,32 +257,11 @@ class Users
 	}
 
 
-	// checks if passed user is same as this object
-	// takes string ID or user object
-	// returns is they are the same
-	public function is_same_as($user)
-	{
-		if(is_object($user)) return $this->id == $user->id;
-		if(is_string($user) && self::regex_id($user)) return $this->id == $user;
-		return false;
-	}
-
-
-	// SUGAR: compare this r_id with global ROLE list.
-	// return if this object is r_id.
-	public function is_staff()
-	{
-		global $ROLE;
-
-		return $ROLE["staff"] <= $this->r_id;
-	}
-
-
 	// check that user is staff in DB.
 	// takes user ID.
 	// queries DB.
 	// returns if in DB && role is greater or equal to staff.
-	public static function is_staff_in_DB($id)
+	private static function is_staff_in_DB($id)
 	{
 		global $mysqli, $ROLE;
 
@@ -268,10 +274,48 @@ class Users
 	}
 
 
+	// formerly: public static function RFIDtoID($rfid_no).
+	// get the ID for a user based on their RFID number.
+	// takes RFID number string.
+	// queries DB and creates Users object if found.
+	// returns Users object if found or false.
+	public static function user_for_rfid_no($rfid_no)
+	{
+		global $mysqli;
+		
+		if(!self::regex_rfid($rfid_no)) return false;
+
+		if(!$result = $mysqli->query("SELECT `user_id` FROM `rfid` WHERE `rfid_no` = '$rfid_no'")
+		|| !$result->num_rows)
+			return false;
+
+		return self::with_id($result->fetch_assoc()["user_id"]);
+	}
+
+
 	// ————————————————————— SETTERS —————————————————————
 
-	// 
-	public function set_user_time_limit()
+	// queries DB for associated accounts (currently not implemented).
+	// gets accounts for user from DB table `auth_accts`. adds accounts to property array.
+	// returns success of query.
+	private function set_accounts()
+	{
+		global $mysqli;
+		
+		//Authorized Accounts that the user is authorized to use
+		if(!$result = $mysqli->query(	"SELECT `a_id` FROM `auth_accts`
+										WHERE `auth_accts`.`user_id` = '$this' AND `valid` = 'Y';"
+		)) return false;
+
+		$this->accounts = array();  // (re)set accounts
+		while($row = $result->fetch_assoc()) $this->accounts[] = new Accounts($row['a_id']);
+		return true;
+	}
+
+
+	// sets the login time of a user.
+	// based on role, sets time_limit property with the site variable.
+	private function set_user_time_limit()
 	{
 		global $ROLE, $SITE_VARS;
 
@@ -281,58 +325,29 @@ class Users
 
 	// —————————————————————— REGEX ——————————————————————
 
-
-	// formerly: public static function regexRFID($rfid_no)
-	public static function regex_rfid($rfid_no)
-	{
-		return boolval(preg_match("/^\d{4,12}$/",$rfid_no));
-	}
-
-
-	// formerly regexUser($operator)
+	// formerly regexUser($operator).
+	// regexes a users ID.
+	// takes user id string.
+	// compares to DB stored regex format.
+	// returns if ID invalid, not in DB, or in DB with class constants.
 	public static function regex_id($id)
 	{
-		global $mysqli, $sv;
+		global $mysqli, $MAKERSPACE_VARS;
 
-		if(!preg_match("/$sv[regexUser]/",$id)) return self::BAD_ID;
+		if(!preg_match("/$MAKERSPACE_VARS[regex_id]/", $id)) return self::BAD_ID;
 		if(!$result = $mysqli->query("SELECT * FROM `users` WHERE `user_id` = '$id';" || !$result->num_rows))
 			return self::UNKNOWN_ID;
 		return self::KNOWN_ID;
 	}
 
 
-	public static function RFIDtoID($rfid_no)
+	// formerly: public static function regexRFID($rfid_no).
+	// regexes an RFID number.
+	// takes an RFID number.
+	// returns boolean value of the pregmatch.
+	public static function regex_rfid($rfid_no)
 	{
-		global $mysqli;
-		
-		if(!preg_match("/^\d+$/", $rfid_no) == 0) return false;
-
-		if($result = $mysqli->query("
-			SELECT operator FROM rfid WHERE rfid_no = $rfid_no
-		")){
-			$row = $result->fetch_array(MYSQLI_NUM);;
-			$operator = $row[0];
-			if($uta_id) return($operator);
-			return "No UTA ID match for RFID $rfid_no";
-		}
-		return "Error Users RF";
-	}
-
-	
-	private function set_accounts()
-	{
-		global $mysqli;
-		
-		//Authorized Accounts that the user is authorized to use
-		if($result = $mysqli->query(	"SELECT `a_id` FROM `auth_accts`
-										WHERE `auth_accts`.`operator` = '$this' AND `valid` = 'Y';"
-		))
-		{
-			$this->accounts = array();  // (re)set accounts
-			while($row = $result->fetch_assoc()) $this->accounts[] = new Accounts($row['a_id']);
-			return true;
-		} 
-		return false;
+		return boolval(preg_match("/^\d{4,12}$/", $rfid_no));
 	}
 
 
@@ -362,8 +377,10 @@ class Users
 	}
 
 
-	// formerly: public function ticketsAssist()
-	// 
+	// formerly: public function ticketsAssist().
+	// gets the number of tickets user is marked as assistant to.
+	// queries DB for count of assistants.
+	// returns result (int) or -1 if bad result.
 	public function transaction_assists()
 	{
 		global $mysqli;
@@ -377,7 +394,11 @@ class Users
 	}
 
 
-	// formerly: public function ticketsAssistRank()
+	// formerly: public function ticketsAssistRank().
+	// gets the ranking of number of assists.
+	// queries DB for count of assistants as subquery. then counts the number of those 
+	// greater than user's number of assists.
+	// returns result (int) or -1 if bad result.
 	public function transaction_assists_rank()
 	{
 		global $mysqli;
@@ -393,7 +414,10 @@ class Users
 	}
 
 
-	// formerly: public function ticketsTotal()
+	// formerly: public function ticketsTotal().
+	// gets the number of tickets user has created.
+	// queries DB for count of tickets.
+	// returns result (int) or -1 if bad result.
 	public function total_transactions()
 	{
 		global $mysqli;
@@ -406,7 +430,11 @@ class Users
 	}
 
 
-	// formerly: public function ticketsTotalRank()
+	// formerly: public function ticketsTotalRank().
+	// gets the ranking of number of tickets.
+	// queries DB for count of tickets as subquery. then counts the number of those 
+	// greater than user's number of tickets.
+	// returns result (int) or -1 if bad result.
 	public function total_transactions_rank()
 	{
 		global $mysqli;
@@ -424,6 +452,10 @@ class Users
 
 
 
+// ——————————————————————— ROLE ———————————————————————
+// —————————————————————————————————————————————————
+
+// manages data for `role` table.
 class Role
 {
 	// formerly: public static function getTabResult().
@@ -439,51 +471,54 @@ class Role
 										WHERE `r_id` IN (SELECT DISTINCT `r_id` FROM `users`);"
 		))
 		{
-			while($row = $result->fetch_assoc())
-			{
-				$used_roles[$row["r_id"]] = $row["title"];
-			}
+			while($row = $result->fetch_assoc()) $used_roles[$row["r_id"]] = $row["title"];
 		}
 
 		return $used_roles;
 	}
 
 	
-	// formerly: public static function getTitle($r_id)
-	public static function to_title($r_id){
+	// formerly: public static function getTitle($r_id).
+	// converts an r_id to its title.
+	// takes r_id (int).
+	// if valid, queries DB for title string.
+	// return title string if found, else false.
+	public static function to_title($r_id)
+	{
 		global $mysqli;
 
-		if(preg_match("/^\d+$/",$r_id) == 0) {
-			echo "Invalid RoleID - $r_id";
+		if(!self::regex_id($r_id)) return false;
+
+		if(!$result = $mysqli->query("SELECT `title` FROM `role` WHERE `r_id` = $r_id;") || !$result->num_rows)
 			return false;
-		}
 
-		if($result = $mysqli->query("
-			SELECT `title`
-			FROM `role`
-			WHERE `r_id` = '$r_id'
-			Limit 1;
-		")){
-			$row = $result->fetch_assoc();
-			return $row["title"];
-		} else {
-			echo mysqli_error($mysqli);
-		}
+		return $result->fetch_assoc()["title"];
 	}
 
 
-	public static function listRoles(){
+	// formerly: public static function listRoles().
+	// lists roles by r_id and title.
+	// adds query to associative array <r_id, title>. throws error if bad query.
+	// returns array.
+	public static function list_roles()
+	{
 		global $mysqli;
 
-		if($result = $mysqli->query("SELECT `r_id`, `title` FROM `role`;"))
-		{
-			return $result;
-		} else {
-			echo mysqli_error($mysqli);
-		}
+		$roles = array();
+		if(!$result = $mysqli->query("SELECT `r_id`, `title` FROM `role`;") || !$result->num_rows)
+			throw new Exception("Role::list_roles: bad query: $mysqli->error");
+			
+		while($row = $result->fetch_assoc()) $roles[$row["r_id"]] = $row["title"];
+		return $roles;
 	}
 
 
+	// —————————————————————— REGEX ——————————————————————
+
+	// check if role_id is valid.
+	// takes role_id.
+	// converts role to in if string. checks that role is within listed role bounds.
+	// returns true if all conditions met, else false.
 	public static function regex_id($id)
 	{
 		global $ROLE;
@@ -500,6 +535,11 @@ class Role
 
 
 
+// ——————————————————————— STAFF ———————————————————————
+// —————————————————————————————————————————————————
+
+// holds data for staff object.
+// adds priviledged methods to users who are staff in the DB.
 class Staff extends Users
 {
 	// ————————————————————— CREATION —————————————————————
@@ -508,17 +548,21 @@ class Staff extends Users
 	{
 		global $ROLE;
 
-		// create staff
-		parent::__construct($id);
+		parent::__construct($id);  // create user
 
 		// validate staff level
-		if($ROLE["staff"] > $this->r_id) throw new Exception("Staff::__construct: user is not staff");
+		if($this->r_id < $ROLE["staff"]) throw new Exception("Staff::__construct: user is not staff");
 	}
 
 
 	// ————————————————————— CREATORS —————————————————————
 
-	// formerly: public function insertRFID($staff, $rfid_no){
+	// formerly: public function insertRFID($staff, $rfid_no).
+	// adds rfid to user.
+	// takes rfid number (string), user (object or id).
+	// validates permission of staff to edit rfid & rfid number. checks that user not already in rfid table. if so, calls
+	// update_rfid. else creates new instance in DB (users object converts to string w/ magic methos __toString). 
+	// returns execution success.
 	public function new_rfid($rfid_no, $user)
 	{
 		global $mysqli;
@@ -538,13 +582,11 @@ class Staff extends Users
 		// check if RFID already exists: if it does, return false
 		if(!$result = $mysqli->query("SELECT `user_id` FROM `rfid` WHERE `rfid_no` = $rfid_no;"))
 			throw new Exception("Users::new_rfid: bad query: $mysqli->error");
-
 		if($result->num_rows) return self::update_rfid($rfid_no, $user);
 
 		$statement = $mysqli->prepare("INSERT INTO `rfid` (`rfid_no`, `user_id`) VALUES (?, ?);");
 		if(!$statement) throw new Exception("Users::new_rfid: bad prepare: $mysqli->error");
-
-		$statement->bind_param("ss", $rfid_no, $user->id);
+		$statement->bind_param("ss", $rfid_no, $user);
 		if(!$statement) throw new Exception("Users::new_rfid: bad parameter binding: $mysqli->error");
 
 		// submit & return outcome
@@ -553,6 +595,9 @@ class Staff extends Users
 
 	
 	// formerly: public function insertUser($staff, $r_id)
+	// adds new user in `users` table.
+	// takes new user's ID (string), role (int), notes (string).
+	// 
 	public function new_user($new_user_id, $r_id, $notes=NULL)
 	{
 		global $mysqli, $ROLE;
@@ -571,12 +616,10 @@ class Staff extends Users
 		// check if user already exists
 		if(!$result = $mysqli->query("SELECT * FROM `users` WHERE `user_id` = '$new_user_id';"))
 			throw new Exception("Users::new_user: bad query: $mysqli->error");
-
 		if($result->num_rows) return self::update_r_id($new_user_id, $r_id, $notes);  // already exists; update
 
 		if(!$statement = $mysqli->prepare("INSERT INTO `users` (`user_id`, `r_id`, `staff_id`) VALUES (?, ?, ?);"))
 			throw new Exception("Users::new_user: bad prepare: $mysqli->query");
-
 		if(!$statement->bind_param("sds", $new_user_id, $r_id, $this->id))
 			throw new Exception("Users::new_user: bad parameter binding: $mysqli->query");
 
@@ -653,13 +696,11 @@ class Staff extends Users
 		// check if RFID already exists: if it does, return false
 		if(!$result = $mysqli->query("SELECT `user_id` FROM `rfid` WHERE `rfid_no` = $rfid_no;"))
 			throw new Exception("Users::new_rfid: bad query: $mysqli->error");
-
 		if(!$result->num_rows) return self::new_rfid($rfid_no, $user);  // check if exists; if not, create new
 
 		// update
 		$statement = $mysqli->prepare("UPDATE `rfid` SET `rfid_no` = ? WHERE `user_id` = ?;");
 		if(!$statement) throw new Exception("Users::new_rfid: bad query: $mysqli->error");
-
 		$statement->bind_param("ss", $rfid_no, $user->id);
 		if(!$statement) throw new Exception("Users::new_rfid: bad parameter binding: $mysqli->error");
 
@@ -686,19 +727,16 @@ class Staff extends Users
 
 		if(!$results = $mysqli->query("SELECT `user_id` FROM `users` WHERE `user_id` = '$id';"))
 			throw new Exception("Users::new_user: bad query: $mysqli->error");
-
 		if(!$result->num_rows) return self::new_user($user_id, $r_id, $notes);  // does not exist; add
 
 		if(!$statement = $mysqli->prepare(	"UPDATE `users` SET  `notes` = ?, `r_id` = ?, `staff_id` = ?
 												WHERE `user_id` = ?;"
 		)) throw new Exception("Users::new_user: bad prepare: $mysqli->query");
-
 		if(!$statement->bind_param("sdss", $notes, $r_id, $this->id, $new_user_id))
 			throw new Exception("Users::new_user: bad bind: $mysqli->query");
 
 		return $statement->execute();
 	}
 }
-
 
 ?>
