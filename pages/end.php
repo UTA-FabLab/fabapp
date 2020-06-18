@@ -501,7 +501,7 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 				var min_quant = parseFloat(this.element['min'].value) / 60;
 				if(isNaN(hour_quant)) hour_quant = 0;  // Esau found this bug
 				if(isNaN(min_quant)) min_quant = 0;
-				return hour_quant + min_quant / 60;
+				return hour_quant + min_quant;
 			}
 			else
 			{
