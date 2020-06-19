@@ -562,7 +562,7 @@ class Staff extends Users
 	// takes rfid number (string), user (object or id).
 	// validates permission of staff to edit rfid & rfid number. checks that user not already in rfid table. if so, calls
 	// update_rfid. else creates new instance in DB (users object converts to string w/ magic methos __toString). 
-	// returns execution success.
+	// returns execution success (bool).
 	public function new_rfid($rfid_no, $user)
 	{
 		global $mysqli;
@@ -594,10 +594,11 @@ class Staff extends Users
 	}
 
 	
-	// formerly: public function insertUser($staff, $r_id)
+	// formerly: public function insertUser($staff, $r_id).
 	// adds new user in `users` table.
 	// takes new user's ID (string), role (int), notes (string).
-	// 
+	// validates permission to change. check if already in DB: if so, uses update function. else add to DB.
+	// returns success (bool).
 	public function new_user($new_user_id, $r_id, $notes=NULL)
 	{
 		global $mysqli, $ROLE;
@@ -616,7 +617,7 @@ class Staff extends Users
 		// check if user already exists
 		if(!$result = $mysqli->query("SELECT * FROM `users` WHERE `user_id` = '$new_user_id';"))
 			throw new Exception("Users::new_user: bad query: $mysqli->error");
-		if($result->num_rows) return self::update_r_id($new_user_id, $r_id, $notes);  // already exists; update
+		if($result->num_rows) return self::update_user($new_user_id, $r_id, $notes);  // already exists; update
 
 		if(!$statement = $mysqli->prepare("INSERT INTO `users` (`user_id`, `r_id`, `staff_id`) VALUES (?, ?, ?);"))
 			throw new Exception("Users::new_user: bad prepare: $mysqli->query");
@@ -627,10 +628,13 @@ class Staff extends Users
 	}
 
 
-
 	// ————————————————————— GETTERS —————————————————————
 
-	// formerly: public static function rfidExist($rfid_no)
+	// formerly: public static function rfidExist($rfid_no).
+	// checks if rfid number has already in use.
+	// takes rfid_no (string).
+	// queries DB if in.
+	// returns if found (bool).
 	public static function rfid_exist($rfid_no)
 	{
 		global $mysqli;
@@ -647,9 +651,9 @@ class Staff extends Users
 	// ————————————————————— SETTERS —————————————————————
 
 	// sets user role to below staff & remove permissions.
-	// takes ID of user.
+	// takes ID (string) of user.
 	// reduces role to 2 & sets any permissions user may have to invalid.
-	// returns bool of success.
+	// returns success (bool).
 	public static function offboarding($id){
 		global $mysqli;
 		
@@ -663,6 +667,10 @@ class Staff extends Users
 	}
 
 
+	// updates user's icon.
+	// takes icon (string), user (object or id).
+	// inserts into DB new string for user icon.
+	// returns execute success (bool).
 	public function update_icon($icon, $user)
 	{
 		global $mysqli;
@@ -670,13 +678,18 @@ class Staff extends Users
 		if(!$statement = $mysqli->prepare("UPDATE `users` SET `icon` = ? WHERE `user_id` = ?;"))
 					throw new Exception("onboarding.php: bad prepare: $mysqli->error");
 
-		if(!$statement->bind_param("ss", $icon_code, $user_id))
+		if(!$statement->bind_param("ss", $icon, $user))
 			throw new Exception("onboarding.php: bad parameter binding: $mysqli->error");
 
 		return $statement->execute();	
 	}
 
 
+	// updates rfid_no for user.
+	// takes rfid number (string), user (object or id).
+	// validates permission of staff to edit rfid & rfid number. checks that rfid is in rfid table. if not, calls
+	// new_rfid. else updates instance in DB (users object converts to string w/ magic methos __toString). 
+	// returns execution success (bool).
 	public function update_rfid($rfid_no, $user)
 	{
 		global $mysqli;
@@ -709,8 +722,13 @@ class Staff extends Users
 	}
 
 
-	// formerly: public function modifyRoleID($staff, $notes)
-	public function update_r_id($user_id, $r_id, $notes=NULL)
+	// formerly: public function modifyRoleID($staff, $notes).
+	// updates role of user.
+	// takes user (object or id), role (int), notes (string).
+	// validates permission of staff to edit role. checks that user is in users table. if not, calls
+	// new_user. else updates instance in DB (users object converts to string w/ magic methos __toString). 
+	// returns execution success (bool).
+	public function update_r_id($user, $r_id, $notes=NULL)
 	{
 		global $mysqli, $ROLE;
 
@@ -719,7 +737,7 @@ class Staff extends Users
 			$_SESSION["error_msg"] = "Insufficient role to Modify Role";
 			return false;
 		}
-		if($this->is_same_as($new_user_id))
+		if($this->is_same_as($user))
 		{
 			$_SESSION["error_msg"] = "Staff can not modify their own Role ID";
 			return false;
@@ -727,12 +745,12 @@ class Staff extends Users
 
 		if(!$results = $mysqli->query("SELECT `user_id` FROM `users` WHERE `user_id` = '$id';"))
 			throw new Exception("Users::new_user: bad query: $mysqli->error");
-		if(!$result->num_rows) return self::new_user($user_id, $r_id, $notes);  // does not exist; add
+		if(!$result->num_rows) return self::new_user($user, $r_id, $notes);  // does not exist; add
 
 		if(!$statement = $mysqli->prepare(	"UPDATE `users` SET  `notes` = ?, `r_id` = ?, `staff_id` = ?
 												WHERE `user_id` = ?;"
 		)) throw new Exception("Users::new_user: bad prepare: $mysqli->query");
-		if(!$statement->bind_param("sdss", $notes, $r_id, $this->id, $new_user_id))
+		if(!$statement->bind_param("sdss", $notes, $r_id, $this->id, $user))
 			throw new Exception("Users::new_user: bad bind: $mysqli->query");
 
 		return $statement->execute();
