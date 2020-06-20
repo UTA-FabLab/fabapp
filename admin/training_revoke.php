@@ -13,7 +13,8 @@
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
 // staff clearance
-if (!$staff || $staff->getRoleID() < $sv['LvlOfLead']){
+if (!$user || !$user->validate("training"))
+{
 	//Not Authorized to see this Page
 	header('Location: /index.php');
 	$_SESSION['error_msg'] = "Insufficient role level to access, You must be a Trainer.";
@@ -53,7 +54,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_revoke'])) {
 	$expiration = date('Y-m-d', strtotime(filter_input(INPUT_POST, 'expiration')));
 	$reason = filter_input(INPUT_POST, 'reason');
 	$tme_key = filter_input(INPUT_POST, 'tme_key');
-	if(IndividualsCertificates::revoke_training($expiration, $reason, $staff, $tme_key)) {
+	if(IndividualsCertificates::revoke_training($expiration, $reason, $user, $tme_key)) {
 		$_SESSION['success_msg'] = 'Training Revoked';
 		header("Location:training_revoke.php?operator=$trainee_ID");
 	} else {
@@ -64,8 +65,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_revoke'])) {
 // restore
 elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['restore_training'])) {
 	$tme_key = filter_input(INPUT_POST, 'restore_training');
-	$staff_id = $staff->getOperator();
-	if(IndividualsCertificates::restore_training($staff_id, $tme_key)) {
+	if(IndividualsCertificates::restore_training($user->id, $tme_key)) {
 		$_SESSION['success_msg'] = 'Training Restored';
 		header("Location:training_revoke.php?operator=$trainee_ID");
 	} else {
@@ -200,16 +200,16 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['restore_training'])
 							echo "<tr";
 								if($row['current'] == 'N') echo " style='background-color:#ffcccc;'";  // highlight if revoked; '>' in next line is very important
 							echo ">";
-								$operator = Users::withID($row['operator']);
-								$issuer = Users::withID($row['staff_id']);
+								$operator = Users::with_id($row['user_id']);
+								$issuer = Users::with_id($row['staff_id']);
 								?>
 								<td>
 									<div class="btn-group">
 									   <button type="button" class="btn btn-default btn-s dropdown-toggle" data-toggle="dropdown">
-											<?php echo "<i class='".$operator->getIcon()." fa-lg' title='".$operator->getOperator()."'></i>"; ?>
+											<?php echo "<i class='$operator->icon fa-lg' title='$operator'></i>"; ?>
 										</button>
 										<ul class="dropdown-menu pull-right" role="menu">
-											<li style="padding-left: 5px;"> <?php echo $row['operator']; ?> </li>
+											<li style="padding-left: 5px;"> <?php echo $row['user_id']; ?> </li>
 										</ul>
 									</div>
 								</td>
@@ -226,10 +226,10 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['restore_training'])
 					  <td style="padding-left: 15px;">  <!-- approved by -->
 						<div class="btn-group">
 						  <button type="button" class="btn btn-default btn-s dropdown-toggle" data-toggle="dropdown">
-												<?php echo "<i class='".$issuer->getIcon()." fa-lg' title='".$issuer->getOperator()."'></i>"; ?>
+												<?php echo "<i class='$issuer->icon fa-lg' title='$issuer'></i>"; ?>
 						  </button>
 						  <ul class="dropdown-menu pull-right" role="menu">
-												<li style="padding-left: 5px;"><?php echo $issuer->getOperator();?></li>
+												<li style="padding-left: 5px;"><?php echo $issuer; ?></li>
 						  </ul>
 						</div>
 								</td>
@@ -248,22 +248,32 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['restore_training'])
 									<table> <tr> 
 									<!-- cell for revoke -->
 									<td class='col-sm-2'>
-										<?php if($staff && $staff->getRoleID() >= $sv['minRoleTrainer']) {
+										<?php
+										if($user && $user->validate("training"))
+										{
 											if($row['current'] === 'N') { ?>
 											<form method="post">
-												<button type='submit' value=<?php echo "'".$row['tme_key']."'"; ?> class='btn btn-success' name='restore_training' >Restore
+												<button type='submit' value='<?php echo $row['tme_key']; ?>' class='btn btn-success' name='restore_training' >Restore
 												</button>
 											</form>
-											<?php } else { ?>
-												<button type='button' value='Revoke' class='btn btn-danger' <?php echo "onclick='revoke_training(".$row['tme_key'].")'" ?> >Revoke
-												</button>
-											<?php }
-										} elseif($row['current'] === 'N') {
+											<?php
+											}
+												else
+												{
+													?>
+													<button type='button' value='Revoke' class='btn btn-danger' <?php echo "onclick='revoke_training(".$row['tme_key'].")'" ?> >Revoke
+													</button>
+												<?php 
+												}
+										}
+										elseif($row['current'] === 'N')
+										{
 											echo "<b>Revoked</b>";
 										}
 									echo "</td>";
 									if($row['altered_date'] !== NULL) 
-									{ ?>
+									{
+										?>
 										<td class='col-sm-2'>   
 											<div class="btn-group">
 												<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">

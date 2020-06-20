@@ -5,7 +5,7 @@
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
-if (!$user || $user->validate("edit_training"))
+if (!$user || !$user->validate("edit_training"))
 {
     //Not Authorized to see this Page
     header('Location: /index.php');

@@ -21,8 +21,8 @@ include_once (filter_input(INPUT_SERVER,'DOCUMENT_ROOT').'/class/all_classes.php
 
 // authenticate permission for user
 session_start();
-$staff = unserialize($_SESSION['staff']);
-if(!$staff || $staff->roleID < $role["admin"]) exit();
+$user = unserialize($_SESSION['user']);
+if(!$user || $user->validate($ROLE["admin"])) exit();
 
 //———TESTING———
 // $_POST["query"] = "byHour";

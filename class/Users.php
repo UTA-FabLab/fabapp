@@ -181,7 +181,7 @@ class Users
 	// return bool of if they have it.
 	public function validate($role_or_permission)
 	{
-		if(!$role_or_permission) return false;
+		if(!$role_or_permission) return false;  // prevent unfinished/missed work from compromising security
 
 		if(is_int($role_or_permission)) return $role <= $this->r_id;
 		else if(is_string($role_or_permission))
@@ -196,7 +196,7 @@ class Users
 	// return bool of if they have it.
 	public function validate_permissions($permissions)
 	{
-		if(!$permissions) return false;
+		if(!$permissions) return false;  // prevent unfinished/missed work from compromising security
 
 		if(is_string($permissions) && in_array($permissions, $this->permissions)) return true;
 		else if(is_array($permissions))
@@ -218,7 +218,7 @@ class Users
 	// return bool of if role is high enough.
 	public function validate_role($role)
 	{
-		if(!$role) return false;
+		if(!$role) return false;  // prevent unfinished/missed work from compromising security
 
 		if(!is_int($role)) throw new Exception("Users::validate_role: Bad value: $role");
 		return $role <= $this->r_id;
@@ -676,7 +676,7 @@ class Staff extends Users
 		global $mysqli;
 
 		if(!$statement = $mysqli->prepare("UPDATE `users` SET `icon` = ? WHERE `user_id` = ?;"))
-					throw new Exception("onboarding.php: bad prepare: $mysqli->error");
+			throw new Exception("onboarding.php: bad prepare: $mysqli->error");
 
 		if(!$statement->bind_param("ss", $icon, $user))
 			throw new Exception("onboarding.php: bad parameter binding: $mysqli->error");

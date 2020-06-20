@@ -66,10 +66,10 @@ class TrainingModule {
 	}
 
 	
-	public function certify_training($operator_id, $staff){
+	public function certify_training($user_id_id, $staff){
 		global $mysqli, $ROLE;
 		
-		if (!Users::regexUser($operator_id)) return "Invalid Operator ID";
+		if (!Users::regexUser($user_id_id)) return "Invalid user_id ID";
 
 		if ($staff->validate("issue_training")){
 			return ("Staff Member Lacks Authority to Issue Certificate");
@@ -79,7 +79,7 @@ class TrainingModule {
 		if ($results = $mysqli->query("
 			SELECT *
 			FROM `tm_enroll`
-			WHERE tm_id = $this->tm_id AND operator = ".$staff->getOperator()." AND `current` = 'Y'
+			WHERE tm_id = $this->tm_id AND user_id = '$staff' AND `current` = 'Y'
 		")){
 			if( $results->num_rows == 0) {
 				//True when they have the related training
@@ -95,9 +95,9 @@ class TrainingModule {
 		
 		if ($mysqli->query("
 			INSERT INTO `tm_enroll` 
-				(`tm_id`, `operator`, `completed`, `staff_id`, `current`) 
+				(`tm_id`, `user_id`, `completed`, `staff_id`, `current`) 
 			VALUES
-				('$this->tm_id', '$operator_id', CURRENT_TIME(), '$staff', 'Y');
+				('$this->tm_id', '$user_id', CURRENT_TIME(), '$staff', 'Y');
 		")){
 			return true;
 		} elseif ( strpos($mysqli->error, "Duplicate") === 0) {

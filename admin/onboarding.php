@@ -45,32 +45,37 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['modifyBtn']))
 	$role_id = filter_input(INPUT_POST,'__MODUSER__role_select');
 	$icon = filter_input(INPUT_POST,'__MODUSER__icon');
 
-	// create user to compare data with
-	$mod_user = Users::with_id($mod_user_id);
+	$mod_user = Users::with_id($mod_user_id);  // create user to compare data with
+	// validate data
 	if(!$mod_user) exit_with_error("onboarding.php: Unable to create user object for ID: $mod_user_id");
-	
 	if(!$role_id && !$icon) exit_with_error("onboarding.php: You did not choose modify either the role or icon");
 	if(!$user->validate($role_id))
 		exit_with_error("onboarding.php: You do not have high enough access to set a role of level $role_id");
-
 	if(!Users::is_in_DB($mod_user_id))
 		exit_with_error("onboarding.php: user id: $mod_user_id not found in DB");
-
 	if(!Role::regex_id($role_id))
 		exit_with_error("Role: $role_id is invalid");
 
 	// update
 	if($role_id != $mod_user->r_id && $icon != $mod_user->icon)
 	{
-		// update both
+		if(!$user->update_r_id($mod_user, $role_id))
+			exit_with_error("Unable to update r_id: $role_id for user: $mod_user");
+		if(!$user->update_icon($icon, $mod_user))
+			exit_with_error("Unable to update r_id: $role_id for user: $mod_user");
+		exit_with_success("Successfully update role and icon for user: $mod_user");
 	}
 	elseif($role_id != $mod_user->r_id)
 	{
-		// update role 
+		if(!$user->update_r_id($mod_user, $role_id))
+			exit_with_error("Unable to update r_id: $role_id for user: $mod_user");
+		exit_with_success("Successfully update role for user: $mod_user");
 	}
 	elseif($icon != $mod_user->icon)
 	{
-		// update icon
+		if(!$user->update_icon($icon, $mod_user))
+			exit_with_error("Unable to update r_id: $role_id for user: $mod_user");
+		exit_with_success("Successfully update icon for user: $mod_user");
 	}
 	else exit_with_error("onboarding.php: You did not choose modify either the role or icon");
 }
@@ -152,7 +157,7 @@ function exit_with_success($message, $redirect=NULL)
 																	$result = $mysqli->query("SELECT * FROM `role` WHERE `r_id`<= $user->r_id ORDER BY `r_id` DESC;");
 																	while($row = $result->fetch_assoc())
 																	{
-																		echo "<option value=\"$row[r_id]\">$row[title]</option>";
+																		echo "<option value='$row[r_id]''>$row[title]</option>";
 																	}
 																?>
 															</select>
@@ -322,7 +327,7 @@ function exit_with_success($message, $redirect=NULL)
 							</ul>
 							<div class="tab-content">
 								<?php
-									if($tab_result = Role::current_used_roles())
+									if($tab_result)
 									{
 										$count = 0;
 										foreach($tab_result as $r_id => $title)
@@ -375,26 +380,23 @@ function exit_with_success($message, $redirect=NULL)
 									}
 								?>
 							</div>
-						</div>
-						<!-- /.table-responsive -->
+						</div>  <!-- /.table-responsive -->
 					</div>
 				</div>
-			</div>
-			<!-- /.col-md-12 -->
-		</div>
-		<!-- /.row -->
+			</div>  <!-- /.col-md-12 -->
+		</div>  <!-- /.row -->
 	</div>
 </body>
 <?php
-//Standard call for dependencies
-include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
+	//Standard call for dependencies
+	include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 ?>
 <script src="\vendor\iconpicker\js\fontawesome-iconpicker.js"></script>
 <script type="text/javascript">
 
 function validate2()
 {
-	if(stdRegEx("operator", /<?php echo $sv['regexUser'];?>/, "Invalid Operator ID #") === false)
+	if(stdRegEx("operator", /<?php echo $SITE_VARS['regex_id'];?>/, "Invalid Operator ID #") === false)
 	{
 		return false;
 	}
@@ -425,7 +427,7 @@ function validateID()
 	{
 		return false;
 	}
-	if(stdRegEx("__NEWUSER__user_id", /<?php echo $sv['regexUser'];?>/, "Invalid Operator ID #") === false)
+	if(stdRegEx("__NEWUSER__user_id", /<?php echo $SITE_VARS['regex_id'];?>/, "Invalid Operator ID #") === false)
 	{
 		return false;
 	}

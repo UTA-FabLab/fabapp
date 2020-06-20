@@ -22,7 +22,8 @@
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
 // staff clearance
-if (!$staff || $staff->getRoleID() < $sv['minRoleTrainer']){
+if(!$user || !$user->validate($ROLE["admin"]))
+{
 	// Not Authorized to see this Page
 	header('Location: /index.php');
 	$_SESSION['error_msg'] = "Insufficient role level to access, You must be a Trainer.";
@@ -40,7 +41,7 @@ $tables = Database_Table::get_tables();
 
 ?>
 
-<title><?php echo $sv['site_name'];?> Data Reports</title>
+<title><?php echo $SITE_VARS['site_name'];?> Data Reports</title>
 <div id="page-wrapper">
 	<div class="row">
 		<div class="col-md-12">

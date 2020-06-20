@@ -23,7 +23,7 @@ class IndividualsCertificates {
 		elseif($result = $mysql->query("
 			SELECT * FROM 
 			`tm_enroll` 
-			WHERE `operator` = '$id_number';
+			WHERE `user_id` = '$id_number';
 		")) {
 			$this->setCertificates($results);
 		}
@@ -35,7 +35,7 @@ class IndividualsCertificates {
 		$result = $mysqli->query("  SELECT * FROM `tm_enroll`
 									LEFT JOIN `trainingmodule`
 									ON `tm_enroll`.`tm_id` = `trainingmodule`.`tm_id`
-									WHERE `operator` = '".$id_number."';");
+									WHERE `user_id` = '$id_number';");
 		while($row = $result->fetch_array(MYSQLI_ASSOC)) {
 			$rows[] = $row;
 		}
@@ -54,7 +54,7 @@ class IndividualsCertificates {
 		global $sv;
 		global $mysqli;
 
-		if($sv['minRoleTrainer'] < $staff->getRoleID()) return false;
+		if($sv['minRoleTrainer'] < $staff->r_id) return false;
 		if(!preg_match( '/^\d+$/', $tme_key)) return false;
 		$reason = htmlspecialchars($reason);
 
@@ -71,7 +71,7 @@ class IndividualsCertificates {
 			SET `altered_by` = ?, `altered_date` = now(), `altered_notes`= ?, `current` = 'N', `expiration_date`= ?
 			WHERE `tme_key` = ?;
 		")) {
-		$stmt->bind_param("sssi", $staff->getOperator(), $reason, $expiration, $tme_key);
+		$stmt->bind_param("sssi", $staff->id, $reason, $expiration, $tme_key);
 		if ($stmt->execute() === true ){
 			$row = $stmt->affected_rows;
 			// Success, only one row was updated

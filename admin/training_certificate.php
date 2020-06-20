@@ -6,7 +6,8 @@
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 $d_id = $dg_id = $operator = "";
 
-if (!$staff || $staff->getRoleID() < $sv['LvlOfLead']){
+if (!$user || !$user->validate("training"))
+{
 	//Not Authorized to see this Page
 	header('Location: /index.php');
 	$_SESSION['error_msg'] = "Insufficient role level to access, sorry.";
@@ -18,7 +19,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn']) && ($_POS
 	$operator = filter_input(INPUT_POST, 'operator');
 	$msg = false;
 	
-	$msg = submitTM($tm_id, $operator, $staff);
+	$msg = submitTM($tm_id, $operator, $user);
 	
 	if ($msg === true){
 		$_SESSION['type'] = 'tc_success';
@@ -45,7 +46,7 @@ if ($_SESSION['type'] && $_SESSION['type'] == 'tc_success' && $_SERVER["REQUEST_
 	$_SESSION['type'] = '';
 }
 
-function submitTM($tm_id, $operator, $staff){
+function submitTM($tm_id, $operator, $user){
 	global $mysqli;
 	
 	if (!TrainingModule::regexTMId($tm_id)){
@@ -54,7 +55,7 @@ function submitTM($tm_id, $operator, $staff){
 	
 	//Attempt to mark as certified
 	$tm = new TrainingModule($tm_id);
-	$msg = $tm->certify_training($operator, $staff);
+	$msg = $tm->certify_training($operator, $user);
 	if($msg === true){
 		return true;
 	} else {
@@ -73,126 +74,98 @@ function submitTM($tm_id, $operator, $staff){
 	<!-- /.row -->
 	<div class="row">
 		<div class="col-md-8">
-			<?php if ($staff && $staff->getRoleID() >= $sv['LvlOfLead']) {?>
-				<div class="panel panel-default">
-					<div class="panel-heading">
-						<i class="far fa-check-circle fa-lg"></i> Certify Completion of Training
-					</div>
-					<div class="panel-body">
-						<table class="table table-bordered table-striped table-hover"><form name="tcForm" id="tcForm" autocomplete="off" method="POST" action="">
-							<tr>
-								<td class="col-md-3">
-									<a href="#" data-toggle="tooltip" data-placement="top" title="The person that conducted this training">Trainer</a>
-				</td>
-								<td class="col-md-9"><?php if ( $staff )
-									echo "<i class='".$staff->getIcon()." fa-lg' title='".$staff->getOperator()."'></i>";?>
-								</td>
-							</tr>
-							<tr>
-								<td><a href="#" data-toggle="tooltip" data-placement="top" title="Which device does this training belong to?">Select Device or Group</a></td>
-								<td>
-									<select name="d_id" id="d_id" onchange="selectDevice(this)" tabindex="1">
-										<option disabled hidden selected value="">Device</option>
-										<?php if($result = $mysqli->query("
-											SELECT DISTINCT `devices`.`d_id`, `devices`.`device_desc`
-											FROM `devices`
-											INNER JOIN `trainingmodule`
-											ON `devices`.`d_id` = `trainingmodule`.`d_id`
-											ORDER BY `device_desc`
-										")){
-											while($row = $result->fetch_assoc()){
-												echo("<option value='$row[d_id]'>$row[device_desc]</option>");
-											}
-										} else {
-											echo ("Device list Error - SQL ERROR");
-										}?>
-									</select> or <select name="dg_id" id="dg_id" onchange="selectDevice(this)" tabindex="2">
-										<option disabled hidden selected value="">Device Group</option>
-										<?php if($result = $mysqli->query("
-											SELECT DISTINCT `device_group`.`dg_id`, `device_group`.`dg_desc`
-											FROM `device_group`
-											INNER JOIN `trainingmodule`
-											ON `device_group`.`dg_id` = `trainingmodule`.`dg_id`
-											ORDER BY `dg_desc`
-										")){
-											while($row = $result->fetch_assoc()){
-												echo("<option value='$row[dg_id]'>$row[dg_desc]</option>");
-											}
-										} else {
-											echo ("Device list Error - SQL ERROR");
-										}?>
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<i class="far fa-check-circle fa-lg"></i> Certify Completion of Training
+				</div>
+				<div class="panel-body">
+					<table class="table table-bordered table-striped table-hover"><form name="tcForm" id="tcForm" autocomplete="off" method="POST" action="">
+						<tr>
+							<td class="col-md-3">
+								<a href="#" data-toggle="tooltip" data-placement="top" title="The person that conducted this training">Trainer</a>
+							</td>
+							<td class="col-md-9"><?php if ( $user )
+								echo "<i class='$user->icon fa-lg' title='$user->id'></i>";?>
+							</td>
+						</tr>
+						<tr>
+							<td><a href="#" data-toggle="tooltip" data-placement="top" title="Which device does this training belong to?">Select Device or Group</a></td>
+							<td>
+								<select name="d_id" id="d_id" onchange="selectDevice(this)" tabindex="1">
+									<option disabled hidden selected value="">Device</option>
+									<?php if($result = $mysqli->query("
+										SELECT DISTINCT `devices`.`d_id`, `devices`.`device_desc`
+										FROM `devices`
+										INNER JOIN `trainingmodule`
+										ON `devices`.`d_id` = `trainingmodule`.`d_id`
+										ORDER BY `device_desc`
+									")){
+										while($row = $result->fetch_assoc()){
+											echo("<option value='$row[d_id]'>$row[device_desc]</option>");
+										}
+									} else {
+										echo ("Device list Error - SQL ERROR");
+									}?>
+								</select> or <select name="dg_id" id="dg_id" onchange="selectDevice(this)" tabindex="2">
+									<option disabled hidden selected value="">Device Group</option>
+									<?php if($result = $mysqli->query("
+										SELECT DISTINCT `device_group`.`dg_id`, `device_group`.`dg_desc`
+										FROM `device_group`
+										INNER JOIN `trainingmodule`
+										ON `device_group`.`dg_id` = `trainingmodule`.`dg_id`
+										ORDER BY `dg_desc`
+									")){
+										while($row = $result->fetch_assoc()){
+											echo("<option value='$row[dg_id]'>$row[dg_desc]</option>");
+										}
+									} else {
+										echo ("Device list Error - SQL ERROR");
+									}?>
+								</select>
+							</td>
+						</tr>
+						<tr id="tr_tm">
+							<td><a href="#" data-toogle="tooltop" data-placement="top" title="Please select the relevant training that was conducted">Training</a></td>
+							<td>
+						<?php if (isset($tm)){ ?>
+									<select name="tm_id" id="tm_id" onchange="getDesc(this)">
+										<option value="<?php echo $tm->getTm_id()?>" ><?php echo $tm->getTitle()?></option>
 									</select>
 								</td>
 							</tr>
-							<tr id="tr_tm">
-								<td><a href="#" data-toogle="tooltop" data-placement="top" title="Please select the relevant training that was conducted">Training</a></td>
-								<td>
-							<?php if (isset($tm)){ ?>
-										<select name="tm_id" id="tm_id" onchange="getDesc(this)">
-											<option value="<?php echo $tm->getTm_id()?>" ><?php echo $tm->getTitle()?></option>
-										</select>
-									</td>
-								</tr>
-								<tr>
-									<td><a href="#" data-toogle="tooltop" data-placement="top" title="A brief description of what this training covers">Description</a></td>
-									<td id="tm_desc"><?php echo $tm->getTm_desc()?></td>
-								</tr>
-							<?php } else { ?>
-										<select name="tm_id" id="tm_id" onchange="getDesc(this)">
-											<option value="" hidden>Select</option>
-											<option value="" disabled="">Please Select a Device First</option>
-										</select>
-									</td>
-								</tr>
-								<tr>
-									<td><a href="#" data-toogle="tooltop" data-placement="top" title="All devices covered by this Device Group">Devices</a></td>
-									<td id="td_deviceList"></td>
-								</tr>
-								<tr>
-									<td><a href="#" data-toogle="tooltop" data-placement="top" title="A brief description of what this training covers">Description</a></td>
-									<td id="tm_desc"></td>
-								</tr>
-							<?php } ?>
 							<tr>
-								<td><a href="#" data-toggle="tooltip" data-placement="top" title="The person that you will issue a certificate to">Learner</a></td>
-								<td><input type="text" name="operator" id="operator" class="form-control" placeholder="1000000000" maxlength="10" size="10"/></td>
+								<td><a href="#" data-toogle="tooltop" data-placement="top" title="A brief description of what this training covers">Description</a></td>
+								<td id="tm_desc"><?php echo $tm->getTm_desc()?></td>
 							</tr>
-							<tfoot>
-								<tr>
-									<td colspan="2"><div class="pull-right"><input type="submit" name="submitBtn" value="Submit"></div></td>
-								</tr>
-							</tfoot>
-						</form></table>
-					</div>
-					<!-- /.panel-body -->
-				</div>
-				<!-- /.panel -->
-			<?php } elseif($staff) { ?>
-				<div class="panel panel-default">
-					<div class="panel-heading">
-						<i class="fas fa-sign-in-alt fa-lg"></i>  Certify Completion of Training
-					</div>
-					<div class="panel-body">
-						<?php
-							echo "You do not have permission to assign a training";
-						?>
-					</div>
-					<!-- /.panel-body -->
-				</div>
-				<!-- /.panel -->
-			<?php } else { ?>
-				<div class="panel panel-default">
-					<div class="panel-heading">
-						<i class="fas fa-sign-in-alt fa-lg"></i> Please Log In
-					</div>
-					<div class="panel-body">
-					</div>
-					<!-- /.panel-body -->
-				</div>
-				<!-- /.panel -->
-			<?php } ?>
-		</div>
-		<!-- /.col-md-8 -->
+						<?php } else { ?>
+									<select name="tm_id" id="tm_id" onchange="getDesc(this)">
+										<option value="" hidden>Select</option>
+										<option value="" disabled="">Please Select a Device First</option>
+									</select>
+								</td>
+							</tr>
+							<tr>
+								<td><a href="#" data-toogle="tooltop" data-placement="top" title="All devices covered by this Device Group">Devices</a></td>
+								<td id="td_deviceList"></td>
+							</tr>
+							<tr>
+								<td><a href="#" data-toogle="tooltop" data-placement="top" title="A brief description of what this training covers">Description</a></td>
+								<td id="tm_desc"></td>
+							</tr>
+						<?php } ?>
+						<tr>
+							<td><a href="#" data-toggle="tooltip" data-placement="top" title="The person that you will issue a certificate to">Learner</a></td>
+							<td><input type="text" name="operator" id="operator" class="form-control" placeholder="1000000000" maxlength="10" size="10"/></td>
+						</tr>
+						<tfoot>
+							<tr>
+								<td colspan="2"><div class="pull-right"><input type="submit" name="submitBtn" value="Submit"></div></td>
+							</tr>
+						</tfoot>
+					</form></table>
+				</div>  <!-- /.panel-body -->
+			</div>  <!-- /.panel -->
+		</div>  <!-- /.col-md-8 -->
 		<div class="col-md-4">
 			<div class="panel panel-default">
 				<div class="panel-heading">
@@ -220,7 +193,7 @@ function submitTM($tm_id, $operator, $staff){
 							FROM `tm_enroll`
 							WHERE `current` = 'Y'
 						")){
-							$row = $result->fetch_assoc()?>
+							$row = $result->fetch_assoc(); ?>
 							<tr>
 								<td><i class="far fa-check-circle fa-lg"></i> Certificates Issued</td>
 								<td><?php echo $row['count'];?></td>
