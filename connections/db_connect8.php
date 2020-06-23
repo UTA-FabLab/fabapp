@@ -1,4 +1,4 @@
-
+<?php
 $dbhost = "";
 $dbuser = "";
 $dbpass = "";

@@ -13,7 +13,7 @@
  */
 require_once ($_SERVER['DOCUMENT_ROOT']."/connections/db_connect8.php");
 
-class Error {
+class FabAppError {
     private $e_id;
     private $e_time;
     private $page;
@@ -44,9 +44,9 @@ class Error {
         global $mysqli;
         
         if (strcmp($staff_id, "") == 0) {
-            $staff_id = "NULL";
+            $staff_id = NULL;
         } else {
-            $staff_id = "'$staff_id'";
+            $staff_id = "$staff_id";
         }
         
         if ($stmt = $mysqli->prepare("

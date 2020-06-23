@@ -61,7 +61,7 @@ function newTicket(){
     var o_id1 = document.getElementById('processOperator').innerHTML;
 
     if (device_id){
-        if (o_id.substring(6,10) == o_id1.substring(7,11)){
+        if (o_id.substring(6,10) == o_id1.substring(6,11)){
             if("D_" === device_id.substring(0,2)){
                 device_id = device_id.substring(2);
             } else{

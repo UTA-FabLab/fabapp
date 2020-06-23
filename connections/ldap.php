@@ -52,7 +52,7 @@ function AuthenticateUser($netid, $password) {
                     throw new Exception(@ldap_error($connection), @ldap_errno($connection));
                 }
                 // Grab attribute value from record
-                @ldap_free_result($result);             //DO NOT PUT THIS RIGHT NEXT TO THE ldap_search() CALL, CRASHES SERVER
+//                @ldap_free_result($result);             //DO NOT PUT THIS RIGHT NEXT TO THE ldap_search() CALL, CRASHES SERVER
                 $uta_id = @ldap_get_values($connection, $entry, $attribute);
                 if (!$uta_id) {
                     //throw new Exception(@ldap_error($connection), @ldap_errno($connection));
