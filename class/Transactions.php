@@ -269,7 +269,7 @@ class Transactions {
 
 	// prints the thermal ticket
 	public static function printTicket($trans_id){
-		global $mysqli, $sv, $tp;
+		global $mysqli, $sv, $tphost, $tpport;
 
 		try {
 			$ticket = new self($trans_id);  //Pull Ticket Related Information
@@ -280,9 +280,7 @@ class Transactions {
 		}
 		
 		try {
-			// $tpn = 0;  // no other thermal printers || multiple not implemented: default to first in queue
-			$tpn = $ticket->device->device_group->thermal_printer_num;  // get from list of thermal printers based on device location
-			$connector = new NetworkPrintConnector( $tp[$tpn][0], $tp[$tpn][1]);
+			$connector = new NetworkPrintConnector($tphost, $tpport);
 			$printer = new Printer($connector);
 		}
 		catch (Exception $e) {
@@ -387,7 +385,7 @@ class Transactions {
 
     public static function printSheetTicket($trans_id, $cart_inv_ids, $cart_quantities, $cart_prices, $total_price){
         global $mysqli;
-        global $tp;
+        global $tphost, $tpport;
         $sheet_names = array();
 
 
@@ -403,9 +401,8 @@ class Transactions {
     	}
 
         // Set up Printer Connection
-        $tp_number = 0;
         try {
-            $connector = new NetworkPrintConnector( $tp[$tp_number][0], $tp[$tp_number][1]);
+            $connector = new NetworkPrintConnector($tphost, $tpport);
             $printer = new Printer($connector);
         } catch (Exception $e) {
             return "Couldn't print to this printer: " . $e -> getMessage() . "\n";
