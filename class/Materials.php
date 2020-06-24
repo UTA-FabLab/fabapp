@@ -604,6 +604,8 @@ class Mats_Used {
 	public function instance_HTML($readonly=false) {
 		global $status, $sv;
 
+		$min_hours = 0;
+
 		$parent_class_name = $this->material->m_parent ? str_replace(" ", "_", $this->material->m_parent->m_name) : "";
 
 		// set default of hours and minutes

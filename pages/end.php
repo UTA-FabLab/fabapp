@@ -266,7 +266,11 @@ function exit_if_error($error, $redirect=null) {
 								echo Mats_Used::group_mats_used_HTML($ticket->mats_used); 		
 							?>
 						</div>
-						<?php if($ticket->device->device_group->all_device_group_materials()) { ?>
+						<?php if($ticket->device->device_group->all_device_group_materials()) {
+							foreach($ticket->device->device_group->all_device_group_materials() as $material)
+									if($material->m_name != 'Thread'){
+
+						 ?>
 							<table class='table table-bordered table-striped'>
 								<tr class='warning'>
 									<td colspan='3'> Add material </td>
@@ -290,7 +294,7 @@ function exit_if_error($error, $redirect=null) {
 									</td>
 								</tr>
 							</table>
-						<?php } ?>
+						<?php } } ?>
 					</div>
 				</div>
 			<?php } ?>
@@ -357,7 +361,7 @@ function exit_if_error($error, $redirect=null) {
 							border-radius:4px;padding:8px;margin:auto;color:#FFFFFF;margin:auto'>
 								Currently stored in <span id='storage_location_span_modal'></span>
 							</span>
-							<!-- storage loaction posted from input -->
+							<!-- storage location posted from input -->
 							<input id='storage_location_input_modal' name='storage_location_input_modal' 
 							value='<?php echo $storage_location; ?>' hidden>
 						</h4>
@@ -635,8 +639,9 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 		var ticket_status = ticket_status_object.value;
 
 		if(ticket_status == <?php echo $status["partial_fail"]; ?>
-		|| ticket_status == <?php echo $status["total_fail"]; ?>)
-			default_all_material_statuses_to_status();
+		|| ticket_status == <?php echo $status["total_fail"]; ?>
+		|| ticket_status == <?php echo $status["cancelled"]; ?>)
+			default_all_material_statuses_to_status(<?php echo $status["unused"]; ?>);
 		// stored, cancelled, complete
 		// cancelled included b/c user more willing to check off what they didn't use
 		else
@@ -906,7 +911,7 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 		status.innerHTML = confirmation_cell_format(material['mu_id']+'-status', status_name, material['status'].value);
 
 		if(!material["immeasurable"]) {
-			quantity.innerHTML = confirmation_cell_format(material['mu_id']+'-quantity', material['quantity'], material['quantity']);
+			quantity.innerHTML = confirmation_cell_format(material['mu_id']+'-quantity', round(material['quantity'],2), material['quantity']);
 			cost.innerHTML = `<i class='<?php echo $sv["currency"]; ?>'></i>${round(material['cost'], 2)}`;
 		}
 	}
