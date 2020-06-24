@@ -606,6 +606,17 @@ class Mats_Used {
 
 		$parent_class_name = $this->material->m_parent ? str_replace(" ", "_", $this->material->m_parent->m_name) : "";
 
+		// set default of hours and minutes
+		if(is_null($hour))
+		{
+			$hour = 1;
+		}
+		if(is_null($minute))
+		{
+			$minute = 0;
+			//adjust_balances();
+		}
+
 		// color_hex ascription
 		if($this->material->color_hex)
 			$color_hex = "<div class='color-box' style='background-color:#".$this->material->color_hex.";' align='left'></div>";
@@ -616,7 +627,8 @@ class Mats_Used {
 								<td>
 									<div class='input-group'>
 										<span class='input-group-addon'><i class='$sv[currency]'></i> ".sprintf("%0.2f", $this->material->price)." x </span>
-										<input type='number' id='$this->mu_id-input' class='form-control mat_used_input time $parent_class_name-input' 
+										<input type='number' id='$this->mu_id-input' class='form-control mat_used_input time $parent_class_name-input'
+										window.onload='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();'
 										onkeyup='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
 										onchange='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
 										autocomplete='off' style='text-align:right;' min='$min_hours' step='1' value='$hour'>
