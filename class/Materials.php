@@ -272,7 +272,7 @@ class Materials {
 			if($result = $mysqli->query("
 				SELECT `m_id`
 				FROM `materials`
-				WHERE `m_id` = '".$id_or_name."';
+				WHERE `m_id` = $id_or_name;
 			")) {
 				return true;
 			}
@@ -442,7 +442,7 @@ class Mats_Used {
 			$this->material = new Materials($row['m_id']);
 			$this->quantity_used = abs($row['quantity']);
 			$this->status = new Status($row['status_id']);
-			$this->staff = Users::withID($row['staff_id']);
+			$this->staff = Users::with_id($row['staff_id']);
 		}
 	}
 
@@ -575,10 +575,10 @@ class Mats_Used {
 	
 	// create a new instance of material usage in DB.  Optional quanity used
 	public static function insert_material_used($trans_id, $m_id, $status_id, $staff, $quantity_used=null, $notes=null) {
-		global $mysqli, $role, $sv;
+		global $mysqli;
 		
 		//Deny if user is not staff
-		if($staff->roleID < $role['staff']) return "Must be staff in order to update";
+		if(!$staff->is_staff()) return "Must be staff in order to update";
 		
 		//Validate input variables
 		// optional trans_id
@@ -593,7 +593,7 @@ class Mats_Used {
 			VALUES
 				(?, ?, ?, ?, ?, ?);
 		")){
-			$bind_param = $statement->bind_param("iidiss", $trans_id, $m_id, $quantity_used, $status_id, $staff->operator, $notes);
+			$bind_param = $statement->bind_param("iidiss", $trans_id, $m_id, $quantity_used, $status_id, $staff->id, $notes);
 			if($statement->execute()) return $statement->insert_id;
 		}
 		return $mysqli->error;
@@ -602,7 +602,7 @@ class Mats_Used {
 
 	// create an HTML table for the input, select display of mat_used's instance
 	public function instance_HTML($readonly=false) {
-		global $STATUS, $sv;
+		global $STATUS, $SITE_VARS;
 
 		$parent_class_name = $this->material->m_parent ? str_replace(" ", "_", $this->material->m_parent->m_name) : "";
 
@@ -615,7 +615,7 @@ class Mats_Used {
 				$input = 	"<tr>
 								<td>
 									<div class='input-group'>
-										<span class='input-group-addon'><i class='$sv[currency]'></i> ".sprintf("%0.2f", $this->material->price)." x </span>
+										<span class='input-group-addon'><i class='$SITE_VARS[currency]'></i> ".sprintf("%0.2f", $this->material->price)." x </span>
 										<input type='number' id='$this->mu_id-input' class='form-control mat_used_input time $parent_class_name-input' 
 										onkeyup='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
 										onchange='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
@@ -633,7 +633,7 @@ class Mats_Used {
 			else $input = 	"<tr>
 								<td>
 									<div class='input-group'>
-										<span class='input-group-addon'><i class='$sv[currency]'></i> ".sprintf("%0.2f", $this->material->price)." x </span>
+										<span class='input-group-addon'><i class='$SITE_VARS[currency]'></i> ".sprintf("%0.2f", $this->material->price)." x </span>
 										<input type='number' id='$this->mu_id-input' class='form-control mat_used_input $parent_class_name-input' 
 										onkeyup='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
 										onchange='adjust_parent_input(this); adjust_status_for_input(this); adjust_balances();' 
@@ -718,8 +718,8 @@ class Mats_Used {
 	// ———————————————— ATTRIBUTES —————————————————
 
 	public function getMu_date() {
-		global $sv;
-		return date($sv['dateFormat'],strtotime($this->date));
+		global $SITE_VARS;
+		return date($SITE_VARS['dateFormat'],strtotime($this->date));
 	}
 
 

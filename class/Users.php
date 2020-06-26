@@ -586,8 +586,8 @@ class Staff extends Users
 
 		$statement = $mysqli->prepare("INSERT INTO `rfid` (`rfid_no`, `user_id`) VALUES (?, ?);");
 		if(!$statement) throw new Exception("Users::new_rfid: bad prepare: $mysqli->error");
-		$statement->bind_param("ss", $rfid_no, $user);
-		if(!$statement) throw new Exception("Users::new_rfid: bad parameter binding: $mysqli->error");
+		if(!$statement->bind_param("ss", $rfid_no, $user))
+			throw new Exception("Users::new_rfid: bad parameter binding: $mysqli->error");
 
 		// submit & return outcome
 		return $statement->execute();
@@ -714,8 +714,8 @@ class Staff extends Users
 		// update
 		$statement = $mysqli->prepare("UPDATE `rfid` SET `rfid_no` = ? WHERE `user_id` = ?;");
 		if(!$statement) throw new Exception("Users::new_rfid: bad query: $mysqli->error");
-		$statement->bind_param("ss", $rfid_no, $user->id);
-		if(!$statement) throw new Exception("Users::new_rfid: bad parameter binding: $mysqli->error");
+		if(!$statement->bind_param("ss", $rfid_no, $user->id))
+			throw new Exception("Users::new_rfid: bad parameter binding: $mysqli->error");
 
 		// submit & return outcome
 		return $statement->execute();

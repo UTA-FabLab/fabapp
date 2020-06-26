@@ -14,7 +14,7 @@
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
 // staff clearance
-if (!$staff || $staff->getRoleID() < $sv['minRoleTrainer']){
+if (!$user || !$user->validate("inventory")){
 	// Not Authorized to see this Page
 	header('Location: /index.php');
 	$_SESSION['error_msg'] = "Insufficient role level to access, You must be a Lead.";
@@ -52,9 +52,9 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_inventory'])) {
 					</thead>
 					<!-- display all materials -->
 					<tbody>
-						<?php if($result = $mysqli->query("SELECT `m_id`, `m_name`, `current`
-														   FROM `materials`
-														   ORDER BY `m_name`
+						<?php if($result = $mysqli->query(	"SELECT `m_id`, `m_name`, `current`
+																FROM `materials`
+																ORDER BY `m_name`
 						")) {
 							while($row = $result->fetch_assoc()) {
 								echo "<tr> <td> $row[m_name] </td>".
