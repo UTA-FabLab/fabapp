@@ -63,7 +63,7 @@ class Users
 
 		global $mysqli;
 		if(!$user_result = $mysqli->query("SELECT * FROM `users` WHERE `user_id` = '$id';"))
-			throw new Exception("Users::__construct: Bad query: $mysqli->error");
+			throw new Exception("SQL error: $mysqli->error");
 
 		if(!$user_result->num_rows) $this->r_id = 2;  // user does not exist in DB
 		else  // user exists in DB
@@ -88,7 +88,7 @@ class Users
 														WHERE `user_id` = '$id'
 														UNION SELECT `perm_id` FROM `permissions`
 														WHERE `r_id` <= $this->r_id;"
-		)) throw new Exception("Users::__construct: Bad query: $mysqli->error");
+		)) throw new Exception("SQL error: $mysqli->error");
 		while($row = $permission_results->fetch_assoc()) $this->permissions[] = $row["perm_id"];
 
 		// rfid
@@ -139,16 +139,14 @@ class Users
 		if(!self::regex_rfid($rfid_no)) return false;
 
 		$result = $mysqli->query("SELECT `user_id` FROM `rfid` WHERE `rfid_no` = '$rfid_no';");
-		if(!$result || !$result->num_rows) return false;
-
-		try
+		if(!$result)
 		{
-			return new self($result->fetch_assoc()["id"]);
-		}
-		catch (Exception $exception)
-		{
+			error_log("Users::with_rfid: SQL error: $mysqli->error");
 			return false;
 		}
+		elseif(!$result->num_rows) return false;
+
+		return new self::with_id($result->fetch_assoc()["user_id"]);
 	}
 
 
@@ -268,7 +266,8 @@ class Users
 		if(!self::regex_id($id)) return false;
 
 		$result = $mysqli->query("SELECT `r_id` FROM `users` WHERE `user_id` = '$id';");
-		if(!$result || !$result->num_rows) return false;
+		if(!$result) throw new Exception("SQL error: $mysqli->error");
+		if(!$result->num_rows) return false;
 
 		return $ROLE["staff"] <= $result->fetch_assoc()['r_id'];
 	}
@@ -285,9 +284,10 @@ class Users
 		
 		if(!self::regex_rfid($rfid_no)) return false;
 
-		if(!$result = $mysqli->query("SELECT `user_id` FROM `rfid` WHERE `rfid_no` = '$rfid_no'")
-		|| !$result->num_rows)
-			return false;
+		if(!$result = $mysqli->query("SELECT `user_id` FROM `rfid` WHERE `rfid_no` = '$rfid_no'"))
+			error_log("Users::user_for_rfid_no: SQL error: $mysqli->error");
+
+		if(!$result || !$result->num_rows) return false;
 
 		return self::with_id($result->fetch_assoc()["user_id"]);
 	}
@@ -335,8 +335,13 @@ class Users
 		global $mysqli, $MAKERSPACE_VARS;
 
 		if(!preg_match("/$MAKERSPACE_VARS[regex_id]/", $id)) return self::BAD_ID;
-		if(!$result = $mysqli->query("SELECT * FROM `users` WHERE `user_id` = '$id';" || !$result->num_rows))
-			return self::UNKNOWN_ID;
+		if(!$result = $mysqli->query("SELECT * FROM `users` WHERE `user_id` = '$id';")
+		{
+			error_log("Users::regex_id: SQL error: $mysqli->error");
+			return self::BAD_ID;  // unable to check ID: prevent further processes if no DB connection
+		}
+
+		if(!$result->num_rows)) return self::UNKNOWN_ID;
 		return self::KNOWN_ID;
 	}
 
