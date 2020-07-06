@@ -946,7 +946,9 @@ function __NEWINV__get_populate_values($name)
 
 		for(var x = 0; x < rgb.length; x++)
 		{
-			if(parseInt(rgb[x]) == "NaN" && rgb[x] != "") rgb[x] = "0";  // not an integer or blank
+			if(rgb[x] != "") rgb[x] = parseInt(rgb[x]).toString();
+
+			if(isNaN(parseInt(rgb[x])) && rgb[x] != "") rgb[x] = "0";  // not an integer or blank
 			else if(parseInt(rgb[x]) > 255) rgb[x] = rgb[x].substring(0, rgb[x].length -1);  // larger than 255
 
 			// remove leading 0's
