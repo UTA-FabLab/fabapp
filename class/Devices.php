@@ -320,9 +320,9 @@ class DeviceGroup {
 			(?, ?, ?, ?, ?, ?, ?, ?, ?);");
 
 		if(!$statement) return "SQL syntax statement error";
-		$statement->bind_param("sdsssssds", $dg_name, $dg_parent, $dg_desc, $dg_pay, $dg_mat, $dg_store,
+		$statement->bind_param("sisssssis", $dg_name, $dg_parent, $dg_desc, $dg_pay, $dg_mat, $dg_store,
 		$dg_juicebox, $dg_thermal, $dg_granular);
-		if($statement) return "SQL binding error";
+		if(!$statement) return "SQL binding error";
 		if(!$statement->execute()) return "SQL execution error";
 		return $mysqli->insert_id;
 	}

@@ -76,8 +76,9 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['__NEWINV__submit_bu
 
 	$parent = filter_input(INPUT_POST, "__NEWINV__m_parent_select");
 	if($parent && !Materials::regexID($parent)) exit_from_error("Parent material ID $parent is not valid");
+	elseif(!$parent) $parent = null;
 	$product_number = filter_input(INPUT_POST, "__NEWINV__product_number_input");
-	$price = filter_input(INPUT_POST, "__NEWINV__product_number_input");
+	$price = filter_input(INPUT_POST, "__NEWINV__price_input");
 	if(!$measurability = Materials::regexMeasurability(filter_input(INPUT_POST, "__NEWINV__measurable_select"))) 
 		exit_from_error("Bad measurability data $measurability for creating new material");
 	$unit = Materials::regexUnit(filter_input(INPUT_POST, "__NEWINV__unit_input"));

@@ -92,7 +92,7 @@ class Materials {
 				(?, ?, ?, ?, ?, ?, ?);"
 		))
 		{
-			$statement->bind_param("sddssss", $name, $parent, floatval($price), $product_number, $unit, $color, 
+			$statement->bind_param("sidssss", $name, $parent, floatval($price), $product_number, $unit, $color, 
 			$measurability);
 			if(!$statement) return false;
 			if(!$statement->execute()) return false;
@@ -546,7 +546,7 @@ class Mats_Used {
 
 	
 	// create a new instance of material usage in DB.  Optional quanity used
-	public static function insert_material_used($trans_id, $m_id, $status_id, $staff, $quantity_used=null, $notes=null) {
+	public static function insert_material_used($trans_id, $m_id, $status_id, $staff, $quantity_used=0, $notes=null) {
 		global $mysqli, $role, $sv;
 		
 		//Deny if user is not staff
