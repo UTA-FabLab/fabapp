@@ -11,25 +11,25 @@ $device_array = array();
 // Notifications
 
 $operatorInQueueAlert = ("<div style='text-align: center'>
-                    <div class='alert alert-danger'>
-                        Operator is already in this Wait Queue.
-                    </div> </div>");
+            <div class='alert alert-danger'>".
+                $sv['wq_operatorInQueue'].
+             "</div> </div>");
 $successAlert = ("<div style='text-align: center'>
-            <div class='alert alert-success'>
-                Successfully added to wait queue and updated contact info!
-            </div> </div>");
+            <div class='alert alert-success'>".
+                $sv['wq_successAlert'] 
+            ."</div> </div>");
 $phoneNumberAlert = ("<div style='text-align: center'>
-                <div class='alert alert-danger'>
-                    You must enter a phone Number if selecting a carrier!
-                </div> </div>");
+            <div class='alert alert-danger'>".
+                $sv['wq_phoneAlert']
+            ."</div> </div>");
 $carrierAlert = ("<div style='text-align: center'>
-                <div class='alert alert-danger'>
-                    You must select a carrier if entering a phone number!
-                </div> </div>");
+            <div class='alert alert-danger'>".
+                $sv['wq_carrierAlert']    
+            ."</div> </div>");
 $selectDeviceAlert = ("<div style='text-align: center'>
-                <div class='alert alert-danger'>
-                    You must select a device!
-                </div> </div>");
+            <div class='alert alert-danger'>".
+                $sv['wq_deviceAlert']    
+            ."</div> </div>");
 
 if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
     //Not Authorized to see this Page
