@@ -32,7 +32,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST")
 	else $_SESSION["success_msg"] = "Successfully removed you from wait_queue ID: $Q_id";
 
 	// prompt & refresh
-	// header("Location:/pages/info.php");
+	header("Location:/pages/info.php");
 }
 
 
@@ -197,7 +197,6 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 
 		if(!confirm("Are you sure you want to cancel this wait ticket? This cannot be undone")) return;
 
-		console.log("Submitting "+Q_id);
 		document.getElementById("__WAITQ__input").value = Q_id;
 		document.__WAITQ__form.submit();
 	}
