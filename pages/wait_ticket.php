@@ -30,6 +30,7 @@ $selectDeviceAlert = ("<div style='text-align: center'>
             <div class='alert alert-danger'>".
                 $sv['wq_deviceAlert']    
             ."</div> </div>");
+$device_desc = $sv['device_desc'];
 
 if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
     //Not Authorized to see this Page
@@ -381,14 +382,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                                                         <?php //prepare message
                                                                         if ( $row['device_desc'] == ""){
                                                                             //datetime is added within the AJAX file endWaitList
-                                                                            $msg = "A $row[dg_desc] is now available. Please make your way to the FabLab. You have until ";
+                                                                            $msg = "A $row[dg_desc] " . $device_desc;
                                                                         } else {
                                                                             //datetime is added within the AJAX file endWaitList
-                                                                            $msg = "$row[device_desc] is now available. Please make your way to the FabLab. You have until ";
-                                                                        }
+                                                                            $msg = "$row[device_desc] ". $device_desc;                                                                        }
                                                                         ?>
                                                                         <button class="<?php if (isset($row['last_contact'])){echo "btn btn-xs btn-warning";} else{echo "btn btn-xs btn-primary";}?>" data-target="#removeModal" data-toggle="modal" 
-                                                                                onclick="sendManualMessage(<?php echo $row["Q_id"]?>, '<?php echo $msg;?>', 1)">
+                                                                                onclick="sendManualMessage(<?php echo $row["Q_id"]?>, '<?php echo $msg;?>', 1), console.log('. <?php echo $msg ?>')">
                                                                             <!-- make note that adding explanation points may cause errors with notifications -->
                                                                                 Send Alert
                                                                         </button>
