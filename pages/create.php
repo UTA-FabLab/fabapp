@@ -165,7 +165,8 @@ function select_materials_first_ticket($operator, $device, $p_id, $staff) {
 
 	// create new mats_used instance for material
 	foreach($materials as $material)
-		if(!is_int($mu_id = Mats_Used::insert_material_used($trans_id, $material['m_id'], 0, $staff)))
+		//MPZinke: status assigned to used so that NULL status does not bug system.
+		if(!is_int($mu_id = Mats_Used::insert_material_used($trans_id, $material['m_id'], $status["used"], $staff)))
 			exit_if_error("Problem associating materials to ticket–$mu_id");
 
 	header("Location:lookup.php?trans_id=$trans_id");

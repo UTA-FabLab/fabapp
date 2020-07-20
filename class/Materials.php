@@ -29,7 +29,8 @@ class Materials {
 	public $unit;  // str—unit the material uses
 	public $color_hex;  // str—color of material in a hex form
 	public $is_measurable;  // bool—if DB.measurable == Y
-	public $m_prod_number;  // str—assigned product number of material
+	public $product_number;  // str—assigned product number of material
+	public $is_current;
 	
 	public function __construct($m_id) {
 		global $mysqli;
@@ -51,7 +52,8 @@ class Materials {
 			$this->unit = $row['unit'];
 			$this->color_hex = $row['color_hex'] ? $row['color_hex'] : null;
 			$this->is_measurable = $row['measurable'] == "Y";
-			$this->m_prod_number = $row['product_number'];
+			$this->is_current = $row['current'] == "Y";
+			$this->product_number = $row['product_number'];
 		}
 	}
 	
@@ -80,84 +82,53 @@ class Materials {
 
 
 	// create a new material in DB taking parameters
-	public static function create_new_mat($color, $measurability, $name, $price, $product_number, $unit) {
+	public static function create_new_material($color, $measurability, $name, $parent, $price, $product_number, $unit) {
 		global $mysqli;
 
-		if ($statement = $mysqli->prepare(" 
-			INSERT INTO `materials`
+		if ($statement = $mysqli->prepare(
+			"INSERT INTO `materials`
 				(`m_name`, `m_parent`, `price`, `product_number`, `unit`, `color_hex`, `measurable`)
 			VALUES
-				(?, NULL, ?, ?, ?, ?, ?);
-		")) {
-			$statement->bind_param("sdssss", $name, floatval($price), $product_number, $unit, $color, $measurability);
-			if ($statement->execute() === true){
-				$row = $statement->affected_rows;
-				// Success, only one row was updated
-				if ($row == 1) return $mysqli->commit();
-				// Error More then one row was affected
-				elseif ($row > 1) $mysqli->rollback();
-			}
+				(?, ?, ?, ?, ?, ?, ?);"
+		))
+		{
+			$statement->bind_param("sidssss", $name, $parent, floatval($price), $product_number, $unit, $color, 
+			$measurability);
+			if(!$statement) return false;
+			if(!$statement->execute()) return false;
+			return $mysqli->insert_id;
 		}
 		return false;
 	}
 
-
-	public static function create_new_material($m_name, $m_parent, $price, $product_number, $unit, $color_hex, $measurable) {
-		global $mysqli;
-		
-		
-		if (!preg_match('/^[a-f0-9]{6}$/i', $color_hex)){
-			if ($mysqli->query("
-				INSERT INTO `materials`
-					(`m_name`, `m_parent`, `price`, `product_number`, `unit`, `color_hex`, `measurable`)
-				VALUES
-					('$m_name', '$m_parent', '$price', $product_number, '$unit', NULL, '$measurable');
-
-			")){		
-				return ("<div class='col-md-12'><div class='alert alert-success'> Successfully added sheet good material to database: ".$m_name."</div></div>");
-			}
-			return ("<div class='col-md-12'><div class='alert alert-danger'>".$mysqli->error."</div></div>");
-		}
-		else{
-			if ($mysqli->query("
-				INSERT INTO `materials`
-					(`m_name`, `m_parent`, `price`, `product_number`, `unit`, `color_hex`, `measurable`)
-				VALUES
-					('$m_name', '$m_parent', '$price', $product_number, '$unit', '$color_hex', '$measurable');
-
-			")){		
-				return ("<div class='col-md-12'><div class='alert alert-success'> Successfully added sheet good material to database: ".$m_name."</div></div>");
-			}
-			return ("<div class='col-md-12'><div class='alert alert-danger'>".$mysqli->error."</div></div>");
-		}
-	}
 	
 	public static function create_new_sheet_inventory($m_id, $m_parent, $sheet_width, $sheet_height, $sheet_quantity) {
+		//MPZinke: I am currently cleaning this up to prevent passing of HTML strings and prevents SQL injections.  In 
+		// the future I should update it so that it strictly does what its name does (ie creates a new material), and move
+		// updating feature to its own function.
+
 		global $mysqli;
 
-		$sheet_status = Materials::hasInventory($m_id , $sheet_width, $sheet_height);
-		
-		if ($sheet_status){
-			if ($mysqli->query("
-				UPDATE `sheet_good_inventory`
-				SET `quantity` = '$sheet_quantity' 
-				WHERE `m_id`='$m_id' AND `width`='$sheet_width' AND `height` ='$sheet_height';
-			")){
-				return ("<div class='col-md-12'><div class='alert alert-success'> Successfully added sheet inventory to database.</div></div>");
-			}
-			return ("<div class='col-md-12'><div class='alert alert-danger'>".$mysqli->error."</div></div>");
+		if(self::hasInventory($m_id , $sheet_width, $sheet_height))
+		{
+			$statement = $mysqli->prepare(	"UPDATE `sheet_good_inventory` SET `quantity` = ? 
+												WHERE `m_id`= ? AND `width`= ? AND `height` = ?;");
+			if(!$statement) return "Error creating update statement";
+			$statement->bind_param("dddd", $sheet_quantity, $m_id, $sheet_width, $sheet_height);
+			if(!$statement) return "Bad param binding: $mysqli->error";
+			if(!$statement->execute()) return "Bad execution: $mysqli->error";
+			return false;  // no errors
 		}
-		else {
-			if ($mysqli->query("
-				INSERT INTO `sheet_good_inventory` 
-				  (`m_id`, `m_parent`, `width`, `height`, `quantity`) 
-				VALUES
-					('$m_id', '$m_parent', '$sheet_width', '$sheet_height', '$sheet_quantity');
-
-			")){	 
-				return ("<div class='col-md-12'><div class='alert alert-success'> Successfully added sheet inventory to database: ".$sheet_width."x".$sheet_height."</div></div>");
-			}
-			return ("<div class='col-md-12'><div class='alert alert-danger'>".$mysqli->error."</div></div>"); 
+		else
+		{
+			$statement = $mysqli->prepare(	"INSERT INTO `sheet_good_inventory` 
+												(`m_id`, `m_parent`, `width`, `height`, `quantity`) VALUES
+												(?, ?, ?, ?, ?);");
+			if(!$statement) return "Error creating update statement";
+			$statement->bind_param("ddddd", $m_id, $m_parent, $sheet_width, $sheet_height, $sheet_quantity);
+			if(!$statement) return "Bad param binding: $mysqli->error";
+			if(!$statement->execute()) return "Bad execution: $mysqli->error";
+			return false;  // no errors
 		}
 	}
 
@@ -169,12 +140,13 @@ class Materials {
 
 		if(array_key_exists("color_hex", $change_array)) $this->color_hex = $change_array["color_hex"];
 		if(array_key_exists("is_measurable", $change_array)) $this->is_measurable = $change_array["is_measurable"];
+		if(array_key_exists("is_current", $change_array)) $this->is_current = $change_array["is_current"];
 		if(array_key_exists("m_name", $change_array)) $this->m_name = $change_array["m_name"];
-		if(array_key_exists("m_prod_number", $change_array)) $this->m_prod_number = $change_array["m_prod_number"];
+		if(array_key_exists("product_number", $change_array)) $this->product_number = $change_array["product_number"];
 		if(array_key_exists("price", $change_array)) $this->price = $change_array["price"];
 		if(array_key_exists("unit", $change_array)) $this->unit = $change_array["unit"];
 
-		return $this->update_transactions();
+		return $this->update_material();
 	}
 
 
@@ -325,45 +297,45 @@ class Materials {
 	// Writes all variables to the DB for a given Transaction
 	public function update_material(){
 		global $mysqli;
+		$is_measurable = $this->is_measurable ? "Y" : "N";
+		$is_current = $this->is_current ? "Y" : "N";
 
 		// update transaction info
-		$statement = $mysqli->prepare("UPDATE `transactions`
-											SET `color_hex` = ?, `is_measurable` = ?, `m_name` = ?, 
-											`m_prod_number` = ?, `price` = ?, `unit` = ?
+		$statement = $mysqli->prepare(	"UPDATE `materials`
+											SET `color_hex` = ?, `measurable` = ?, `m_name` = ?, 
+											`product_number` = ?, `price` = ?, `unit` = ?, `current` = ?
 											WHERE `m_id` = ?;");
-		$statement->bind_param("ssssdsd", $this->color_hex, $this->is_measurable, $this->m_name, 
-									$this->m_prod_number, $this->price, $this->unit, 
+		$statement->bind_param("ssssdssd", substr($this->color_hex, 1), $is_measurable, $this->m_name, 
+									$this->product_number, $this->price, $this->unit, $is_current,
 									$this->m_id);
-		if(!$statement->execute()) return "Could not update transaction values";
+		if(!$statement) return "Bad parameter passed in updating material";
+		if(!$statement->execute()) return $mysqli->error;
 
-		return null;  // no errors
+		return NULL;  // no errors
 	}
 
 
 	public static function update_sheet_quantity($inv_id, $quantity, $notes) {
 		global $mysqli;
 
-        $result = $mysqli->query("            
-                SELECT DISTINCT `sheet_good_inventory`.`quantity`
-                FROM `sheet_good_inventory`
-                WHERE `sheet_good_inventory`.`inv_id` = '$inv_id';");
-        while($row = $result->fetch_assoc()){
-            $current_quantity = $row[quantity];
-        }
-        
-        $calc_quantity = $current_quantity + $quantity;
-        if ($calc_quantity >= 0){
-            if($inv_id) {
-                if($mysqli->query("
-                    UPDATE `sheet_good_inventory`
-                    SET `quantity` = `quantity`+'$quantity' , `notes`='$notes'
-                    WHERE `inv_ID` = '$inv_id';
-                "))
-                    return ("<div class='col-md-12'><div class='alert alert-success'>Updated Sheet Good Quantity</div></div>");
-            }
-            return $mysqli->error;
-        }
-        return ("<div class='col-md-12'><div class='alert alert-danger'>Incorrect quantity change input, your result must not change quantity to a value below 0.</div></div>");
+		// check that quantity will not be set to a negative value; if negative; return error message
+		$result = $mysqli->query(	"SELECT `quantity`
+									FROM `sheet_good_inventory`
+									WHERE `inv_id` = '$inv_id';");  // cannot affectively SQL inject at this point
+		if(!$result) return "Materials::update_sheet_quantity: ".$mysqli->error;
+		if($result->fetch_assoc()["quantity"] + $quantity < 0)
+			return "Incorrect quantity change input, your result must not change quantity to a value below 0";
+
+		// update quantity
+		$statement = $mysqli->prepare(	"UPDATE `sheet_good_inventory`
+											SET `quantity` = `quantity` + ?, `notes` = ? 
+											WHERE `inv_ID` = ?;");
+		if(!$statement) return "Materials::update_sheet_quantity: ".$mysqli->error;
+
+		$statement->bind_param("dsd", $quantity, $notes, $inv_id);
+		if(!$statement) return "Materials::update_sheet_quantity: ".$mysqli->error;
+		if(!$statement->execute()) return "Materials::update_sheet_quantity: ".$mysqli->error;
+		return NULL;
 	}
 
 
@@ -375,7 +347,7 @@ class Materials {
 	}
 
 	public static function regexColor($color) {
-		if(preg_match('/^[0-9A-Fa-f]{1,6}/', $color)) return $color;
+		if(preg_match('/^#[0-9A-Fa-f]{0,6}/', $color)) return $color;
 		return false;
 	}
 
@@ -391,7 +363,7 @@ class Materials {
 	}
 
 	public static function regexProductNum($product_number) {
-		if(strlen($product_number) > 30 || strlen($product_number) == 0) return false;
+		if(strlen($product_number) > 30) return false;
 		return htmlspecialchars($product_number);
 	}
 
@@ -574,7 +546,7 @@ class Mats_Used {
 
 	
 	// create a new instance of material usage in DB.  Optional quanity used
-	public static function insert_material_used($trans_id, $m_id, $status_id, $staff, $quantity_used=null, $notes=null) {
+	public static function insert_material_used($trans_id, $m_id, $status_id, $staff, $quantity_used=0, $notes=null) {
 		global $mysqli, $role, $sv;
 		
 		//Deny if user is not staff
@@ -584,7 +556,7 @@ class Mats_Used {
 		// optional trans_id
 		if($trans_id && !Transactions::regexTrans($trans_id)) return "Bad transaction ID given to create material usage entry";
 		if(!Materials::regexID($m_id)) return "Bad material ID #$m_id given to create material usage entry";
-		if(!self::regexUnit_Used($quantity_used)) return "Bad quantity used given to create material usage entry";
+		if(!is_numeric($quantity_used)) return "Bad quantity used $quantity_used given to create material usage entry";
 		$quantity_used = -$quantity_used;  // invert amount to show consumption
 
 		if($statement = $mysqli->prepare("
@@ -745,7 +717,7 @@ class Mats_Used {
 
 	// no quanitity is a valid quantity
 	public static function regexUnit_Used($quantity_used){
-		if(!$quantity_used || preg_match("/^\d{0,5}\.{0,1}\d{0,2}$/", $quantity_used) && $quantity_used >= 0)
+		if(!$quantity_used || preg_match("/^-?\d{0,5}\.{0,1}\d{0,2}$/", $quantity_used) && $quantity_used >= 0)
 			return true;
 		return false;
 	}
