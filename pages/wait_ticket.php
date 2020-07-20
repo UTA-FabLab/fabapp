@@ -37,14 +37,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
         $d_id1 = filter_input(INPUT_POST,'devices');
         $dg_id1 = filter_input(INPUT_POST,'dg_id');
         $wait_status = Wait_queue::hasDGWait($operator1 , $dg_id1);
+ 
         
-        if ($wait_status)
+// Temporarily disabling single wait tickets per queue for flipped service model operation.
+// To re-enable limiting users to 1 wait ticker per machine queue, remove the block comments and the comment marks noted below        
+/*        if ($wait_status)
         {
             $wt_msg = ("<div style='text-align: center'>
                     <div class='alert alert-danger'>
                         Operator is already in this Wait Queue.
                     </div> </div>");
         } else {
+*/
             if($ph1 && !isset($_POST['carrier_name'])){
                 $wt_msg = ("<div style='text-align: center'>
                 <div class='alert alert-danger'>
@@ -68,7 +72,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                     $wt_msg = $wait_id1;
                 }
             }
-        }
+//      }   //Un-comment this bracket to re-enable single wait tickets per machine queue
     } else {
         $wt_msg = ("<div style='text-align: center'>
                 <div class='alert alert-danger'>
