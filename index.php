@@ -7,6 +7,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 $device_array = array();
 $_SESSION['type'] = "home";
 $number_of_queue_tables = 0;
+$device_desc = $sv['wq_device_desc'];
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	if(isset($_POST['alertBtn'])){
@@ -199,10 +200,12 @@ function advanceNum($i, $str){
 																			<?php //prepare message
 																			if ( $row['device_desc'] == ""){
 																				//datetime is added within the AJAX file endWaitList
-																				$msg = "A $row[dg_desc] is now available. Please make your way to the FabLab. You have until ";
+																			//	$msg = "A $row[dg_desc] is now available. Please make your way to the FabLab. You have until ";
+																				$msg = "A $row[dg_desc] " . $device_desc .date($sv['dateFormat'], strtotime("now")+$sv["wait_period"]);
 																			} else {
 																				//datetime is added within the AJAX file endWaitList
-																				$msg = "$row[device_desc] is now available. Please make your way to the FabLab. You have until ";
+																			//	$msg = "$row[device_desc] is now available. Please make your way to the FabLab. You have until ";
+																				$msg = "$row[device_desc] ". $device_desc .date($sv['dateFormat'], strtotime("now")+$sv["wait_period"]);
 																			}
 																			?>
 																			<button class="<?php if (isset($row['last_contact'])){echo "btn btn-xs btn-warning";} else{echo "btn btn-xs btn-primary";}?>" data-target="#removeModal" data-toggle="modal" 
