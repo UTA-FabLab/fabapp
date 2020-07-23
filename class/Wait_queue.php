@@ -21,6 +21,9 @@ class Wait_queue {
     private $phone_num;
     private $email;
     private $last_contacted;
+    private $wq_ticketNum = $sv['wq_ticketNum'];
+    private $wq_ticketCancel = $sv['wq_ticketCancel'];
+    private $wq_ticketComplete = $sv['wq_ticketComplete'];
     
     public function __construct($q_id){
         global $mysqli;
@@ -66,7 +69,7 @@ class Wait_queue {
          * TODO: variable validation
          * d_id, dg_id
          */
-        
+
         //return ("<div class='alert alert-danger'>Bad Phone Number - $carrier_name</div>");
         //Validate input variables
         if (!self::regexPhone($phone) && !empty($phone)) {
@@ -91,7 +94,7 @@ class Wait_queue {
                     ('$operator','$d_id','$dg_id',CURRENT_TIMESTAMP, '$email', '$phone', '$carrier_name');
 
             ")){        
-                Notifications::sendNotification($mysqli->insert_id, "FabApp Notification", "You have signed up for FabApp notifications. Your Wait Ticket number is: ".$mysqli->insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
+                Notifications::sendNotification($mysqli->insert_id, "FabApp Notification", $wq_ticketNum .$mysqli->insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateDeviceWaitTimes();
                 //Commented out for Dev purposes
                 Wait_queue::printTicket($operator, $dg_id);
@@ -108,7 +111,7 @@ class Wait_queue {
                 VALUES
                     ('$operator','$dg_id',CURRENT_TIMESTAMP, '$email', '$phone', '$carrier_name');
             ")){        
-                Notifications::sendNotification($mysqli->insert_id, "FabApp Notification", "You have signed up for FabApp notifications. Your Wait Ticket number is: ".$mysqli->insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
+                Notifications::sendNotification($mysqli->insert_id, "FabApp Notification", $wq_ticketNum .$mysqli->insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateWaitTimes();
                 //Commented out for Dev purposes
                 Wait_queue::printTicket($operator, $dg_id);
@@ -149,7 +152,7 @@ class Wait_queue {
 
 
             // Send a notification that they have canceled their wait queue ticket
-            Notifications::sendNotification($queueItem->q_id, "FabApp Notification", "Your Wait Ticket has been cancelled", 'From: FabApp Notifications' . "\r\n" .'', 0);             
+            Notifications::sendNotification($queueItem->q_id, "FabApp Notification", $wq_ticketCancel, 'From: FabApp Notifications' . "\r\n" .'', 0);             
         
             if ($mysqli->query("
                 UPDATE `wait_queue`
@@ -213,7 +216,7 @@ class Wait_queue {
         }
         
 
-        Notifications::sendNotification($q_id, "FabApp Notification", "Your Wait Ticket has been completed.", 'From: FabApp Notifications' . "\r\n" .'', 0);
+        Notifications::sendNotification($q_id, "FabApp Notification", $wq_ticketComplete, 'From: FabApp Notifications' . "\r\n" .'', 0);
         
 
         $msg = Wait_queue::deleteContactInfo($q_id);
