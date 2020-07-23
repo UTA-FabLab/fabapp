@@ -30,7 +30,7 @@ $selectDeviceAlert = ("<div style='text-align: center'>
             <div class='alert alert-danger'>".
                 $sv['wq_deviceAlert']    
             ."</div> </div>");
-$device_desc = $sv['device_desc'];
+$device_desc = $sv['wq_device_desc'];
 
 if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
     //Not Authorized to see this Page
