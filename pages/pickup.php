@@ -63,6 +63,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['end_button'])) {
 
 	// completely failed ticket; nothing to pay for
 	if($ticket_status == $status['total_fail']) {
+		exit_if_error(StorageObject::remove_object_from_storage($staff, $trans_id));  // take out of storage (trash)
 		$_SESSION['success_msg'] = "Ticket successfully ended.";
 		header("Location:./lookup.php?trans_id=$ticket->trans_id");
 	}
