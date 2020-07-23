@@ -21,10 +21,9 @@ class Wait_queue {
     private $phone_num;
     private $email;
     private $last_contacted;
-    private $wq_ticketNum = $sv['wq_ticketNum'];
-    private $wq_ticketCancel = $sv['wq_ticketCancel'];
-    private $wq_ticketComplete = $sv['wq_ticketComplete'];
     
+
+
     public function __construct($q_id){
         global $mysqli;
 
@@ -64,6 +63,7 @@ class Wait_queue {
 
     public static function insertWaitQueue($operator, $d_id, $dg_id, $phone, $carrier_name, $email) {
         global $mysqli;
+        $wq_ticketNum = $sv['wq_ticketNum'];
         
         /**
          * TODO: variable validation
@@ -150,6 +150,9 @@ class Wait_queue {
         global $mysqli;
         global $operator;
 
+        $wq_ticketCancel = $sv['wq_ticketCancel'];
+    
+
 
             // Send a notification that they have canceled their wait queue ticket
             Notifications::sendNotification($queueItem->q_id, "FabApp Notification", $wq_ticketCancel, 'From: FabApp Notifications' . "\r\n" .'', 0);             
@@ -179,6 +182,8 @@ class Wait_queue {
     {
         global $mysqli;
 
+
+        $wq_ticketComplete = $sv['wq_ticketComplete'];
         //if id && d_id are in wait_queue table
         //elseif id &&dg_id are in wait_queue table
         if ($result = $mysqli->query("
