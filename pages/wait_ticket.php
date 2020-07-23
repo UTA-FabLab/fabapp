@@ -382,13 +382,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                                                         <?php //prepare message
                                                                         if ( $row['device_desc'] == ""){
                                                                             //datetime is added within the AJAX file endWaitList
-                                                                            $msg = "A $row[dg_desc] is now available. Please make your way to the FabLab. You have until" .date($sv['dateFormat'], strtotime("now")+$sv["wait_period"]);
+                                                                            $msg = "A $row[dg_desc] is now available. Please make your way to the FabLab. You have until " .date($sv['dateFormat'], strtotime("now")+$sv["wait_period"]);
                                                                         } else {
                                                                             //datetime is added within the AJAX file endWaitList
-                                                                            $msg = "$row[device_desc] is now available. Please make your way to the FabLab. You have until".date($sv['dateFormat'], strtotime("now")+$sv["wait_period"]);                                                                        }
+                                                                            $msg = "$row[device_desc] is now available. Please make your way to the FabLab. You have until ".date($sv['dateFormat'], strtotime("now")+$sv["wait_period"]);                                                                        
+                                                                        }
                                                                         ?>
                                                                         <button class="<?php if (isset($row['last_contact'])){echo "btn btn-xs btn-warning";} else{echo "btn btn-xs btn-primary";}?>" data-target="#removeModal" data-toggle="modal" 
-                                                                                onclick="sendManualMessage(<?php echo $row["Q_id"]?>, '<?php echo $msg;?>', 1), console.log('. <?php echo $msg ?>')">
+                                                                                onclick="sendManualMessage(<?php echo $row["Q_id"]?>, '<?php echo $msg;?>', 1)">
                                                                             <!-- make note that adding explanation points may cause errors with notifications -->
                                                                                 Send Alert
                                                                         </button>
