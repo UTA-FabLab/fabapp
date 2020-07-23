@@ -63,6 +63,7 @@ class Wait_queue {
 
     public static function insertWaitQueue($operator, $d_id, $dg_id, $phone, $carrier_name, $email) {
         global $mysqli;
+        global $sv;
         $wq_ticketNum = $sv['wq_ticketNum'];
         
         /**
@@ -149,6 +150,7 @@ class Wait_queue {
     {
         global $mysqli;
         global $operator;
+        global $sv;
 
         $wq_ticketCancel = $sv['wq_ticketCancel'];
     
@@ -181,6 +183,7 @@ class Wait_queue {
     public static function transferFromWaitQueue($operator, $d_id)
     {
         global $mysqli;
+        global $sv;
 
 
         $wq_ticketComplete = $sv['wq_ticketComplete'];
