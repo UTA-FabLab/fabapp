@@ -267,8 +267,6 @@ function exit_if_error($error, $redirect=null) {
 							?>
 						</div>
 						<?php if($ticket->device->device_group->all_device_group_materials()) {
-							foreach($ticket->device->device_group->all_device_group_materials() as $material)
-									if($material->m_name != 'Thread'){
 
 						 ?>
 							<table class='table table-bordered table-striped'>
@@ -294,7 +292,7 @@ function exit_if_error($error, $redirect=null) {
 									</td>
 								</tr>
 							</table>
-						<?php } } ?>
+						<?php }  ?>
 					</div>
 				</div>
 			<?php } ?>
