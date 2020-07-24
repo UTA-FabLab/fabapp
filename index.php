@@ -7,7 +7,6 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 $device_array = array();
 $_SESSION['type'] = "home";
 $number_of_queue_tables = 0;
-$device_desc = $sv['wq_device_desc'];
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	if(isset($_POST['alertBtn'])){
@@ -198,6 +197,7 @@ function advanceNum($i, $str){
 																	<?php if (!empty($row['Op_phone']) || !empty($row['Op_email'])) { ?> 
 																		<div style="text-align: center">
 																			<?php //prepare message
+																			$device_desc = $sv['wq_device_desc'];
 																			if ( $row['device_desc'] == ""){
 																				//datetime is added within the AJAX file endWaitList
 																			//	$msg = "A $row[dg_desc] is now available. Please make your way to the FabLab. You have until ";
