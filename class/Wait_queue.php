@@ -587,7 +587,7 @@ class Wait_queue {
     
     public static function printTicket($operator, $dg_id){
         global $mysqli;
-        global $tp;
+        global $tphost, $tpport;
         $est_cost = 0;
 
         if($result = $mysqli->query("
@@ -611,9 +611,8 @@ class Wait_queue {
         }
 
         // Set up Printer Connection
-        $tp_number = 0;
         try {
-            $connector = new NetworkPrintConnector( $tp[$tp_number][0], $tp[$tp_number][1]);
+            $connector = new NetworkPrintConnector($tphost, $tpport);
             $printer = new Printer($connector);
         } catch (Exception $e) {
             return "Couldn't print to this printer: " . $e -> getMessage() . "\n";
