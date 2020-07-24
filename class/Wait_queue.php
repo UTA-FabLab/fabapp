@@ -177,7 +177,8 @@ class Wait_queue {
 		if ($result = $mysqli->query("
 				SELECT `Q_id`
 				FROM `wait_queue`
-				WHERE `Operator` = '$operator' AND `valid` = 'Y' AND `Dev_id` = '$d_id';
+				WHERE `Operator` = '$operator' AND `valid` = 'Y' AND `Dev_id` = '$d_id'
+				ORDER BY `Q_id` ASC LIMIT 1;
 		")){
 			if($result->num_rows == 1) {
 				$row = $result->fetch_assoc();
@@ -190,7 +191,8 @@ class Wait_queue {
 					FROM `wait_queue`
 					LEFT JOIN `devices`
 					ON `devices`.`dg_id` = `wait_queue`.`Devgr_id`
-					WHERE `Operator` = '$operator' AND `valid` = 'Y' AND `devices`.`d_id` = '$d_id';
+					WHERE `Operator` = '$operator' AND `valid` = 'Y' AND `devices`.`d_id` = '$d_id'
+					ORDER BY `Q_id` ASC LIMIT 1;
 				")){
 					if($result->num_rows == 1) {
 						$row = $result->fetch_assoc();
