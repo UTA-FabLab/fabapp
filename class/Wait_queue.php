@@ -769,6 +769,5 @@ class Wait_queue {
         return $this->start_time;
     }
     
-
 }
 ?>
