@@ -769,5 +769,41 @@ class Wait_queue {
     public function getStartTime() {
         return $this->start_time;
     }
+    
+    public static function all_wait_tickets_for_user($operator)
+	{
+		global $mysqli;
+
+		if(!Users::regexUser($operator)) throw new Exception("Bad operator ID: $operator");
+
+		$tickets = array();
+		if(!$results = $mysqli->query(	"SELECT `wait_queue`.`Q_id`, `wait_queue`.`Start_date`, `devices`.`device_desc`,
+										`device_group`.`dg_desc` FROM `wait_queue` 
+										LEFT JOIN `devices` ON `devices`.`d_id` = `wait_queue`.`Dev_id`
+										LEFT JOIN `device_group` ON `wait_queue`.`Devgr_id` = `device_group`.`dg_id`
+										WHERE `valid` = 'Y' AND `Operator` = '$operator';"
+		))
+		{
+			error_log("Wait_queue::all_wait_tickets_for_user: SQL error: $mysqli->error");
+			return $tickets;
+		}
+
+		while($row = $results->fetch_assoc()) $tickets[$row["Q_id"]] = $row;
+		return $tickets;
+	}
+
+
+	public static function wait_ticket_belongs_to_user($operator, $Q_id)
+	{
+		global $mysqli;
+
+		if(!preg_match("/^\d+$/", $Q_id)) throw new Exception("Bad Q_id $Q_id");
+
+		if(!$results = $mysqli->query("SELECT `Operator` FROM `wait_queue` WHERE `Q_id` = $Q_id;")) 
+			throw new Exception("SQL error: $mysqli->error");
+
+		if(!$results->num_rows) return false;
+		return $results->fetch_assoc()["Operator"] == $operator;
+	}
 }
 ?>
