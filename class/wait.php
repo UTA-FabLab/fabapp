@@ -20,13 +20,12 @@ use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
 
 
 function wait($str){
-    global $tp;
+    global $tphost, $tpport;
     global $sv;
 
     // Set up Printer
     try {
-        $tpn = 0;
-        $connector = new NetworkPrintConnector( $tp[$tpn][0], $tp[$tpn][1]);
+        $connector = new NetworkPrintConnector($tphost, $tpport);
         $printer = new Printer($connector);
     } catch (Exception $e) {
         return "Couldn't print to this printer: " . $e -> getMessage() . "\n";

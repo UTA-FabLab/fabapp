@@ -36,7 +36,7 @@ if($results = $mysqli->query("
 									</tr>";
 	}
 } else {
-	$mysqli->getMessage();
+	exit_if_error($mysqli->error);
 }
 
 

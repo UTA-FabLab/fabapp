@@ -22,6 +22,8 @@ class Wait_queue {
     private $email;
     private $last_contacted;
     
+
+
     public function __construct($q_id){
         global $mysqli;
 
@@ -61,12 +63,14 @@ class Wait_queue {
 
     public static function insertWaitQueue($operator, $d_id, $dg_id, $phone, $carrier_name, $email) {
         global $mysqli;
+        global $sv;
+        $wq_ticketNum = $sv['wq_ticketNum'];
         
         /**
          * TODO: variable validation
          * d_id, dg_id
          */
-        
+
         //return ("<div class='alert alert-danger'>Bad Phone Number - $carrier_name</div>");
         //Validate input variables
         if (!self::regexPhone($phone) && !empty($phone)) {
@@ -91,7 +95,7 @@ class Wait_queue {
                     ('$operator','$d_id','$dg_id',CURRENT_TIMESTAMP, '$email', '$phone', '$carrier_name');
 
             ")){        
-                Notifications::sendNotification($mysqli->insert_id, "FabApp Notification", "You have signed up for FabApp notifications. Your Wait Ticket number is: ".$mysqli->insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
+                Notifications::sendNotification($mysqli->insert_id, "FabApp Notification", $wq_ticketNum .$mysqli->insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateDeviceWaitTimes();
                 //Commented out for Dev purposes
                 Wait_queue::printTicket($operator, $dg_id);
@@ -108,7 +112,7 @@ class Wait_queue {
                 VALUES
                     ('$operator','$dg_id',CURRENT_TIMESTAMP, '$email', '$phone', '$carrier_name');
             ")){        
-                Notifications::sendNotification($mysqli->insert_id, "FabApp Notification", "You have signed up for FabApp notifications. Your Wait Ticket number is: ".$mysqli->insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
+                Notifications::sendNotification($mysqli->insert_id, "FabApp Notification", $wq_ticketNum .$mysqli->insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateWaitTimes();
                 //Commented out for Dev purposes
                 Wait_queue::printTicket($operator, $dg_id);
@@ -146,10 +150,14 @@ class Wait_queue {
     {
         global $mysqli;
         global $operator;
+        global $sv;
+
+        $wq_ticketCancel = $sv['wq_ticketCancel'];
+    
 
 
             // Send a notification that they have canceled their wait queue ticket
-            Notifications::sendNotification($queueItem->q_id, "FabApp Notification", "Your Wait Ticket has been cancelled", 'From: FabApp Notifications' . "\r\n" .'', 0);             
+            Notifications::sendNotification($queueItem->q_id, "FabApp Notification", $wq_ticketCancel, 'From: FabApp Notifications' . "\r\n" .'', 0);             
         
             if ($mysqli->query("
                 UPDATE `wait_queue`
@@ -175,13 +183,17 @@ class Wait_queue {
     public static function transferFromWaitQueue($operator, $d_id)
     {
         global $mysqli;
+        global $sv;
 
+
+        $wq_ticketComplete = $sv['wq_ticketComplete'];
         //if id && d_id are in wait_queue table
         //elseif id &&dg_id are in wait_queue table
         if ($result = $mysqli->query("
                 SELECT `Q_id`
                 FROM `wait_queue`
-                WHERE `Operator` = '$operator' AND `valid` = 'Y' AND `Dev_id` = '$d_id';
+                WHERE `Operator` = '$operator' AND `valid` = 'Y' AND `Dev_id` = '$d_id'
+                ORDER BY `Q_id` ASC LIMIT 1;
         ")){
             if($result->num_rows == 1) {
                 $row = $result->fetch_assoc();
@@ -194,7 +206,8 @@ class Wait_queue {
                     FROM `wait_queue`
                     LEFT JOIN `devices`
                     ON `devices`.`dg_id` = `wait_queue`.`Devgr_id`
-                    WHERE `Operator` = '$operator' AND `valid` = 'Y' AND `devices`.`d_id` = '$d_id';
+                    WHERE `Operator` = '$operator' AND `valid` = 'Y' AND `devices`.`d_id` = '$d_id'
+                   ORDER BY `Q_id` ASC LIMIT 1;
                 ")){
                     if($result->num_rows == 1) {
                         $row = $result->fetch_assoc();
@@ -213,7 +226,7 @@ class Wait_queue {
         }
         
 
-        Notifications::sendNotification($q_id, "FabApp Notification", "Your Wait Ticket has been completed.", 'From: FabApp Notifications' . "\r\n" .'', 0);
+        Notifications::sendNotification($q_id, "FabApp Notification", $wq_ticketComplete, 'From: FabApp Notifications' . "\r\n" .'', 0);
         
 
         $msg = Wait_queue::deleteContactInfo($q_id);
@@ -576,7 +589,7 @@ class Wait_queue {
     
     public static function printTicket($operator, $dg_id){
         global $mysqli;
-        global $tp;
+        global $tphost, $tpport;
         $est_cost = 0;
 
         if($result = $mysqli->query("
@@ -600,9 +613,8 @@ class Wait_queue {
         }
 
         // Set up Printer Connection
-        $tp_number = 0;
         try {
-            $connector = new NetworkPrintConnector( $tp[$tp_number][0], $tp[$tp_number][1]);
+            $connector = new NetworkPrintConnector($tphost, $tpport);
             $printer = new Printer($connector);
         } catch (Exception $e) {
             return "Couldn't print to this printer: " . $e -> getMessage() . "\n";
@@ -758,6 +770,40 @@ class Wait_queue {
         return $this->start_time;
     }
     
+    public static function all_wait_tickets_for_user($operator)
+	{
+		global $mysqli;
 
+		if(!Users::regexUser($operator)) throw new Exception("Bad operator ID: $operator");
+
+		$tickets = array();
+		if(!$results = $mysqli->query(	"SELECT `wait_queue`.`Q_id`, `wait_queue`.`Start_date`, `devices`.`device_desc`,
+										`device_group`.`dg_desc` FROM `wait_queue` 
+										LEFT JOIN `devices` ON `devices`.`d_id` = `wait_queue`.`Dev_id`
+										LEFT JOIN `device_group` ON `wait_queue`.`Devgr_id` = `device_group`.`dg_id`
+										WHERE `valid` = 'Y' AND `Operator` = '$operator';"
+		))
+		{
+			error_log("Wait_queue::all_wait_tickets_for_user: SQL error: $mysqli->error");
+			return $tickets;
+		}
+
+		while($row = $results->fetch_assoc()) $tickets[$row["Q_id"]] = $row;
+		return $tickets;
+	}
+
+
+	public static function wait_ticket_belongs_to_user($operator, $Q_id)
+	{
+		global $mysqli;
+
+		if(!preg_match("/^\d+$/", $Q_id)) throw new Exception("Bad Q_id $Q_id");
+
+		if(!$results = $mysqli->query("SELECT `Operator` FROM `wait_queue` WHERE `Q_id` = $Q_id;")) 
+			throw new Exception("SQL error: $mysqli->error");
+
+		if(!$results->num_rows) return false;
+		return $results->fetch_assoc()["Operator"] == $operator;
+	}
 }
 ?>

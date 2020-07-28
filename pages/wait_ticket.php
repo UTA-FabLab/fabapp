@@ -8,6 +8,30 @@ $d_id1 = $dg_id1 = $ph1 = $carrier_name1 = $em1 = $operator1 = $wt_msg = "";
 $number_of_queue_tables = 0;
 $device_array = array();
 
+// Notifications
+
+$operatorInQueueAlert = ("<div style='text-align: center'>
+            <div class='alert alert-danger'>".
+                $sv['wq_operatorInQueue'].
+             "</div> </div>");
+$successAlert = ("<div style='text-align: center'>
+            <div class='alert alert-success'>".
+                $sv['wq_successAlert'] 
+            ."</div> </div>");
+$phoneNumberAlert = ("<div style='text-align: center'>
+            <div class='alert alert-danger'>".
+                $sv['wq_phoneAlert']
+            ."</div> </div>");
+$carrierAlert = ("<div style='text-align: center'>
+            <div class='alert alert-danger'>".
+                $sv['wq_carrierAlert']    
+            ."</div> </div>");
+$selectDeviceAlert = ("<div style='text-align: center'>
+            <div class='alert alert-danger'>".
+                $sv['wq_deviceAlert']    
+            ."</div> </div>");
+$device_desc = $sv['wq_device_desc'];
+
 if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
     //Not Authorized to see this Page
     $_SESSION['error_msg'] = "You are unable to view this page.";
@@ -15,10 +39,7 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
     exit();
 }
 if (isset($_SESSION['wt_msg']) && $_SESSION['wt_msg'] == 'success'){
-    $wt_msg = ("<div style='text-align: center'>
-            <div class='alert alert-success'>
-                Successfully added to wait queue and updated contact info!
-            </div> </div>");
+    $wt_msg = $successAlert;
     unset($_SESSION['wt_msg']);
 }
 if (!array_key_exists("clear_queue",$sv)){
@@ -37,24 +58,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
         $d_id1 = filter_input(INPUT_POST,'devices');
         $dg_id1 = filter_input(INPUT_POST,'dg_id');
         $wait_status = Wait_queue::hasDGWait($operator1 , $dg_id1);
+ 
         
-        if ($wait_status)
+// Temporarily disabling single wait tickets per queue for flipped service model operation.
+// To re-enable limiting users to 1 wait ticker per machine queue, remove the block comments and the comment marks noted below        
+/*        if ($wait_status)
         {
-            $wt_msg = ("<div style='text-align: center'>
-                    <div class='alert alert-danger'>
-                        Operator is already in this Wait Queue.
-                    </div> </div>");
+            $wt_msg = $operatorInQueueAlert;
         } else {
+*/
             if($ph1 && !isset($_POST['carrier_name'])){
-                $wt_msg = ("<div style='text-align: center'>
-                <div class='alert alert-danger'>
-                    You Must Select A Carrier If Entering a Phone Number
-                </div> </div>");
+                $wt_msg = $carrierAlert;
             } elseif (!$ph1 && isset($_POST['carrier_name'])){
-                $wt_msg = ("<div style='text-align: center'>
-                <div class='alert alert-danger'>
-                    You Must Enter a Phone Number If Selecting a Carrier
-                </div> </div>");
+                $wt_msg = $phoneNumberAlert;
                 
             } else {
                 $carrier_name1 = filter_input(INPUT_POST,'carrier_name');
@@ -68,12 +84,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                     $wt_msg = $wait_id1;
                 }
             }
-        }
+//      }   //Un-comment this bracket to re-enable single wait tickets per machine queue
     } else {
-        $wt_msg = ("<div style='text-align: center'>
-                <div class='alert alert-danger'>
-                    You Must Select A Device
-                </div> </div>");
+        // devices and device group set this line is unreachable.
+        $wt_msg = $selectDeviceAlert;
     }
 }
 ?>
@@ -151,7 +165,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                             ")) {
                                                 while ( $rows = mysqli_fetch_array ( $result ) ) {
                                                     // Create value in the form of DG_dgID-dID
-                                                    echo "<option value=". $rows ['provider'] .">" . $rows ['provider'] . "</option>";
+                                                    echo "<option value='". $rows ['provider'] ."'>" . $rows ['provider'] . "</option>";
                                                 }
                                             } else {
                                                 die ("There was an error loading the phone carriers.");
@@ -372,10 +386,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                                                         <?php //prepare message
                                                                         if ( $row['device_desc'] == ""){
                                                                             //datetime is added within the AJAX file endWaitList
-                                                                            $msg = "A $row[dg_desc] is now available. Please make your way to the FabLab. You have until ";
+                                                                            $msg = "A $row[dg_desc] " . $device_desc .date($sv['dateFormat'], strtotime("now")+$sv["wait_period"]);
                                                                         } else {
                                                                             //datetime is added within the AJAX file endWaitList
-                                                                            $msg = "$row[device_desc] is now available. Please make your way to the FabLab. You have until ";
+                                                                            $msg = "$row[device_desc] ". $device_desc .date($sv['dateFormat'], strtotime("now")+$sv["wait_period"]);                                                                        
                                                                         }
                                                                         ?>
                                                                         <button class="<?php if (isset($row['last_contact'])){echo "btn btn-xs btn-warning";} else{echo "btn btn-xs btn-primary";}?>" data-target="#removeModal" data-toggle="modal" 

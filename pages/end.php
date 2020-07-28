@@ -266,7 +266,9 @@ function exit_if_error($error, $redirect=null) {
 								echo Mats_Used::group_mats_used_HTML($ticket->mats_used); 		
 							?>
 						</div>
-						<?php if($ticket->device->device_group->all_device_group_materials()) { ?>
+						<?php if($ticket->device->device_group->all_device_group_materials())
+						{
+							?>
 							<table class='table table-bordered table-striped'>
 								<tr class='warning'>
 									<td colspan='3'> Add material </td>
@@ -290,7 +292,9 @@ function exit_if_error($error, $redirect=null) {
 									</td>
 								</tr>
 							</table>
-						<?php } ?>
+							<?php
+						}
+					?>
 					</div>
 				</div>
 			<?php } ?>

@@ -219,14 +219,14 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 								<a href="#"><i class="fas fa-warehouse"></i> Inventory<span class="fas fa-angle-left"></span></a>
 								<ul class="nav nav-second-level">
 									<li>
-										<a href="/pages/inventory.php"><i class="fas fa-box"></i> On Hand</a>
+										<a href="/pages/inventory.php"><i class="fa fa-inbox"></i> On Hand</a>
 									</li>
 									<li>
-										<a href="/pages/inventory_processing.php"><i class="fas fa-shipping-fast"></i> Edit Inventory</a>
+										<a href="/pages/inventory_quantity.php">&#x270E; Change Inventory</a>
 									</li>
 									<?php if(isset($staff) && $staff->getRoleID() >= $sv['minRoleTrainer']) { ?>
 									<li>
-										<a href="/pages/current_inventory.php"><i class="far fa-check-square"></i> Usable Inventory</a>
+										<a href="/pages/inventory_materials.php"><i class='fa fa-plus-circle'></i> Inventory Materials</a>
 									</li>
 									<?php } ?>
 									<li>
@@ -271,6 +271,11 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 											</span>
 										</div>
 									</li>
+									<?php if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfLead']) { ?>
+										<li>
+											<a href="/pages/offline_ticket.php"><i class="fas fa-history"></i> Offline Transactions</a>
+										</li>
+									<?php } ?>
 								</form>
 								</ul>
 							</li>
