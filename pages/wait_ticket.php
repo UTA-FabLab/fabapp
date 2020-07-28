@@ -165,7 +165,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                             ")) {
                                                 while ( $rows = mysqli_fetch_array ( $result ) ) {
                                                     // Create value in the form of DG_dgID-dID
-                                                    echo "<option value=". $rows ['provider'] .">" . $rows ['provider'] . "</option>";
+                                                    echo "<option value='". $rows ['provider'] ."'>" . $rows ['provider'] . "</option>";
                                                 }
                                             } else {
                                                 die ("There was an error loading the phone carriers.");
