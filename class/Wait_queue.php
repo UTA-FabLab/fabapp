@@ -151,13 +151,24 @@ class Wait_queue {
         global $mysqli;
         global $operator;
         global $sv;
+		global $wqTicketOperator;
 
         $wq_ticketCancel = $sv['wq_ticketCancel'];
+		$wq_secondNotification = $sv['wq_SecondaryEmail'];
+		$wqTicketOperator = $staff->$operator;
     
 
 
             // Send a notification that they have canceled their wait queue ticket
-            Notifications::sendNotification($queueItem->q_id, "FabApp Notification", $wq_ticketCancel, 'From: FabApp Notifications' . "\r\n" .'', 0);             
+            Notifications::sendNotification($queueItem->q_id, "FabApp Notification", $wq_ticketCancel, 'From: FabApp Notifications' . "\r\n" .'', 0);
+			
+			//Evaluate to see if operator issuing cancellation request is the operator listed in the wait queue ticket, if true then perform email address verification
+			//Email site variable must be a valid address, or no action will be taken
+			if($wqTicketOperator == $operator) {
+				if(filter_var($wq_secondNotification, FILTER_VALIDATE_EMAIL){
+					Notifications::sendMail($wq_secondNotification, "FabApp Self-Cancellation Notice", "Learner " . $wqTicketOperator . " has cancelled their own wait ticket.  Please update accordingly." . '\r\n This is only a test email, do not pay attention yet');
+				}
+			}
         
             if ($mysqli->query("
                 UPDATE `wait_queue`
