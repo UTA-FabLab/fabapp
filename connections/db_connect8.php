@@ -1,8 +1,9 @@
+<?php
 
-$dbhost = "";
-$dbuser = "";
-$dbpass = "";
-$dbdatabase = "";
+$dbhost = "localhost";
+$dbuser = "root";
+$dbpass = "mysql";
+$dbdatabase = "fabapp-permissions";
 // Connecting to mysql database
 $mysqli = new mysqli($dbhost, $dbuser, $dbpass) or die(mysql_error());
 
