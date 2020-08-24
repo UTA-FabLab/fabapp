@@ -76,7 +76,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["update_inventory"])
 	// $response = array("type" => gettype($mats_used_changes[0]));
 	foreach($mats_used_changes as $update) {
 		if($update->notes) $update->notes = htmlspecialchars($update->notes);
-		$outcome = Mats_Used::insert_material_used(null, $update->m_id, $update->status_id, $staff, $update->quantity_used, $update->notes);
+		$outcome = Mats_Used::insert_material_used(null, $update->m_id, $update->status_id, $staff, $update->quantity, $update->notes);
 		if(!is_int($outcome)) $errors[$update->m_id] = array(	"m_id" => $update->m_id,
 																	"message" => $outcome,
 																	"notes" => $update->notes,
@@ -115,6 +115,18 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["add_edit_mat_used_i
 	echo json_encode(array(	"mu_id" => $mu_id,
 								"material_HTML" => $HTML, 
 								"material_name" => $mat_used->material->m_name));
+}
+
+elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["material_info"]))
+{
+	if(!Materials::regexID($_POST["material_info"])) exit();
+	$mat = new Materials($_POST["material_info"]);
+
+	$attributes = array(
+			"m_name" => $mat->m_name, "m_parent" => $mat->m_parent->m_id, "price" => $mat->price, 
+			"unit" => $mat->unit, "color_hex" => "#$mat->color_hex", "is_measurable" => $mat->is_measurable, 
+			"product_number" => $mat->product_number, "is_current" => $mat->is_current);
+	echo json_encode($attributes);
 }
 
 

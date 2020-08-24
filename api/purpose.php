@@ -46,7 +46,7 @@ if (!isset($json_out["ERROR"])){
 		$json_out["authorized"] = "N";
 		$json_out["ERROR"] = $mysqli->error;
 	} else {
-		while($row = $result->fetch_array(MYSQL_ASSOC)) {
+		while($row = $result->fetch_array(MYSQLI_ASSOC)) {
 			$json_out[] = $row;
 		}
 	}

@@ -239,17 +239,17 @@ function __header__echo_go_modal($message, $type, $disappear="false")
 									<a href="#"><i class="fas fa-warehouse"></i> Inventory<span class="fas fa-angle-left"></span></a>
 									<ul class="nav nav-second-level">
 										<li>
-											<a href="/pages/inventory.php"><i class="fas fa-box"></i> On Hand</a>
+											<a href="/pages/inventory.php"><i class="fa fa-inbox"></i> On Hand</a>
 										</li>
 										<li>
-											<a href="/pages/inventory_processing.php"><i class="fas fa-shipping-fast"></i> Edit Inventory</a>
+											<a href="/pages/inventory_quantity.php">&#x270E; Change Inventory</a>
 										</li>
 										<?php
 											if(isset($user) && $user->validate("create_inventory"))
 											{
 												?>
 												<li>
-													<a href="/pages/current_inventory.php"><i class="far fa-check-square"></i> Usable Inventory</a>
+													<a href="/pages/inventory_materials.php"><i class='fa fa-plus-circle'></i> Inventory Materials</a>
 												</li>
 												<?php
 											}
@@ -307,6 +307,16 @@ function __header__echo_go_modal($message, $type, $disappear="false")
 									</form>
 									</ul>
 								</li>
+								<?php
+								if (isset($user) && $user->validate($ROLE["lead"])) 
+								{ 
+									?>
+									<li>
+										<a href="/pages/offline_ticket.php"><i class="fas fa-history"></i> Offline Transactions</a>
+									</li>
+									<?php 
+									} 
+								?>
 								<li>
 									<a href="#" id="pickLink"><i class="fas fa-gift"></i> Pick Up 3D Print<span class="fas fa-angle-left"></span></a>
 									<ul class="nav nav-second-level">

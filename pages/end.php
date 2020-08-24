@@ -266,7 +266,9 @@ function exit_if_error($error, $redirect=null) {
 								echo Mats_Used::group_mats_used_HTML($ticket->mats_used); 		
 							?>
 						</div>
-						<?php if($ticket->device->device_group->all_device_group_materials()) { ?>
+						<?php if($ticket->device->device_group->all_device_group_materials())
+						{
+							?>
 							<table class='table table-bordered table-striped'>
 								<tr class='warning'>
 									<td colspan='3'> Add material </td>
@@ -290,7 +292,9 @@ function exit_if_error($error, $redirect=null) {
 									</td>
 								</tr>
 							</table>
-						<?php } ?>
+							<?php
+						}
+					?>
 					</div>
 				</div>
 			<?php } ?>
@@ -740,8 +744,10 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	{
 		var materials_statuses = document.getElementsByClassName("mat_used_select");
 		for(var x = 0; x < materials_statuses.length; x++)
+		{
 			if(status) materials_statuses[x].value = status;
 			else materials_statuses[x].selectedIndex = 0;
+		}
 	}
 
 
@@ -834,8 +840,17 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 		populate_material_table(materials);
 
 		// ---- storage ----
-		if(ticket_status != <?php echo $STATUS["stored"] ?>) $("#storage_location_div_modal").hide();
-		else $("#storage_location_div_modal").show();
+		// status is not storage
+		if(ticket_status != <?php echo $status["stored"] ?>) $("#storage_location_div_modal").hide();
+		// status is storage and location selected
+		else if(document.getElementById("storage_location_input_modal").value)
+			$("#storage_location_div_modal").show();
+		// status is storage but location not selected
+		else
+		{
+			ticket_status_select.selectedIndex = 0;
+			return alert("Status marked as storage but no location was selected");
+		}
 
 		// ---- notes ----
 		document.getElementById("ticket_notes_textarea_modal").value = 
@@ -978,12 +993,13 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	function failed_ticket_material_statuses_are_invalid(materials, ticket_status)
 	{
 		// make sure a note is stated
-		if(document.getElementById("ticket_notes").value.length < 10)
+		if(document.getElementById("ticket_notes_textarea").value.length < 10)
 			return alert_and_return_true("You must state how the ticket failed");
 		// require 1 failed material: none found
+		console.log(materials);
 		if(!any(	materials,
-				function(mat, value){return mat["status"] == value;},
-				<?php echo $STATUS["failed_mat"]; ?>)
+				function(mat, value){return mat["status"].value == value;},
+				<?php echo $status["failed_mat"]; ?>)
 		) return alert_and_return_true("Any failed ticket requires at least 1 failed material");
 
 		// cover paritally failed ticket specific requirements
@@ -1045,12 +1061,17 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 					alert(response["error"]);
 					return;
 				}
+				console.log(response);
 
 				// add stuff to page
 				var message =	`Please place the object into a box in drawer ${response["drawer_label"]}, `+ 
 									`then confirm its placement by clicking the box on the screen`;
 				var drawer_title = 	`<h3>Drawer ${response["drawer_label"]} </h3>`;
 				document.getElementById("drawer_fill").innerHTML = message + drawer_title + response["drawer_HTML"];
+			},
+			error: function(error)
+			{
+				console.log(error);
 			}
 		});		
 	}
@@ -1078,6 +1099,10 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 									`then confirm its placement by clicking the highlighted box on the screen`;
 				var drawer_title = 	`<h3>Drawer ${response["drawer_label"]} </h3>`;
 				document.getElementById("drawer_fill").innerHTML = message + drawer_title + response["drawer_HTML"];
+			},
+			error: function(error)
+			{
+				console.log(error);
 			}
 		});
 	}

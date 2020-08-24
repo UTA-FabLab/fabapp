@@ -37,17 +37,18 @@ if (!$user || !$user->is_staff()){
                             </tr>
                         </thead>
                         <?php
-                            foreach(FabAppError::getErrors() as $er)
-                            {
-                                echo "<tr>";
-                                    echo "<td>".$er->getE_time()."</td>";
-                                    echo "<td>".$er->getPage()."</td>";
-                                    echo "<td>".$er->getMsg()."</td>";
-                                    if (!is_object($er->getStaff())) echo "<td></td>";
-                                    else echo "<td> <i class='".$er->getStaff()->icon." fa-lg' title='".$er->getStaff()->id."'></i></td>";
-                                echo "</tr>";    
-                            }
-                        ?>
+                        foreach ( FabAppError::getErrors() as $er ){
+                            echo "<tr>";
+                                echo "<td>".$er->getE_time()."</td>";
+                                echo "<td>".$er->getPage()."</td>";
+                                echo "<td>".$er->getMsg()."</td>";
+                                if (is_object($er->getStaff())){
+                                    echo "<td> <i class='".$er->getStaff()->getIcon()." fa-lg' title='".$er->getStaff()->getOperator()."'></i></td>";
+                                } else {
+                                    echo "<td></td>";
+                                }
+                            echo "</tr>";    
+                        } ?>
                         <tfoot>
                             <tr>
                                 <th>Date</th>

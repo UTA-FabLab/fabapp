@@ -104,7 +104,7 @@ function GetByDeviceID ($device_id) {
         ErrorExit(2);
     }
 	
-	while($row = $result->fetch_array(MYSQL_ASSOC)) {
+	while($row = $result->fetch_array(MYSQLI_ASSOC)) {
             $json_out[] = $row;
     }
 	
