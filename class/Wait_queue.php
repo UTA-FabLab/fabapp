@@ -150,28 +150,32 @@ class Wait_queue {
     public static function deleteFromWaitQueue($queueItem)
     {
         global $mysqli;
-        global $operator;	//ID number of the WQ ticket's owner
+        global $operator;	//ID number of the WQ ticket's owner/requestor
         global $sv;
-		global $staff; //The ID number of the logged-in user 
+		global $staff; //The ID number of the currently logged-in user 
 		
 
         $wq_ticketCancel = $sv['wq_ticketCancel'];
 		$wq_secondNotification = $sv['wq_SecondaryEmail'];
 		$wq_LoggedInUserOperator = $staff->operator;
 		
+		
+	//Leave these diagnostic lines in for later, something in my code is bound to break something else later
+	
 	//	error_log('wq_secondNotification email is : ' . $wq_secondNotification, 0);
 	//	error_log('User cancelling this ticket(wqTicketOperator) is :' . $wq_LoggedInUserOperator, 0);
 	//	error_log('operator (ID of ticket owner) is :' . $operator, 0);
-		
-	//	error_log('email address validity is: ' . var_dump(filter_var($wq_secondNotification, FILTER_VALIDATE_EMAIL) , 0) );
+	//	error_log('email address validity is: ' . filter_var($wq_secondNotification, FILTER_VALIDATE_EMAIL) , 0) ;
     
 
 
             // Send a notification that they have canceled their wait queue ticket
             Notifications::sendNotification($queueItem->q_id, "FabApp Notification", $wq_ticketCancel, 'From: FabApp Notifications' . "\r\n" .'', 0);
 			
-			//Evaluate to see if operator issuing cancellation request is the operator listed in the wait queue ticket, if true then perform email address verification
-			//Email site variable must be a valid address, or no action will be taken
+			//Evaluate to see if operator issuing cancellation request is the operator listed in the wait queue ticket
+			//If true then perform email address verification
+			//If email address variable is valid, address is passed along as a string.  If invalid, boolean FALSE is returned instead
+			//If filter_var result is anything but FALSE, notice is transmitted - this probably needs better evaluation
 			if ($wq_LoggedInUserOperator == $operator) {
 				if(filter_var($wq_secondNotification, FILTER_VALIDATE_EMAIL) != false ) {
 					Notifications::sendMail($wq_secondNotification, "FabApp Self-Cancellation Notice", 'Learner has cancelled their own wait ticket.  Please update things accordingly.') ;
