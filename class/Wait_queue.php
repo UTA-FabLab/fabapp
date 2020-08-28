@@ -21,6 +21,7 @@ class Wait_queue {
     private $phone_num;
     private $email;
     private $last_contacted;
+	
     
 
 
@@ -149,13 +150,20 @@ class Wait_queue {
     public static function deleteFromWaitQueue($queueItem)
     {
         global $mysqli;
-        global $operator;
+        global $operator;	//ID number of the WQ ticket's owner
         global $sv;
-		global $wqTicketOperator;
+		global $staff; //The ID number of the logged-in user 
+		
 
         $wq_ticketCancel = $sv['wq_ticketCancel'];
 		$wq_secondNotification = $sv['wq_SecondaryEmail'];
-		$wqTicketOperator = $staff->$operator;
+		$wq_LoggedInUserOperator = $staff->operator;
+		
+	//	error_log('wq_secondNotification email is : ' . $wq_secondNotification, 0);
+	//	error_log('User cancelling this ticket(wqTicketOperator) is :' . $wq_LoggedInUserOperator, 0);
+	//	error_log('operator (ID of ticket owner) is :' . $operator, 0);
+		
+	//	error_log('email address validity is: ' . var_dump(filter_var($wq_secondNotification, FILTER_VALIDATE_EMAIL) , 0) );
     
 
 
@@ -164,9 +172,9 @@ class Wait_queue {
 			
 			//Evaluate to see if operator issuing cancellation request is the operator listed in the wait queue ticket, if true then perform email address verification
 			//Email site variable must be a valid address, or no action will be taken
-			if($wqTicketOperator == $operator) {
-				if(filter_var($wq_secondNotification, FILTER_VALIDATE_EMAIL){
-					Notifications::sendMail($wq_secondNotification, "FabApp Self-Cancellation Notice", "Learner " . $wqTicketOperator . " has cancelled their own wait ticket.  Please update accordingly." . '\r\n This is only a test email, do not pay attention yet');
+			if ($wq_LoggedInUserOperator == $operator) {
+				if(filter_var($wq_secondNotification, FILTER_VALIDATE_EMAIL) != false ) {
+					Notifications::sendMail($wq_secondNotification, "FabApp Self-Cancellation Notice", 'Learner has cancelled their own wait ticket.  Please update things accordingly.') ;
 				}
 			}
         
