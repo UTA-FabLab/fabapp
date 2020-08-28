@@ -178,7 +178,7 @@ class Wait_queue {
 			//If filter_var result is anything but FALSE, notice is transmitted - this probably needs better evaluation
 			if ($wq_LoggedInUserOperator == $operator) {
 				if(filter_var($wq_secondNotification, FILTER_VALIDATE_EMAIL) != false ) {
-					Notifications::sendMail($wq_secondNotification, "FabApp Self-Cancellation Notice", 'Learner has cancelled their own wait ticket.  Please update things accordingly.') ;
+					Notifications::sendMail($wq_secondNotification, "FabApp Self-Cancellation Notice", 'Learner has cancelled their own wait ticket, #' . $queueItem->q_id . '.  Please update things accordingly.') ;
 				}
 			}
         
