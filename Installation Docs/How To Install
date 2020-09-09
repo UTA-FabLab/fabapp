@@ -1,1 +1,8 @@
-Placeholder for further content.
+To install FabApp:
+
+1.  Obtain a hostname and space on a LAMP stack server matching basic requirements.
+2.  Create a DB on MySQL called fabapp, import the schema.sql(located in fabapp/Installation Docs) file into it to create the correct tables.  Configure 2 seperate users: one with read/write/mod privileges on the entire DB, and one with read/delete privileges ONLY on the fabapp/storage_box table.
+3.  Download or clone the Production branch into your directory on the webserver.
+4.  Determine the hostname/ports for your network's LDAP authentication service, the BaseDN and BindDN relevant to it, and determine the name of the attribute containing the unique identifier for users in your local LDAP system.  
+5.  Open up ldap.php and replace the $attribute assignment with your system's field name.  Replace the $ldap_server, $ldap_baseDN, and $ldap_bindDN assignments with the applicable information.
+6.  Edit the db_connect8.php file and insert the address of the SQL host, the standard(R/W/Mod) database user's name, and the standard database user's PW.  If you named your SQL instance anything other than "fabapp" you will need to change the $dbdatabase variable to reflect that as well.
