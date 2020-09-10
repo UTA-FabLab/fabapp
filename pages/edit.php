@@ -23,18 +23,18 @@
 
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
-if(!$staff) exit_if_error("Please Login", "/index.php");
-elseif($staff->roleID < $sv['editTrans']) exit_if_error("You are not authorized to edit this ticket", "/index.php");
+if(!isset($user)) exit_if_error("Please Login", "/index.php");
+elseif($user("edit_transaction")) exit_if_error("You are not authorized to edit this ticket", "/index.php");
 elseif(!$_GET["trans_id"]) exit_if_error("Search parameter is missing", "/index.php");
 elseif(!Transactions::regexTrans($_GET["trans_id"])) exit_if_error("Ticket #$_GET[trans_id] is invalid", "/index.php");
 else {
 	$trans_id = $_GET["trans_id"];
 	$ticket = new Transactions($trans_id);
 	$storage = StorageObject::object_is_in_storage($trans_id) ? new StorageObject($trans_id) : null;
-	$account_ids = array_map(create_function('$obj', 'return $obj->a_id;'), Accounts::listAccts($ticket->user, $staff));
+	$account_ids = array_map(create_function('$obj', 'return $obj->a_id;'), Accounts::listAccts($ticket->user, $user));
 }
 
-if($staff->operator == $ticket->user->operator && $staff->roleID < $role["admin"])
+if($user->is_same_as($ticket->user) && $user($ROLE["admin"]))
 	exit_if_error("You do not have permission to edit your own ticket", "/index.php");
 
 
@@ -56,7 +56,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["save_data"])) {
 		if(!$mat_status) exit_if_error("Invalid material status for mat_used #$mu_id");
 		$mat_status = new Status($mat_status);
 
-		$material_edit_staff = Users::withID(filter_input(INPUT_POST, "$mu_id-staff"));
+		$material_edit_staff = Users::with_id(filter_input(INPUT_POST, "$mu_id-staff"));
 		if($error = $mat_used->edit_material_used_information(array("quantity_used" => $quantity_used, 
 		"m_id" => $material, "status" => $mat_status, "staff" => $material_edit_staff)))
 			exit_if_error("Unable to update material used #$mat_used->mu_id: $error");
@@ -70,8 +70,8 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["save_data"])) {
 	$start_time = htmlspecialchars(filter_input(INPUT_POST, "t_start"));
 	$end_time = htmlspecialchars(filter_input(INPUT_POST, "t_end"));
 	// self regexing
-	$operator = Users::withID(filter_input(INPUT_POST, "operator"));
-	$staff = Users::withID(filter_input(INPUT_POST, "staff_id"));
+	$operator = Users::with_id(filter_input(INPUT_POST, "operator"));
+	$staff = Users::with_id(filter_input(INPUT_POST, "staff_id"));
 
 	if(!Status::regexID($ticket_status)) exit_if_error("Status ID $ticket_status is an invalid format");
 	
@@ -85,7 +85,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["save_data"])) {
 
 	if($ticket->pickup_time) {
 		$pickup_time = htmlspecialchars(filter_input(INPUT_POST, "pickup_time"));
-		$receiver = Users::withID(filter_input(INPUT_POST, "receiver"));
+		$receiver = Users::with_id(filter_input(INPUT_POST, "receiver"));
 
 		exit_if_error($ticket->edit_transaction_information(array(	"pickup_time" => $pickup_time, 
 																	"pickedup_by" => $receiver)));
@@ -114,7 +114,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["save_data"])) {
 			$storage_object = new StorageObject($trans_id);
 
 			$stored_time = htmlspecialchars(filter_input(INPUT_POST, "storage_start"));
-			$storage_staff = Users::withID(filter_input(INPUT_POST, "storage_staff"));
+			$storage_staff = Users::with_id(filter_input(INPUT_POST, "storage_staff"));
 
 			exit_if_error($storage_object->edit_object_storage_information(array(	"storage_start" => $stored_time, 
 																						"staff" => $storage_staff)));
@@ -173,7 +173,7 @@ function exit_with_success($message, $redirect=null) {
 					</div>
 					<div class="panel-body">
 						<?php 
-							$readonly = $staff->operator == $ticket->staff->operator ? "readonly" : "";  // prevent staff from listing someone else as changer
+							$readonly = $user->is_same_as($ticket->staff) ? "readonly" : "";  // prevent staff from listing someone else as changer
 						?>
 						<table class ="table table-bordered table-striped">
 							<tr>
@@ -194,22 +194,22 @@ function exit_with_success($message, $redirect=null) {
 								<td>Start Time</td>
 								<td>
 									<input id='t_start' name='t_start' class='form-control' value='<?php echo date("Y-m-d\TH:i:s", strtotime($ticket->t_start)); ?>' 
-									type='datetime-local' onkeyup='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'
-									onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'/>
+									type='datetime-local' onkeyup='change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 2);'
+									onchange='change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 2);'/>
 								</td>
 							</tr>
 							<tr>
 								<td>End Time</td>
 								<td>
 									<input id='t_end' name='t_end' class='form-control' value='<?php echo date("Y-m-d\TH:i:s", strtotime($ticket->t_end)); ?>' 
-									type='datetime-local' onkeyup='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'
-									onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'/>
+									type='datetime-local' onkeyup='change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 2);'
+									onchange='change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 2);'/>
 								</td>
 							</tr>
 							<tr>
 								<td>Status</td>
 								<td>
-									<select name="status_id" id="status_id" class='form-control' onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'>
+									<select name="status_id" id="status_id" class='form-control' onchange='change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 2);'>
 										<?php
 										$available_statuses = Status::device_and_transaction_statuses();
 										$status_descriptions = Status::getList();
@@ -225,16 +225,16 @@ function exit_with_success($message, $redirect=null) {
 								<td>Picked Up Time</td>
 								<td>
 									<input id='pickup_time' name='pickup_time' class='form-control' value='<?php echo date("Y-m-d\TH:i:s", strtotime($ticket->pickup_time)); ?>' 
-									type='datetime-local' onkeyup='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'
-									onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'/>
+									type='datetime-local' onkeyup='change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 2);'
+									onchange='change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 2);'/>
 								</td>
 							</tr>
 							<tr>
 								<td>Picked Up By</td>
 								<td>
 									<input type='number' name='receiver' id='receiver' placeholder='1000000000' value='<?php echo $ticket->pickedup_by->operator; ?>'
-									class='form-control' onkeyup='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'
-									onchange='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'>
+									class='form-control' onkeyup='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 2);'
+									onchange='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 2);'>
 								</td>
 							</tr>
 							<?php } ?>
@@ -242,8 +242,8 @@ function exit_with_success($message, $redirect=null) {
 								<td>Started By</td>
 								<td>
 									<input type="number" name="operator" id="operator" placeholder="1000000000" value="<?php echo $ticket->user->operator; ?>"
-									class='form-control' onkeyup='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'
-									onchange='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'>
+									class='form-control' onkeyup='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 2);'
+									onchange='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 2);'>
 								</td>
 							</tr>
 							<tr>
@@ -267,8 +267,8 @@ function exit_with_success($message, $redirect=null) {
 								</td>
 								<td>
 									<textarea name='ticket_notes' id='ticket_notes' class='form-control' 
-									onkeyup='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'
-									onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'><?php echo $ticket->notes; ?></textarea>
+									onkeyup='change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 2);'
+									onchange='change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 2);'><?php echo $ticket->notes; ?></textarea>
 								</td>
 							</tr>
 						</table>
@@ -280,7 +280,7 @@ function exit_with_success($message, $redirect=null) {
 					</div>
 					<div id='mats_used_display'>
 						<?php foreach ($ticket->mats_used as $mat_used) {
-							$readonly = $staff->operator == $mat_used->staff->operator ? "readonly" : "";  // prevent staff from listing someone else as changer
+							$readonly = $staff->id == $mat_used->staff->operator ? "readonly" : "";  // prevent staff from listing someone else as changer
 							$mu_id = $mat_used->mu_id; ?>
 							<div class="panel-body">
 								<table id='mu-<?php echo $mu_id; ?>' class="table table-bordered table-striped mats_used" style="table-layout:fixed">
@@ -288,7 +288,7 @@ function exit_with_success($message, $redirect=null) {
 										<td class="col-md-4">Material</td>
 										<td class="col-md-8">
 											<select name="<?php echo $mu_id; ?>-material" id="<?php echo $mu_id; ?>-material" class='form-control' 
-											onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 1);'>
+											onchange='change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 1);'>
 												<?php
 												//List all Materials that are available to that device
 												$device_materials = Materials::getDeviceMats($ticket->device->device_group->dg_id);
@@ -312,12 +312,12 @@ function exit_with_success($message, $redirect=null) {
 														<span class='input-group-addon'><?php printf("<i class='$sv[currency]'></i> %.2f x ", $mat_used->material->price); ?></span>
 														<!-- hours is not set to a minimum because it is assumed staff knows what they are doing -->
 														<input class='form-control' type='number' name='<?php echo $mu_id; ?>-hour' id='<?php echo $mu_id; ?>-hour' autocomplete='off' tabindex='2'
-														value='<?php echo $hour; ?>' min='0' max='9999' step='1' style='text-align:right;' onkeyup='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 4, 1);'
-														onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 4, 1);'/>
+														value='<?php echo $hour; ?>' min='0' max='9999' step='1' style='text-align:right;' onkeyup='change_edit_staff(this, "<?php echo "$staff->id"; ?>", 4, 1);'
+														onchange='change_edit_staff(this, "<?php echo "$staff->id"; ?>", 4, 1);'/>
 														<span class='input-group-addon'>Hours</span>
 														<input class='form-control' type='number' name='<?php echo $mu_id; ?>-minute' id='<?php echo $mu_id; ?>-minute' autocomplete='off' tabindex='2'
-														value='<?php echo $minute; ?>' min='0' max='9999' style='text-align:right;' onkeyup='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 4, 1);'
-														onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 4, 1);'/>
+														value='<?php echo $minute; ?>' min='0' max='9999' style='text-align:right;' onkeyup='change_edit_staff(this, "<?php echo "$staff->id"; ?>", 4, 1);'
+														onchange='change_edit_staff(this, "<?php echo "$staff->id"; ?>", 4, 1);'/>
 														<span class="input-group-addon">Minutes</span>
 													<?php
 													}
@@ -325,8 +325,8 @@ function exit_with_success($message, $redirect=null) {
 													?>
 														<span class='input-group-addon'><?php printf("<i class='$sv[currency]'></i> %.2f x ", $mat_used->material->price); ?></span>
 														<input class='form-control' type='number' name='<?php echo $mu_id; ?>-quantity' id='<?php echo $mu_id; ?>-quantity' autocomplete='off'
-														value='<?php echo $mat_used->quantity_used; ?>' min='0' max='9999' onkeyup='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 4, 1);'
-														style='text-align:right;' onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 4, 1);'/>
+														value='<?php echo $mat_used->quantity_used; ?>' min='0' max='9999' onkeyup='change_edit_staff(this, "<?php echo "$staff->id"; ?>", 4, 1);'
+														style='text-align:right;' onchange='change_edit_staff(this, "<?php echo "$staff->id"; ?>", 4, 1);'/>
 														<span class='input-group-addon'><?php echo $mat_used->material->unit; ?></span>
 													<?php } ?>
 												</div>
@@ -337,7 +337,7 @@ function exit_with_success($message, $redirect=null) {
 										<td>Material Status</td>
 										<td>
 											<select name="<?php echo $mu_id; ?>-select" id="<?php echo $mu_id; ?>-select" class='form-control' 
-											onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 1);'>
+											onchange='change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 1);'>
 												<option <?php echo "value='$STATUS[used]'".($mat_used->status->status_id == $STATUS["used"] ? "selected" : ""); ?> >Used</option>
 												<option <?php echo "value='$STATUS[unused]'".($mat_used->status->status_id == $STATUS["unused"] ? "selected" : ""); ?> >Unused</option>
 												<option <?php echo "value='$STATUS[failed_mat]'".($mat_used->status->status_id == $STATUS["failed_mat"] ? "selected" : ""); ?> >Failed Material</option>
@@ -348,7 +348,7 @@ function exit_with_success($message, $redirect=null) {
 										<td>Staff</td>
 										<td>
 											<input type="number" name="<?php echo $mu_id; ?>-staff" id="<?php echo $mu_id; ?>-staff" placeholder="1000000000" 
-											value="<?php if($mat_used->staff) echo $mat_used->staff->operator; ?>" onkeyup='restrict_size(this);' 
+											value="<?php if($mat_used->staff) echo $mat_used->staff; ?>" onkeyup='restrict_size(this);' 
 											onchange='restrict_size(this);' class='form-control' <?php echo $readonly; ?>>
 										</td>
 									</tr>
@@ -393,7 +393,7 @@ function exit_with_success($message, $redirect=null) {
 							<?php 
 							if(StorageObject::object_is_in_storage($ticket->trans_id)) { 
 								$storage_object = new StorageObject($ticket->trans_id); 
-								$readonly = $staff->operator == $storage_object->staff->operator ? "readonly" : "";  // prevent staff from listing someone else as changer
+								$readonly = $staff->is_same_as($storage_object->staff) ? "readonly" : "";  // prevent staff from listing someone else as changer
 								?>
 								<tr>
 									<td>Address</td>
@@ -417,14 +417,14 @@ function exit_with_success($message, $redirect=null) {
 									<td>Placed Into Storage</td>
 									<td>
 										<input id='storage_start' name='storage_start' class='form-control' value='<?php echo date("Y-m-d\TH:i:s", strtotime($storage_object->storage_start)); ?>' 
-										type='datetime-local' onkeyup='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 1);'
-										onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 1);'/>
+										type='datetime-local' onkeyup='change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 1);'
+										onchange='change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 1);'/>
 									</td>
 								</tr>
 								<tr>
 									<td>Staff</td>
 									<td>
-										<input type='number' name="storage_staff" placeholder="1000000000" value="<?php echo $storage_object->staff->operator; ?>"
+										<input type='number' name="storage_staff" placeholder="1000000000" value="<?php echo $storage_object->staff; ?>"
 										onchange='restrict_size(this);' onkeyup='restrict_size(this);' class='form-control' <?php echo $readonly; ?>>
 									</td>
 								</tr>
@@ -460,7 +460,7 @@ function exit_with_success($message, $redirect=null) {
 								<?php
 									//Show editing fields if they have access to the Account of the Charge
 									if(in_array($account_charge->account->a_id, $account_ids)) {
-										$readonly = $staff->operator == $account_charge->staff->operator ? "readonly" : "";  // prevent staff from listing someone else as changer
+										$readonly = $staff->is_same_as($account_charge->staff) ? "readonly" : "";  // prevent staff from listing someone else as changer
 										if(is_object($account_charge->user)) { ?>
 											<tr>
 												<td colspan="2" align="center" class="active"><b>Account Charge # <?php echo $ac_id; ?></b></td>
@@ -469,9 +469,9 @@ function exit_with_success($message, $redirect=null) {
 												<td>Paid By</td>
 												<td>
 													<input type="number" name="ac_operator_<?php echo $ac_id; ?>" id="ac_operator-<?php echo $ac_id; ?>" placeholder="1000000000" 
-													value="<?php echo $account_charge->user->operator; ?>" class="form-control" 
-													onkeyup='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);' 
-													onchange='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'/>
+													value="<?php echo $account_charge->user; ?>" class="form-control" 
+													onkeyup='restrict_size(this); change_edit_staff(this, "<?php echo "$staff"; ?>", 3, 2);' 
+													onchange='restrict_size(this); change_edit_staff(this, "<?php echo "$staff"; ?>", 3, 2);'/>
 												</td>
 											</tr>
 										<?php 
@@ -482,8 +482,8 @@ function exit_with_success($message, $redirect=null) {
 												<td>
 													<input type="number" name="ac_operator_<?php echo $ac_id; ?>" id="ac_operator-<?php echo $ac_id; ?>" 
 													placeholder="1000000000" attern="[0-9]{10}" class="form-control" 
-													onkeyup='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'
-													onchange='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'>
+													onkeyup='restrict_size(this); change_edit_staff(this, "<?php echo "$staff"; ?>", 3, 2);'
+													onchange='restrict_size(this); change_edit_staff(this, "<?php echo "$staff"; ?>", 3, 2);'>
 												</td>
 											</tr>
 										<?php } ?>
@@ -495,8 +495,8 @@ function exit_with_success($message, $redirect=null) {
 															<span class="input-group-addon"><?php echo "<i class='$sv[currency]'></i>" ; ?></span>
 															<input type="number" id='ac_amount-<?php echo $ac_id; ?>' name="ac_amount_<?php echo $ac_id; ?>" 
 															value="<?php echo $account_charge->amount; ?>" step="0.01" class="form-control"
-															onkeyup='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'
-															onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'/>
+															onkeyup='change_edit_staff(this, "<?php echo "$staff"; ?>", 3, 2);'
+															onchange='change_edit_staff(this, "<?php echo "$staff"; ?>", 3, 2);'/>
 														</div>
 													</div>
 												</td>
@@ -506,15 +506,15 @@ function exit_with_success($message, $redirect=null) {
 												<td>
 													<input id='ac_date_<?php echo $ac_id; ?>' name='ac_date_<?php echo $ac_id; ?>' class='form-control' 
 													value='<?php echo date("Y-m-d\TH:i:s", strtotime($storage_object->storage_start)); ?>' type='datetime-local' 
-													onkeyup='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'
-													onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'/>
+													onkeyup='change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 2);'
+													onchange='change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 2);'/>
 												</td>
 											</tr>
 											<tr>
 												<td>Account</td>
 												<td>
 													<select name="ac_acct_<?php echo $ac_id; ?>" id="ac_acct-<?php echo $ac_id; ?>" class="form-control" 
-													onchange='change_edit_staff(this, "<?php echo "$staff->operator"; ?>", 3, 2);'><?php
+													onchange='change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 2);'><?php
 														foreach(Accounts::listAccts($ticket->user, $staff) as $acct) {
 															$selected = ($acct->a_id == $account_charge->account->a_id) ? "selected" : "";
 															echo("<option value='$acct->a_id' title='$acct->getDescription()'' $selected>$acct->name</option>");
@@ -548,10 +548,10 @@ function exit_with_success($message, $redirect=null) {
 												<td>
 													<div class="btn-group">
 														<button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-															<i class="<?php echo $account_charge->user->icon; ?> fa-lg" title="<?php echo $account_charge->user->operator; ?>"></i>
+															<i class="<?php echo $account_charge->user->icon; ?> fa-lg" title="<?php echo $account_charge->user; ?>"></i>
 														</button>
 														<ul class="dropdown-menu" role="menu">
-															<li style="padding-left: 5px;"><?php echo $account_charge->user->operator; ?></li>
+															<li style="padding-left: 5px;"><?php echo $account_charge->user; ?></li>
 														</ul>
 													</div>
 												</td>
@@ -580,10 +580,10 @@ function exit_with_success($message, $redirect=null) {
 											<td>
 												<div class="btn-group">
 													<button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-														<i class="<?php echo $account_charge->staff->icon; ?> fa-lg" title="<?php echo $account_charge->staff->operator; ?>"></i>
+														<i class="<?php echo $account_charge->staff->icon; ?> fa-lg" title="<?php echo $account_charge->staff; ?>"></i>
 													</button>
 													<ul class="dropdown-menu" role="menu">
-														<li style="padding-left: 5px;"><?php echo $account_charge->staff->operator; ?></li>
+														<li style="padding-left: 5px;"><?php echo $account_charge->staff; ?></li>
 													</ul>
 												</div>
 											</td>
@@ -756,7 +756,7 @@ function exit_with_success($message, $redirect=null) {
 						<tr>
 							<td>Staff</td>
 							<td>
-								<input name='storage_staff' value='<?php echo $staff->operator; ?>' class='form-control' readonly/>
+								<input name='storage_staff' value='<?php echo $staff->id; ?>' class='form-control' readonly/>
 							</td>
 						</tr>`;
 					document.getElementById("storage_modal").style.display = "none";

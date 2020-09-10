@@ -289,7 +289,7 @@ class Acct_charge {
 			$acct->updateBalance($amount);
 			$ac_notes = "Debit Charge";
 		} else {
-			$ac_owed = Acct_charge::checkOutstanding($ticket->getUser()->getOperator());
+			$ac_owed = Acct_charge::checkOutstanding($ticket->getUser()->id);
 			//if ticket has a related acct charge to a_id == 1
 			if (isset($ac_owed[$trans_id])){
 				//invert the amount owed and reduce the account balance
@@ -299,7 +299,7 @@ class Acct_charge {
 					INSERT INTO `acct_charge` 
 						(`a_id`, `trans_id`, `ac_date`, `operator`, `staff_id`, `amount`, `ac_notes`) 
 					VALUES
-						('1', '$trans_id', CURRENT_TIME(), '$payer->operator','".$staff->getOperator()."', '".-1.0 * $amount."', \"Credit Charge\");
+						('1', '$trans_id', CURRENT_TIME(), '$payer','$staff', '".-1.0 * $amount."', \"Credit Charge\");
 				")){
 					//No return, all for the following query to return the proper insert id
 				} else {
@@ -317,7 +317,7 @@ class Acct_charge {
 			VALUES
 				(?, ?, CURRENT_TIME(), ?, ?, ?, ?);
 		")){
-			$stmt->bind_param("iissds", $a_id, $trans_id, $payer->operator, $s_operator, $amount, $ac_notes);
+			$stmt->bind_param("iissds", $a_id, $trans_id, $payer->id, $s_operator, $amount, $ac_notes);
 			$stmt->execute();
 			$ac_id = $mysqli->insert_id;
 			
@@ -474,7 +474,7 @@ class Acct_charge {
 
 	private function setOperator($operator) {
 		if ($user = Users::payer($operator)){} else {
-			$user = Users::withID($operator);
+			$user = Users::with_id($operator);
 		}
 		$this->user = $user;
 	}
@@ -483,7 +483,7 @@ class Acct_charge {
 		if (is_object($staff_id)){
 			$staff = $staff_id;
 		} else {
-			$staff = Users::withID($staff_id);
+			$staff = Users::with_id($staff_id);
 		}
 		$this->staff = $staff;
 	}

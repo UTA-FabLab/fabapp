@@ -5,7 +5,7 @@
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
-if (!isset($staff) || ($staff->getRoleID() < $sv['LvlOfStaff'] && $staff->getRoleID() != $sv['serviceTechnican'])) {
+if (!isset($user) || (!$staff->is_staff() && !$user->validate("service_tech"))) {
 	//Not Authorized to see this Page
 	$_SESSION['error_msg'] = "Not Authorized to view this page";
 	header('Location: /index.php');
@@ -65,10 +65,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['btnHistory'])){
 							</div> -->
 							<div class="btn-group">
 								<button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-									<i class="<?php echo $staff->getIcon();?> fa-lg" title="<?php echo $staff->getOperator();?>"></i>
+									<i class="<?php echo $staff->icon;?> fa-lg" title="<?php echo $staff;?>"></i>
 								</button>
 								<ul class="dropdown-menu" role="menu">
-									<li style="padding-left: 5px;"><?php echo $staff->getOperator();?></li>
+									<li style="padding-left: 5px;"><?php echo $staff;?></li>
 								</ul>
 							</div>
 						</td>

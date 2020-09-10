@@ -398,7 +398,7 @@ class ObjBox {
         if( is_object($operator)){
             $this->user = $operator;
         } elseif (Users::regexUser($operator)) {
-            $this->user = Users::withID($operator);
+            $this->user = Users::with_id($operator);
         } else {
             $this->user = null;
         }
@@ -409,7 +409,7 @@ class ObjBox {
     }
 
     public function setStaff($staff_id) {
-        $this->staff = Users::withID($staff_id);
+        $this->staff = Users::with_id($staff_id);
     }
     
     //Set end timestamp to a Ticket who's status was reverted back to in progress

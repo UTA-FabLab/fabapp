@@ -32,7 +32,7 @@ $selectDeviceAlert = ("<div style='text-align: center'>
             ."</div> </div>");
 $device_desc = $sv['wq_device_desc'];
 
-if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
+if (!isset($user) || !$user->is_staff()){
     //Not Authorized to see this Page
     $_SESSION['error_msg'] = "You are unable to view this page.";
     header('Location: /index.php');
@@ -45,7 +45,7 @@ if (isset($_SESSION['wt_msg']) && $_SESSION['wt_msg'] == 'success'){
 if (!array_key_exists("clear_queue",$sv)){
     $mysqli->query("INSERT INTO `site_variables` (`id`, `name`, `value`, `notes`) VALUES (NULL, 'clear_queue', '8', 'Minimum Lvl Required to clear the Wait Queue')");
 }
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff->getRoleID() >= $sv['clear_queue']) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $user->validate_permissions("clear_queue")) {
     Wait_queue::removeAllUsers();
     $_SESSION['success_msg'] = "Wait Queue has been cleared";
     header("Location:/index.php");
@@ -306,11 +306,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                             <thead>
                                                 <tr class="tablerow">
                                                     <th><i class="fa fa-th-list"></i> Queue Number</th>
-                                                    <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?> <th><i class="far fa-user"></i> MavID</th><?php } ?>
+                                                    <?php if ($user && $user->is_staff()) { ?> <th><i class="far fa-user"></i> MavID</th><?php } ?>
                                                     <?php if ($tab["dg_id"]==2) { ?> <th><i class="far fa-flag"></i> Device Group</th><?php } ?>
                                                     <?php if ($tab["dg_id"]!=2) { ?> <th><i class="far fa-flag"></i> Device</th><?php } ?>
                                                     <th><i class="far fa-clock"></i> Time Left</th>
-                                                    <?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?> 
+                                                    <?php if ($user && $user->is_staff()) { ?> 
                                                     <th><i class="far fa-flag"></i> Alerts</th>
                                                     <th><i class="fa fa-times"></i> Remove</th>
                                                     <?php } ?>
@@ -333,7 +333,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
 
                                                             <!-- Operator ID --> 
                                                             <td>
-                                                                <?php $user = Users::withID($row['Operator']);?>
+                                                                <?php $user = Users::with_id($row['Operator']);?>
                                                                 <a class="<?php echo $user->getIcon()?> fa-lg" title="<?php echo($row['Operator']) ?>"  href="/pages/waitUserInfo.php?q_id=<?php echo $row["Q_id"]?>&loc=1"></a>
                                                                 <?php if (!empty($row['Op_phone'])) { ?> <i class="fas fa-mobile"   title="<?php echo ($row['Op_phone']) ?>"></i> <?php } ?>
                                                                 <?php if (!empty($row['Op_email'])) { ?> <i class="fas fa-envelope" title="<?php echo ($row['Op_email']) ?>"></i> <?php } ?>
@@ -425,7 +425,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
             </div>
         </div>
         <!-- /.col-md-8 -->
-        <?php if ($staff->getRoleID() >= $sv['clear_queue']){ ?>
+        <?php if ($user->validate_permissions("clear_queue")){ ?>
             <div class="col-md-4">
                 <div class="panel panel-default">
                     <div class="panel-heading">
@@ -524,7 +524,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
         return false;
     }
     
-    <?php if ($staff->getRoleID() < $sv['clear_queue']){ ?>
+    <?php if ($user->validate_permissions("clear_queue")){ ?>
         function removeAllUsers(){
 
             if (confirm("You are about to delete ALL wait queue users. Click OK to continue or CANCEL to quit.")){

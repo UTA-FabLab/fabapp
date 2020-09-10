@@ -679,7 +679,7 @@ class Mats_Used {
 		// quantity used is negative b/c using a mat always takes away from inventory
 		$statement->bind_param("dddsd", 
 									$this->material->m_id, $quantity_used,
-									$this->status->status_id, $this->staff->operator, 
+									$this->status->status_id, $this->staff->id, 
 									$this->mu_id);
 		if(!$statement->execute()) return "Could not update transaction values";
 

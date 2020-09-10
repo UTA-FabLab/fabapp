@@ -48,7 +48,7 @@ class StorageObject {
 			else {
 				$row = $results->fetch_assoc();
 				$this->box_id = $row['drawer'].$row['unit'];
-				$this->staff = Users::withID($row['staff_id']);
+				$this->staff = Users::with_id($row['staff_id']);
 				$this->storage_start = $row['item_change_time'];
 			}
 		}
@@ -70,7 +70,7 @@ class StorageObject {
 		$statement = $mysqli->prepare("UPDATE `storage_box`
 											SET `trans_id` = ?, `item_change_time` = CURRENT_TIMESTAMP, `staff_id` = ?
 											WHERE `drawer` = ? AND `unit` = ?;");
-		$statement->bind_param($execute_type, $trans_id, $staff->operator, $indicators['drawer'], $indicators['unit']);
+		$statement->bind_param($execute_type, $trans_id, $staff->id, $indicators['drawer'], $indicators['unit']);
 
 		if(!$statement->execute()) return "Could not update storage box values";
 		return null;  // no errors
@@ -87,8 +87,8 @@ class StorageObject {
 										ON `transactions`.`trans_id` = `storage_box`.`trans_id`
 										LEFT JOIN `authrecipients`
 										ON `authrecipients`.`trans_id` = `storage_box`.`trans_id`
-										WHERE `transactions`.`operator` = '$operator->operator'
-										OR `authrecipients`.`operator` = '$operator->operator'
+										WHERE `transactions`.`operator` = '$operator'
+										OR `authrecipients`.`operator` = '$operator'
 										ORDER BY `storage_box`.`trans_id` ASC;"
 		)) {
 			while($row = $results->fetch_assoc())
@@ -110,7 +110,7 @@ class StorageObject {
 
 
 	public static function find_objects_in_storage_for_user($user) {
-		if(is_object($user)) $operator = $user->operator;
+		if(is_object($user)) $operator = $user->id;
 
 		$users_objects = array();
 		global $mysqli;
@@ -172,7 +172,7 @@ class StorageObject {
 		$statement = $mysqli->prepare("UPDATE `storage_box`
 											SET `trans_id` = NULL, `item_change_time` = CURRENT_TIMESTAMP, `staff_id` = ?
 											WHERE `trans_id` = ?;");
-		$statement->bind_param("sd", $staff->operator, $trans_id);
+		$statement->bind_param("sd", $staff->id, $trans_id);
 		if(!$statement->execute()) return "Could not update storage box values";
 	}
 
@@ -184,7 +184,7 @@ class StorageObject {
 		$statement = $mysqli->prepare("UPDATE `storage_box`
 											SET `item_change_time` = ?, `staff_id` = ?
 											WHERE `trans_id` = ?;");
-		$statement->bind_param("ssd", $this->storage_start, $this->staff->operator, $this->trans_id);
+		$statement->bind_param("ssd", $this->storage_start, $this->staff->id, $this->trans_id);
 		if(!$statement->execute()) return "Could not update storage box values";
 
 		return null;  // no errors

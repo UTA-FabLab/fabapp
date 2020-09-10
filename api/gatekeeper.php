@@ -17,7 +17,7 @@ function gatekeeper ($operator, $d_id) {
 	if (is_a($operator, "Users")){
 		$user = $operator;
 	} else {
-		$user = Users::withID($operator);
+		$user = Users::with_id($operator);
 	}
 
 	// Check to see if ID is a 10-digit number
@@ -56,7 +56,7 @@ function gatekeeper ($operator, $d_id) {
 		JOIN `transactions` ON `transactions`.`trans_id` = `storage_box`.`trans_id`
 		JOIN `devices` ON `transactions`.`d_id` = `devices`.`d_id`
 		JOIN `device_group` ON `device_group`.`dg_id` = `devices`.`dg_id`
-		WHERE `transactions`.`operator` = '$user->operator'
+		WHERE `transactions`.`operator` = '$user'
 	")){
 		if($result->num_rows > 0){
 			//Current Time

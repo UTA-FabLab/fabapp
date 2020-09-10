@@ -4,7 +4,7 @@
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
 if(!isset($user)) $error = exit_if_error("Please log in", "/index.php");
-elseif($user->roleID < $role["lead"])
+elseif(!$user($ROLE["lead"]))
 	exit_if_error("You are not authorized to see this page", "/index.php");
 
 

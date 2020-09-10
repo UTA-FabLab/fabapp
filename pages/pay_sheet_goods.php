@@ -12,14 +12,14 @@ session_start();
 $array_values="";
 $resultStr = "";
 $errorMsg = "";
-if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff'] || !isset($_SESSION['sheet_ticket']) ){
+if (!isset($user) || !$user->is_staff() || !isset($_SESSION['sheet_ticket']) ){
     //Not Authorized to see this Page
     $_SESSION['error_msg'] = "You are unable to view this page.";
     header('Location: /index.php');
     exit();
 } else {
     $sheet_ticket = unserialize($_SESSION['sheet_ticket']);
-    $user = $sheet_ticket->getUser();
+    $operator = $sheet_ticket->getUser();
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['payBtn']) && $errorMsg == ""){
@@ -35,7 +35,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['payBtn']) && $errorMs
             //The person paying may not be the person who is authorized to pick up a print
             $payee = $sheet_ticket->getUser()->getOperator();
             echo "<script> console.log('SP: $selectPay, payee: $payee'); </script>";
-            $result = Acct_charge::insertSheetCharge($sheet_ticket, $selectPay, $payee, $staff, $amount);
+            $result = Acct_charge::insertSheetCharge($sheet_ticket, $selectPay, $payee, $user, $amount);
         }
 
         if (is_int($result)){
@@ -134,8 +134,8 @@ if ($errorMsg != ""){
                                     <td><select name="selectPay" id="selectPay" onchange="updateBtn(this.value)">
                                         <option value="" disabled selected>Select</option>
                                         <?php
-                                            $accounts = Accounts::listAccts($user, $staff);
-                                            $ac_owed = Acct_charge::checkOutstanding($sheet_ticket->getUser()->getOperator());
+                                            $accounts = Accounts::listAccts($operator, $user);
+                                            $ac_owed = Acct_charge::checkOutstanding($sheet_ticket->getUser()->id);
                                             foreach($accounts as $a){
                                                 if (isset($ac_owed[$sheet_ticket->getTrans_id()]) && $a->getA_id() == 1){
                                                     //Don't Show it
@@ -165,7 +165,7 @@ if ($errorMsg != ""){
                 </div>
                 <!-- /.panel -->
                 <?php //Look for associated charges Panel
-                if($staff && $sheet_ticket->getAc() && (($sheet_ticket->getUser()->getOperator() == $staff->getOperator()) || $staff->getRoleID() >= $sv['LvlOfStaff']) ){ ?>
+                if($user && $sheet_ticket->getAc() && (($sheet_ticket->getUser()->is_same_as($user)) || $user->is_staff()) ){ ?>
                     <div class="panel panel-default">
                         <div class="panel-heading">
                             <i class="fas fa-credit-card fa-lg"></i> Related Charges
@@ -184,19 +184,19 @@ if ($errorMsg != ""){
                                     else 
                                         echo"\n\t\t<tr>";
                                         if ( is_object($ac->getUser()) ) {
-                                            if (($ac->getUser()->getOperator() == $staff->getOperator()) || $staff->getRoleID() >= $sv['LvlOfStaff'] ){
-                                                echo "<td><i class='".$ac->getUser()->getIcon()." fa-lg' title='".$ac->getUser()->getOperator()."'></i></td>";
+                                            if (($ac->getUser()->is_same_as($user)) || $user->is_staff()){
+                                                echo "<td><i class='".$ac->getUser()->icon." fa-lg' title='".$ac->getUser()->id."'></i></td>";
                                             } else {
-                                                echo "<td><i class='".$ac->getUser()->getIcon()." fa-lg'></i></td>";
+                                                echo "<td><i class='".$ac->getUser()->icon." fa-lg'></i></td>";
                                             }
                                         } else {
                                             echo "<td>-</td>";
                                         }
-                                        if ( ($sheet_ticket->getUser()->getOperator() == $staff->getOperator()) || $staff->getRoleID() >= $sv['LvlOfStaff'] ){
+                                        if ( ($sheet_ticket->getUser()->is_same_as($user)) || $user->is_staff()){
                                             echo "<td><i class='".$sv['currency']."'></i> ".number_format($ac->getAmount(), 2)."</td>";
                                         }
                                         echo "<td><i class='far fa-calendar-alt' title='".$ac->getAc_date()."'> ".$ac->getAccount()->getName()."</i></td>";
-                                        echo "<td><i class='".$ac->getStaff()->getIcon()." fa-lg' title='".$ac->getStaff()->getOperator()."'></i>";
+                                        echo "<td><i class='".$ac->getStaff()->icon." fa-lg' title='".$ac->getStaff()->id."'></i>";
                                         if ($ac->getAc_notes()){ ?>
                                             <div class="btn-group">
                                                 <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">

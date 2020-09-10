@@ -6,7 +6,7 @@
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 $sl_id = $sr_notes = $notes = "";
 
-if (!isset($staff) || ($staff->getRoleID() < $sv['LvlOfStaff'] && $staff->getRoleID() != $sv['serviceTechnican'])) {
+if (!isset($user) || (!$user->is_staff() && !$user("service_tech"))) {
     //Not Authorized to see this Page
     $_SESSION['error_msg'] = "Not Authorized to view this page";
     header('Location: /index.php');
@@ -21,11 +21,11 @@ if ( !empty(filter_input(INPUT_GET, "sc_id")) ) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn']) && 
-        ($staff->getRoleID() >= $sv['staffTechnican'] || $staff->getRoleID() == $sv['serviceTechnican'])){
+        ($user("staff_tech") || $user($ROLE["service"]))){
     $device_status = filter_input(INPUT_POST, 'status');
     $sl_id = filter_input(INPUT_POST, 'sl_id');
     $sr_notes = filter_input(INPUT_POST, 'sr_notes');
-    $msg = $sc->insert_reply($staff, $device_status, $sl_id, $sr_notes);
+    $msg = $sc->insert_reply($user, $device_status, $sl_id, $sr_notes);
     if (is_string($msg)){
         //display error message
         $errorMsg = $msg;
@@ -33,7 +33,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn']) &&
         header("Location:sr_log.php?sc_id=".$sc->getSc_id());
     }
 } elseif ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['editSC']) && 
-        $sc->getStaff()->getOperator() == $staff->getOperator()) {
+        $sc->getStaff()->is_same_as($user)) {
     $notes = filter_input(INPUT_POST, 'notes');
     $sc->updateNotes($notes);
     header("Location:sr_log.php?sc_id=".$sc->getSc_id());
@@ -57,7 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn']) &&
             <?php } ?>
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    Overall Status : <?php Devices::printDot($staff, $sc->getDevice()->getD_id()); echo $sc->getDevice()->getDevice_desc(); ?>
+                    Overall Status : <?php Devices::printDot($user, $sc->getDevice()->getD_id()); echo $sc->getDevice()->getDevice_desc(); ?>
                 </div>
             </div>
             <div class="panel panel-default">
@@ -93,7 +93,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn']) &&
                         </tr>
                     </table>
                 </div>
-                <?php if ($sc->getStaff()->getOperator() == $staff->getOperator()) { ?>
+                <?php if ($sc->getStaff()->is_same_as($user)) { ?>
                 <div class='panel-footer clearfix'>
                     <button class='btn btn-primary pull-right' onclick='editSR()'>Edit</button>
                 </div>
@@ -102,7 +102,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn']) &&
         </div>
         <!-- /.col-md-5 -->
         <div class="col-md-6">
-            <?php if ($staff->getRoleID() >= $sv['staffTechnican'] || $staff->getRoleID() == $sv['serviceTechnican']){ ?>
+            <?php if ($user("staff_tech") || $user($ROLE["service"])){ ?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <i class="far fa-comment fa-fw"></i> Reply to Issue
@@ -192,10 +192,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn']) &&
                                     <td>
                                         <div class="btn-group">
                                             <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-                                                <i class="<?php echo $sr->getStaff()->getIcon();?> fa-lg" title="<?php echo $sr->getStaff()->getOperator();?>"></i>
+                                                <i class="<?php echo $sr->getStaff()->icon;?> fa-lg" title="<?php echo $sr->getStaff();?>"></i>
                                             </button>
                                             <ul class="dropdown-menu" role="menu">
-                                                <li style="padding-left: 5px;"><?php echo $sr->getStaff()->getOperator();?></li>
+                                                <li style="padding-left: 5px;"><?php echo $sr->getStaff();?></li>
                                             </ul>
                                         </div>
                                     </td>

@@ -6,33 +6,33 @@
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 $error_msg = "";
 
-if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
+if (!isset($user) || !$user->is_staff()){
     //Not Authorized to see this Page
     $_SESSION['error_msg'] = "You are unable to view this page.";
     header('Location: /index.php');
     exit();
 }
 
-if (isset($staff) && $staff->getRoleID() >= $sv['LvlOfStaff']){
-    $q_id = filter_input(INPUT_GET , 'q_id', FILTER_VALIDATE_INT, false);
-    if (is_int($q_id) && $result = $mysqli->query("
-        SELECT `Op_email` , `Op_phone`, `Operator` , `Devgr_id`
-        FROM `wait_queue`
-        WHERE `Q_id`= $q_id AND `valid`='Y';
-    ")) {
-        if ($result->num_rows == 1){
-            $row = $result->fetch_assoc();
-            $old_operator = $row['Operator'];
-            $Op_email = $row['Op_email'];
-            $Op_phone = $row['Op_phone'];
-            $devgr_id = $row['Devgr_id'];
-        } else {
-            $error_msg = "Unable to find Queue ID.";
-        }
+
+$q_id = filter_input(INPUT_GET , 'q_id', FILTER_VALIDATE_INT, false);
+if (is_int($q_id) && $result = $mysqli->query("
+    SELECT `Op_email` , `Op_phone`, `Operator` , `Devgr_id`
+    FROM `wait_queue`
+    WHERE `Q_id`= $q_id AND `valid`='Y';
+")) {
+    if ($result->num_rows == 1){
+        $row = $result->fetch_assoc();
+        $old_operator = $row['Operator'];
+        $Op_email = $row['Op_email'];
+        $Op_phone = $row['Op_phone'];
+        $devgr_id = $row['Devgr_id'];
     } else {
-        $error_msg = "Invalid Queue ID.";
+        $error_msg = "Unable to find Queue ID.";
     }
+} else {
+    $error_msg = "Invalid Queue ID.";
 }
+
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['timerBtn'])) {
     Notifications::setLastNotified($q_id);

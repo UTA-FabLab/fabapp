@@ -60,8 +60,8 @@ if ( isset($input_data["type"]) ){
 
 if (strtolower($type) == "utaid_double"){
     // added this part to support user + learner transaction with utaid
-    $user = Users::withID($input_data["number"]);
-    $staff = Users::withID($input_data["number_employee"]);
+    $user = Users::with_id($input_data["number"]);
+    $staff = Users::with_id($input_data["number_employee"]);
     if(array_key_exists("dev_id", $input_data)){
         $device_id = $input_data["dev_id"];
     } elseif(array_key_exists("device_id", $input_data)) {
@@ -86,7 +86,7 @@ if (strtolower($type) == "utaid_double"){
     OnTransaction_double($user, $staff, $device_id);
 
 } elseif(strtolower($type) == "check_status_utaid") {
-    check_user_status( Users::withID($input_data["number"]) );
+    check_user_status( Users::with_id($input_data["number"]) );
 	
 } elseif(strtolower($type) == "check_status_rfid") {
     check_user_status( RFIDtoUTAID($input_data["number"]) );

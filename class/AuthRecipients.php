@@ -83,10 +83,10 @@ class AuthRecipients {
 		global $mysqli;
 
 		if(!is_object($ticket)) $ticket = new Transactions($ticket);
-		$operator = is_object($user) ? $user->operator : $user;
+		$operator = is_object($user) ? $user->id : $user;
 
 		// always allowed to pick up own print
-		if(is_object($ticket) && $ticket->user->operator == $operator) return true;
+		if(is_object($ticket) && $ticket->user->is_same_as($operator)) return true;
 
 		if ($result = $mysqli->query("
 			SELECT *

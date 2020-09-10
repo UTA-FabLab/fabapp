@@ -22,14 +22,15 @@
 
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
-if($staff->roleID < $role["staff"]) exit_if_error("You do not have permission to view this page");
+if(!isset($user)) exit_if_error("Please login");
+elseif(!$user->is_staff()) exit_if_error("You do not have permission to view this page");
 elseif(!$_GET["operator"] && !$_GET["trans_id"]) exit_if_error("No parameters supplied");
 elseif($_GET["operator"] && !Users::regexUser($_GET["operator"])) 
 	exit_if_error("Operator #$_GET[operator] is not valid");
 elseif($_GET["trans_id"] && !Transactions::regexTrans($_GET["trans_id"]))
 	exit_if_error("Transaction #$_GET[trans_id] is not valid");
 else {
-	$operator = Users::withID($_GET["operator"]);
+	$operator = Users::with_id($_GET["operator"]);
 	$storage_tickets = StorageObject::all_in_storage_for_operator($operator);
 	$unended_tickets = Transactions::unended_tickets_for_user($operator);
 	$tickets = array_merge($storage_tickets, $unended_tickets);
@@ -49,7 +50,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['end_button'])) {
 		exit_if_error("Could not get all values for materials", "./pickup.php?trans_id=$ticket->trans_id");
 	foreach($ticket->mats_used as $mat_used) {
 		$material_values = $materials_values[$mat_used->mu_id];
-		exit_if_error($mat_used->end_material_used($staff, $material_values['status'], $material_values['quantity']));
+		exit_if_error($mat_used->end_material_used($user, $material_values['status'], $material_values['quantity']));
 	}
 
 	// end ticket
@@ -57,14 +58,14 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['end_button'])) {
 	// prevent frontend changing of variables to cheat backend
 
 	if($ticket_status >= $status['charge_to_acct']) exit_if_error("Ticket status is invalid.");
-	exit_if_error($ticket->end_transaction($staff, $ticket_status), "./pickup.php?trans_id=$ticket->trans_id");
+	exit_if_error($ticket->end_transaction($user, $ticket_status), "./pickup.php?trans_id=$ticket->trans_id");
 
 	$ticket_notes = htmlspecialchars(filter_input(INPUT_POST, "ticket_notes_textarea_modal"));
 	if($ticket_notes) exit_if_error($ticket->edit_transaction_information(array("notes" => $ticket_notes)));
 
 	// completely failed ticket; nothing to pay for
 	if($ticket_status == $status['total_fail']) {
-		exit_if_error(StorageObject::remove_object_from_storage($staff, $ticket->trans_id));  // take out of storage (trash)
+		exit_if_error(StorageObject::remove_object_from_storage($user, $ticket->trans_id));  // take out of storage (trash)
 		$_SESSION['success_msg'] = "Ticket successfully ended.";
 		header("Location:./lookup.php?trans_id=$ticket->trans_id");
 	}
@@ -134,7 +135,7 @@ function exit_with_success($message, $redirect=null) {
 						<i class="fas fa-exclamation-triangle" ></i> No Objects in Storage
 					</div>
 					<div class="panel-body">
-						<a href="/pages/lookup.php?operator=<?php echo $user->operator; ?>" title="Click to look up the user's last ticket"><i class="fas fa-link"></i> Goto Last Ticket</a>
+						<a href="/pages/lookup.php?operator=<?php echo $operator->id; ?>" title="Click to look up the user's last ticket"><i class="fas fa-link"></i> Goto Last Ticket</a>
 					</div>
 				</div>
 			</div>  <!-- end page -->
@@ -148,7 +149,7 @@ function exit_with_success($message, $redirect=null) {
 				<?php foreach($tickets as $ticket) {
 					echo 	"<tr>
 								<td>
-									<a href='./pickup.php?operator=$operator->operator&trans_id=$ticket->trans_id'>$ticket->trans_id</a>
+									<a href='./pickup.php?operator=$operator->id&trans_id=$ticket->trans_id'>$ticket->trans_id</a>
 								</td>
 							</tr>";
 				}
@@ -175,10 +176,10 @@ function exit_with_success($message, $redirect=null) {
 								<td>
 									<div class="btn-group">
 										<button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-											<i class="<?php echo $ticket->user->icon;?> fa-lg" title="<?php echo $ticket->user->operator;?>"></i>
+											<i class="<?php echo $ticket->user->icon;?> fa-lg" title="<?php echo $ticket->user;?>"></i>
 										</button>
 										<ul class="dropdown-menu" role="menu">
-											<li style="padding-left: 5px;"><?php echo $ticket->user->operator;?></li>
+											<li style="padding-left: 5px;"><?php echo $ticket->user;?></li>
 										</ul>
 									</div>
 								</td>

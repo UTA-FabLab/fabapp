@@ -6,7 +6,7 @@
 include_once ($_SERVER ['DOCUMENT_ROOT'] . '/pages/header.php');
 $device = $sl_id = $notes = "";
 
-if (!isset($staff) || ($staff->getRoleID() < $sv['LvlOfStaff'] && $staff->getRoleID() != $sv['serviceTechnican'])) {
+if (!isset($user) || (!$user->is_staff() && $user("service_tech"))) {
 	// Not Authorized to see this Page
 	$_SESSION['error_msg'] = "You must be logged in to report an issue.";
 	header ( 'Location: /index.php' );
@@ -20,7 +20,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn'])){
 	$sl_id = filter_input(INPUT_POST, 'sl_id');
 	$notes = filter_input(INPUT_POST, 'notes');
 	
-	$msg = Service_call::call($staff, $devices, $sl_id, $notes);
+	$msg = Service_call::call($user, $devices, $sl_id, $notes);
 	if (is_string($msg)){
 		//display error message
 		$errorMsg = $msg;
@@ -81,7 +81,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn'])){
 										<div class="input-group">
 											<span class="input-group-addon" id="dot_span">
 												<?php if (is_object($device)){
-													Devices::printDot($staff, $device->device_id);
+													Devices::printDot($user, $device->device_id);
 												} else { ?>
 													<i class='fas fa-circle fa-lg' style='color:gainsboro'></i>
 												<?php } ?>

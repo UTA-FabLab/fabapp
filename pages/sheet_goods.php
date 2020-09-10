@@ -12,7 +12,7 @@ if (!empty($_SESSION['sheet_ticket'])){
     Transactions::endSheetTicket($_SESSION['sheet_ticket'], 2);
     unset($_SESSION['sheet_ticket']);
 }
-session_start();
+
 //initialize cart if not set or is unset
 if(!isset($_SESSION['cart_array'])){
     $_SESSION['cart_array'] = array();
@@ -23,7 +23,7 @@ if(!isset($_SESSION['cart_array'])){
 //Submit results
 $resultStr = "";
 $number_of_sheet_tables = 0;
-if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
+if (!isset($user) || !$user->is_staff()){
     //Not Authorized to see this Page
     $_SESSION['error_msg'] = "You are unable to view this page.";
     header('Location: /index.php');
@@ -62,22 +62,22 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['refreshBtn'])) {
 
 if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['checkout_button'])) {
     
-    $sell_op = Users::withID(filter_input(INPUT_POST, 'sell_operator'));
+    $sell_op = Users::with_id(filter_input(INPUT_POST, 'sell_operator'));
     $status_id = 23;
     $p_id = filter_input(INPUT_POST, 'p_id');
     
-    if(strlen($sell_op->operator)==10 && !empty($status_id) && !empty($p_id)){
+    if(strlen($sell_op->id)==10 && !empty($status_id) && !empty($p_id)){
         if(Acct_charge::checkOutstanding(filter_input(INPUT_POST, 'sell_operator')) != false){
             $_SESSION['error_msg'] = "User has Outstanding Charge(s): ".filter_input(INPUT_POST, 'sell_operator');
             header("Location: /pages/sheet_goods.php");
         } else {
-            $trans_id = Transactions::insert_new_transaction($sell_op, $sv['sheet_device'], "00:00:00", $p_id, $status_id, $staff);
+            $trans_id = Transactions::insert_new_transaction($sell_op, $sv['sheet_device'], "00:00:00", $p_id, $status_id, $user);
             $sheet_ticket = new Transactions($trans_id);
             $_SESSION['sheet_ticket'] = serialize($sheet_ticket);
             header("Location: /pages/pay_sheet_goods.php");
         }
     } else {
-        if(strlen($sell_op->operator)!=10){
+        if(strlen($sell_op->id)!=10){
             $_SESSION['error_msg'] = "Please enter a correct operator ID in the 'Purchaser Operator ID' field.";
             header("Location: /pages/sheet_goods.php");   
         }

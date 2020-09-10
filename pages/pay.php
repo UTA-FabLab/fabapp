@@ -36,7 +36,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
 // check inputs and success of ticket creation
 if(!$_GET["trans_id"]) exit_if_error("Pay: Ticket ID not supplied");
-elseif(!$staff) exit_if_error("Please log in");
+elseif(!isset($user)) exit_if_error("Please log in");
 else {
 	$trans_id = filter_input(INPUT_GET, "trans_id", FILTER_VALIDATE_INT);
 	try {
@@ -48,7 +48,7 @@ else {
 }
 
 // authenticate user
-if($staff->roleID < $role['staff'] || ($staff->operator == $ticket->user->operator && $staff->roleID < $sv['editTrans']))
+if(!$user->is_staff() || ($user->is_same_as($ticket->user) && !$user("edit_transaction")))
 	exit_if_error("You do not have permission to end this ticket.  Please ask a staff member");
 
 
@@ -77,7 +77,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['pay_button'])) {
 	$operator = filter_input(INPUT_POST, "payer");
 	if(!Users::regexUser($operator))
 		exit_if_error("The payer ID supplied is not a valid ID number");
-	$receiver = Users::withID($operator);
+	$receiver = Users::with_id($operator);
 	if(!AuthRecipients::validatePickUp($ticket, $receiver))
 		exit_if_error("The person is not allowed to pick up this ticket");
 
@@ -91,7 +91,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['pay_button'])) {
 		if(!is_numeric($account_id)) exit_if_error("Account ID $account_id supplied is not valid", "pay.php?trans_id=$trans_id");
 
 
-		$response = Acct_charge::insertCharge($ticket, $account_id, $receiver, $staff);
+		$response = Acct_charge::insertCharge($ticket, $account_id, $receiver, $user);
 		if(is_string($response))
 			exit_if_error($response, "pay.php?trans_id=$trans_id");
 
@@ -104,8 +104,8 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['pay_button'])) {
 
 	// remove from storage if in storage
 	if(StorageObject::object_is_in_storage($trans_id)) {
-		exit_if_error($ticket->record_pickup($reciever, $staff));
-		exit_if_error(StorageObject::remove_object_from_storage($staff, $trans_id));
+		exit_if_error($ticket->record_pickup($reciever, $user));
+		exit_if_error(StorageObject::remove_object_from_storage($user, $trans_id));
 		if(!$success_message) $success_message = "Ticket #$trans_id is complete";
 	}
 
@@ -172,13 +172,13 @@ function exit_with_success($message, $redirect=null) {
 							<td>Operator</td>
 							<td>
 								<i class="<?php echo $ticket->user->icon; ?> fa-lg" 
-								title="<?php if($staff->role >= $role["admin"]) echo $ticket->user->operator; ?>"></i>
+								title="<?php if($user->validate_role($ROLE["admin"])) echo $ticket->user; ?>"></i>
 							</td>
 						</tr>
 						<tr>
 							<td>Staff</td>
 							<td>
-								<?php echo "<i class='".$ticket->staff->icon." fa-lg' title='".$ticket->staff->operator."'></i>"; ?>
+								<?php echo "<i class='".$ticket->staff->icon." fa-lg' title='$ticket->staff'></i>"; ?>
 							</td>
 						</tr>
 						<!-- IN LOVING MEMORY OF SAMUEL LAW -->
@@ -294,7 +294,7 @@ function exit_with_success($message, $redirect=null) {
 										onchange="authenticate_payer(); adjust_submit_button_for_payment_type(this);">
 											<option hidden selected value=''>Select</option>
 											<?php
-												$accounts = Accounts::listAccts($ticket->user, $staff);
+												$accounts = Accounts::listAccts($ticket->user, $user);
 												$ac_owed = Acct_charge::checkOutstanding($ticket->user->operator);
 												foreach($accounts as $a)
 													// show accounts available
@@ -345,54 +345,51 @@ function exit_with_success($message, $redirect=null) {
 			</div>
 			<!-- /.panel -->
 		<!-- RELATED CHARGES -->
-			<?php //Look for associated charges Panel
-			if($staff && $ticket->acct_charge && (($ticket->user->operator == $staff->operator) || $staff->roleID >= $sv['LvlOfStaff']) ){ ?>
-				<div class="panel panel-default">
-					<div class="panel-heading">
-						<i class="fas fa-credit-card fa-lg"></i> Related Charges
-					</div>
-					<div class="panel-body">
-						<table class="table table-bordered">
-							<tr>
-								<td class="col-sm-1">By</td>
-								<td class="col-sm-2">Amount</td>
-								<td class="col-sm-7">Account</td>
-								<td class="col-sm-2">Staff</td>
-							</tr>
-							<?php foreach ($ticket->acct_charge as $ac){
-								echo $ac->account->a_id == 1 ? "<tr class='danger'>" : "<tr>";
-
-								if(is_object($ac->user) ) {
-									if (($ac->user->operator == $staff->operator) || $staff->roleID >= $sv['LvlOfStaff'] )
-										echo "<td><i class='".$ac->user->icon." fa-lg' title='".$ac->user->operator."'></i></td>";
-									else echo "<td><i class='".$ac->user->icon." fa-lg'></i></td>";
-								}
-								else echo "<td>-</td>";
-
-								if($ticket->user->operator == $staff->operator || $staff->roleID >= $sv['LvlOfStaff'])
-									echo "<td><i class='$sv[currency]'></i> ".number_format($ac->amount, 2)."</td>";
-
-								echo "<td><i class='far fa-calendar-alt' title='$ac->ac_date'> ".$ac->account->name."</i></td>";
-								echo "<td><i class='".$ac->staff->icon." fa-lg' title='".$ac->staff->operator."'></i>";
-								if($ac->ac_notes) { ?>
-									<div class="btn-group">
-										<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
-											<span class="fas fa-music" title="Notes"></span>
-										</button>
-										<ul class="dropdown-menu pull-right" role="menu">
-											<li style="padding-left: 5px;"><?php echo $ac->ac_notes;?></li>
-										</ul>
-									</div>
-								<?php }
-								echo "</td>";
-								} ?>
-							</tr>
-						</table>
-					</div>
-					<!-- /.panel-body -->
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<i class="fas fa-credit-card fa-lg"></i> Related Charges
 				</div>
-				<!-- /.panel -->
-			<?php } ?>
+				<div class="panel-body">
+					<table class="table table-bordered">
+						<tr>
+							<td class="col-sm-1">By</td>
+							<td class="col-sm-2">Amount</td>
+							<td class="col-sm-7">Account</td>
+							<td class="col-sm-2">Staff</td>
+						</tr>
+						<?php foreach ($ticket->acct_charge as $ac){
+							echo $ac->account->a_id == 1 ? "<tr class='danger'>" : "<tr>";
+
+							if(is_object($ac->user) ) {
+								if (($user->is_same_as($ac->user)) || $user->is_staff())
+									echo "<td><i class='".$ac->user->icon." fa-lg' title='$ac->user'></i></td>";
+								else echo "<td><i class='".$ac->user->icon." fa-lg'></i></td>";
+							}
+							else echo "<td>-</td>";
+
+							if($user->is_same_as($ticket->user) || $user->is_staff())
+								echo "<td><i class='$sv[currency]'></i> ".number_format($ac->amount, 2)."</td>";
+
+							echo "<td><i class='far fa-calendar-alt' title='$ac->ac_date'> ".$ac->account->name."</i></td>";
+							echo "<td><i class='".$ac->staff->icon." fa-lg' title='$ac->staff'></i>";
+							if($ac->ac_notes) { ?>
+								<div class="btn-group">
+									<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
+										<span class="fas fa-music" title="Notes"></span>
+									</button>
+									<ul class="dropdown-menu pull-right" role="menu">
+										<li style="padding-left: 5px;"><?php echo $ac->ac_notes;?></li>
+									</ul>
+								</div>
+							<?php }
+							echo "</td>";
+							} ?>
+						</tr>
+					</table>
+				</div>
+				<!-- /.panel-body -->
+			</div>
+			<!-- /.panel -->
 		</div>
 	<!---------------- STORAGE ---------------->
 		<?php if(StorageObject::object_is_in_storage($trans_id)) { 

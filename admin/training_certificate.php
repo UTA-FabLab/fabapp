@@ -30,7 +30,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn']) && ($_POS
 	}
 } elseif ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['teBtn'])) {
 	$id = filter_input(INPUT_POST, 'teField');
-	$user = Users::withID($id);
+	$user = Users::with_id($id);
 }
 
 //

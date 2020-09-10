@@ -5,7 +5,7 @@
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
-if (!isset($staff) || ($staff->getRoleID() < $sv['LvlOfStaff'] && $staff->getRoleID() != $sv['serviceTechnican'])) {
+if (!isset($user) || (!$user->is_staff() && !$user("service_tech"))) {
     // Not Authorized to see this Page
     $_SESSION['error_msg'] = "You must be logged in to report an issue.";
     header ( 'Location: /index.php' );
@@ -39,7 +39,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && filter_has_var(INPUT_POST, 'btnHist
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <i class="fas fa-history fa-fw"></i>Service History : 
-                        <?php Devices::printDot($staff, $device->getD_id()); 
+                        <?php Devices::printDot($user, $device->getD_id()); 
                         echo $device->getDevice_desc();?>
                 </div>
                 <div class="panel-body">
@@ -68,10 +68,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && filter_has_var(INPUT_POST, 'btnHist
                                     <?php $staff = Staff::withID($row['staff_id']); ?>
                                     <div class="btn-group">
                                         <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-                                            <i class="<?php echo $staff->getIcon();?> fa-lg" title="<?php echo $staff->getOperator();?>"></i>
+                                            <i class="<?php echo $staff->icon;?> fa-lg" title="<?php echo $staff->id;?>"></i>
                                         </button>
                                         <ul class="dropdown-menu" role="menu">
-                                            <li style="padding-left: 5px;"><?php echo $staff->getOperator();?></li>
+                                            <li style="padding-left: 5px;"><?php echo $staff->id;?></li>
                                         </ul>
                                     </div>
                                 </td>

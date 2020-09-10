@@ -444,7 +444,7 @@ class Service_reply {
 		if (is_object($staff)){
 			$this->staff = $staff;
 		} else {
-			$this->staff = Users::withID($staff);
+			$this->staff = Users::with_id($staff);
 		}
 	}
 
