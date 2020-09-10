@@ -12,7 +12,7 @@ if (!empty($_SESSION['sheet_ticket'])){
     Transactions::endSheetTicket($_SESSION['sheet_ticket'], 2);
     unset($_SESSION['sheet_ticket']);
 }
-session_start();
+
 //initialize cart if not set or is unset
 if(!isset($_SESSION['cart_array'])){
     $_SESSION['cart_array'] = array();
