@@ -8,12 +8,20 @@
  *   -Restrict displayed inv. to current only
  */
 
-$LvlOfInventory = 9;  //TODO: find out actual level; change for all
 
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
+if(!isset($user))
+{
+	$_SESSION["error_msg"] = "Please login";
+	header("Location:/index.php");
+	exit();
+}
+
+
 // change inventory
-if($_SERVER["REQUEST_METHOD"] == "POST" && $staff->getRoleID() >= $sv['LvlOfLead'] && isset($_POST['save_material'])) {
+if($_SERVER["REQUEST_METHOD"] == "POST" && $user("inventory") && isset($_POST['save_material']))
+{
 	$m_id = filter_input(INPUT_POST, 'm_id');
 	$new_amount = filter_input(INPUT_POST, 'quantity');
 	$mat = new Materials($m_id);
@@ -21,7 +29,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && $staff->getRoleID() >= $sv['LvlOfLead
 	$difference = $new_amount - $original_amount;
 	$reason = "Updated to match current inventory";
 
-	if(Mats_Used::update_mat_quantity($m_id, $difference, $reason, $staff, 16)) {
+	if(Mats_Used::update_mat_quantity($m_id, $difference, $reason, $user, 16)) {
 		$_SESSION['success_msg'] = $mat->getM_name()." updated from ".$original_amount." ".$mat->getUnit()." to ".
 								   $new_amount." ".$mat->getUnit();
 	} else {
@@ -46,7 +54,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && $staff->getRoleID() >= $sv['LvlOfLead
 			<div class="panel panel-default">
 				<div class="panel-heading">
 					<i class="fas fa-warehouse fa-fw"></i> Inventory
-					<?php if($staff && $staff->getRoleID() >= $sv['LvlOfLead']) { ?>
+					<?php if($user($ROLE["lead"])) { ?>
 						<div class="pull-right">
 							<div class="btn-group">
 								<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
@@ -73,21 +81,21 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && $staff->getRoleID() >= $sv['LvlOfLead
 						</thead>
 						<tbody>
 						<?php //Display Inventory Based on device group
-						if($result = $mysqli->query("
-							SELECT `materials`.`m_id` as `m_id`, `m_name`, SUM(quantity) AS `sum`, `materials`.`product_number`, `color_hex`, `unit`
+						if($result = $mysqli->query(
+							"SELECT `materials`.`m_id` as `m_id`, `m_name`, SUM(quantity) AS `sum`, `materials`.`product_number`, `color_hex`, `unit`
 							FROM `materials`
 							LEFT JOIN `mats_used`
 							ON mats_used.m_id = `materials`.`m_id`
 							WHERE `materials`.`measurable` = 'Y'
 							AND `materials`.`current` = 'Y'
 							GROUP BY `m_name`, `color_hex`, `unit`
-							ORDER BY `m_name` ASC;
-						")){
+							ORDER BY `m_name` ASC;"
+						)){
 							while ($row = $result->fetch_assoc()){ ?>
 								<tr>
 									<td><?php echo $row['m_name']; ?></td>
 									<td align='center'><div class="color-box" style="width:100%;background-color: #<?php echo $row['color_hex'];?>;"/></td>
-									<?php if($staff && $staff->getRoleID() >= $sv['LvlOfLead']) {
+									<?php if($user("inventory")) {
 										echo "<td ondblclick='edit_materials(".$row['m_id'].")'>".number_format($row['sum'])." ".$row['unit']."</td>";
 									} else {
 										echo "<td>".number_format($row['sum'])." ".$row['unit']."</td>";

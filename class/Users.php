@@ -22,7 +22,7 @@ include_once ($_SERVER['DOCUMENT_ROOT']."/class/site_variables.php");
 $ROLE = array();
 if(!$results = $mysqli->query("SELECT `r_id`, `variable` FROM `role`;"))
 	throw new Exception("Users.php: Bad query: $mysqli->error");
-else while($row = $results->fetch_assoc()) $ROLE[$row['variable']] = intval($row['r_id']);
+while($row = $results->fetch_assoc()) $ROLE[$row['variable']] = intval($row['r_id']);
 
 
 // holds data about a user based on ID number.
@@ -146,7 +146,7 @@ class Users
 		}
 		elseif(!$result->num_rows) return false;
 
-		return new self::with_id($result->fetch_assoc()["user_id"]);
+		return self::with_id($result->fetch_assoc()["user_id"]);
 	}
 
 
@@ -170,6 +170,12 @@ class Users
 		global $ROLE;
 
 		return $ROLE["staff"] <= $this->r_id;
+	}
+
+
+	public function __invoke($role_or_permission)
+	{
+		return $this->validate($role_or_permission);
 	}
 
 
@@ -335,13 +341,13 @@ class Users
 		global $mysqli, $MAKERSPACE_VARS;
 
 		if(!preg_match("/$MAKERSPACE_VARS[regex_id]/", $id)) return self::BAD_ID;
-		if(!$result = $mysqli->query("SELECT * FROM `users` WHERE `user_id` = '$id';")
+		if(!$result = $mysqli->query("SELECT * FROM `users` WHERE `user_id` = '$id';"))
 		{
 			error_log("Users::regex_id: SQL error: $mysqli->error");
 			return self::BAD_ID;  // unable to check ID: prevent further processes if no DB connection
 		}
 
-		if(!$result->num_rows)) return self::UNKNOWN_ID;
+		if(!$result->num_rows) return self::UNKNOWN_ID;
 		return self::KNOWN_ID;
 	}
 

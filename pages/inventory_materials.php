@@ -22,15 +22,13 @@
 include_once ("$_SERVER[DOCUMENT_ROOT]/pages/header.php");
 
 // staff clearance
-if(!$staff || $staff->getRoleID() < $sv['minRoleTrainer'])
+if(!$user || !$user("inventory"))
 {
 	// Not Authorized to see this Page
 	header('Location: /index.php');
 	$_SESSION['error_msg'] = "Insufficient role level to access, You must be a Lead.";
 }
 
-
-$failure_message = "";
 
 // edit material update code
 // get desired update material ID & check if valid. get all material values. if value changed, add it to list of 
@@ -130,10 +128,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['__SHEETVAR__submit_
 
 
 	$sheet_parent1 = filter_input(INPUT_POST, "__SHEETVAR__m_parent_select");
-	if($result1 = $mysqli->query("   
-		SELECT `materials`.`price`
-		FROM `materials`
-		WHERE `materials`.`m_id` = '$sheet_parent1';"))
+	if($result1 = $mysqli->query("SELECT `materials`.`price` FROM `materials` WHERE `materials`.`m_id` = '$sheet_parent1';"))
 	{
 		while($row = $result1->fetch_assoc())
 			$sheet_cost1 = $row["price"];
@@ -151,9 +146,8 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['__SHEETVAR__submit_
 
 elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['__SHEETSIZE__submit_button']))
 {
-	if(!preg_match('/^[0-9]+$/i', $_POST['__SHEETSIZE__parent_select']))
-		exit_from_error("You must properly fill the Sheet Material field.");
-	elseif(!preg_match('/^[0-9]+$/i', $_POST['__SHEETSIZE__variant_select']))
+	if(!preg_match('/^[0-9]+$/i', $_POST['__SHEETSIZE__parent_select']) 
+	|| !preg_match('/^[0-9]+$/i', $_POST['__SHEETSIZE__variant_select']))
 		exit_from_error("You must properly fill the Sheet Material field.");
 	elseif(!preg_match('#^\d+(?:\.\d{1,2})?$#', $_POST['__SHEETSIZE__width_input']))
 		exit_from_error("Incorrect input: $_POST[__SHEETSIZE__width_input] on Width field.");

@@ -25,7 +25,7 @@
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
 // staff clearance
-if (!$staff || $staff->getRoleID() < $sv['LvlOfLead']){
+if (!isset($user) || !$user("inventory")){
 	// Not Authorized to see this Page
 	header('Location: /index.php');
 	$_SESSION['error_msg'] = "Insufficient role level to access, You must be a Lead.";
@@ -258,14 +258,12 @@ function successful_and_failed_device_group_additions($m_id, $device_group) {
 						<li class="active">
 							<a data-toggle="tab" aria-expanded="false" href="#1"> Update Inventory</a>
 						</li>
-						<?php if($staff->getRoleID() >= $sv['minRoleTrainer']) { ?>
 						<li>
 							<a data-toggle="tab" aria-expanded="false" href="#2"> Create Inventory</a>
 						</li>
-						<?php } ?>
-					<li class="dropdown">
-					  <a class="dropdown-toggle" data-toggle="dropdown" href="#1">Sheet Goods
-					  <span class="caret"></span></a>
+						<li class="dropdown">
+						  <a class="dropdown-toggle" data-toggle="dropdown" href="#1">Sheet Goods
+						  <span class="caret"></span></a>
 					  <ul class="dropdown-menu">
 						<li><a data-toggle="tab" aria-expanded="false" href="#3">Add Sheet Parent</a></li>
 						<li><a data-toggle="tab" aria-expanded="false" href="#4">Add Sheet Child</a></li>
@@ -348,7 +346,6 @@ function successful_and_failed_device_group_additions($m_id, $device_group) {
 					
 <!--—————————————— CREATE INVENTORY ——————————————-->
 
-					<?php if($staff->getRoleID() >= $sv['minRoleTrainer']) { ?>
 					  <div id="2" class="tab-pane fade">
 						<div class="row">
 							&nbsp;&nbsp;&nbsp;&nbsp;
@@ -467,7 +464,6 @@ function successful_and_failed_device_group_additions($m_id, $device_group) {
 							</div>
 						</div>
 					  </div>
-					<?php } ?>
 
 <!--——————————————— SHEET GOODS ———————————————-->
 						
@@ -1103,7 +1099,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 // -————————————————————————————————————————
 
 // further restrict new item creation to trainers
-if($staff->getRoleID() >= $sv['minRoleTrainer']) { ?>
+ ?>
 
 	// change the text of the button that collapses the section between current inventory and create new material
 	function button_text(element) {
@@ -1269,7 +1265,7 @@ if($staff->getRoleID() >= $sv['minRoleTrainer']) { ?>
 		b = parseInt(color.substr(5), 16);
 		document.getElementById("rgb_input").value = "rgb(" + r + ',' + g + ',' + b + ')';
 	}
-<?php } ?>
+
 
 	function alert_and_return(message) {
 		alert(message);

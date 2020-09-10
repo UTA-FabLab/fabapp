@@ -20,7 +20,7 @@
 // ---- PAGE SETUP ----
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
-if(!$staff) $error = exit_if_error("Please log in", "/index.php");
+if(!isset($user)) exit_if_error("Please log in", "/index.php");
 elseif(!isset($_GET["operator"]) && !isset($_GET["trans_id"])) exit_if_error("Search parameter is missing", "/index.php");
 
 // lookup by ticket ID
@@ -53,7 +53,7 @@ elseif(isset($_GET["operator"])) {
 }
 
 // check permission
-if($staff->operator != $ticket->user->operator && $staff->roleID < $role["staff"])
+if($user->is_same_as($ticket->user) && !$user->is_staff())
 	exit_if_error("You are not authorized to see this ticket", "/index.php");
 
 // Transactions::printTicket($ticket->trans_id);
@@ -71,7 +71,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['printForm'])) {
 }
 elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['undo_button'])) {
 	// double check that ticket may be ended
-	if($staff->roleID < $role["staff"])
+	if(!$user->is_staff())
 		exit_if_error("You do not have permission to unend this ticket");
 	elseif($ticket->status->status_id <= $STATUS["moveable"])
 		exit_if_error("Ticket cannot be unended because it has not been ended");
@@ -91,14 +91,14 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['undo_button'])) {
 elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['new_material_button'])) {
 	$new_material = filter_input(INPUT_POST, "new_material");
 
-	if($staff->roleID < $role["staff"])  // double check permission
+	if(!$user->is_staff())  // double check permission
 		exit_if_error("You do not have permission to unend this ticket");
 	elseif(!Materials::regexID($new_material))
 		exit_if_error("Material ID $new_material is not valid");
 	elseif($STATUS["moveable"] < $ticket->status->status_id)
 		exit_if_error("You cannot add a material to an ended ticket");
 
-	if(!is_int($mu_id = Mats_Used::insert_material_used($ticket->trans_id, $new_material, $STATUS["used"], $staff)))
+	if(!is_int($mu_id = Mats_Used::insert_material_used($ticket->trans_id, $new_material, $STATUS["used"], $user)))
 		exit_if_error("Problem associating materials to ticket–$mu_id");
 	exit_with_success("Material added");
 }
@@ -157,7 +157,7 @@ function exit_with_success($message, $redirect=null) {
 	</div> <!-- /.row -->
 	<div class="row">
 		<div class="col-lg-5">
-			<?php if($staff->roleID >= $role["staff"]) { ?>
+			<?php if($user->is_staff()) { ?>
 				<div class="panel panel-default">
 					<div class="panel-heading clearfix">
 						<i class="fas fa-ticket-alt fa-lg"></i> Ticket # <b><?php echo $ticket->trans_id; ?></b>
@@ -167,13 +167,13 @@ function exit_with_success($message, $redirect=null) {
 									<span class="caret"></span>
 								</button>
 								<ul class="dropdown-menu pull-right" role="menu">
-									<?php if($staff->operator == $ticket->user->operator) { ?>
+									<?php if($user->is_same_as($ticket->user)) { ?>
 										<li>
 											<a href="javascript: addBtn()" />Add Authorized Recipient</a>
 										</li>
 									<?php
 									}
-									if($staff->roleID >= $sv['editTrans']) { ?>
+									if($user("edit_transaction")) { ?>
 										<li>
 											<a href='/pages/edit.php?trans_id=<?php echo $ticket->trans_id; ?>' class="bg-warning"/>Edit</a>
 										</li>
@@ -433,7 +433,7 @@ function exit_with_success($message, $redirect=null) {
 							</table>
 						<?php } ?> 
 					</div> <!-- /.panel-body -->
-					<?php if($staff->roleID >= $role["staff"] && $ticket->status->status_id <= $STATUS["moveable"] &&
+					<?php if($user->is_staff() && $ticket->status->status_id <= $STATUS["moveable"] &&
 							count($ticket->device->device_group->optional_materials) 
 							+ count($ticket->device->device_group->required_materials) > count($ticket->mats_used)) { ?>
 						<div class="panel-body">
@@ -470,7 +470,7 @@ function exit_with_success($message, $redirect=null) {
 
 		<div class="col-lg-5">
 			<?php // rework to rollback transaction, mats_used, ac_charge...user gets to put it back in storage manually (limit 30 minutes)
-			if($sv['LvlOfStaff'] <= $staff->roleID && -1800 < (date("Y-m-d H:i:s") - strtotime($ticket->t_end)) && $ticket->status->status_id > $STATUS["moveable"]) {
+			if($user->is_staff() && -1800 < (date("Y-m-d H:i:s") - strtotime($ticket->t_end)) && $ticket->status->status_id > $STATUS["moveable"]) {
 				if($ticket->device->device_id != $sv["sheet_device"]) { ?>
 				<div class="panel panel-default">
 					<div class="panel-heading">
@@ -488,7 +488,7 @@ function exit_with_success($message, $redirect=null) {
 
 			// —————— REPORT ISSUE ——————
 
-			if($staff->roleID >= $sv['LvlOfStaff'] && ($ticket->status->status_id == $STATUS['total_fail'] 
+			if($user->is_staff() && ($ticket->status->status_id == $STATUS['total_fail'] 
 			|| $ticket->status->status_id == $STATUS['partial_fail'])) { ?>
 				<div class="panel panel-default">
 					<div class="panel-heading">
@@ -534,7 +534,7 @@ function exit_with_success($message, $redirect=null) {
 									<?php echo $storage->storage_start; ?>
 								</td>
 							</tr>
-							<?php if($staff->roleID >= $role["staff"]) { ?>
+							<?php if($user->is_staff()) { ?>
 								<tr>
 									<td>
 										Address
@@ -655,7 +655,7 @@ function exit_with_success($message, $redirect=null) {
 										<?php echo $ac->account->name; ?>
 									</td>
 									<td>
-										<?php if($staff->roleID >= $sv['LvlOfStaff']) { ?>
+										<?php if($user->is_staff()) { ?>
 											<div class="btn-group">
 												<button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
 													<i class="<?php echo $ac->staff->icon; ?> fa-lg" title="<?php echo $ac->staff->operator; ?>"></i>

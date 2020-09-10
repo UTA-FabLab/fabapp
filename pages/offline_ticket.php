@@ -3,8 +3,8 @@
 // ---- PAGE SETUP ----
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
-if(!$staff) $error = exit_if_error("Please log in", "/index.php");
-elseif($staff->roleID < $role["lead"])
+if(!isset($user)) $error = exit_if_error("Please log in", "/index.php");
+elseif($user->roleID < $role["lead"])
 	exit_if_error("You are not authorized to see this page", "/index.php");
 
 

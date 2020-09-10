@@ -6,6 +6,15 @@
  //This will import all of the CSS and HTML code necessary to build the basic page
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
+// added by MPZinke on 2020.08.27 to prevent people from posting 
+if(!isset($user))
+{
+	$_SESSION["error_msg"] = "Please login";
+	header("Location:/index.php");
+	exit();
+}
+
+
 if($_SERVER["REQUEST_METHOD"] == "POST")
 {
 	// check that user is in ticket
@@ -17,14 +26,14 @@ if($_SERVER["REQUEST_METHOD"] == "POST")
 		exit();
 	}
 
-	if(!Wait_queue::wait_ticket_belongs_to_user($staff->operator, $Q_id))
+	if(!Wait_queue::wait_ticket_belongs_to_user($user->operator, $Q_id))
 	{
 		$_SESSION["error_msg"] = "The user for wait queue ID: $Q_id is incorrect";
 		header("Location:/pages/info.php");
 		exit();
 	}
 
-	$operator = $staff->operator;
+	$operator = $user->operator;
 	// cancel ticket
 	$queue_ticket = new Wait_queue($Q_id);
 	echo "WAIT QUEUE: ".$queue_ticket->getQ_ID();
@@ -65,7 +74,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST")
 			<!-- /.row -->
 			<?php
 		// added by MPZinke on 2020.07.17 to allow for learners to remove themselves from wait_queue
-		if(Wait_queue::isOperatorWaiting($staff->operator))
+		if(Wait_queue::isOperatorWaiting($user->operator))
 		{
 			?>
 			<form method='POST' id='__WAITQ__form' name='__WAITQ__form'>
@@ -89,7 +98,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST")
 										</tr>
 									</thead>
 									<?php
-										$tickets = Wait_queue::all_wait_tickets_for_user($staff->operator);
+										$tickets = Wait_queue::all_wait_tickets_for_user($user->operator);
 										foreach($tickets as $ticket)
 										{
 											?>
