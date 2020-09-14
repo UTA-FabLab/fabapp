@@ -22,10 +22,12 @@ if (!empty(filter_input(INPUT_GET, "id"))) { ?>
 			</div>
 
 			<div class="modal-body">
-				<?php if(unserialize($_SESSION['staff'])->getRoleID() < $sv['minRoleTrainer']) {
-						echo "Insufficient role level";
-					}
-					else {
+				<?php 
+					if(!isset($_SESSION["staff"])) exit();
+
+					if(!unserialize($_SESSION['staff'])->validate_role($ROLE["admin"])) echo "Insufficient role level";
+					else 
+					{
 						// get parts of value passed
 						$id = explode("|", filter_input(INPUT_GET, "id"), 2);
 						// regexing and query

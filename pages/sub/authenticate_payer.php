@@ -19,7 +19,7 @@ include_once (filter_input(INPUT_SERVER,'DOCUMENT_ROOT').'/class/all_classes.php
 if(isset($_POST["trans_id"]) && isset($_POST["payer"])) {
 	$trans_id = $_POST["trans_id"];
 	$payer = $_POST["payer"];
-	if(Transactions::regexTrans($trans_id) && Users::regexUser($payer)) {
+	if(Transactions::regexTrans($trans_id) && Users::regex_id($payer)) {
 		echo json_encode(array("approved" => AuthRecipients::validatePickUp($trans_id, $payer)));
 	}
 }

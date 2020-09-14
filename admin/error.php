@@ -43,7 +43,7 @@ if (!$user || !$user->is_staff()){
                                 echo "<td>".$er->getPage()."</td>";
                                 echo "<td>".$er->getMsg()."</td>";
                                 if (is_object($er->getStaff())){
-                                    echo "<td> <i class='".$er->getStaff()->getIcon()." fa-lg' title='".$er->getStaff()->getOperator()."'></i></td>";
+                                    echo "<td> <i class='".$er->getStaff()->getIcon()." fa-lg' title='".$er->getStaff()->id."'></i></td>";
                                 } else {
                                     echo "<td></td>";
                                 }

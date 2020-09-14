@@ -59,7 +59,7 @@ class Service_call {
 	public static function call($staff, $device, $sl_id, $sc_notes){
 		global $mysqli;
 		
-		$staff_id = $staff->getOperator();
+		$staff_id = $staff->id;
 		if (is_object($device)){
 			$device_id = $device->device_id;
 		} elseif (is_string($device)) {
@@ -183,7 +183,7 @@ class Service_call {
 	}
 
 	function setStaff($staff) {
-		$this->staff = Staff::withID($staff);
+		$this->staff = Staff::with_id($staff);
 	}
 
 	function setSl($sl_id) {
@@ -411,7 +411,7 @@ class Service_reply {
 	public static function insert_reply($staff, $sc_id, $sr_notes){
 		global $mysqli;
 		
-		$staff_id = $staff->getOperator();
+		$staff_id = $staff->id;
 		$sr_notes = htmlspecialchars($sr_notes);
 		
 		if ( $stmt = $mysqli->prepare("

@@ -79,10 +79,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn']) &&
                             <td>
                                 <div class="btn-group">
                                     <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-                                        <i class="<?php echo $sc->getStaff()->getIcon();?> fa-lg" title="<?php echo $sc->getStaff()->getOperator();?>"></i>
+                                        <i class="<?php echo $sc->getStaff()->getIcon();?> fa-lg" title="<?php echo $sc->getStaff()->id;?>"></i>
                                     </button>
                                     <ul class="dropdown-menu" role="menu">
-                                        <li style="padding-left: 5px;"><?php echo $sc->getStaff()->getOperator();?></li>
+                                        <li style="padding-left: 5px;"><?php echo $sc->getStaff()->id;?></li>
                                     </ul>
                                 </div>
                             </td>

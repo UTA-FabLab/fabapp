@@ -31,8 +31,8 @@ include_once (filter_input(INPUT_SERVER,'DOCUMENT_ROOT').'/class/all_classes.php
 
 // authenticate permission for user
 session_start();
-$staff = unserialize($_SESSION['staff']);
-if(!$staff || $staff->roleID < $role["staff"]) exit();
+$user = unserialize($_SESSION['staff']);
+if(!$user || !$user->is_staff()) exit();
 
 //TESTING
 // $_SERVER["REQUEST_METHOD"] = "POST";
@@ -48,7 +48,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["add_new_material"])) {
 	check_posted_values($m_id, $trans_id);  // regex passed valued; exit if invalid
 
 	// add to DB
-	$mu_id = Mats_Used::insert_material_used($trans_id, $m_id, $STATUS["used"], $staff);
+	$mu_id = Mats_Used::insert_material_used($trans_id, $m_id, $STATUS["used"], $user);
 	if(!is_int($mu_id)) {
 		echo json_encode(array("error" => "Error associating material with ticket—$mu_id"));
 		exit();
@@ -76,7 +76,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["update_inventory"])
 	// $response = array("type" => gettype($mats_used_changes[0]));
 	foreach($mats_used_changes as $update) {
 		if($update->notes) $update->notes = htmlspecialchars($update->notes);
-		$outcome = Mats_Used::insert_material_used(null, $update->m_id, $update->status_id, $staff, $update->quantity, $update->notes);
+		$outcome = Mats_Used::insert_material_used(null, $update->m_id, $update->status_id, $user, $update->quantity, $update->notes);
 		if(!is_int($outcome)) $errors[$update->m_id] = array(	"m_id" => $update->m_id,
 																	"message" => $outcome,
 																	"notes" => $update->notes,
@@ -100,7 +100,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["add_edit_mat_used_i
 	check_posted_values($m_id, $trans_id);  // regex passed valued; exit if invalid
 
 	// add to DB
-	$mu_id = Mats_Used::insert_material_used($trans_id, $m_id, $STATUS["used"], $staff);
+	$mu_id = Mats_Used::insert_material_used($trans_id, $m_id, $STATUS["used"], $user);
 	if(!is_int($mu_id)) {
 		echo json_encode(array("error" => "Error associating material with ticket—$mu_id"));
 		exit();
@@ -184,7 +184,7 @@ function mats_used_share_parents_and_not_same_instance($mu1, $mu2) {
 
 function edit_page_new_mat_used_HTML($mat_used) {
 	// ——— POPULATION STUFF ———
-	$readonly = $staff->operator == $mat_used->staff->operator ? "readonly" : "";  // prevent staff from listing someone else as changer
+	$readonly = $user->is_same_as($mat_used->staff) ? "readonly" : "";  // prevent staff from listing someone else as changer
 	$mu_id = $mat_used->mu_id;
 	
 	// options for material select
@@ -211,19 +211,19 @@ function edit_page_new_mat_used_HTML($mat_used) {
 			$input .= "<span class='input-group-addon'>".sprintf("<i class='$sv[currency]'></i> %.2f x ", $mat_used->material->price)."</span>
 			<!-- hours is not set to a minimum because it is assumed staff knows what they are doing -->
 			<input class='form-control' type='number' name='$mu_id-hour' id='$mu_id-hour' autocomplete='off' tabindex='2'
-			value='$hour' min='0' max='9999' step='1' style='text-align:right;' onkeyup='change_edit_staff(this, \"$staff->operator\", 4, 1);'
-			onchange='change_edit_staff(this, \"$staff->operator\", 4, 1);'/>
+			value='$hour' min='0' max='9999' step='1' style='text-align:right;' onkeyup='change_edit_staff(this, \"$user\", 4, 1);'
+			onchange='change_edit_staff(this, \"$user\", 4, 1);'/>
 			<span class='input-group-addon'>Hours</span>
 			<input class='form-control' type='number' name='$mu_id-minute' id='$mu_id-minute' autocomplete='off' tabindex='2'
-			value='$minute' min='0' max='9999' style='text-align:right;' onkeyup='change_edit_staff(this, \"$staff->operator\", 4, 1);'
-			onchange='change_edit_staff(this, \"$staff->operator\", 4, 1);'/>
+			value='$minute' min='0' max='9999' style='text-align:right;' onkeyup='change_edit_staff(this, \"$user\", 4, 1);'
+			onchange='change_edit_staff(this, \"$user->operator\", 4, 1);'/>
 			<span class='input-group-addon'>Minutes</span>";
 		}
 		else { 
 			$input .= "<span class='input-group-addon'>".sprintf("<i class='$sv[currency]'></i> %.2f x ", $mat_used->material->price)."</span>
 			<input class='form-control' type='number' name='$mu_id-quantity' id='$mu_id-quantity' autocomplete='off'
-			value='$mat_used->quantity_used' min='0' max='9999' onkeyup='change_edit_staff(this, \"$staff->operator\", 4, 1);'
-			style='text-align:right;' onchange='change_edit_staff(this, \"$staff->operator\", 4, 1);'/>
+			value='$mat_used->quantity_used' min='0' max='9999' onkeyup='change_edit_staff(this, \"$user\", 4, 1);'
+			style='text-align:right;' onchange='change_edit_staff(this, \"$user\", 4, 1);'/>
 			<span class='input-group-addon'>".$mat_used->material->unit."</span>";
 		}
 		$input .= "</div>
@@ -238,7 +238,7 @@ function edit_page_new_mat_used_HTML($mat_used) {
 					<td class='col-md-4'>Material</td>
 					<td class='col-md-8'>
 						<select name='<?php echo $mu_id; ?>-material' id='<?php echo $mu_id; ?>-material' class='form-control' 
-						onchange='change_edit_staff(this, '$staff->operator', 3, 1);'>
+						onchange='change_edit_staff(this, '$user', 3, 1);'>
 							$material_options
 						</select>
 					</td>
@@ -248,7 +248,7 @@ function edit_page_new_mat_used_HTML($mat_used) {
 					<td>Material Status</td>
 					<td>
 						<select name='$mu_id-select' id='$mu_id-select' class='form-control' 
-						onchange='change_edit_staff(this, \"$staff->operator\", 3, 1);'>
+						onchange='change_edit_staff(this, \"$user\", 3, 1);'>
 							<option value='$STATUS[used]'".($mat_used->status->status_id == $STATUS["used"] ? "selected" : "").">Used</option>
 							<option value='$STATUS[unused]'".($mat_used->status->status_id == $STATUS["unused"] ? "selected" : "").">Unused</option>
 							<option value='$STATUS[failed_mat]'".($mat_used->status->status_id == $STATUS["failed_mat"] ? "selected" : "").">Failed Material</option>
@@ -259,7 +259,7 @@ function edit_page_new_mat_used_HTML($mat_used) {
 					<td>Staff</td>
 					<td>
 						<input type='number' name='$mu_id-staff' id='$mu_id-staff' placeholder='1000000000' 
-						value='".($mat_used->staff ? $mat_used->staff->operator : "")."' onkeyup='restrict_size(this);' 
+						value='".($mat_used->staff ? $mat_used->staff->id : "")."' onkeyup='restrict_size(this);' 
 						onchange='restrict_size(this);' class='form-control' $readonly>
 					</td>
 				</tr>

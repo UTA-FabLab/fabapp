@@ -32,7 +32,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
 // check inputs and success of ticket creation
 if(!$_GET["trans_id"]) exit_if_error("End: Ticket ID not supplied");
-elseif(!$staff) exit_if_error("Please log in");
+elseif(!isset($user)) exit_if_error("Please log in");
 else {
 	$trans_id = filter_input(INPUT_GET, "trans_id", FILTER_VALIDATE_INT);
 	try {
@@ -44,7 +44,7 @@ else {
 }
 
 // authenticate user
-if($staff->roleID < $role['staff'] || ($staff->operator == $ticket->user->operator && $staff->roleID < $sv['editTrans']))
+if(!$user->is_staff() || ($user->is_same_as($ticket->user) && $user->validate("edit_transaction")))
 	exit_if_error("You do not have permission to end this ticket.  Please ask a staff member", "/pages/lookup.php?trans_id=$trans_id");
 
 // prevent ending ended tickets except those that are prepaid—this way the materials used are confirmed
@@ -53,12 +53,12 @@ if($ticket->status->status_id > $STATUS['moveable'] && !$ticket->device_group->i
 
 // no cost associated with ticket && not assign materials after ticket; auto close
 if($ticket->no_associated_materials_have_a_price() && $ticket->device_group->is_select_mats_first) {
-	exit_if_error($ticket->end_transaction($staff, $STATUS['complete']));
+	exit_if_error($ticket->end_transaction($user, $STATUS['complete']));
 	$_SESSION['success_msg'] = "End: Ticket successfully ended";
 	header("Location:/pages/lookup.php?trans_id=$ticket->trans_id");
 }
 // cost associated with ticket; not staff
-elseif($staff->getRoleID() < $role['staff']) 
+elseif(!$user->is_staff()) 
 	exit_if_error("This ticket may have a cost. Please ask a staff member to help you close this ticket.");
 
 // cost associated; get attributes from user
@@ -69,14 +69,14 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['end_button'])) {
 		exit_if_error("End: Could not get all values for materials", "./end.php?trans_id=$trans_id");
 	foreach($ticket->mats_used as $mat_used) {
 		$material_values = $materials_values[$mat_used->mu_id];
-		exit_if_error($mat_used->end_material_used($staff, $material_values['status'], $material_values['quantity']));
+		exit_if_error($mat_used->end_material_used($user, $material_values['status'], $material_values['quantity']));
 	}
 
 	// end ticket
 	$ticket_status = filter_input(INPUT_POST, "ticket_status_input_modal");  // update ticket
 	// prevent frontend changing of variables to cheat backend
 	if($ticket_status >= $STATUS['charge_to_acct']) exit_if_error("End: Ticket status is invalid.");
-	$error = $ticket->end_transaction($staff, $ticket_status);
+	$error = $ticket->end_transaction($user, $ticket_status);
 	exit_if_error($error, "./end.php?trans_id=$trans_id");
 
 	$ticket_notes = htmlspecialchars(filter_input(INPUT_POST, "ticket_notes_textarea_modal"));
@@ -92,7 +92,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['end_button'])) {
 	{
 		if(!$location = filter_input(INPUT_POST, "storage_location_input_modal"))
 			exit_if_error("End: Could not retrieve storage location from page");
-		$error = StorageObject::add_object_to_location_from_possible_previous($location, $staff, $trans_id);
+		$error = StorageObject::add_object_to_location_from_possible_previous($location, $user, $trans_id);
 		exit_if_error($error, "./lookup.php?trans_id=$trans_id");
 		// nothing more to do for ticket; print message and go to home
 		$_SESSION['success_msg'] = "Successfully ended and stored ticket #$trans_id";

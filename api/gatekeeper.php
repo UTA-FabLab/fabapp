@@ -95,11 +95,11 @@ function gatekeeper ($operator, $d_id) {
 		WHERE `d_id` = $d_id AND `solved` = 'N' AND `sl_id` >=7;
 	")){
 		if ($result->num_rows > 0){
-			if ($user->getRoleID() == $sv['serviceTechnican'] || $user->getRoleID() >= $sv['staffTechnican']){
+			if ($user->validate($ROLE["service"]) || $user->is_staff()){
 				//No Problems Keep Working
 			} else {
 				//role id != 7 or r_id < 10
-				return array ("status_id" => 1, "ERROR" => "This device is Out of Service",  "authorized" => "N", "role" => $user->getRoleID());
+				return array ("status_id" => 1, "ERROR" => "This device is Out of Service",  "authorized" => "N", "role" => $user->r_id);
 			}
 		}
 	}
@@ -109,7 +109,7 @@ function gatekeeper ($operator, $d_id) {
 	//
 	//   User has an outstanding charge
 	//
-	$ac_owed = Acct_charge::checkOutstanding($user->getOperator());
+	$ac_owed = Acct_charge::checkOutstanding($user->id);
 	if (is_array($ac_owed) && sizeof($ac_owed) > 0){
 		$msg = "Over due balance for Ticket :";
 		foreach(array_keys($ac_owed) as $aco_key){
@@ -167,12 +167,12 @@ function gatekeeper ($operator, $d_id) {
 		if ($results = $mysqli->query("
 			SELECT *
 			FROM `tm_enroll`
-			WHERE `tm_enroll`.`tm_id` = '$tm_id' AND `operator` = '".$user->getOperator()."'
+			WHERE `tm_enroll`.`tm_id` = '$tm_id' AND `operator` = '$user'
 		")){
 			if( $results->num_rows) {
 				$count++;
 			} else {
-				return array ("status_id" => 2, "ERROR" => "ID: ".$user->getOperator()." Needs ".$title, "authorized" => "N");
+				return array ("status_id" => 2, "ERROR" => "ID: $user Needs ".$title, "authorized" => "N");
 			}
 		} else {
 			return array ("status_id" => 0, "ERROR" => $mysqli->error, "authorized" => "N");

@@ -232,7 +232,7 @@ function exit_with_success($message, $redirect=null) {
 							<tr>
 								<td>Picked Up By</td>
 								<td>
-									<input type='number' name='receiver' id='receiver' placeholder='1000000000' value='<?php echo $ticket->pickedup_by->operator; ?>'
+									<input type='number' name='receiver' id='receiver' placeholder='1000000000' value='<?php echo $ticket->pickedup_by->id; ?>'
 									class='form-control' onkeyup='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 2);'
 									onchange='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 2);'>
 								</td>
@@ -241,7 +241,7 @@ function exit_with_success($message, $redirect=null) {
 							<tr>
 								<td>Started By</td>
 								<td>
-									<input type="number" name="operator" id="operator" placeholder="1000000000" value="<?php echo $ticket->user->operator; ?>"
+									<input type="number" name="operator" id="operator" placeholder="1000000000" value="<?php echo $ticket->user->id; ?>"
 									class='form-control' onkeyup='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 2);'
 									onchange='restrict_size(this); change_edit_staff(this, "<?php echo "$staff->id"; ?>", 3, 2);'>
 								</td>
@@ -249,7 +249,7 @@ function exit_with_success($message, $redirect=null) {
 							<tr>
 								<td>Staff</td>
 								<td>
-									<input type="number" name="staff_id" id="staff_id" placeholder="1000000000" value="<?php echo $ticket->staff ? $ticket->staff->operator : ""; ?>"
+									<input type="number" name="staff_id" id="staff_id" placeholder="1000000000" value="<?php echo $ticket->staff ? $ticket->staff->id : ""; ?>"
 									onkeyup='restrict_size(this);' onchange='restrict_size(this);' class='form-control' <?php echo $readonly; ?>>
 								</td>
 							</tr>
@@ -280,7 +280,7 @@ function exit_with_success($message, $redirect=null) {
 					</div>
 					<div id='mats_used_display'>
 						<?php foreach ($ticket->mats_used as $mat_used) {
-							$readonly = $staff->id == $mat_used->staff->operator ? "readonly" : "";  // prevent staff from listing someone else as changer
+							$readonly = $mat_used->staff->is_same_as($staff->id) ? "readonly" : "";  // prevent staff from listing someone else as changer
 							$mu_id = $mat_used->mu_id; ?>
 							<div class="panel-body">
 								<table id='mu-<?php echo $mu_id; ?>' class="table table-bordered table-striped mats_used" style="table-layout:fixed">

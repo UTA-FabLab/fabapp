@@ -86,7 +86,7 @@ class Accounts {
 			while($row = $result->fetch_assoc()){
 				if (in_array($row['a_id'],$init) ){
 					array_push($accounts, new Accounts($row['a_id']));
-				} elseif ($row['role_access'] <= $staff->getRoleID()) {
+				} elseif ($staff->validate($row['role_access'])) {
 					array_push($accounts, new Accounts($row['a_id']));
 				}
 			}
@@ -213,7 +213,7 @@ class Acct_charge {
 		$ac_owed = array();
 		$any_outstanding = false;
 		
-		if(!Users::regexUser($operator)) return "Invalid ID";
+		if(!Users::regex_id($operator)) return "Invalid ID";
 		
 		if ($result = $mysqli->query("
 			SELECT `acct_charge`.`trans_id`, `acct_charge`.`amount`
@@ -310,7 +310,7 @@ class Acct_charge {
 			$ac_notes = NULL;
 		}
 		
-		$s_operator = $staff->getOperator();
+		$s_operator = $staff->id;
 		if ($stmt = $mysqli->prepare("
 			INSERT INTO `acct_charge` 
 				(`a_id`, `trans_id`, `ac_date`, `operator`, `staff_id`, `amount`, `ac_notes`)
@@ -349,7 +349,7 @@ class Acct_charge {
 					INSERT INTO `acct_charge` 
 						(`a_id`, `trans_id`, `ac_date`, `operator`, `staff_id`, `amount`, `ac_notes`) 
 					VALUES
-						('1', '$trans_id', CURRENT_TIME(), '$payer','".$staff->getOperator()."', '".-1.0 * $amount."', \"Credit Charge\");
+						('1', '$trans_id', CURRENT_TIME(), '$payer','$staff', '".-1.0 * $amount."', \"Credit Charge\");
 				")){
 					//No return, all for the following query to return the proper insert id
 				} else {
@@ -360,7 +360,7 @@ class Acct_charge {
 			$ac_notes = NULL;
 		}
 		
-		$s_operator = $staff->getOperator();
+		$s_operator = $staff->id;
 		if ($mysqli->query("
 				INSERT INTO `acct_charge` 
 					(`a_id`, `trans_id`, `ac_date`, `operator`, `staff_id`, `amount`, `ac_notes`) 
@@ -510,7 +510,7 @@ class Acct_charge {
 		
 		if ($mysqli->query("
 			UPDATE `acct_charge`
-			SET `ac_date` = CURRENT_TIMESTAMP,  `staff_id` = '".$staff->getOperator()."',
+			SET `ac_date` = CURRENT_TIMESTAMP,  `staff_id` = '$staff',
 				`amount` = 0.0, `ac_notes` = 'Void payment'
 			WHERE `acct_charge`.`ac_id` = $this->ac_id;
 		")){
@@ -535,7 +535,7 @@ class Acct_charge {
 				if ($row['amount'] < .001){
 					if ($mysqli->query("
 						UPDATE `acct_charge`
-						SET `ac_date` = CURRENT_TIMESTAMP,  `staff_id` = '".$staff->getOperator()."',
+						SET `ac_date` = CURRENT_TIMESTAMP,  `staff_id` = '$staff',
 							`amount` = 0.0, `ac_notes` = 'Void Payment'
 						WHERE `acct_charge`.`ac_id` = $row[ac_id];
 					")){
@@ -561,8 +561,8 @@ class Acct_charge {
 		$amount = $this->getAmount();
 		if(!$this->getAc_notes()) $notes = NULL;
 		else $notes = $this->getAc_notes();
-		$operator = $this->user->getOperator();
-		$staff_id = $this->staff->getOperator();
+		$operator = $this->user->id;
+		$staff_id = $this->staff->id;
 
 
 		if ($stmt = $mysqli->prepare("

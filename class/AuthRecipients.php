@@ -20,7 +20,7 @@ class AuthRecipients {
 			$trans_id = $ticket->trans_id;
 		}
 		if (is_object($user)){
-			$operator = $user->getOperator();
+			$operator = $user->id;
 		} else {
 			$operator = $user;
 		}

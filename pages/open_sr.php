@@ -5,7 +5,7 @@
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
-if (!isset($user) || (!$staff->is_staff() && !$user->validate("service_tech"))) {
+if (!isset($user) || (!$user->is_staff() && !$user->validate("service_tech"))) {
 	//Not Authorized to see this Page
 	$_SESSION['error_msg'] = "Not Authorized to view this page";
 	header('Location: /index.php');
@@ -54,7 +54,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['btnHistory'])){
 							<?php echo date("Y-m-d H:i:s", strtotime($row["sc_time"])); ?>
 						</td>
 						<td>
-							<?php $staff = Staff::withID($row['staff_id']); ?>
+							<?php $staff = Staff::with_id($row['staff_id']); ?>
 							<!-- <div class="btn-group">
 								<button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
 									<i class='far fa-calendar-alt' title="<?php echo date($sv['dateFormat'], strtotime($row["sc_time"])); ?>"></i>

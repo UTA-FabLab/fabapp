@@ -65,7 +65,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && filter_has_var(INPUT_POST, 'btnHist
                                             <li style="padding-left: 5px;"><?php echo date($sv['dateFormat'], strtotime($row["sc_time"])); ?></li>
                                         </ul>
                                     </div>
-                                    <?php $staff = Staff::withID($row['staff_id']); ?>
+                                    <?php $staff = Staff::with_id($row['staff_id']); ?>
                                     <div class="btn-group">
                                         <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
                                             <i class="<?php echo $staff->icon;?> fa-lg" title="<?php echo $staff->id;?>"></i>

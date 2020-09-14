@@ -69,7 +69,7 @@ class TrainingModule {
 	public function certify_training($user_id_id, $staff){
 		global $mysqli, $ROLE;
 		
-		if (!Users::regexUser($user_id_id)) return "Invalid user_id ID";
+		if (!Users::regex_id($user_id_id)) return "Invalid user_id ID";
 
 		if ($staff->validate("issue_training")){
 			return ("Staff Member Lacks Authority to Issue Certificate");
@@ -116,7 +116,7 @@ class TrainingModule {
 		if (!self::regexSize($class_size)) return "Invalid Class Size";
 		if (!self::regexTime($duration)) {return "Bad Time - $duration";}
 		if (!self::regexTmReq($tm_required)) {return "Select Requirement";}
-		if ($staff->validate("edit_training")) {return "Staff Member Is Unable To Edit Training Modules";}
+		if (!$staff->validate("edit_training")) {return "Staff Member Is Unable To Edit Training Modules";}
 
 		if($d_id){
 			$mysqli->autocommit(FALSE);

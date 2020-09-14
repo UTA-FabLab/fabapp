@@ -6,7 +6,7 @@
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 $error_msg = "";
 
-if (!$staff || $staff->getRoleID() < 10){
+if (!$user || !$user->validate($ROLE["admin"])){
     //Not Authorized to see this Page
     $_SESSION['error_msg'] = "You are unable to view this page.";
     header('Location: /index.php');

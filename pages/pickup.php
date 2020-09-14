@@ -25,7 +25,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 if(!isset($user)) exit_if_error("Please login");
 elseif(!$user->is_staff()) exit_if_error("You do not have permission to view this page");
 elseif(!$_GET["operator"] && !$_GET["trans_id"]) exit_if_error("No parameters supplied");
-elseif($_GET["operator"] && !Users::regexUser($_GET["operator"])) 
+elseif($_GET["operator"] && !Users::regex_id($_GET["operator"])) 
 	exit_if_error("Operator #$_GET[operator] is not valid");
 elseif($_GET["trans_id"] && !Transactions::regexTrans($_GET["trans_id"]))
 	exit_if_error("Transaction #$_GET[trans_id] is not valid");

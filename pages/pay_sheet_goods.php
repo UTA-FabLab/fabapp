@@ -33,7 +33,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['payBtn']) && $errorMs
         
         if ( preg_match("/^\d{1,3}$/", $selectPay) ){
             //The person paying may not be the person who is authorized to pick up a print
-            $payee = $sheet_ticket->getUser()->getOperator();
+            $payee = $sheet_ticket->getUser()->id;
             echo "<script> console.log('SP: $selectPay, payee: $payee'); </script>";
             $result = Acct_charge::insertSheetCharge($sheet_ticket, $selectPay, $payee, $user, $amount);
         }
@@ -148,7 +148,7 @@ if ($errorMsg != ""){
                                 </tr>
                                 <tr>
                                     <td><b>Purchaser</b></td>
-                                    <td><input disabled type="text" class="form-control" name="payee" id="payee" value="<?php echo($sheet_ticket->getUser()->getOperator()); ?>"
+                                    <td><input disabled type="text" class="form-control" name="payee" id="payee" value="<?php echo($sheet_ticket->getUser()->id); ?>"
                                             maxlength="10"></td>
                                 </tr>
                                 <tr>

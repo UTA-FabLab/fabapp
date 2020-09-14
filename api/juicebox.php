@@ -27,17 +27,20 @@ $headers = apache_request_headers();
 if ($sv['api_key'] == "") {
     $json_out["ERROR"] = "API Not Set, Unable to authenticate Device";
     //ErrorExit(1);
-} elseif(isset($headers['authorization'])){
+}
+elseif(isset($headers['authorization'])){
     if ($sv['api_key'] != $headers['authorization'] ){
         $json_out["ERROR"] = "Unable to authenticate Device";
         ErrorExit(1);
     }
-} elseif(isset($headers['Authorization'])){
+}
+elseif(isset($headers['Authorization'])){
     if ($sv['api_key'] != $headers['Authorization'] ){
         $json_out["ERROR"] = "Unable to Authenticate Device";
         ErrorExit(1);
     }
-} else {
+}
+else {
     $json_out["ERROR"] = "Header Are Not Set";
     ErrorExit(1);
 }
@@ -53,7 +56,8 @@ if (! ($input_data)) {
 if ( isset($input_data["type"]) ){
     $type = $input_data["type"];
     $json_out = array();
-} else {
+}
+else {
     $json_out["ERROR"] = "Type of call not set";
     ErrorExit(1);
 }
@@ -64,43 +68,54 @@ if (strtolower($type) == "utaid_double"){
     $staff = Users::with_id($input_data["number_employee"]);
     if(array_key_exists("dev_id", $input_data)){
         $device_id = $input_data["dev_id"];
-    } elseif(array_key_exists("device_id", $input_data)) {
+    }
+    elseif(array_key_exists("device_id", $input_data)) {
         $device_id = $input_data["device_id"];
-    } else {
+    }
+    else {
         $device_id = $input_data["device"];
     }
     OnTransaction_double($user, $staff, $device_id);
 
-} elseif(strtolower($type) == "rfid_double"){
+}
+elseif(strtolower($type) == "rfid_double"){
     // added this part to support user + learner transac 
     $user = RFIDtoUTAID($input_data["number"]);
     $staff = RFIDtoUTAID($input_data["number_employee"]);
     if(array_key_exists("dev_id", $input_data)){
         $device_id = $input_data["dev_id"];
-    } elseif(array_key_exists("device_id", $input_data)) {
+    }
+    elseif(array_key_exists("device_id", $input_data)) {
         $device_id = $input_data["device_id"];
-    } else {
+    }
+    else {
         $device_id = $input_data["device"];
     }
     
     OnTransaction_double($user, $staff, $device_id);
 
-} elseif(strtolower($type) == "check_status_utaid") {
+}
+elseif(strtolower($type) == "check_status_utaid") {
     check_user_status( Users::with_id($input_data["number"]) );
 	
-} elseif(strtolower($type) == "check_status_rfid") {
+}
+elseif(strtolower($type) == "check_status_rfid") {
     check_user_status( RFIDtoUTAID($input_data["number"]) );
 
-} elseif( strtolower($type) == "end_transaction" ) {
+}
+elseif( strtolower($type) == "end_transaction" ) {
     if(array_key_exists("dev_id", $input_data)){
         end_transaction( $input_data["dev_id"] );
-    } elseif(array_key_exists("device_id", $input_data)) {
+    }
+    elseif(array_key_exists("device_id", $input_data)) {
         end_transaction( $input_data["device_id"] );
-    } else {
+    }
+    else {
         end_transaction( $input_data["device"] );
     }
     
-} else {
+}
+else {
     $json_out["ERROR"] = "Unknown type: $type";
     ErrorExit(1);
 }
@@ -122,7 +137,7 @@ function OnTransaction_double ($user, $staff, $device_id) {
         $json_out[$key] =  $value;
     }
     if ($json_out["authorized"] == "N"){
-        $json_out["ID"] = $user->getOperator();
+        $json_out["ID"] = $user->id;
         ErrorExit(1);
     }
     $status_id = $json_out["status_id"];
@@ -132,25 +147,30 @@ function OnTransaction_double ($user, $staff, $device_id) {
         $json_out[$key] =  $value;
     }
     if ($json_out["authorized"] == "N"){
-        $json_out["ID"] = $staff->getOperator();
+        $json_out["ID"] = $staff->id;
         ErrorExit(1);
     }
     $status_id_2 = $json_out["status_id"];
 
-    if($user != $staff && ($user->getRoleID() >= $sv['LvlOfStaff'] || $staff->getRoleID() >= $sv['LvlOfStaff'])){
+    if(!$user->is_same_as($staff) && ($user->is_staff() || $staff->is_staff()))
+    {
         CreateTransaction_double($user, $staff, $device_id, $status_id);
 
-    } else if($user == $staff && ($user->getRoleID() >= $sv['minRoleTrainer'] || $user->getRoleID() == 7)){
-        CreateTransaction_double($staff, $user, $device_id, $status_id);
+    }
 
-    } else if( $user == $staff ) {
+    else if($user->is_same_as($staff) && ($user->validate($ROLE["admin"]) || $user->validate($ROLE["service"])))
+    {
+        CreateTransaction_double($staff, $user, $device_id, $status_id);
+    }
+    else if($user->is_same_as($staff)) {
         $json_out["ERROR"] = "Both id's are the same and lack appropriate Role ID";
         $json_out["success"] = "N";
         $json_out["authorized"] = "N";
         ErrorExit(1);
 
-    } else {
-        $json_out["ERROR"] = "ID-1:".$user->getOperator()." Role:".$user->getRoleID()." & ID-2:".$user->getOperator()." Role:".$staff->getRoleID().", one of the id's does not have access";
+    }
+    else {
+        $json_out["ERROR"] = "ID-1:$user Role:$user->r_id & ID-2:$user Role:$staff->r_id, one of the id's does not have access";
         $json_out["success"] = "N";
         $json_out["authorized"] = "N";
         ErrorExit(1);
@@ -167,14 +187,14 @@ function CreateTransaction_double ($user, $staff, $device_id, $status_id) {
     global $mysqli;
     
     //Lower Role ID must be user
-    if ($user->getRoleID() > $staff->getRoleID()){
+    if ($user->r_id > $staff->r_id){
         $temp = $user;
         $user = $staff;
         $staff = $temp;
     }
     
     //Deny if they are not the next person in line to use this device
-    $msg = Wait_queue::transferFromWaitQueue($user->getOperator(), $device_id);
+    $msg = Wait_queue::transferFromWaitQueue($user->id, $device_id);
     if (is_string($msg)){
         $json_out["ERROR"] = $msg;
         return;
@@ -184,14 +204,15 @@ function CreateTransaction_double ($user, $staff, $device_id, $status_id) {
       INSERT INTO transactions 
         (`operator`,`d_id`,`t_start`,`status_id`, `staff_id`) 
       VALUES
-        ('".$user->getOperator()."', '$device_id', CURRENT_TIMESTAMP, '$status_id', '".$staff->getOperator()."');
+        ('$user', '$device_id', CURRENT_TIMESTAMP, '$status_id', '$staff');
     ");
     $mysqli_error = mysqli_error($mysqli);
     if ($mysqli_error) {
         $json_out["ERROR"] = $mysqli_error;
         ErrorExit(2);
     
-    } else {
+    }
+    else {
         $trans_id = mysqli_insert_id($mysqli);
         $json_out["trans_id"] = $trans_id;
         $json_out["status_id"] = $status_id;
@@ -207,8 +228,8 @@ function CreateTransaction_double ($user, $staff, $device_id, $status_id) {
 function check_user_status( $operator ){
     global $json_out;
 
-    $json_out["role"] = $operator->getRoleID();
-    return $operator->getRoleID();
+    $json_out["role"] = $operator->r_id;
+    return $operator->r_id;
 }
 
 ////////////////////////////////////////////////////////////////
@@ -230,14 +251,16 @@ function RFIDtoUTAID ($rfid_no) {
         $stmt->execute();
         $insID = $stmt->insert_id;
         $stmt->close();
-    } else {
+    }
+    else {
         FabAppError::insertError($_SERVER['PHP_SELF'],  $mysqli->error, "");
     }
     
-    $user = Users::withRF($rfid_no);
+    $user = Users::with_rfid($rfid_no);
     if (is_object($user)) {
         return($user);
-    } else {
+    }
+    else {
         $json_out["ERROR"] = $user;
         ErrorExit(1);
     }
@@ -272,7 +295,8 @@ function end_transaction( $d_id ){
     if ($msg === true){
         $json_out["CONTENT"] = "Ticket ".$ticket->getTrans_id()." has been closed";
         $json_out["success"] = "Y";
-    } else {
+    }
+    else {
         $json_out["success"] = "N";
         FabAppError::insertError($_SERVER['PHP_SELF'],  $msg, "");
         ErrorExit(1);
@@ -288,7 +312,8 @@ function ErrorExit ($exit_status) {
     if(isset($input_data["device"])){
         $device = new Devices($input_data['device']);
         FabAppError::insertError("JuiceBox: ".$device->getDevice_desc(), $json_out['ERROR'], "");
-    } else {
+    }
+    else {
         FabAppError::insertError("JuiceBox", $json_out['ERROR'], "");
     }
     echo json_encode($json_out);

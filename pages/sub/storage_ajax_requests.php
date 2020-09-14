@@ -27,8 +27,8 @@ include_once (filter_input(INPUT_SERVER,'DOCUMENT_ROOT').'/class/all_classes.php
 
 // authenticate permission for user
 session_start();
-$staff = unserialize($_SESSION['staff']);
-if(!$staff || $staff->roleID < $role["staff"]) exit();
+$user = unserialize($_SESSION['staff']);
+if(!$user || !$user->is_staff()) exit();
 
 
 
@@ -71,7 +71,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["move_to_new_location"])
 	$unit = htmlspecialchars($_POST["unit"]);
 	$trans_id = htmlspecialchars($_POST["trans_id"]);
 
-	$error = StorageObject::add_object_to_location_from_possible_previous($drawer.$unit, $staff, $trans_id);
+	$error = StorageObject::add_object_to_location_from_possible_previous($drawer.$unit, $user, $trans_id);
 	echo json_encode(array("error" => $error));
 }
 

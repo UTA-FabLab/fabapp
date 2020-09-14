@@ -774,7 +774,7 @@ class Wait_queue {
 	{
 		global $mysqli;
 
-		if(!Users::regexUser($operator)) throw new Exception("Bad operator ID: $operator");
+		if(!Users::regex_id($operator)) throw new Exception("Bad operator ID: $operator");
 
 		$tickets = array();
 		if(!$results = $mysqli->query(	"SELECT `wait_queue`.`Q_id`, `wait_queue`.`Start_date`, `devices`.`device_desc`,

@@ -75,7 +75,7 @@ elseif(!StorageObject::object_is_in_storage($trans_id)) {
 if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['pay_button'])) {
 	// check user allowed to pickup ticket
 	$operator = filter_input(INPUT_POST, "payer");
-	if(!Users::regexUser($operator))
+	if(!Users::regex_id($operator))
 		exit_if_error("The payer ID supplied is not a valid ID number");
 	$receiver = Users::with_id($operator);
 	if(!AuthRecipients::validatePickUp($ticket, $receiver))
