@@ -1,7 +1,7 @@
 <?php
 
 /***********************************************************************************************************
-*	
+*
 *	@author Jon Le
 *	Edited by: MPZinke on 06.08.19 to improve commenting an logic/functionality of class.
 *	 Separated physical location (storage_box) from censeptual information (transaction) in
@@ -16,18 +16,18 @@
 *
 *	DESCRIPTION: Transaction (Ticket) instance for device usage.  Associates costs, user,
 *	 devices, materials for creating/logging information in DB `transactions`.  Prints hard copy
-*	 of tickets.  Designed for by-page instance & not transfering accross pages.  If sent 
+*	 of tickets.  Designed for by-page instance & not transfering accross pages.  If sent
 *	 pages, post creation changes (eg Materials) do not update
 *
 ***********************************************************************************************************/
- 
+
 //Thermal Reciept Dependancies
 require_once ($_SERVER['DOCUMENT_ROOT'].'/api/php_printer/autoload.php');
 require_once ($_SERVER['DOCUMENT_ROOT'].'/connections/tp_connect.php');
 use Mike42\Escpos\Printer;
 use Mike42\Escpos\EscposImage;
 use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
- 
+
 class Transactions {
 	public $cost;  // costs associated with ticket; device usage + material usage
 	public $duration;  // time a device took to complete task
@@ -47,13 +47,13 @@ class Transactions {
 	public $staff;  // fablab staff user object based on staff_id
 	public $status;  // status object based on status
 	public $user;  // person who started the print/ticket
-	
+
 	public function __construct($trans_id){
 		global $mysqli;
-		
+
 		if (!preg_match("/^\d+$/", $trans_id))
 			throw new Exception("Invalid Ticket Number : $trans_id");
-		
+
 		if ($result = $mysqli->query("
 			SELECT *
 			FROM transactions
@@ -99,7 +99,7 @@ class Transactions {
 		global $sv;
 
 		if(!$this->t_start) return 0;
-		if(!$end = $this->t_end) $end = date("Y-m-d H:i:s", strtotime("now"));	
+		if(!$end = $this->t_end) $end = date("Y-m-d H:i:s", strtotime("now"));
 
 		$duration = (strtotime($this->t_end) - strtotime($this->t_start)) / 3600;
 		return $this->duration < $sv['minTime'] ? $sv['minTime'] : $duration;  // minimum time interval
@@ -162,11 +162,11 @@ class Transactions {
 		$this->t_end = date("Y-m-d H:i:s");
 		return $this->update_transaction();  // return error or null (no error)
 	}
-	
+
 
 	public function end_juicebox(){
 		global $mysqli, $status;
-		
+
 		$total = $this->quote_cost();
 		//Status = Moveable
 		//Intended to block additional Power On Until Learner Pays Balance
@@ -176,7 +176,7 @@ class Transactions {
 		// null for no error, string for error
 		return $this->update_transaction();
 	}
-	
+
 
 	public function end_octopuppet(){
 		global $mysqli, $status;
@@ -196,11 +196,11 @@ class Transactions {
 
 	public function endSheetTicket($trans_id, $sheet_good_status){
 		global $mysqli, $status;
-		
+
 		// 1 for complete, 2 for failed
 		$status_id = $sheet_good_status == 1 ? $status["complete"] : $status["total_fail"];
-		
-		
+
+
 		if ($mysqli->query("
 			UPDATE `transactions`
 			SET `t_end` = CURRENT_TIMESTAMP , `status_id` = '$status_id'
@@ -208,16 +208,16 @@ class Transactions {
 		"))
 			return 1;
 		return 0;
-	
+
 	}
 
 
 	public static function insertSheetTrans($trans_id, $inv_id, $quantity){
 		global $mysqli;
-		
+
 		if ($mysqli->query("
-				INSERT INTO `sheet_good_transactions` 
-					(`trans_id`, `inv_id`, `quantity`, `remove_date`) 
+				INSERT INTO `sheet_good_transactions`
+					(`trans_id`, `inv_id`, `quantity`, `remove_date`)
 				VALUES
 					('$trans_id', '$inv_id', '$quantity', CURRENT_TIMESTAMP);
 		")){
@@ -239,14 +239,14 @@ class Transactions {
 		if(!Purpose::regexID($p_id)) return "Invalid Purpose - $p_id";
 		if($status_id && !Status::regexID($status_id)) return "Invalid Status";
 		$note = $note ? "'".self::regexNotes($note)."'" : "NULL";
-		
+
 		if($error = Wait_queue::transferFromWaitQueue($operator->operator, $device_id)) return $error;
-		
+
 		$t_end = $status_id == $status["sheet_sale"] ? "CURRENT_TIMESTAMP" : "NULL";  // sheet goods
 		// $note is intentionally left without '' so that if it is null, it will be entered as a null value
-		if ($mysqli->query("INSERT INTO transactions 
-							(`operator`, `d_id`, `t_start`, `t_end`, `status_id`, `p_id`, `est_time`, `staff_id`, `notes`) 
-							-- (`operator`,`device_id`,`t_start`,`status_id`,`p_id`,`est_time`,`staff_id`, `notes`) 
+		if ($mysqli->query("INSERT INTO transactions
+							(`operator`, `d_id`, `t_start`, `t_end`, `status_id`, `p_id`, `est_time`, `staff_id`, `notes`)
+							-- (`operator`,`device_id`,`t_start`,`status_id`,`p_id`,`est_time`,`staff_id`, `notes`)
 							VALUES
 							('$operator->operator', '$device_id', CURRENT_TIMESTAMP, $t_end, '$status_id', '$p_id', '$est_time', '$staff->operator', $note);"
 		)){
@@ -257,7 +257,7 @@ class Transactions {
 
 
 	/*
-	Check that the materials associated with transaction are not chargable. 
+	Check that the materials associated with transaction are not chargable.
 	If materials has cost, user must pay for it.
 	*/
 	public function no_associated_materials_have_a_price() {
@@ -278,7 +278,7 @@ class Transactions {
 			echo $e;
 			return $e->getMessage();
 		}
-		
+
 		try {
 			$connector = new NetworkPrintConnector($tphost, $tpport);
 			$printer = new Printer($connector);
@@ -301,7 +301,7 @@ class Transactions {
 			//Body
 			$printer->feed(2);
 			$printer->text("Device:   ".$ticket->device->name);
-			
+
 			// estimated amount
 			$est_amount = 0;
 			foreach($ticket->mats_used as $mat_used)
@@ -314,7 +314,7 @@ class Transactions {
 			$printer->text("$ ".number_format($ticket->quote_cost(), 2));
 			$printer->feed();
 			if($ticket->est_time) $printer->text("Est. Duration:   $ticket->est_time");
-			
+
 			if ($ticket->filename){
 				$printer->feed();
 				$printer->text("File:   $ticket->filename");
@@ -442,14 +442,14 @@ class Transactions {
             	$printer -> text($cart_prices[$i]);
             }
             $printer -> setTextSize(1, 1);
-            $printer -> feed(2); 
+            $printer -> feed(2);
             $printer -> setJustification(Printer::JUSTIFY_RIGHT);
             $printer -> setEmphasis(true);
             $printer -> text("Total: $".$total_price);
             $printer -> setEmphasis(false);
 
-            $printer -> feed(2);  
-            
+            $printer -> feed(2);
+
             // Print Footer
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
             $printer -> text("For information about FabLab's");
@@ -459,7 +459,7 @@ class Transactions {
             $printer -> setEmphasis(true);
             $printer -> text("http://fablab.uta.edu/policy");
             $printer -> feed();
-            
+
         } catch (Exception $print_error) {
             //echo $print_error->getMessage();
             $printer -> text($print_error->getMessage());
@@ -476,7 +476,7 @@ class Transactions {
             echo "Couldn't print to this printer: " . $e -> getMessage() . "\n";
         }
     }
-    
+
 
 
 
@@ -497,8 +497,8 @@ class Transactions {
 
 	// add information about who pickuped a transaction, when and by whom it was facilitated
 	public function record_pickup($reciever, $staff) {
-		return $this->edit_transaction_information(array(	"pickedup_by" => $reciever, 
-															"pickup_time" => date("Y-m-d H:i:s"), 
+		return $this->edit_transaction_information(array(	"pickedup_by" => $reciever,
+															"pickup_time" => date("Y-m-d H:i:s"),
 															"staff" => $staff));
 	}
 
@@ -508,7 +508,7 @@ class Transactions {
 		// current cost - (already been paid) + .001 (prevent negative rounding errors)
 		$balance = $this->quote_cost() - $this->current_transaction_credit() + .001;
 		// allow for .005 rounding error
-		return (-.005 < $balance && $balance < .005) ? 0 : $balance; 
+		return (-.005 < $balance && $balance < .005) ? 0 : $balance;
 	}
 
 
@@ -521,16 +521,20 @@ class Transactions {
 
 		// update transaction info
 		$statement = $mysqli->prepare("UPDATE `transactions`
-											SET `d_id` = ?, `operator` = ?, `t_start` = ?, 
-											`t_end` = ?, `status_id` = ?, `staff_id` = ?, 
+											SET `d_id` = ?, `operator` = ?, `t_start` = ?,
+											`t_end` = ?, `status_id` = ?, `staff_id` = ?,
 											`pickup_time` = ?, `pickedup_by` = ?,  `notes` = ?,
 											`duration` = ?
 											WHERE `trans_id` = ?;");
 
-		$statement->bind_param("dsssdsssssd", $this->device->device_id, $this->user->operator, $this->t_start, 
-									$this->t_end, $this->status->status_id, $this->staff->operator, 
-									$this->pickup_time, $pickedup_by, $this->filename_and_notes(), 
-									$this->duration,
+		$notes = $this->filename_and_notes();
+		$t_end = $this->t_end = date("Y-m-d H:i:s", strtotime("now"));
+		$duration = $this->duration_string();
+
+		$statement->bind_param("dsssdsssssd", $this->device->device_id, $this->user->operator, $this->t_start,
+									$t_end, $this->status->status_id, $this->staff->operator,
+									$this->pickup_time, $pickedup_by, $notes,
+									$duration,
 									$this->trans_id);
 
 
@@ -655,7 +659,7 @@ class Transactions {
 		$time = "$sArray[0]h $sArray[1]m $sArray[2]s";
 		return $time;
 	}
-	
+
 	public function getDuration_raw() {
 		if (strcmp($this->duration,"") == 0)
 				return "";
