@@ -269,7 +269,7 @@ function end_transaction( $d_id ){
 	
     $msg = $ticket->end_juicebox();
 
-    if ($msg === true){
+    if ($msg === null){
         $json_out["CONTENT"] = "Ticket ".$ticket->getTrans_id()." has been closed";
         $json_out["success"] = "Y";
     } else {
