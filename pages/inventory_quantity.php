@@ -473,7 +473,7 @@ function exit_with_success($success_message)
 	// does not exist, defaults value. otherwise insert value into place.
 	function __INVENTORY__update_unit(element) {
 		var select_mat_data = element.options[element.selectedIndex].value.split('|');
-		console.log(select_mat_data);
+	//	console.log(select_mat_data);	//diagnostic to view select_mat_data contents
 		var great_grandparent = element.parentElement.parentElement.parentElement;
 		great_grandparent.getElementsByClassName("unit")[0].innerHTML = select_mat_data[1] || "[ - ]";
 		great_grandparent.getElementsByClassName("product_number")[0].innerHTML = select_mat_data[2] || "[unassigned]";
