@@ -18,6 +18,7 @@
 **********************************************************/
 
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
+include_once("$_SERVER[DOCUMENT_ROOT]/connections/selected_drawer_number.php");
 
 // staff clearance
 if (!$staff || $staff->getRoleID() < $sv['minRoleTrainer']){
@@ -25,14 +26,6 @@ if (!$staff || $staff->getRoleID() < $sv['minRoleTrainer']){
 	header('Location: /index.php');
 	$_SESSION['error_msg'] = "Insufficient role level to access, You must be a Trainer.";
 }
-
-
-// access DB as user with storage_box delete permissions using following credentials 
-$db_storage_box_host = "localhost";
-$db_storage_box_user = "";  // populate
-$db_storage_box_pass = "";  // populate
-$dbdatabase = "fabapp";
-
 
 // set up page to load drawer
 if(filter_input(INPUT_GET, "drawer")) {
@@ -48,7 +41,6 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["get_drawer"])) {
 	header("Location:storage_unit_creator.php?drawer=$selected_drawer_number");
 }
 elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["delete_drawer"])) {
-	include_once("$_SERVER[DOCUMENT_ROOT]/connections/selected_drawer_number.php");
 	$selected_drawer_number = htmlspecialchars(filter_input(INPUT_POST, "drawer_number"));
 
 	$errors = StorageDrawer::delete_drawer($selected_drawer_number);
@@ -90,9 +82,6 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["partition_unit"])) 
 }
 elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["delete_unit_button"])) {
 	$unit = htmlspecialchars(filter_input(INPUT_POST, "deletion_input"));
-
-	// connect to mysql database using user with storage_box delete permissions
-	$storage_box_DB_user = new mysqli($db_storage_box_host, $db_storage_box_user, $db_storage_box_pass, $dbdatabase) or die(mysql_error());
 
 	$errors = StorageUnit::delete_unit($drawer_number, $unit);
 	if(!$errors) $_SESSION['success_msg'] = "Successfully deleted unit";
