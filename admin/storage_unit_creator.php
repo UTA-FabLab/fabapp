@@ -48,10 +48,8 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["get_drawer"])) {
 	header("Location:storage_unit_creator.php?drawer=$selected_drawer_number");
 }
 elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["delete_drawer"])) {
+	include_once("$_SERVER[DOCUMENT_ROOT]/connections/selected_drawer_number.php");
 	$selected_drawer_number = htmlspecialchars(filter_input(INPUT_POST, "drawer_number"));
-
-	// connect to mysql database using user with storage_box delete permissions
-	$storage_box_DB_user = new mysqli($db_storage_box_host, $db_storage_box_user, $db_storage_box_pass, $dbdatabase) or die(mysql_error());
 
 	$errors = StorageDrawer::delete_drawer($selected_drawer_number);
 	if(!$errors) $_SESSION['success_msg'] = "Successfully deleted drawer";
