@@ -38,6 +38,7 @@ class Transactions {
 	public $t_start;  // start time of transaction task
 	public $t_end;  // end time of transaction task
 	public $trans_id;  // unique identifier of transaction
+	public $status_id; // status id of current transaction
 	//Objects
 	public $acct_charge;  // acount charge object based on trans_id
 	public $device;  // device object based on device_id
@@ -66,6 +67,7 @@ class Transactions {
 			$this->acct_charge = Acct_charge::byTrans_id($trans_id);
 			$this->device = new Devices($row['d_id']);  //REMOVE WITH UPDATE
 			$this->duration = $row['duration'];
+			$this->status_id = $row['status_id'];
 			// $this->device = new Devices($row['device_id']);  //ADD WITH UPDATE
 			$this->est_time = $row['est_time'];
 			if(substr_count($row['notes'], "⦂")) $this->filename = explode("⦂", $row['notes'])[0];
@@ -180,18 +182,39 @@ class Transactions {
 
 	public function end_octopuppet(){
 		global $mysqli, $status;
-
-		$this->t_end = date("Y-m-d H:i:s", strtotime("now"));  // set t_end only for object (!DB)
-		$duration = $this->duration_string();
-		if ($mysqli->query("
+		// Keep offline status id
+		// Currently we have no way to find out the exact time when the job ended on client.
+		// Use est_time as a close guess. TODO: Send exact end times from OctoPuppet.
+		if ($this->status_id == $status["offline"]) {
+			$duration = $this->est_time;
+			if ($mysqli->query("
+			UPDATE `transactions`
+			SET `duration` = '$duration'
+			WHERE `trans_id` = '$this->trans_id';
+			")){
+				if ($mysqli->affected_rows == 1) {
+					return true;
+				} else{
+					return false;  // unsuccessful
+				};
+			}
+			
+		} else {
+			$this->t_end = date("Y-m-d H:i:s", strtotime("now"));  // set t_end only for object (!DB)
+			$duration = $this->duration_string();
+			if ($mysqli->query("
 			UPDATE `transactions`
 			SET `duration` = '$duration', `status_id` = '$status[moveable]'
 			WHERE `trans_id` = '$this->trans_id';
-		")){
-			if ($mysqli->affected_rows == 1) return true;
+			")){
+				if ($mysqli->affected_rows == 1) {
+					return true;
+				} else{
+					return false;  // unsuccessful
+				};
+			}
 		}
-		return false;  // unsuccessful
-	}
+}
 
 
 	public function endSheetTicket($trans_id, $sheet_good_status){
