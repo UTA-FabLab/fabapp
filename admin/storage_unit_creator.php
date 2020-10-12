@@ -18,7 +18,7 @@
 **********************************************************/
 
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
-include_once("$_SERVER[DOCUMENT_ROOT]/connections/selected_drawer_number.php");
+include_once("$_SERVER[DOCUMENT_ROOT]/connections/storage_box_DB_user.php");
 
 // staff clearance
 if (!$staff || $staff->getRoleID() < $sv['minRoleTrainer']){
@@ -30,7 +30,7 @@ if (!$staff || $staff->getRoleID() < $sv['minRoleTrainer']){
 // set up page to load drawer
 if(filter_input(INPUT_GET, "drawer")) {
 	$drawer_number = filter_input(INPUT_GET, "drawer");
-	$unit_behavior = array("class" => "unit", "onclick" => "delete_unit(this)", "onmouseover" => "track(this)", "onmouseout" => "untrack(this)");
+	$unit_behavior = array("id" => "__unit__", "class" => "unit", "onclick" => "delete_unit(this)", "onmouseover" => "track(this)", "onmouseout" => "untrack(this)");
 	$empty_behavior = array("class" => "free", "onclick" => "bound_partition(this, \"edit_partition_input\", \"free\")", 
 								"onmouseover" => "track(this)", "onmouseout" => "untrack(this)");
 	$Drawer = new StorageDrawer($drawer_number, $unit_behavior, $empty_behavior);  // array of unit objects
