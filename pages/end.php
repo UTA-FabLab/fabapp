@@ -52,7 +52,7 @@ if($ticket->status->status_id > $status['moveable'] && !$ticket->device_group->i
 	exit_if_error("Transaction #$trans_id already ended");
 
 // no cost associated with ticket && not assign materials after ticket; auto close
-if($ticket->no_associated_materials_have_a_price() && $ticket->device_group->is_select_mats_first) {
+if($ticket->no_associated_materials_have_a_price() && $ticket->device->device_group->is_select_mats_first) {
 	exit_if_error($ticket->end_transaction($staff, $status['complete']));
 	$_SESSION['success_msg'] = "End: Ticket successfully ended";
 	header("Location:/pages/lookup.php?trans_id=$ticket->trans_id");
