@@ -191,6 +191,7 @@ function PrintTransaction ($operator, $device_id) {
     }
 
     if ($input_data["filename"]){
+	//	error_log("The filename property of input_data as received in flud::PrintTransaction is: " . var_export($input_data["filename"], true) , 0);			//diagnostic line 
         $filename = "$input_data[filename]⦂";
     }
 
@@ -207,20 +208,20 @@ function PrintTransaction ($operator, $device_id) {
 
     if ($insert_result = $mysqli->query("
         INSERT INTO transactions
-            (`operator`,`d_id`,`t_start`,`status_id`,`p_id`,`est_time`) 
+            (`operator`,`d_id`,`t_start`,`status_id`,`p_id`,`est_time`, `notes`) 
         VALUES
-            ('$operator','$d_id',CURRENT_TIMESTAMP,'$auth_status','$p_id','$est_build_time');
+            ('$operator','$d_id',CURRENT_TIMESTAMP,'$auth_status','$p_id','$est_build_time', '$filename');
     ")){
         $trans_id = $json_out["trans_id"] = $mysqli->insert_id;
         $print_json["trans_id"] = $trans_id;
         
         if ($stmt = $mysqli->prepare("
             INSERT INTO mats_used
-                (`trans_id`,`m_id`, `quantity`, `status_id`, `mu_notes`, `mu_date`) 
+                (`trans_id`,`m_id`, `quantity`, `status_id`, `mu_date`) 
             VALUES
-                (?, ?, ?, ?, ?, CURRENT_TIMESTAMP);
+                (?, ?, ?, ?, CURRENT_TIMESTAMP);
         ")){
-            $bind_param = $stmt->bind_param("iidis", $trans_id, $m_id, $input_data["est_filament_used"], $auth_status, $filename);
+            $bind_param = $stmt->bind_param("iidi", $trans_id, $m_id, $input_data["est_filament_used"], $auth_status);
             $stmt->execute();
             $stmt->close();
         } else {
