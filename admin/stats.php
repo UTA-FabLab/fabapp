@@ -82,6 +82,7 @@ $tables = Database_Table::get_tables();
 									<option value='by_device_all'>Tickets by Device (All)</option>
 									<option value='by_device_floor'>Tickets by Device (Floor)</option>
 									<option value='by_device_all'>Tickets by Device (Shop)</option>
+									<option value='by_bursar'>Tickets charged to Bursar account</option>
 								</select>
 							</td>
 							<td class='col-md-2'>

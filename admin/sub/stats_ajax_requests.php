@@ -25,16 +25,19 @@ $staff = unserialize($_SESSION['staff']);
 if(!$staff || $staff->roleID < $role["admin"]) exit();
 
 //———TESTING———
+// $_SERVER["REQUEST_METHOD"] = "POST";
+// $_POST["prebuilt_query"] = true;
 // $_POST["query"] = "byHour";
-// $_POST["start_time"] = "0010-10-10";
-// $_POST["end_time"] = "2019-09-30";
+// $_POST["start_time"] = "2020-10-01";
+// $_POST["end_time"] = "2020-10-17";
 // $_POST["device"] = "*";
 
+
 if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["prebuilt_query"])) {
-	$function = htmlspecialchars($_POST["query"]);
-	$start = htmlspecialchars($_POST["start_time"]);
-	$end = htmlspecialchars($_POST["end_time"]);
-	$device = htmlspecialchars($_POST["device"]);
+	$function = $_POST["query"];
+	$start = $_POST["start_time"];
+	$end = $_POST["end_time"];
+	$device = $_POST["device"];
 
 	$pie_chart_label_column = htmlspecialchars($_POST["pie_chart_label_column"]);
 	$pie_chart_data_column = htmlspecialchars($_POST["pie_chart_data_column"]);
