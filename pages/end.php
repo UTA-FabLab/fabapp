@@ -220,13 +220,13 @@ function exit_if_error($error, $redirect=null) {
 												else {?>
 													<option value='<?php echo $status['complete']; ?>'>Complete</option>
 												<?php } ?>
-												<option value='<?php echo $status['total_fail']; ?>'>Total Fail</option>
+												<option value='<?php echo $status['cancelled']; ?>'>Cancelled</option>
 												<?php
 												if(!$ticket->device->device_group->is_juiceboxManaged)
 												{
 													?>
 													<option value='<?php echo $status['partial_fail']; ?>'>Partial Fail</option>
-													<option value='<?php echo $status['cancelled']; ?>'>Cancelled</option>
+													<option value='<?php echo $status['total_fail']; ?>'>Total Fail</option>
 													<?php
 												}
 												?>
@@ -997,21 +997,16 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	}
 
 
+	// Determines if the material status are properly populated.
+	// Take a list of scraped material dictionaries, ticket status ID.
+	// Goes through material dictionaries & determines if their logic is correct give the ticket status.
+	// Return true is an error, null if there is no error.
 	function failed_ticket_material_statuses_are_invalid(materials, ticket_status)
 	{
 		// make sure a note is stated
 		if(document.getElementById("ticket_notes_textarea").value.length < 10)
 			return alert_and_return_true("You must state how the ticket failed");
 
-		<?php
-			// juicebox managed devices do not require any materials or statuses
-			if($ticket->device->device_group->is_juiceboxManaged)
-			{
-				?>
-				if(!materials.length) return false;  // no errors
-				<?php
-			}
-		?>
 		// require 1 failed material: none found
 		console.log(materials);
 		if(!any(	materials,
