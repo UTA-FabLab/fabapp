@@ -220,9 +220,16 @@ function exit_if_error($error, $redirect=null) {
 												else {?>
 													<option value='<?php echo $status['complete']; ?>'>Complete</option>
 												<?php } ?>
-												<option value='<?php echo $status['partial_fail']; ?>'>Partial Fail</option>
 												<option value='<?php echo $status['total_fail']; ?>'>Total Fail</option>
-												<option value='<?php echo $status['cancelled']; ?>'>Cancelled</option>
+												<?php
+												if(!$ticket->device->device_group->is_juiceboxManaged)
+												{
+													?>
+													<option value='<?php echo $status['partial_fail']; ?>'>Partial Fail</option>
+													<option value='<?php echo $status['cancelled']; ?>'>Cancelled</option>
+													<?php
+												}
+												?>
 											</select>
 										</td>
 										<!-- current or selected storage information -->
@@ -995,6 +1002,16 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 		// make sure a note is stated
 		if(document.getElementById("ticket_notes_textarea").value.length < 10)
 			return alert_and_return_true("You must state how the ticket failed");
+
+		<?php
+			// juicebox managed devices do not require any materials or statuses
+			if($ticket->device->device_group->is_juiceboxManaged)
+			{
+				?>
+				if(!materials.length) return false;  // no errors
+				<?php
+			}
+		?>
 		// require 1 failed material: none found
 		console.log(materials);
 		if(!any(	materials,
