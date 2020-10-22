@@ -32,54 +32,60 @@ if(!$staff || $staff->roleID < $role["admin"]) exit();
 // $_POST["end_time"] = "2020-10-17";
 // $_POST["device"] = "*";
 
+try
+{
+	if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["prebuilt_query"])) {
+		$function = $_POST["query"];
+		$start = $_POST["start_time"];
+		$end = $_POST["end_time"];
+		$device = $_POST["device"];
 
-if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["prebuilt_query"])) {
-	$function = $_POST["query"];
-	$start = $_POST["start_time"];
-	$end = $_POST["end_time"];
-	$device = $_POST["device"];
+		$pie_chart_label_column = htmlspecialchars($_POST["pie_chart_label_column"]);
+		$pie_chart_data_column = htmlspecialchars($_POST["pie_chart_data_column"]);
+		$pie_chart_label_column = "Hour";  //TESTING
+		$pie_chart_data_column = "Count";  //TESTING
 
-	$pie_chart_label_column = htmlspecialchars($_POST["pie_chart_label_column"]);
-	$pie_chart_data_column = htmlspecialchars($_POST["pie_chart_data_column"]);
-	$pie_chart_label_column = "Hour";  //TESTING
-	$pie_chart_data_column = "Count";  //TESTING
+		$params = Database_Query::prebuilt_query($end, $function, $start, $device);
+		$query_object = new Database_Query($params["statement"]);
+		echo json_encode(array(	"HTML" => $query_object->HTML_table,
+									"pie_chart" => $query_object->pie_chart_data($pie_chart_data_column, $pie_chart_label_column),
+									"statement" => $query_object->statement,
+									"tsv" => $query_object->tsv,
+									"warning" => $query_object->warning));
+	}
 
-	$params = Database_Query::prebuilt_query($end, $function, $start, $device);
-	$query_object = new Database_Query($params["statement"]);
-	echo json_encode(array(	"HTML" => $query_object->HTML_table,
-								"pie_chart" => $query_object->pie_chart_data($pie_chart_data_column, $pie_chart_label_column),
-								"statement" => $query_object->statement,
-								"tsv" => $query_object->tsv,
-								"warning" => $query_object->warning));
+
+	// ———————————————— CUSTOM QUERY ————————————————
+
+	// get columns to select from
+	if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["columns_for_table"])) {
+	// elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["columns_for_table"])) {
+		$table = new Database_Table(filter_input(INPUT_POST, "table_id"));
+
+		echo json_encode(array(	"columns" => $table->columns,
+									"column_names" => $table->column_names,
+									"name" => $table->name,
+									"table" => $table->table, 
+									"types" => $table->column_types));
+	}
+
+	// submit custom query and return results
+	elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["custom_query"])) {
+		$statement = $_POST["statement"];
+		// $statement = "SELECT `materials`.*,`device_materials`.* FROM `materials` JOIN `device_materials` ON `materials`.`m_id` = `device_materials`.`m_id`";
+		$query_object = new Database_Query($_POST["statement"]);
+		if($query_object->error) echo_error($query_object->error);
+
+		echo json_encode(array(	"HTML" => $query_object->HTML_table,
+									"statement" => $statement,
+									"tsv" => $query_object->tsv,
+									"warning" => $query_object->warning));
+		// exit();
+	}
 }
-
-
-// ———————————————— CUSTOM QUERY ————————————————
-
-// get columns to select from
-if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["columns_for_table"])) {
-// elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["columns_for_table"])) {
-	$table = new Database_Table(filter_input(INPUT_POST, "table_id"));
-
-	echo json_encode(array(	"columns" => $table->columns,
-								"column_names" => $table->column_names,
-								"name" => $table->name,
-								"table" => $table->table, 
-								"types" => $table->column_types));
-}
-
-// submit custom query and return results
-elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["custom_query"])) {
-	$statement = $_POST["statement"];
-	// $statement = "SELECT `materials`.*,`device_materials`.* FROM `materials` JOIN `device_materials` ON `materials`.`m_id` = `device_materials`.`m_id`";
-	$query_object = new Database_Query($_POST["statement"]);
-	if($query_object->error) echo_error($query_object->error);
-
-	echo json_encode(array(	"HTML" => $query_object->HTML_table,
-								"statement" => $statement,
-								"tsv" => $query_object->tsv,
-								"warning" => $query_object->warning));
-	// exit();
+catch(Exception $e)
+{
+	echo json_encode(array("error" => $e->getMessage()));
 }
 
 
