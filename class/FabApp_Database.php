@@ -166,9 +166,8 @@ class Database_Query {
 		// filter for harmful words
 		if($prohibit_potentially_harmful_words && $prohibition = self::query_contains_prohibited_words($query))
 			$this->set_error("'$prohibition' is a prohibited term as it may be used maliciously");
-		if(!$results = $mysqli->query($statement))
-			$this->set_error("Error in query: $results->error");
-		$this->results = self::query_results($results);
+		if(!$results = $mysqli->query($statement)) $this->set_error("Error in query: $mysqli->error");
+		else $this->results = self::query_results($results);
 
 		// create dict of more readable names for query
 		foreach($this->columns as $column) {
@@ -484,7 +483,6 @@ class Database_Query {
 
 	private function set_error($error_message) {
 		$this->error = $error_message;
-		exit();
 	}
 
 

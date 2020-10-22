@@ -27,9 +27,9 @@ if(!$staff || $staff->roleID < $role["admin"]) exit();
 //———TESTING———
 // $_SERVER["REQUEST_METHOD"] = "POST";
 // $_POST["prebuilt_query"] = true;
-// $_POST["query"] = "byHour";
-// $_POST["start_time"] = "2020-10-01";
-// $_POST["end_time"] = "2020-10-17";
+// $_POST["query"] = "by_bursar";
+// $_POST["start_time"] = "2016-08-01";
+// $_POST["end_time"] = "2020-10-21";
 // $_POST["device"] = "*";
 
 try
@@ -47,6 +47,7 @@ try
 
 		$params = Database_Query::prebuilt_query($end, $function, $start, $device);
 		$query_object = new Database_Query($params["statement"]);
+		if($query_object->error) throw new Exception($query_object->error);
 		echo json_encode(array(	"HTML" => $query_object->HTML_table,
 									"pie_chart" => $query_object->pie_chart_data($pie_chart_data_column, $pie_chart_label_column),
 									"statement" => $query_object->statement,
