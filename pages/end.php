@@ -52,7 +52,7 @@ if($ticket->status->status_id > $status['moveable'] && !$ticket->device_group->i
 	exit_if_error("Transaction #$trans_id already ended");
 
 // no cost associated with ticket && not assign materials after ticket; auto close
-if($ticket->no_associated_materials_have_a_price() && $ticket->device_group->is_select_mats_first) {
+if($ticket->no_associated_materials_have_a_price() && $ticket->device->device_group->is_select_mats_first) {
 	exit_if_error($ticket->end_transaction($staff, $status['complete']));
 	$_SESSION['success_msg'] = "End: Ticket successfully ended";
 	header("Location:/pages/lookup.php?trans_id=$ticket->trans_id");
@@ -220,9 +220,16 @@ function exit_if_error($error, $redirect=null) {
 												else {?>
 													<option value='<?php echo $status['complete']; ?>'>Complete</option>
 												<?php } ?>
-												<option value='<?php echo $status['partial_fail']; ?>'>Partial Fail</option>
-												<option value='<?php echo $status['total_fail']; ?>'>Total Fail</option>
 												<option value='<?php echo $status['cancelled']; ?>'>Cancelled</option>
+												<?php
+												if(!$ticket->device->device_group->is_juiceboxManaged)
+												{
+													?>
+													<option value='<?php echo $status['partial_fail']; ?>'>Partial Fail</option>
+													<option value='<?php echo $status['total_fail']; ?>'>Total Fail</option>
+													<?php
+												}
+												?>
 											</select>
 										</td>
 										<!-- current or selected storage information -->
@@ -990,11 +997,16 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	}
 
 
+	// Determines if the material status are properly populated.
+	// Take a list of scraped material dictionaries, ticket status ID.
+	// Goes through material dictionaries & determines if their logic is correct give the ticket status.
+	// Return true is an error, null if there is no error.
 	function failed_ticket_material_statuses_are_invalid(materials, ticket_status)
 	{
 		// make sure a note is stated
 		if(document.getElementById("ticket_notes_textarea").value.length < 10)
 			return alert_and_return_true("You must state how the ticket failed");
+
 		// require 1 failed material: none found
 		console.log(materials);
 		if(!any(	materials,
