@@ -190,7 +190,7 @@ class Transactions {
 			if ($mysqli->query("
 			UPDATE `transactions`
 			SET `duration` = '$duration'
-			WHERE `trans_id` = '$this->trans_id';
+			WHERE `trans_id` = $this->trans_id;
 			")){
 				if ($mysqli->affected_rows == 1) {
 					return true;
