@@ -42,8 +42,6 @@ try
 
 		$pie_chart_label_column = htmlspecialchars($_POST["pie_chart_label_column"]);
 		$pie_chart_data_column = htmlspecialchars($_POST["pie_chart_data_column"]);
-		$pie_chart_label_column = "Hour";  //TESTING
-		$pie_chart_data_column = "Count";  //TESTING
 
 		$params = Database_Query::prebuilt_query($end, $function, $start, $device);
 		$query_object = new Database_Query($params["statement"]);

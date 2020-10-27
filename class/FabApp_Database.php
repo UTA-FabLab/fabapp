@@ -164,7 +164,7 @@ class Database_Query {
 		// query
 		$this->statement = $statement;
 		// filter for harmful words
-		if($prohibit_potentially_harmful_words && $prohibition = self::query_contains_prohibited_words($query))
+		if($prohibit_potentially_harmful_words && $prohibition = self::query_contains_prohibited_words($statement))
 			$this->set_error("'$prohibition' is a prohibited term as it may be used maliciously");
 		if(!$results = $mysqli->query($statement)) $this->set_error("Error in query: $mysqli->error");
 		else $this->results = self::query_results($results);

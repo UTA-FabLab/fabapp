@@ -299,12 +299,13 @@ $tables = Database_Table::get_tables();
 					<table class='col-md-12'>
 						<tr>
 							<td class='col-md-3' style='padding:16px;'>
-								<button class='btn btn-default' onclick='exportTableToExcel("<?php echo $data['tsv'] ?>", "<?php echo $data['file_name']?>");'>Download Excel</button>
+								<input id='tsv_data_input' value='' hidden>
+								<button class='btn btn-default' onclick='exportTableToExcel(document.getElementById("tsv_data_input"));'>Download Excel</button>
 							</td>
 							<!-- TODO: create so that only appears is Pie chart data sent through AJAX -->
 							<td id='pie_chart_option' class='col-md-3' style='padding:16px;'>
 								<div id='pie_chart_button_div' hidden>
-									<button class='btn btn-default' onclick='create_pie_chart("<?php echo $data['pie'] ?>", "<?php echo $data['file_name']?>");'>Download Pie Chart</button>
+									<button class='btn btn-default'>Download Pie Chart</button>
 								</div>
 							</td>
 						</tr>
@@ -469,7 +470,11 @@ $tables = Database_Table::get_tables();
 		var end = document.getElementById("end_time").value;
 		var device = document.getElementById("device").value;
 
-		var data = {"prebuilt_query" : true, "query" : query, "start_time" : start, "end_time" : end, "device" : device};
+		var data =
+		{
+			"prebuilt_query" : true, "query" : query, "start_time" : start, "end_time" : end, "device" : device,
+			"pie_chart_label_column" : "", "pie_chart_data_column" : ""
+		};
 		submit_query_and_add_values_to_table(data);
 	}
 
