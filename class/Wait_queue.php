@@ -99,7 +99,7 @@ class Wait_queue {
                 Notifications::sendNotification($mysqli->insert_id, "FabApp Notification", $wq_ticketNum .$mysqli->insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateDeviceWaitTimes();
                 //Commented out for Dev purposes
-                Wait_queue::printTicket($operator, $dg_id);
+                Wait_queue::printTicket($mysqli->insert_id);
                 return $mysqli->insert_id;
                 
             } else {
@@ -116,7 +116,7 @@ class Wait_queue {
                 Notifications::sendNotification($mysqli->insert_id, "FabApp Notification", $wq_ticketNum .$mysqli->insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateWaitTimes();
                 //Commented out for Dev purposes
-                Wait_queue::printTicket($operator, $dg_id);
+                Wait_queue::printTicket($mysqli->insert_id);
                 return $mysqli->insert_id;
             } else {
                 return ("<div class='alert alert-danger'>Error2 updating contact info!</div>");
@@ -610,7 +610,11 @@ class Wait_queue {
     }
     
     
-    public static function printTicket($operator, $dg_id){
+    // Print a wait queue ticket using a thermal printer.
+    // Takes the `Q_id` primary key for the `wait_queue` table.
+    // Queries information and prints it appropriately to the appropriate printer based on thermal printer info.
+    // Returns error string, if error occured.
+    public static function printTicket($Q_id){
         global $mysqli;
         global $tphost, $tpport;
         $est_cost = 0;
@@ -620,8 +624,10 @@ class Wait_queue {
             FROM `wait_queue`
             LEFT JOIN `devices`
             ON `wait_queue`.`Dev_id` = `devices`.`d_id`
-            WHERE `wait_queue`.`Operator` = $operator AND `wait_queue`.`Devgr_id` = $dg_id AND `wait_queue`.`valid` = 'Y'
+            WHERE `wait_queue`.`Q_id` = $Q_id AND `wait_queue`.`valid` = 'Y';
         ")){
+            if(!$result->num_rows) return "Could not find a wait queue ticket for $Q_id";
+
             $row = $result->fetch_assoc();
             $timeLeft = $row["estTime"];
             if (isset($timeLeft)){
