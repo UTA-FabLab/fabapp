@@ -187,7 +187,7 @@ class Database_Query {
 		if($this->results)
 		{
 			$this->HTML_table = self::create_HTML_table_rows($this->results);
-			$this->tsv = self::tsv($this->results);
+			$this->tsv = self::tsv_string($this->results);
 		}
 	}
 
@@ -470,14 +470,15 @@ class Database_Query {
 	}
 
 
-	// return tsv string to print into excel sheet
-	public static function tsv($data) {
-		$tsv = implode("\t", array_keys($data[0]));
+	// Create a TSV string for the given results.
+	// Takes ARRAY<ARRAY<STRING, MULTIPLE>> of data
+	// Creates a header row. Adds data to TSV
+	// Returns TSV string.
+	public static function tsv_string($data) {
+		$tsv_rows = array(implode("\t", array_keys($data[0])));
+		foreach($data as $row) $tsv_rows[] = implode("\t", $row);
 
-		foreach($data as $row)
-			$tsv .= "\n".implode("\t", $row);
-
-		return $tsv;
+		return implode("\n", $tsv_rows);
 	}
 
 
