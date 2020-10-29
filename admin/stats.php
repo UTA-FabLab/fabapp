@@ -300,7 +300,7 @@ $tables = Database_Table::get_tables();
 						<tr>
 							<td class='col-md-3' style='padding:16px;'>
 								<input id='tsv_data_input' value='' hidden>
-								<button class='btn btn-default' onclick='exportTableToExcel(document.getElementById("tsv_data_input"));'>Download Excel</button>
+								<button class='btn btn-default' onclick='exportTableToExcel(document.getElementById("tsv_data_input").value);'>Download Excel</button>
 							</td>
 							<!-- TODO: create so that only appears is Pie chart data sent through AJAX -->
 							<td id='pie_chart_option' class='col-md-3' style='padding:16px;'>
