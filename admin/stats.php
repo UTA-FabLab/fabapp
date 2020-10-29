@@ -82,6 +82,7 @@ $tables = Database_Table::get_tables();
 									<option value='by_device_all'>Tickets by Device (All)</option>
 									<option value='by_device_floor'>Tickets by Device (Floor)</option>
 									<option value='by_device_all'>Tickets by Device (Shop)</option>
+									<option value='by_bursar'>Tickets charged to Bursar account</option>
 								</select>
 							</td>
 							<td class='col-md-2'>
@@ -298,12 +299,13 @@ $tables = Database_Table::get_tables();
 					<table class='col-md-12'>
 						<tr>
 							<td class='col-md-3' style='padding:16px;'>
-								<button class='btn btn-default' onclick='exportTableToExcel("<?php echo $data['tsv'] ?>", "<?php echo $data['file_name']?>");'>Download Excel</button>
+								<input id='tsv_data_input' value='' hidden>
+								<button class='btn btn-default' onclick='exportTableToExcel();'>Download Excel</button>
 							</td>
 							<!-- TODO: create so that only appears is Pie chart data sent through AJAX -->
 							<td id='pie_chart_option' class='col-md-3' style='padding:16px;'>
 								<div id='pie_chart_button_div' hidden>
-									<button class='btn btn-default' onclick='create_pie_chart("<?php echo $data['pie'] ?>", "<?php echo $data['file_name']?>");'>Download Pie Chart</button>
+									<button class='btn btn-default'>Download Pie Chart</button>
 								</div>
 							</td>
 						</tr>
@@ -342,6 +344,7 @@ $tables = Database_Table::get_tables();
 				$("#custom_query_collapse").removeClass('in');  // hide selections
 				document.getElementById("query_display").innerHTML = response["statement"];
 				document.getElementById("result_pannel").hidden = false;
+				document.getElementById("tsv_data_input").value = response["tsv"];
 				
 				// set data to table and format
 				document.getElementById("result_table_div").innerHTML = response["HTML"];
@@ -364,7 +367,12 @@ $tables = Database_Table::get_tables();
 
 // ———————————————— EXCEL/TSV/CSV —————————————————
 
-	function exportTableToExcel(tsv, filename = 'excel_data'){
+	// Exports tsv data as excel file.
+	// Takes tsv data string (if null, defaults to tsv_data_input value), filename (defaulted to excel_data).
+	// Creates file using tsv data. Download file.
+	function exportTableToExcel(tsv=null, filename='excel_data')
+	{
+		if(!tsv) tsv = document.getElementById("tsv_data_input").value;
 		var downloadLink;
 		var dataType = 'application/vnd.ms-excel';
 		
@@ -372,14 +380,16 @@ $tables = Database_Table::get_tables();
 		downloadLink = document.createElement("a");  // create download link element
 		document.body.appendChild(downloadLink);
 		
-		if(navigator.msSaveOrOpenBlob){
-				var blob = new Blob(['\ufeff', tsv], {type: dataType});
-				navigator.msSaveOrOpenBlob( blob, filename);
+		if(navigator.msSaveOrOpenBlob)
+		{
+			var blob = new Blob(['\ufeff', tsv], {type: dataType});
+			navigator.msSaveOrOpenBlob( blob, filename);
 		}
-		else{
-				downloadLink.href = 'data:' + dataType + ', ' + tsv;  // create a link to the file
-				downloadLink.download = filename;  // setting the file name
-				downloadLink.click();  // triggering the function
+		else
+		{
+			downloadLink.href = 'data:' + dataType + ', ' + tsv;  // create a link to the file
+			downloadLink.download = filename;  // setting the file name
+			downloadLink.click();  // triggering the function
 		}
 	}
 
@@ -468,7 +478,11 @@ $tables = Database_Table::get_tables();
 		var end = document.getElementById("end_time").value;
 		var device = document.getElementById("device").value;
 
-		var data = {"prebuilt_query" : true, "query" : query, "start_time" : start, "end_time" : end, "device" : device};
+		var data =
+		{
+			"prebuilt_query" : true, "query" : query, "start_time" : start, "end_time" : end, "device" : device,
+			"pie_chart_label_column" : "", "pie_chart_data_column" : ""
+		};
 		submit_query_and_add_values_to_table(data);
 	}
 

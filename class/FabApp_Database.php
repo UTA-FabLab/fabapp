@@ -164,11 +164,10 @@ class Database_Query {
 		// query
 		$this->statement = $statement;
 		// filter for harmful words
-		if($prohibit_potentially_harmful_words && $prohibition = self::query_contains_prohibited_words($query))
+		if($prohibit_potentially_harmful_words && $prohibition = self::query_contains_prohibited_words($statement))
 			$this->set_error("'$prohibition' is a prohibited term as it may be used maliciously");
-		if(!$results = $mysqli->query($statement))
-			$this->set_error("Error in query: $results->error");
-		$this->results = self::query_results($results);
+		if(!$results = $mysqli->query($statement)) $this->set_error("Error in query: $mysqli->error");
+		else $this->results = self::query_results($results);
 
 		// create dict of more readable names for query
 		foreach($this->columns as $column) {
@@ -185,8 +184,11 @@ class Database_Query {
 			$this->results = array_slice($this->results, 0, 500);
 		}
 
-		$this->HTML_table = self::create_HTML_table_rows($this->results);
-		$this->tsv = self::tsv($this->results);
+		if($this->results)
+		{
+			$this->HTML_table = self::create_HTML_table_rows($this->results);
+			$this->tsv = self::tsv_string($this->results);
+		}
 	}
 
 
@@ -346,6 +348,27 @@ class Database_Query {
 							GROUP BY `devices`.`device_desc`
 							ORDER BY `devices`.`device_desc`;";
 		}
+		// Tickets by individual tool for ONLY shop room devices
+		elseif($function === "by_bursar") {
+			$file_name = "FabLab_TicketsByBursar";
+			$head = array("Name", "Count");
+		/*	$statement = 	"SELECT `devices`.`device_desc` AS Device, COUNT(*) AS Count
+							FROM `transactions`
+							JOIN `devices` ON `transactions`.`d_id` = `devices`.`d_id`
+							WHERE '$start' <=`transactions`.`t_start`
+							AND `transactions`.`t_end` < '$end'
+							AND `devices`.`dg_id` = '3'
+							$device_condition
+							GROUP BY `devices`.`device_desc`
+							ORDER BY `devices`.`device_desc`;";
+		*/
+			$statement = 	"SELECT `acct_charge`.`trans_id`
+							FROM `acct_charge`
+							JOIN `transactions` ON `acct_charge`.`trans_id` = `transactions`.`trans_id`
+							WHERE `a_id` = 6
+							$device_condition
+							ORDER BY `acct_charge`.`trans_id`;";
+		}
 
 		return array("file_name" => $file_name, "head" => $head, "statement" => $statement, "error" => $function);
 	}
@@ -447,20 +470,20 @@ class Database_Query {
 	}
 
 
-	// return tsv string to print into excel sheet
-	public static function tsv($data) {
-		$tsv = implode("\t", array_keys($data[0]));
+	// Create a TSV string for the given results.
+	// Takes ARRAY<ARRAY<STRING, MULTIPLE>> of data
+	// Creates a header row. Adds data to TSV
+	// Returns TSV string.
+	public static function tsv_string($data) {
+		$tsv_rows = array(implode("\t", array_keys($data[0])));
+		foreach($data as $row) $tsv_rows[] = implode("\t", $row);
 
-		foreach($data as $row)
-			$tsv .= "\n".implode("\t", $row);
-
-		return $tsv;
+		return implode("\n", $tsv_rows);
 	}
 
 
 	private function set_error($error_message) {
 		$this->error = $error_message;
-		exit();
 	}
 
 
