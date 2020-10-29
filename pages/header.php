@@ -271,11 +271,6 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 											</span>
 										</div>
 									</li>
-									<?php if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfLead']) { ?>
-										<li>
-											<a href="/pages/offline_ticket.php"><i class="fas fa-history"></i> Offline Transactions</a>
-										</li>
-									<?php } ?>
 								</form>
 								</ul>
 							</li>
@@ -324,6 +319,12 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 								<a href="/pages/tools.php"><i class="fas fa-toolbox"></i> Tools</a>
 							</li>
 						<?php
+						if (isset($staff) && ($staff->getRoleID() >=  $sv['LvlOfLead']) && (OfflineTrans::haveOfflineTrans())) { ?>
+							<li>
+								<a href="/pages/offline_ticket.php"><i class="fas fa-history"></i> Offline Transactions</a>
+							</li>
+						<?php 
+						} 
 						if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfLead']) { ?>
 							<li>
 								<a herf="#"><i class="fas fa-book"></i> Training<span class="fas fa-angle-left"></span></a>

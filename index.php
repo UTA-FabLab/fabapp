@@ -312,7 +312,7 @@ function advanceNum($i, $str){
 							FROM `devices`
 							JOIN `device_group`
 							ON `devices`.`dg_id` = `device_group`.`dg_id`
-							LEFT JOIN (SELECT trans_id, t_start, est_time, d_id, status_id FROM transactions WHERE status_id < $status[total_fail] ORDER BY trans_id DESC) as t 
+							LEFT JOIN (SELECT trans_id, t_start, est_time, d_id, status_id FROM transactions WHERE status_id < $status[total_fail] AND status_id != $status[offline] ORDER BY trans_id DESC) as t 
 							ON `devices`.`d_id` = `t`.`d_id`
 							WHERE public_view = 'Y'
 							ORDER BY `trans_id` DESC, `device_desc` ASC
