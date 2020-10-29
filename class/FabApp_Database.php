@@ -476,9 +476,9 @@ class Database_Query {
 	// Returns TSV string.
 	public static function tsv_string($data) {
 		$tsv_rows = array(implode("\t", array_keys($data[0])));
-		foreach($data as $row) $tsv_rows[] = implode("\t", $row);
+		foreach($data as $row) $tsv_rows[] = implode("\t", array_values($row));
 
-		return implode("\n", $tsv_rows);
+		return implode("\\n", $tsv_rows);
 	}
 
 
