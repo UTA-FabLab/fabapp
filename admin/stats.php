@@ -300,7 +300,7 @@ $tables = Database_Table::get_tables();
 						<tr>
 							<td class='col-md-3' style='padding:16px;'>
 								<input id='tsv_data_input' value='' hidden>
-								<button class='btn btn-default' onclick='exportTableToExcel(document.getElementById("tsv_data_input").value);'>Download Excel</button>
+								<button class='btn btn-default' onclick='exportTableToExcel();'>Download Excel</button>
 							</td>
 							<!-- TODO: create so that only appears is Pie chart data sent through AJAX -->
 							<td id='pie_chart_option' class='col-md-3' style='padding:16px;'>
@@ -344,6 +344,7 @@ $tables = Database_Table::get_tables();
 				$("#custom_query_collapse").removeClass('in');  // hide selections
 				document.getElementById("query_display").innerHTML = response["statement"];
 				document.getElementById("result_pannel").hidden = false;
+				document.getElementById("tsv_data_input").value = response["tsv"];
 				
 				// set data to table and format
 				document.getElementById("result_table_div").innerHTML = response["HTML"];
@@ -366,7 +367,12 @@ $tables = Database_Table::get_tables();
 
 // ———————————————— EXCEL/TSV/CSV —————————————————
 
-	function exportTableToExcel(tsv, filename = 'excel_data'){
+	// Exports tsv data as excel file.
+	// Takes tsv data string (if null, defaults to tsv_data_input value), filename (defaulted to excel_data).
+	// Creates file using tsv data. Download file.
+	function exportTableToExcel(tsv=null, filename='excel_data')
+	{
+		if(!tsv) tsv = document.getElementById("tsv_data_input").value;
 		var downloadLink;
 		var dataType = 'application/vnd.ms-excel';
 		
@@ -374,14 +380,16 @@ $tables = Database_Table::get_tables();
 		downloadLink = document.createElement("a");  // create download link element
 		document.body.appendChild(downloadLink);
 		
-		if(navigator.msSaveOrOpenBlob){
-				var blob = new Blob(['\ufeff', tsv], {type: dataType});
-				navigator.msSaveOrOpenBlob( blob, filename);
+		if(navigator.msSaveOrOpenBlob)
+		{
+			var blob = new Blob(['\ufeff', tsv], {type: dataType});
+			navigator.msSaveOrOpenBlob( blob, filename);
 		}
-		else{
-				downloadLink.href = 'data:' + dataType + ', ' + tsv;  // create a link to the file
-				downloadLink.download = filename;  // setting the file name
-				downloadLink.click();  // triggering the function
+		else
+		{
+			downloadLink.href = 'data:' + dataType + ', ' + tsv;  // create a link to the file
+			downloadLink.download = filename;  // setting the file name
+			downloadLink.click();  // triggering the function
 		}
 	}
 

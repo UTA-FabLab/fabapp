@@ -49,7 +49,7 @@ try
 		echo json_encode(array(	"HTML" => $query_object->HTML_table,
 									"pie_chart" => $query_object->pie_chart_data($pie_chart_data_column, $pie_chart_label_column),
 									"statement" => $query_object->statement,
-									"tsv" => $query_object->tsv,
+									"tsv" => mysql_real_escape_string($query_object->tsv),  // handle comments
 									"warning" => $query_object->warning));
 	}
 
