@@ -58,7 +58,7 @@ function gatekeeper ($operator, $d_id) {
 		JOIN `device_group` ON `device_group`.`dg_id` = `devices`.`dg_id`
 		WHERE `transactions`.`operator` = '$user->operator'
 	")){
-		if($result->num_rows > 0){
+		if($result->num_rows > 0 ){
 			//Current Time
 			$now = new DateTime();
 			while($row = $result->fetch_array()){
@@ -67,7 +67,7 @@ function gatekeeper ($operator, $d_id) {
 				$o_start = new DateTime($row['item_change_time']);
 				$o_start->add(new DateInterval("P".$sv['maxHold']."D"));
 				
-				if(($device->getDg()->parent == $row['dg_parent']) || ($now > $o_start)){
+				if( /*($device->getDg()->parent == $row['dg_parent']) ||*/ ($now > $o_start)){		//Just commenting out the extraneous criteria while we're experimenting here 
 					return array ("status_id" => 1, "ERROR" => "Please Pay for Your Previous 3D Print. See Ticket: ".$row['trans_id'],  "authorized" => "N");
 				}
 			}
@@ -110,8 +110,8 @@ function gatekeeper ($operator, $d_id) {
 	//   User has an outstanding charge
 	//
 	$ac_owed = Acct_charge::checkOutstanding($user->getOperator());
-	if (is_array($ac_owed) && sizeof($ac_owed) > 0){
-		$msg = "Over due balance for Ticket :";
+	if (is_array($ac_owed) && sizeof($ac_owed) >= $sv['gk_MaxTabSize']){			//adding site variable 'gk_MaxTabSize' to make changing this easier
+		$msg = "Over due balance for Ticket(s) :";
 		foreach(array_keys($ac_owed) as $aco_key){
 			$msg = $msg." ".$aco_key." &";
 		}
