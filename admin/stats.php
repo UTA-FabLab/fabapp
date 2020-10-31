@@ -369,17 +369,19 @@ $tables = Database_Table::get_tables();
 
 	// Exports tsv data as excel file.
 	// Takes tsv data string (if null, defaults to tsv_data_input value), filename (defaulted to excel_data).
+	// Uses method from https://github.com/nicolaskruchten/pivottable/issues/851
 	// Creates file using tsv data. Download file.
 	function exportTableToExcel(tsv=null, filename='excel_data')
 	{
+		filename += '.tsv';  // specify file name
+
 		if(!tsv) tsv = document.getElementById("tsv_data_input").value;
-		var downloadLink;
-		var dataType = 'application/vnd.ms-excel';
-		
-		filename += '.xls';  // specify file name
-		downloadLink = document.createElement("a");  // create download link element
+		tsv = tsv.replace(/\\n/g,"\n");
+
+		var downloadLink = document.createElement("a");  // create download link element
 		document.body.appendChild(downloadLink);
 		
+		var dataType = 'text/tsv';
 		if(navigator.msSaveOrOpenBlob)
 		{
 			var blob = new Blob(['\ufeff', tsv], {type: dataType});
