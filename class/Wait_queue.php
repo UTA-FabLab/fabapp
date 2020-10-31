@@ -95,12 +95,14 @@ class Wait_queue {
                 VALUES
                     ('$operator','$d_id','$dg_id',CURRENT_TIMESTAMP, '$email', '$phone', '$carrier_name');
 
-            ")){        
-                Notifications::sendNotification($mysqli->insert_id, "FabApp Notification", $wq_ticketNum .$mysqli->insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
+            ")){
+                $insert_id = $mysqli->insert_id;
+                Notifications::sendNotification($insert_id, "FabApp Notification", $wq_ticketNum .$insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateDeviceWaitTimes();
                 //Commented out for Dev purposes
-                Wait_queue::printTicket($mysqli->insert_id);
-                return $mysqli->insert_id;
+                if($error = Wait_queue::printTicket($insert_id))
+					error_log("Wait_queue::insertWaitQueue ".__LINE__.": $error");
+                return $insert_id;
                 
             } else {
                 return ("<div class='alert alert-danger'>".$mysqli->error."</div>");
@@ -112,12 +114,14 @@ class Wait_queue {
                   (`operator`, `Devgr_id`,`start_date`, `Op_email`, `Op_phone`, `carrier`) 
                 VALUES
                     ('$operator','$dg_id',CURRENT_TIMESTAMP, '$email', '$phone', '$carrier_name');
-            ")){        
-                Notifications::sendNotification($mysqli->insert_id, "FabApp Notification", $wq_ticketNum .$mysqli->insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
+            ")){
+                $insert_id = $mysqli->insert_id;   
+                Notifications::sendNotification($insert_id, "FabApp Notification", $wq_ticketNum .$insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateWaitTimes();
                 //Commented out for Dev purposes
-                Wait_queue::printTicket($mysqli->insert_id);
-                return $mysqli->insert_id;
+		if($error = Wait_queue::printTicket($insert_id))
+					error_log("Wait_queue::insertWaitQueue ".__LINE__.": $error");
+                return $insert_id;
             } else {
                 return ("<div class='alert alert-danger'>Error2 updating contact info!</div>");
             }
