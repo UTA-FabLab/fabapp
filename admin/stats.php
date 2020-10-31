@@ -373,7 +373,7 @@ $tables = Database_Table::get_tables();
 	// Creates file using tsv data. Download file.
 	function exportTableToExcel(tsv=null, filename='excel_data')
 	{
-		filename += '.xls';  // specify file name
+		filename += '.tsv';  // specify file name
 
 		if(!tsv) tsv = document.getElementById("tsv_data_input").value;
 		tsv = tsv.replace(/\\n/g,"\n");
@@ -381,7 +381,7 @@ $tables = Database_Table::get_tables();
 		var downloadLink = document.createElement("a");  // create download link element
 		document.body.appendChild(downloadLink);
 		
-		var dataType = 'application/vnd.ms-excel';
+		var dataType = 'text/tsv';
 		if(navigator.msSaveOrOpenBlob)
 		{
 			var blob = new Blob(['\ufeff', tsv], {type: dataType});
