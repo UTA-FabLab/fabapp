@@ -50,6 +50,7 @@ function gatekeeper ($operator, $d_id) {
 	}
 	
 	//Deny Print if they have prints to pickup
+	error_log("Beginning evaluation for whether prints are waiting to pick up. ", 0);
 	if ($result = $mysqli->query("
 		SELECT *
 		FROM `storage_box`
@@ -58,7 +59,9 @@ function gatekeeper ($operator, $d_id) {
 		JOIN `device_group` ON `device_group`.`dg_id` = `devices`.`dg_id`
 		WHERE `transactions`.`operator` = '$user->operator'
 	")){
+		error_log(var_export($result->num_rows, TRUE) . " = result variable value." , 0);
 		if($result->num_rows > 0 ){
+			error_log("Prior prints exist, evaluating for length of storage. ", 0);
 			//Current Time
 			$now = new DateTime();
 			while($row = $result->fetch_array()){
@@ -66,6 +69,8 @@ function gatekeeper ($operator, $d_id) {
 				//Deny if Object in storage is older than maxHold
 				$o_start = new DateTime($row['item_change_time']);
 				$o_start->add(new DateInterval("P".$sv['maxHold']."D"));
+				error_log("now = " . var_export($now, TRUE) , 0);
+				error_log("o_start = " . var_export($o_start, TRUE) , 0);
 				
 				if( /*($device->getDg()->parent == $row['dg_parent']) ||*/ ($now > $o_start)){		//Just commenting out the extraneous criteria while we're experimenting here 
 					return array ("status_id" => 1, "ERROR" => "Please Pay for Your Previous 3D Print. See Ticket: ".$row['trans_id'],  "authorized" => "N");
@@ -109,8 +114,13 @@ function gatekeeper ($operator, $d_id) {
 	//
 	//   User has an outstanding charge
 	//
+	error_log("Evaluation for outstanding charges now. ",0);
 	$ac_owed = Acct_charge::checkOutstanding($user->getOperator());
+	error_log("User's ID returned number from getOperator is: " . $user->getOperator(), 0 );
+	error_log("ac_owed variable value = " . var_export($ac_owed, TRUE), 0);
 	if (is_array($ac_owed) && sizeof($ac_owed) >= $sv['gk_MaxTabSize']){			//adding site variable 'gk_MaxTabSize' to make changing this easier
+		error_log("If this appears, ac_owed is an array, sizeof ac_owed is larger than gk_MaxTabSize. ",0);
+	error_log("gk_MaxTabSize = " . var_export($sv['gk_MaxTabSize'], true), 0);
 		$msg = "Over due balance for Ticket(s) :";
 		foreach(array_keys($ac_owed) as $aco_key){
 			$msg = $msg." ".$aco_key." &";
