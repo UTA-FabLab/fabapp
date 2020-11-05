@@ -90,6 +90,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['end_button'])) {
 	// store object
 	elseif($ticket_status == $status['stored'])
 	{
+		//look in here for where to deposit the unpaid charge into acct_charge 
 		if(!$location = filter_input(INPUT_POST, "storage_location_input_modal"))
 			exit_if_error("End: Could not retrieve storage location from page");
 		$error = StorageObject::add_object_to_location_from_possible_previous($location, $staff, $trans_id);
