@@ -50,7 +50,7 @@ function gatekeeper ($operator, $d_id) {
 	}
 	
 	//Deny ticket if they have too many jobs waiting to pick up
-	error_log("Beginning evaluation for whether prints are waiting to pick up. ", 0);
+	
 	if ($result = $mysqli->query("
 		SELECT *
 		FROM `storage_box`
@@ -64,7 +64,7 @@ function gatekeeper ($operator, $d_id) {
 
 			//Current Time
 			$now = new DateTime();
-			error_log("now DateTime contents: " . var_export($now, TRUE), 0);						//diagnostic line
+			
 			$ticketsOwed = "";																		//placeholder for tickets waiting for pickup/payment - intended to ultimately hold full list of all outstanding tickets
 			
 			while($row = $result->fetch_assoc() )        //loop to gather all results of query. "There are time when it's better to use fetch_array, but that's like saying there are times it's better to drive off the bridge.  Usually, it's not." - M. Zinke
@@ -75,13 +75,13 @@ function gatekeeper ($operator, $d_id) {
 			$ticketsOwed = implode("<br/>", $tickets_array);    //extract trans_id from each query result and append into one big string
 			$result->data_seek(0);			//reset iterator, hopefully?
 	
-	error_log("row variable contents before evaluation for main while loop: " . var_export($result->fetch_array(), TRUE) ,0);								//diagnostic line
+	
 			while($row = $result->fetch_assoc()){			//previously was fetch_array() 
 				//Deny if Object in storage is from the same Device Group -- currently invalid
 				//Deny if Object in storage is older than maxHold
 				$o_start = new DateTime($row['item_change_time']);
 				$o_start->add(new DateInterval("P".$sv['maxHold']."D"));
-				error_log("O_start datetime contents: " . var_export($o_start, TRUE), 0);			//diagnostic line 
+				
 
 			
 
@@ -89,7 +89,7 @@ function gatekeeper ($operator, $d_id) {
 				
 				if( ($now > $o_start) ) {															//Changing criteria to check whether any item has been stored longer than the max allowable time
 //					return array ("status_id" => 1, "ERROR" => "Please Pay for Your Previous Job. See Ticket: ".$row['trans_id'],  "authorized" => "N");			//old message retained for quicker switch back to old requirements
-					return array ("status_id" => 1, "ERROR" => "Please Pay for Any Previous Job(s), they are past due for pickup. See Ticket: ".$row['trans_id'],  "authorized" => "N");
+					return array ("status_id" => 1, "ERROR" => "Please Pay for Any Previous Job(s), one or more are past due for pickup.<br/>See Ticket: ".$row['trans_id'] . " For Oldest Job.",  "authorized" => "N");
 				}
 				else if( $result->num_rows >= $sv['gk_MaxTicketTab'] ) {									//Changing criteria to check whether learner has more than the max allowable number of tickets waiting for action
 	
@@ -135,13 +135,13 @@ function gatekeeper ($operator, $d_id) {
 	//
 	//   User has an outstanding charge
 	//
-	error_log("Evaluation for outstanding charges now. ",0);
+	
 	$ac_owed = Acct_charge::checkOutstanding($user->getOperator());								//turns out this will always return false under the current process, so the rest never gets evaluated
-	error_log("User's ID returned number from getOperator is: " . $user->getOperator(), 0 );
-	error_log("ac_owed variable value = " . var_export($ac_owed, TRUE), 0);
+	
+	
 	if (is_array($ac_owed) && sizeof($ac_owed) >= $sv['gk_MaxTabSize']){			//adding site variable 'gk_MaxTabSize' to make changing this easier if the charge process is repaired at a later date
-		error_log("If this appears, ac_owed is an array, sizeof ac_owed is larger than gk_MaxTabSize. ",0);
-	error_log("gk_MaxTabSize = " . var_export($sv['gk_MaxTabSize'], true), 0);
+		
+	
 		$msg = "Over due balance for Ticket(s) :";
 		foreach(array_keys($ac_owed) as $aco_key){
 			$msg = $msg." ".$aco_key." &";
