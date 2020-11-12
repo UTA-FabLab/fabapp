@@ -160,7 +160,11 @@ function exit_with_success($message, $redirect=null) {
 			<?php if($staff->roleID >= $role["staff"]) { ?>
 				<div class="panel panel-default">
 					<div class="panel-heading clearfix">
-						<i class="fas fa-ticket-alt fa-lg"></i> Ticket # <b><?php echo $ticket->trans_id; ?></b>
+						<?php if ($offTrans = OfflineTrans::byTransId($ticket->trans_id)) { ?>
+                        	<i class="fas fa-ticket-alt fa-lg"></i> Ticket # <b><?php echo $ticket->getTrans_id(); ?> | <?php echo $offTrans; ?></b>
+                    	<?php } else { ?>
+                        	<i class="fas fa-ticket-alt fa-lg"></i> Ticket # <b><?php echo $ticket->getTrans_id(); ?></b>
+                    	<?php } ?>
 						<div class="pull-right">
 							<div class="btn-group">
 								<button type="button" class="btn btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
@@ -199,6 +203,12 @@ function exit_with_success($message, $redirect=null) {
 									<?php echo $ticket->t_start." – ".$ticket->t_end; ?>
 								</td>
 							</tr>
+							<?php if ($offTrans = OfflineTrans::byTransId($ticket->trans_id)) { ?>
+                            <tr>
+                                <td>Offline Trans.</td>
+                                <td><?php echo $offTrans; ?></td>
+                            </tr>
+                        	<?php } ?>
 							<?php if($ticket->est_time) { ?>
 								<tr>
 									<td>Estimated Time</td>
