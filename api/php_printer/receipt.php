@@ -93,6 +93,7 @@ try {
 		// No main body
 	} elseif (strtolower($type) == "start_ticket") {
 		$filename = $input_data["filename"];
+	//	error_log("Filename variable as received from Octopuppet on start of ticket: " . $filename, 0); 						//diagnostic line to examine filename variable
 		$est_cost = $input_data["est_cost"];
 		$est_material = $input_data["est_material"];
 		$est_duration = $input_data["est_duration"];
@@ -101,6 +102,7 @@ try {
 		StartTicket($filename, $est_cost, $est_material, $est_duration, $filament_type, $device_name);
 	} elseif (strtolower($type) == "end_ticket") {
 		$filename = $input_data["filename"];
+	//	error_log("Filename variable as received from Octopuppet on end of ticket: " . $filename, 0); 						//diagnostic line to examine filename variable
 		$cost = $input_data["cost"];
 		$filament_used = $input_data["filament_used"];
 		$time_opened = $input_data["time_opened"];

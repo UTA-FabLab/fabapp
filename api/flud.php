@@ -213,6 +213,7 @@ function PrintTransaction ($operator, $device_id) {
     }
 
     if ($input_data["filename"]){
+	//	error_log("The filename property of input_data as received in flud::PrintTransaction is: " . var_export($input_data["filename"], true) , 0);			//diagnostic line 
         $filename = "$input_data[filename]⦂";
     }
 
