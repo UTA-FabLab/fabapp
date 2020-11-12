@@ -1,5 +1,18 @@
 <?php
 class OfflineTrans {
+    public static function haveOfflineTrans(){
+        global $mysqli, $status;
+        if ($result = $mysqli->query("
+        SELECT *
+        FROM `transactions`
+        WHERE `status_id` = '$status[offline]';
+        "))
+        if ($result->num_rows > 0){
+            return true;
+        }
+        return false;
+    }
+    // VV UNUSED VV
     public static function byOffTransId($off_trans_id){
         global $mysqli;
         if ($result = $mysqli->query("
