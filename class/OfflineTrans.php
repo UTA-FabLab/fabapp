@@ -12,7 +12,7 @@ class OfflineTrans {
         }
         return false;
     }
-    // VV UNUSED VV
+    
     public static function byOffTransId($off_trans_id){
         global $mysqli;
         if ($result = $mysqli->query("
