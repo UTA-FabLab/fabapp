@@ -34,6 +34,7 @@ class Transactions {
 	public $est_time;  // estimated time to do transaction task
 	public $filename;  // used filename from `notes` with ⦂ following (eg my_file.gcode⦂ )
 	public $notes;  // note associated with transaction
+	public $off_trans_id; // unique identifier of transaction (offline)
 	public $pickup_time;  // time item was picked up
 	public $t_start;  // start time of transaction task
 	public $t_end;  // end time of transaction task
@@ -74,6 +75,7 @@ class Transactions {
 			$this->mats_used = Mats_Used::objects_by_trans_id($row['trans_id']);
 			$this->notes = substr_count($row['notes'], "⦂") ? explode("⦂", $row['notes'])[1] : $row['notes'];
 //			error_log("The contents of this -> notes in the Transactions constructor are: " . var_export( $this->notes, true ), 0);			//diagnostic line
+			$this->off_trans_id = OfflineTrans::byTransId($trans_id);
 			$this->purpose = new Purpose($row['p_id']);
 			$this->pickup_time = $row['pickup_time'];
 			$this->pickedup_by = Users::withID($row['pickedup_by']);
@@ -319,6 +321,10 @@ class Transactions {
 			$printer->graphics($img);
 			$printer->feed();
 			$printer->text("Ticket: $ticket->trans_id");
+			if($ticket->off_trans_id) {
+				$printer->feed();
+				$printer->text("Offline ID: $ticket->off_trans_id");
+			}
 			$printer->feed();
 			$printer->text($ticket->t_start);
 
@@ -394,7 +400,6 @@ class Transactions {
 				}
 			}
 
-
 			$printer->feed(2);
 			$printer->text("NOTES: _________________________");
 			$printer->feed(2);
@@ -405,6 +410,13 @@ class Transactions {
 			$printer->feed(3);
 			$printer->graphics(EscposImage::load($_SERVER['DOCUMENT_ROOT']."/images/sig.png", 0));
 			$printer->feed();
+			if($ticket->off_trans_id) {
+				$printer->feed();
+				$printer->setTextSize(3, 3);
+				$printer->text("$ticket->off_trans_id");
+				$printer->setTextSize(1, 1);
+				$printer->feed(4);
+			}
 			$printer->text($sv['website_url']);  //TODO: change to $sv
 			$printer->feed();
 			$printer->text($sv['phone_number']);  //TODO: change to $sv
