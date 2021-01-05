@@ -121,8 +121,8 @@ function exit_with_success($success_message)
 														<option selected='selected' value="NONE" disabled hidden>Select Material</option>
 														<?php
 															foreach($device_mats as $dm)
-																// options have three values: m_id, unit, product number
-																echo ("<option value='$dm->m_id|$dm->unit|$dm->m_prod_number'
+																// options have three values: m_id, unit, product number (m_prod_number)
+																echo ("<option value='$dm->m_id|$dm->unit|$dm->product_number'
 																		id='$dm->unit' >$dm->m_name</option>");
 														?>
 													</select>
@@ -473,6 +473,7 @@ function exit_with_success($success_message)
 	// does not exist, defaults value. otherwise insert value into place.
 	function __INVENTORY__update_unit(element) {
 		var select_mat_data = element.options[element.selectedIndex].value.split('|');
+	//	console.log(select_mat_data);	//diagnostic to view select_mat_data contents
 		var great_grandparent = element.parentElement.parentElement.parentElement;
 		great_grandparent.getElementsByClassName("unit")[0].innerHTML = select_mat_data[1] || "[ - ]";
 		great_grandparent.getElementsByClassName("product_number")[0].innerHTML = select_mat_data[2] || "[unassigned]";
