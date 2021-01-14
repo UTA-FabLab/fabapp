@@ -34,10 +34,12 @@ class Transactions {
 	public $est_time;  // estimated time to do transaction task
 	public $filename;  // used filename from `notes` with ⦂ following (eg my_file.gcode⦂ )
 	public $notes;  // note associated with transaction
+	public $off_trans_id; // unique identifier of transaction (offline)
 	public $pickup_time;  // time item was picked up
 	public $t_start;  // start time of transaction task
 	public $t_end;  // end time of transaction task
 	public $trans_id;  // unique identifier of transaction
+	public $status_id; // status id of current transaction
 	//Objects
 	public $acct_charge;  // acount charge object based on trans_id
 	public $device;  // device object based on device_id
@@ -66,12 +68,14 @@ class Transactions {
 			$this->acct_charge = Acct_charge::byTrans_id($trans_id);
 			$this->device = new Devices($row['d_id']);  //REMOVE WITH UPDATE
 			$this->duration = $row['duration'];
+			$this->status_id = $row['status_id'];
 			// $this->device = new Devices($row['device_id']);  //ADD WITH UPDATE
 			$this->est_time = $row['est_time'];
 			if(substr_count($row['notes'], "⦂")) $this->filename = explode("⦂", $row['notes'])[0];
 			$this->mats_used = Mats_Used::objects_by_trans_id($row['trans_id']);
 			$this->notes = substr_count($row['notes'], "⦂") ? explode("⦂", $row['notes'])[1] : $row['notes'];
 //			error_log("The contents of this -> notes in the Transactions constructor are: " . var_export( $this->notes, true ), 0);			//diagnostic line
+			$this->off_trans_id = OfflineTrans::byTransId($trans_id);
 			$this->purpose = new Purpose($row['p_id']);
 			$this->pickup_time = $row['pickup_time'];
 			$this->pickedup_by = Users::withID($row['pickedup_by']);
@@ -181,18 +185,39 @@ class Transactions {
 
 	public function end_octopuppet(){
 		global $mysqli, $status;
-
-		$this->t_end = date("Y-m-d H:i:s", strtotime("now"));  // set t_end only for object (!DB)
-		$duration = $this->duration_string();
-		if ($mysqli->query("
+		// Keep offline status id
+		// Currently we have no way to find out the exact time when the job ended on client.
+		// Use est_time as a close guess. TODO: Send exact end times from OctoPuppet.
+		if ($this->status_id == $status["offline"]) {
+			$duration = $this->est_time;
+			if ($mysqli->query("
+			UPDATE `transactions`
+			SET `duration` = '$duration'
+			WHERE `trans_id` = $this->trans_id;
+			")){
+				if ($mysqli->affected_rows == 1) {
+					return true;
+				} else{
+					return false;  // unsuccessful
+				};
+			}
+			
+		} else {
+			$this->t_end = date("Y-m-d H:i:s", strtotime("now"));  // set t_end only for object (!DB)
+			$duration = $this->duration_string();
+			if ($mysqli->query("
 			UPDATE `transactions`
 			SET `duration` = '$duration', `status_id` = '$status[moveable]'
 			WHERE `trans_id` = '$this->trans_id';
-		")){
-			if ($mysqli->affected_rows == 1) return true;
+			")){
+				if ($mysqli->affected_rows == 1) {
+					return true;
+				} else{
+					return false;  // unsuccessful
+				};
+			}
 		}
-		return false;  // unsuccessful
-	}
+}
 
 
 	public function endSheetTicket($trans_id, $sheet_good_status){
@@ -296,6 +321,10 @@ class Transactions {
 			$printer->graphics($img);
 			$printer->feed();
 			$printer->text("Ticket: $ticket->trans_id");
+			if($ticket->off_trans_id) {
+				$printer->feed();
+				$printer->text("Offline ID: $ticket->off_trans_id");
+			}
 			$printer->feed();
 			$printer->text($ticket->t_start);
 
@@ -371,7 +400,6 @@ class Transactions {
 				}
 			}
 
-
 			$printer->feed(2);
 			$printer->text("NOTES: _________________________");
 			$printer->feed(2);
@@ -382,6 +410,13 @@ class Transactions {
 			$printer->feed(3);
 			$printer->graphics(EscposImage::load($_SERVER['DOCUMENT_ROOT']."/images/sig.png", 0));
 			$printer->feed();
+			if($ticket->off_trans_id) {
+				$printer->feed();
+				$printer->setTextSize(3, 3);
+				$printer->text("$ticket->off_trans_id");
+				$printer->setTextSize(1, 1);
+				$printer->feed(4);
+			}
 			$printer->text($sv['website_url']);  //TODO: change to $sv
 			$printer->feed();
 			$printer->text($sv['phone_number']);  //TODO: change to $sv
