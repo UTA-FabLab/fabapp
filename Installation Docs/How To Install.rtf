@@ -1,109 +1,36 @@
 {\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang1033\deflangfe1033{\fonttbl{\f0\fswiss\fprq2\fcharset0 Calibri;}}
-{\*\listtable 
-{\list\listhybrid
-{\listlevel\levelnfc0\leveljc0\levelstartat1{\leveltext\'02\'00);}{\levelnumbers\'01;}\jclisttab\tx0}
-{\listlevel\levelnfc4\leveljc0\levelstartat1{\leveltext\'02\'01);}{\levelnumbers\'01;}\jclisttab\tx0}\listid1 }
-{\list\listhybrid
-{\listlevel\levelnfc0\leveljc0\levelstartat1{\leveltext\'02\'00.;}{\levelnumbers\'01;}\jclisttab\tx0}
-{\listlevel\levelnfc4\leveljc0\levelstartat1{\leveltext\'02\'01);}{\levelnumbers\'01;}\jclisttab\tx0}\listid2 }
-{\list\listhybrid
-{\listlevel\levelnfc0\leveljc0\levelstartat1{\leveltext\'02\'00);}{\levelnumbers\'01;}\jclisttab\tx0}
-{\listlevel\levelnfc4\leveljc0\levelstartat1{\leveltext\'02\'01);}{\levelnumbers\'01;}\jclisttab\tx0}\listid3 }}
-{\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1}{\listoverride\listid2\listoverridecount0\ls2}{\listoverride\listid3\listoverridecount0\ls3}}
-{\*\generator Riched20 10.0.17763}{\*\mmathPr\mnaryLim0\mdispDef1\mwrapIndent1440 }\viewkind4\uc1 
+{\*\generator Riched20 10.0.17763}{\*\mmathPr\mdispDef1\mwrapIndent1440 }\viewkind4\uc1 
 \pard 
-{\listtext\f0 1)\tab}\ls1\nowidctlpar\fi-360\li360\sa200\sl276\slmult1\f0\fs22\lang9 Obtain a hostname and space on a LAMP-stack-equipped server matching FabApp's basic requirements. \par
-{\listtext\f0 2)\tab}Determine the hostname/ports for your network's LDAP authentication service, the BaseDN and BindDN relevant to it, and determine the name of the attribute containing the unique identifier for users in your local LDAP system.\par
-{\listtext\f0 3)\tab}Create an empty DB instance in SQL called fabapp.  Download and import the Installation_Schema.sql file(located in fabapp/Installation Docs) file into it to create the correct tables and load starter data to for all necessary site variables.\par
-{\listtext\f0 4)\tab}Configure 2 seperate users within SQL: one with read/write/mod privileges on the entire "fabapp" DB, and one with read/delete privileges ONLY on the fabapp/storage_box table.\par
-{\listtext\f0 5)\tab}Download or clone the Production branch into your site's directory on the webserver.\par
+{\pntext\f0 1.\tab}{\*\pn\pnlvlbody\pnf0\pnindent0\pnstart1\pndec{\pntxta.}}
+\nowidctlpar\fi-360\li360\sa200\sl276\slmult1\f0\fs22\lang9 Obtain a hostname and space on a LAMP-stack-equipped server matching FabApp's basic requirements. \par
+{\pntext\f0 2.\tab}Determine the hostname/ports for your network's LDAP authentication service, the BaseDN and BindDN relevant to it, and determine the name of the attribute containing the unique identifier for users in your local LDAP system.\par
+{\pntext\f0 3.\tab}Create an empty DB instance in SQL called fabapp.  Download and import the Installation_Schema.sql file(located in fabapp/Installation Docs) file into it to create the correct tables and load starter data to for all necessary site variables.\par
+{\pntext\f0 4.\tab}Configure 2 seperate users within SQL: one with read/write/mod privileges on the entire "fabapp" DB, and one with read/delete privileges ONLY on the fabapp/storage_box table.\par
+{\pntext\f0 5.\tab}Download or clone the Production branch into your site's directory on the webserver.\par
+{\pntext\f0 6.\tab}Open up connections/ldap.php and replace the $attribute assignment with your system's field name.  Replace the $ldap_server, $ldap_baseDN, and $ldap_bindDN assignments with the corresponding information.  Contact your sysadmin if you're unsure about which details go where.\par
+{\pntext\f0 7.\tab}FabApp is designed to operate solely off of a unique ID issued to students and staff of UT Arlington \endash  referred to as the \ldblquote EmplID\rdblquote  at our institution.  To reflect the correct field for your institution, obtain the list of the fields your LDAP server returns, find out which attribute field\rquote s number corresponds with the unique ID number issued to each person at the university, and change line 61 in ./connections/ldap.php\line\line FROM:  $value = $uta_id[0];\line TO:\tab $value=$uta_id[the index number of your LDAP\rquote s unique ID field];\line\line Example:  Organization A has an LDAP installation that returns the following fields, in order, when a successful LDAP authentication is made:\line\line [First name]\line [Last name]\line [Job Title]\line [Creation Date]\line [Unique Employee ID number]\line [Email Address]\line [Phone Number]\line\line In order to configure FaApp to retrieve the correct field data, the \ldblquote 0\rdblquote  would be substituted with \ldblquote 4\rdblquote  \endash  remember that computers start counting at 0, so the value of the 5\super th\nosupersub  entry\rquote s index is going to be \ldblquote 4\rdblquote .\par
+{\pntext\f0 8.\tab}Edit the connections/db_connect8.php file and insert the address of the SQL host, the standard(R/W/Mod) database user's name, and the standard database user's PW.  \line\line NOTE:  If you named your SQL instance anything other than "fabapp" you will need to change the $dbdatabase variable to reflect that.\par
+{\pntext\f0 9.\tab}Edit the connections/storage_box_db_user.php file and insert the address of the SQL server hostname, the storage box-only user\rquote s name, and the PW for that same user.  \line\line NOTE:  If the SQL instance name has been customized and set to something other than \ldblquote fabapp\rdblquote  you will need to change the "$dbdatabase" variable to reflect that.\par
+{\pntext\f0 10.\tab}If you have a networked thermal printer, open the connections/tp_connect.php file and insert the IP address and port number into the appropriate variables.  Currently FabApp only supports the Epson TM-88V/M-244A thermal printer. \line\line NOTE:  If you do not have a thermal printer, use 127.0.0.1 and 9999 as the port number.  Lacking a printer will cause delays to occur for some operations and tools.\par
+{\pntext\f0 11.\tab}Next, the back-door and external service tech accounts should be configured.  The account names are currently set inside the switch\{\} statement within "./connections/LDAP.php".  \line\line NOTE:  After configuring the two accounts, change the site variables "backdoor_password" and "service" from their defaults, record the new passwords, and store them somewhere safe and private.\par
+{\pntext\f0 12.\tab}Log in using the back door account, and use the Onboarding tool in Admin > Users to begin adding users.  FabApp supports many different role levels - set at least one person as the "Super" role(typically the person responsible for maintaining your installation of FabApp).  \par
+{\pntext\f0 13.\tab}Add a Super user first, then log out of the back door account and attempt to log in and work as that user.  If you cannot log in, revisit Steps 2, 4, and 5 - double-check your information, and recruit your sysadmin\rquote s assistance if unsure about what information goes where.\line\line NOTE:  The Super user tier should be reserved for the person(s) ultimately responsible for the operation and maintenance of your FabApp instance \endash  just because you\rquote re the boss, it doesn\rquote t mean you\rquote re the Super user!  This tier has no checks and balances on it, and has the ability to lock itself or anybody else out of their privileges or out of FabApp as a whole.\par
+{\pntext\f0 14.\tab}Add your Admin-level users next.\line\line This tier has the ability to change most things in FabApp, edit any tickets, self-pay for their own jobs, create materials in Inventory, create Devices, create training modules and link them to any Device, add Admin-level and below users, and change most site variables.  If you do not have any in mind, this may be skipped and done later if desired.\par
+{\pntext\f0 15.\tab}Add any Lead or Supervisory-level users.  This may be skipped and done later if desired.\par
+{\pntext\f0 16.\tab}Add lowest-level employee users.  This may be skipped and done later if desired.\par
+{\pntext\f0 17.\tab}Create Device Groups.  Use the \ldblquote Add Device Group\rdblquote  tool in the Admin > Manage Devices section.\line\line A Device Group is a container that individual Devices are lumped together underneath \endash  any trainings/materials/wait queues/etc associated with that Group will automatically be associated with the Devices contained within it.  It is mandatory for a device to belong to one.\par
+{\pntext\f0 18.\tab}Create Devices First.  Use the \ldblquote Add Device\rdblquote  tool in the Admin > Manage Devices section.\line\line A)\tab The \ldblquote Base Price\rdblquote  of a device may be $0.00 if desired.  If you are charging per-use rather than for materials used, this is where it would be best set.\line\line B)\tab\ldblquote Storable\rdblquote  indicates whether completed jobs may be stored by employees for later pickup(\ldblquote Y), or if it must be taken with the machine\rquote s user immediately after completion(\ldblquote N\rdblquote ).\line\line C)\tab\ldblquote Public View\rdblquote  indicates whether or not the device will be listed as something available to use.  If set to N, the entry will still remain for the device, but it will not be accessible for ticket creation of any kind.\par
+{\pntext\f0 19.\tab}Create Materials.  Use the Inventory > Inventory Materials tool and the \ldblquote New Material\rdblquote  tab.\line\line A)\tab Materials may have Parent groups, or may exist without belonging to a Parent group\line B)\tab The \ldblquote Unit\rdblquote  field is open-entry, but will also pop a list of any units already existing in the Materials table\line C)\tab A material may be associated with multiple device groups \endash  select all the groups desired, they will appear as multiple tags underneath as each group is selected.\line D)\tab Color value is optional\line E)\tab After all materials have been created and associated with their device groups, use the Change Inventory tool to input the amount of each material you have on hand.  \par
+{\pntext\f0 20.\tab}Create storage locations for completed jobs.  Use the Site Tools > Storage Box tool to create, delete, and edit storage locations and subdivisions within those locations.\par
+{\pntext\f0 21.\tab}Create any necessary Training modules using the Training > Manage Trainings tool.\line A)\tab This may be skipped and done later if desired.\line B)\tab Training Modules can be applied to either Device Groups OR to individual Devices.  \line C)\tab Having prerequisites is \b not\b0  mandated for training certificates, but it is recommended to create some kind of general competency/safety training certificate and then make it a prerequisite for further certificates concerning any equipment that could inflict real injury or requiring specialized training to operate.\line D)\tab Each Training Certificate may also be set as mandatory or non-mandatory for the device(s) it concerns.  We highly suggest having \b at least one\b0  mandatory training certificate for each piece of equipment capable of inflicting real injury if misused.\par
+{\pntext\f0 22.\tab}Fill in and customize the Site Variables.  Use the Admin > Site Variables page to list out and edit all available site variables\line\line A)\tab When generating the API key, it is recommended to use a random generator and make it more than 28 characters long.  Store the API key as both a physical written copy in a safe place, and electronically in a location qualified as \ldblquote secure storage\rdblquote  by your institution.\line B) Change the \ldblquote backdoor_pass\rdblquote  value right away.  Store it in a similar manner to the API key.\line C)\tab Change the \ldblquote service\rdblquote  value right away.  Store it in a similar manner to the API key.\line D)\tab All role-based privilege settings default to role 8 after the starter SQL file is loaded \endash  it is recommended that you review, modify, and verify all role-oriented site variables to ensure privileges are not set for too low a role in your organization, or that you have not limited everything to Super role by accident.\par
+{\pntext\f0 23.\tab}Deploy Octopuppet and JuiceBox units as desired\line A)\tab Use the full hostname acquired in Step 1 as the base URL when configuring these for deployment.\par
+{\pntext\f0 24.\tab}Run a test ticket for each device and verify everything has been set up the way you intended.\par
+{\pntext\f0 25.\tab}To change account names, edit the "Name" and "Description" field for each row in the Accounts table.  DO NOT change the a_id value.  There must be at least 1 completed row in the Accounts table.\par
+{\pntext\f0 26.\tab}To change job reasons, change the "p_title" value in the "Purpose" table.  There must be at least 1 completed row in the Purpose table.\par
+{\pntext\f0 27.\tab}To change the role descriptors, change the "title" and "lvl_desc" fields in the Roles table.\line\line NOTE:  Do NOT change any other fields in this table.  It is extremely important that no other table data is altered.\par
 
-\pard 
-{\listtext\f0 a)\tab}\ls1\ilvl1\nowidctlpar\fi-360\li720\sa200\sl276\slmult1 Open up connections/ldap.php and replace the $attribute assignment with your system's field name.  Replace the $ldap_server, $ldap_baseDN, and $ldap_bindDN assignments with the applicable information. \par
-{\listtext\f0 b)\tab}FabApp is designed to operate solely off of the unique ID issued to students and staff of UT Arlington \endash  the \ldblquote EmplID\rdblquote .  To reflect the correct field for your institution, get a list of the fields your LDAP server returns, find out which attribute field\rquote s number corresponds with the unique ID number, and change line 61 in ./connections/ldap.php\par
-
-\pard\nowidctlpar\li720\sa200\sl276\slmult1 FROM:  $value = $uta_id[0];\par
-TO:\tab $value=$uta_id[the index number of your LDAP\rquote s unique ID field];\par
-Example:  Organization A has an LDAP installation that returns the following fields, in order, when a successful LDAP authentication is made:\par
-[First name]\par
-[Last name]\par
-[Job Title]\par
-[Creation Date]\par
-[Employee ID number]\par
-[Email Address]\par
-[Phone Number]\par
-In order to configure FaApp to retrieve the correct field data, the \ldblquote 0\rdblquote  would be substituted with \ldblquote 4\rdblquote  \endash  remember that computers start counting at 0, so the value of the 5\super th\nosupersub  entry\rquote s index is going to be \ldblquote 4\rdblquote .\par
-
-\pard\nowidctlpar\fi-360\li360\sa200\sl276\slmult1 6)\tab Edit the connections/db_connect8.php file and insert the address of the SQL host, the standard(R/W/Mod) database user's name, and the standard database user's PW.  If you named your SQL instance anything other than "fabapp" you will need to change the $dbdatabase variable to reflect that.\par
-7)\tab Edit the connections/storage_box_db_user.php file and insert the address of the SQL host, the storage box-only user\rquote s name, and the PW for that same user.  If the SQL instance is named something other than \ldblquote fabapp\rdblquote  you will need to change the $dbdatabase variable to reflect that.\par
-8)\tab If you have a networked thermal printer, open the connections/tp_connect.php file and insert the IP address and port number into the appropriate variables.  Currently FabApp only supports the Epson TM-88V/M-244A thermal printer.\par
-9)\tab Next, the back-door and external service tech accounts should be configured.  The account names are currently set inside the switch\{\} statement within LDAP.php - look for these to change to be service variables in the future.  After configuring the two accounts, change the site variables "backdoor_password" and "service" accordingly.\par
-10)\tab Log in using the back door account, and use the Onboarding tool in Admin > Users to begin adding users.  FabApp supports many different role levels - set at least one person as the "Super" role(typically the person responsible for maintaining your installation of FabApp).  \par
-
-\pard 
-{\listtext\f0 a)\tab}\ls2\ilvl1\nowidctlpar\fi-360\li720\sa200\sl276\slmult1 Add a Super user first, then log out of the back door account and attempt to log in and work as that user.  If you cannot log in, revisit Steps 2, 4, and 5 - double-check your information, and recruit your sysadmin\rquote s assistance if unsure about what information goes where.\par
-{\listtext\f0 b)\tab}The Super user tier should be reserved for the person(s) ultimately responsible for the operation and maintenance of your FabApp instance \endash  just because you\rquote re the boss, it doesn\rquote t mean you\rquote re the Super user!  This tier has no checks and balances on it, and has the ability to lock itself or anybody else out of their privileges or out of FabApp as a whole.\par
-
-\pard 
-{\listtext\f0 1)\tab}\ls3\nowidctlpar\fi-360\li360\sa200\sl276\slmult1 Add your Admin-level users next.\par
-
-\pard 
-{\listtext\f0 a)\tab}\ls3\ilvl1\nowidctlpar\fi-360\li720\sa200\sl276\slmult1 This tier has the ability to change most things in FabApp, edit any tickets, self-pay for their own jobs, create materials in Inventory, create Devices, create training modules and link them to any Device, add Admin-level and below users, and change most site variables.\par
-{\listtext\f0 b)\tab}If you do not have any in mind, this may be skipped and done later if desired.\par
-
-\pard 
-{\listtext\f0 2)\tab}\ls3\nowidctlpar\fi-360\li360\sa200\sl276\slmult1 Add any Lead or Supervisory-level users.\par
-
-\pard 
-{\listtext\f0 a)\tab}\ls3\ilvl1\nowidctlpar\fi-360\li720\sa200\sl276\slmult1 This may be skipped and done later if desired.\par
-
-\pard 
-{\listtext\f0 3)\tab}\ls3\nowidctlpar\fi-360\li360\sa200\sl276\slmult1 Add lowest-level employee users.\par
-
-\pard 
-{\listtext\f0 a)\tab}\ls3\ilvl1\nowidctlpar\fi-360\li720\sa200\sl276\slmult1 This may be skipped and done later if desired.\par
-
-\pard 
-{\listtext\f0 4)\tab}\ls3\nowidctlpar\fi-360\li360\sa200\sl276\slmult1 Create Device Groups.  Use the \ldblquote Add Device Group\rdblquote  tool in the Admin > Manage Devices section.\par
-
-\pard 
-{\listtext\f0 a)\tab}\ls3\ilvl1\nowidctlpar\fi-360\li720\sa200\sl276\slmult1 A Group is a container that individual Devices are lumped together underneath \endash  any trainings/materials/wait queues/etc associated with that Group will automatically be associated with the Devices contained within it.  It is mandatory for a device to belong to one.\par
-
-\pard 
-{\listtext\f0 5)\tab}\ls3\nowidctlpar\fi-360\li360\sa200\sl276\slmult1 Create Devices.  Use the \ldblquote Add Device\rdblquote  tool in the Admin > Manage Devices section.\par
-
-\pard 
-{\listtext\f0 a)\tab}\ls3\ilvl1\nowidctlpar\fi-360\li720\sa200\sl276\slmult1 The \ldblquote Base Price\rdblquote  of a device may be $0.00 if desired.\par
-{\listtext\f0 b)\tab}\ldblquote Storable\rdblquote  indicates whether completed jobs may be stored by employees for later pickup(\ldblquote Y), or if it must be taken with the machine\rquote s user immediately after completion(\ldblquote N\rdblquote ).\par
-{\listtext\f0 c)\tab}\ldblquote Public View\rdblquote  indicates whether or not the device will be listed as something available to use.  If set to N, the entry will still remain for the device, but it will not be accessible for ticket creation of any kind.\par
-
-\pard 
-{\listtext\f0 6)\tab}\ls3\nowidctlpar\fi-360\li360\sa200\sl276\slmult1 Create Materials.  Use the Inventory > Inventory Materials tool and the \ldblquote New Material\rdblquote  tab.\par
-
-\pard 
-{\listtext\f0 a)\tab}\ls3\ilvl1\nowidctlpar\fi-360\li720\sa200\sl276\slmult1 Materials may have Parent groups, or may exist without belonging to a Parent group\par
-{\listtext\f0 b)\tab}The \ldblquote Unit\rdblquote  field is open-entry, but will also pop a list of any units already existing in the Materials table\par
-{\listtext\f0 c)\tab}A material may be associated with multiple device groups \endash  select all the groups desired, they will appear as multiple tags underneath as each group is selected.\par
-{\listtext\f0 d)\tab}Color value is optional\par
-
-\pard 
-{\listtext\f0 7)\tab}\ls3\nowidctlpar\fi-360\li360\sa200\sl276\slmult1 Create storage locations for completed jobs.  Use the Site Tools > Storage Box tool to create, delete, and edit storage locations and subdivisions within those locations.\par
-{\listtext\f0 8)\tab}Create any necessary Training modules using the Training > Manage Trainings tool\par
-
-\pard 
-{\listtext\f0 a)\tab}\ls3\ilvl1\nowidctlpar\fi-360\li720\sa200\sl276\slmult1 This may be skipped and done later if desired.\par
-{\listtext\f0 b)\tab}Modules can be applied to either Device Groups OR to individual Devices.  \par
-{\listtext\f0 c)\tab}Having prerequisites is not mandated for training certificates, but it is recommended to have some kind of general competency/safety training certificate and then make it a prerequisite for any equipment that could inflict real injury.\par
-
-\pard 
-{\listtext\f0 9)\tab}\ls3\nowidctlpar\fi-360\li360\sa200\sl276\slmult1 Fill in and customize the Site Variables.  Use the Admin > Site Variables page to list out and edit all available site variables\par
-
-\pard 
-{\listtext\f0 a)\tab}\ls3\ilvl1\nowidctlpar\fi-360\li720\sa200\sl276\slmult1 When generating the API key, it is recommended to use a random generator and make it more than 28 characters long.  Store the API key as both a physical copy in a safe place, and eletronically in a place qualified as \ldblquote secure storage\rdblquote  by your institution.\par
-{\listtext\f0 b)\tab} Change the \ldblquote backdoor_pass\rdblquote  value right away.  Store it in a similar manner to the API key.\par
-{\listtext\f0 c)\tab}Change the \ldblquote service\rdblquote  value right away.  Store it in a similar manner to the API key.\par
-{\listtext\f0 d)\tab}All role-based privilege settings default to role 8 after the starter SQL file is loaded \endash  it is recommended that you review, modify, and verify all role-oriented site variables to ensure privileges are not set for too low a role in your organization, or that you have not limited everything to Super role by accident.\par
-
-\pard\nowidctlpar\li720\sa200\sl276\slmult1\par
+\pard\nowidctlpar\sa200\sl276\slmult1\par
+\par
 }
  
