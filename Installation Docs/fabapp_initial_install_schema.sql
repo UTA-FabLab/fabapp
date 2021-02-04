@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 4.5.4.1deb2ubuntu2.1
--- http://www.phpmyadmin.net
+-- version 4.6.6deb5ubuntu0.5
+-- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Sep 23, 2020 at 05:13 PM
--- Server version: 5.7.31-0ubuntu0.16.04.1-log
--- PHP Version: 7.2.31-1+ubuntu16.04.1+deb.sury.org+1
+-- Generation Time: Feb 04, 2021 at 12:34 PM
+-- Server version: 5.7.33-0ubuntu0.18.04.1-log
+-- PHP Version: 7.2.34-8+ubuntu16.04.1+deb.sury.org+1
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
@@ -34,6 +34,18 @@ CREATE TABLE `accounts` (
   `operator` varchar(10) NOT NULL,
   `role_access` varchar(2) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `accounts`
+--
+
+INSERT INTO `accounts` (`a_id`, `name`, `description`, `balance`, `operator`, `role_access`) VALUES
+(1, 'Unpaid', 'Unpaid charge, Blocked until Paid', '0', '0', '9'),
+(2, 'CSGold', 'CSGold Account', '0', '0', '8'),
+(3, 'FabLab', 'FabLab\'s in-House Charge Account', '0', '0', '9'),
+(4, 'Library', 'General Library Account', '0', '0', '9'),
+(5, 'IDT', 'Inter-Departmental Transfers', '0', '0', '9'),
+(6, 'Bursar', 'Office of Student Accounts', '0', '0', '10');
 
 -- --------------------------------------------------------
 
@@ -183,11 +195,6 @@ CREATE TABLE `error` (
   `staff_id` varchar(10) DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
---
--- Dumping data for table `error`
---
-
-
 -- --------------------------------------------------------
 
 --
@@ -242,6 +249,17 @@ CREATE TABLE `objbox` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `offline_transactions`
+--
+
+CREATE TABLE `offline_transactions` (
+  `trans_id` int(11) NOT NULL,
+  `off_trans_id` varchar(14) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `purpose`
 --
 
@@ -249,6 +267,17 @@ CREATE TABLE `purpose` (
   `p_id` int(11) NOT NULL,
   `p_title` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `purpose`
+--
+
+INSERT INTO `purpose` (`p_id`, `p_title`) VALUES
+(1, 'Curricular Research'),
+(2, 'Extra Curricular Research'),
+(3, 'Non-Academic'),
+(4, 'Service-Call'),
+(5, 'Entrepreneurial');
 
 -- --------------------------------------------------------
 
@@ -318,7 +347,7 @@ CREATE TABLE `service_lvl` (
   `msg` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
---
+ --
 -- Dumping data for table `service_lvl`
 --
 
@@ -327,7 +356,6 @@ INSERT INTO `service_lvl` (`sl_id`, `msg`) VALUES
 (5, 'Issue'),
 (7, 'Out For OutReach'),
 (10, 'NonOperating');
-
 -- --------------------------------------------------------
 
 --
@@ -428,7 +456,7 @@ INSERT INTO `site_variables` (`id`, `name`, `value`, `notes`) VALUES
 (38, 'mServing', '0', 'Misc now serving'),
 (39, 'mNext', '0', 'Misc Next Issuable Number'),
 (40, 'backdoor_pass', '1234567890', 'General password to be used when the authentication server is not working.'),
-(41, 'service', 'service1234', 'Service Technician PW '),
+(41, 'service', 'service1234', 'Service Technician PW'),
 (42, 'wait_system', 'new', 'toggle between the new system and the old. (any/new)'),
 (43, 'editSV', '8', 'Role Level that allows you to edit Site Variables.  Do not set this beyond your highest assignable level. '),
 (44, 'clear_queue', '8', 'Minimum Level Required to clear the Wait Queue'),
@@ -437,7 +465,7 @@ INSERT INTO `site_variables` (`id`, `name`, `value`, `notes`) VALUES
 (47, 'wait_period', '300', 'Waiting period allotted to each Wait Queue Ticket(sec)'),
 (48, 'LvlOfLead', '8', 'Role of Lead for inventory editing'),
 (49, 'website_url', '', 'Website for Makerspace'),
-(50, 'phone_number', '', 'MakerSpace Phone Number'),
+(50, 'phone_number', '', 'Makerspace phone number'),
 (51, 'sheet_goods_parent', '123', 'sheet good parent material id'),
 (52, 'sheet_device', '68', 'Meta-device for association of sheetgoods with device'),
 (53, 'strg_drwr_indicator', 'numer', 'numer for a numeric drawer label, alpha for an alphabetical drawer label'),
@@ -447,13 +475,14 @@ INSERT INTO `site_variables` (`id`, `name`, `value`, `notes`) VALUES
 (57, 'wq_phoneAlert', 'You must enter a phone number if selecting a carrier.', 'Alert message sent when an operator selects a carrier but not a phone number.'),
 (58, 'wq_carrierAlert', 'You must select a carrier if entering a phone number!', 'Alert message sent when an operator inputs a phone number but not a carrier.'),
 (59, 'wq_deviceAlert', 'You must select a device.', 'Alert message sent when an operator does not select a device.'),
-(60, 'wq_device_desc', 'queue slot has opened up and your job will be processed soon.  Best start time estimate is  ', 'Text/Email message sent when an operator presses the \\"Send Alert\\" button and a specific device is available. Must end with a space to properly format with time variable.\\r\\n'),
+(60, 'wq_device_desc', 'queue slot has opened up and your job will be processed soon.  Best start time estimate is  ', 'Text/Email message sent when an operator presses the \\\"Send Alert\\\" button and a specific device is available. Must end with a space to properly format with time variable.\\r\\n'),
 (61, 'wq_ticketNum', 'You are now in the FabLab job queue, your wait ticket number is ', 'Alert message sent when an operator is added to the wait queue.'),
 (62, 'wq_ticketCancel', 'Your Wait Ticket has been cancelled.  There is no undoing this.', 'Alert message sent when an operator\'s wait queue ticket has been cancelled.'),
 (63, 'wq_ticketComplete', 'Your wait is nearly over.  Your job is next in line to be created.', 'Alert message sent when an operator\'s wait queue ticket has been completed.'),
-(64, 'wq_SecondaryEmail', '', 'Listserv address to notify when a self-cancellation has occurred.  Leave blank to disable the notifications'),
+(64, 'wq_SecondaryEmail', '', 'Listserv address to notify when a self-cancellation has occurred.  Leave blank to disable the notifications.'),
 (65, 'gk_MaxTabSize', '10', 'Maximum amount of money a learner can owe us before they are cut off from further jobs.'),
 (66, 'gk_MaxTicketTab', '10', 'Maximum amount of tickets a learner may have waiting for action before new ones are denied.');
+
 -- --------------------------------------------------------
 
 --
@@ -866,17 +895,17 @@ ALTER TABLE `wait_queue`
 -- AUTO_INCREMENT for table `accounts`
 --
 ALTER TABLE `accounts`
-  MODIFY `a_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `a_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `acct_charge`
 --
 ALTER TABLE `acct_charge`
-  MODIFY `ac_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15485;
+  MODIFY `ac_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `authrecipients`
 --
 ALTER TABLE `authrecipients`
-  MODIFY `ar_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=152;
+  MODIFY `ar_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `auth_accts`
 --
@@ -886,7 +915,7 @@ ALTER TABLE `auth_accts`
 -- AUTO_INCREMENT for table `carrier`
 --
 ALTER TABLE `carrier`
-  MODIFY `c_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `c_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `citation`
 --
@@ -896,102 +925,102 @@ ALTER TABLE `citation`
 -- AUTO_INCREMENT for table `devices`
 --
 ALTER TABLE `devices`
-  MODIFY `d_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=78;
+  MODIFY `d_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `device_group`
 --
 ALTER TABLE `device_group`
-  MODIFY `dg_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `dg_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `device_materials`
 --
 ALTER TABLE `device_materials`
-  MODIFY `dm_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=151;
+  MODIFY `dm_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `error`
 --
 ALTER TABLE `error`
-  MODIFY `e_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=212;
+  MODIFY `e_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `materials`
 --
 ALTER TABLE `materials`
-  MODIFY `m_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=149;
+  MODIFY `m_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `mats_used`
 --
 ALTER TABLE `mats_used`
-  MODIFY `mu_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41664;
+  MODIFY `mu_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `objbox`
 --
 ALTER TABLE `objbox`
-  MODIFY `o_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17037;
+  MODIFY `o_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `rfid`
 --
 ALTER TABLE `rfid`
-  MODIFY `rf_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=355;
+  MODIFY `rf_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `service_call`
 --
 ALTER TABLE `service_call`
-  MODIFY `sc_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=335;
+  MODIFY `sc_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `service_lvl`
 --
 ALTER TABLE `service_lvl`
-  MODIFY `sl_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `sl_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `service_reply`
 --
 ALTER TABLE `service_reply`
-  MODIFY `sr_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=368;
+  MODIFY `sr_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `sheet_good_inventory`
 --
 ALTER TABLE `sheet_good_inventory`
-  MODIFY `inv_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `inv_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `site_variables`
 --
 ALTER TABLE `site_variables`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=66;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `status`
 --
 ALTER TABLE `status`
-  MODIFY `status_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `status_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `table_descriptions`
 --
 ALTER TABLE `table_descriptions`
-  MODIFY `t_d_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `t_d_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `tm_enroll`
 --
 ALTER TABLE `tm_enroll`
-  MODIFY `tme_key` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=862;
+  MODIFY `tme_key` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `trainingmodule`
 --
 ALTER TABLE `trainingmodule`
-  MODIFY `tm_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+  MODIFY `tm_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `transactions`
 --
 ALTER TABLE `transactions`
-  MODIFY `trans_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45583;
+  MODIFY `trans_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `u_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=423;
+  MODIFY `u_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 --
 -- AUTO_INCREMENT for table `wait_queue`
 --
 ALTER TABLE `wait_queue`
-  MODIFY `Q_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4852;
+  MODIFY `Q_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
