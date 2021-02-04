@@ -269,7 +269,7 @@ class DeviceGroup {
 				$this->dg_id = $row['dg_id'];
 				$this->parent = $row['dg_parent'];
 				$this->name = $row["dg_name"];
-				$this->is_juicebox_managed = $row['juiceboxManaged'] == 'Y';
+				$this->is_juiceboxManaged = $row['juiceboxManaged'] == 'Y';
 				$this->is_granular_wait = $row['granular_wait'] == 'Y';
 				$this->is_pay_first = $row['payFirst'] == 'Y';
 				$this->is_select_mats_first = $row['selectMatsFirst'] == 'Y';

@@ -18,6 +18,7 @@
 **********************************************************/
 
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
+include_once("$_SERVER[DOCUMENT_ROOT]/connections/storage_box_DB_user.php");
 
 // staff clearance
 if (!$staff || $staff->getRoleID() < $sv['minRoleTrainer']){
@@ -26,18 +27,10 @@ if (!$staff || $staff->getRoleID() < $sv['minRoleTrainer']){
 	$_SESSION['error_msg'] = "Insufficient role level to access, You must be a Trainer.";
 }
 
-
-// access DB as user with storage_box delete permissions using following credentials 
-$db_storage_box_host = "localhost";
-$db_storage_box_user = "";  // populate
-$db_storage_box_pass = "";  // populate
-$dbdatabase = "fabapp";
-
-
 // set up page to load drawer
 if(filter_input(INPUT_GET, "drawer")) {
 	$drawer_number = filter_input(INPUT_GET, "drawer");
-	$unit_behavior = array("class" => "unit", "onclick" => "delete_unit(this)", "onmouseover" => "track(this)", "onmouseout" => "untrack(this)");
+	$unit_behavior = array("id" => "__unit__", "class" => "unit", "onclick" => "delete_unit(this)", "onmouseover" => "track(this)", "onmouseout" => "untrack(this)");
 	$empty_behavior = array("class" => "free", "onclick" => "bound_partition(this, \"edit_partition_input\", \"free\")", 
 								"onmouseover" => "track(this)", "onmouseout" => "untrack(this)");
 	$Drawer = new StorageDrawer($drawer_number, $unit_behavior, $empty_behavior);  // array of unit objects
@@ -49,9 +42,6 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["get_drawer"])) {
 }
 elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["delete_drawer"])) {
 	$selected_drawer_number = htmlspecialchars(filter_input(INPUT_POST, "drawer_number"));
-
-	// connect to mysql database using user with storage_box delete permissions
-	$storage_box_DB_user = new mysqli($db_storage_box_host, $db_storage_box_user, $db_storage_box_pass, $dbdatabase) or die(mysql_error());
 
 	$errors = StorageDrawer::delete_drawer($selected_drawer_number);
 	if(!$errors) $_SESSION['success_msg'] = "Successfully deleted drawer";
@@ -92,9 +82,6 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["partition_unit"])) 
 }
 elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["delete_unit_button"])) {
 	$unit = htmlspecialchars(filter_input(INPUT_POST, "deletion_input"));
-
-	// connect to mysql database using user with storage_box delete permissions
-	$storage_box_DB_user = new mysqli($db_storage_box_host, $db_storage_box_user, $db_storage_box_pass, $dbdatabase) or die(mysql_error());
 
 	$errors = StorageUnit::delete_unit($drawer_number, $unit);
 	if(!$errors) $_SESSION['success_msg'] = "Successfully deleted unit";

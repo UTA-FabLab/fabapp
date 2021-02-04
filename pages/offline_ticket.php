@@ -8,6 +8,18 @@ elseif($staff->roleID < $role["lead"])
 	exit_if_error("You are not authorized to see this page", "/index.php");
 
 
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+	if( filter_input(INPUT_POST, 'offLookupBtn') !== null ){
+		if( filter_input(INPUT_POST, 'offLookupField') !== null){
+			$transByOffTransId = OfflineTrans::byOffTransId(filter_input(INPUT_POST, 'offLookupField'));
+			if( $transByOffTransId != null){
+				header("location:/pages/lookup.php?trans_id=$transByOffTransId");
+			} else {
+				exit_if_error("Invalid Offline Transaction ID.", '/pages/offline_ticket.php');
+			}
+		}
+	}
+}
 $offline_transactions = array();
 if($results = $mysqli->query("	
 								SELECT *
@@ -45,7 +57,7 @@ function exit_if_error($error, $redirect=null) {
 	global $ticket;
 
 	if($error) {
-		$_SESSION['error_msg'] = "Lookup.php: ".$error;
+		$_SESSION['error_msg'] = "offline_ticket.php: ".$error;
 		if($redirect) header("Location:$redirect");
 		else header("Location:/index.php");
 		exit();
@@ -66,7 +78,7 @@ function exit_with_success($message, $redirect=null) {
 if (isset($_GET['printForm'])){
 	$transId = $_GET['printForm'];
 	exit_if_error(Transactions::printTicket($transId));
-	exit_with_success("Printing ticket for ticket # $transId");
+	exit_with_success("Printing ticket for ticket # $transId", '/pages/offline_ticket.php');
 }
 ?>
 
@@ -84,21 +96,41 @@ if (isset($_GET['printForm'])){
 				<div class="panel-heading">
                 	<i class="fas fa-cubes fa-lg"></i> Current Offline Transactions
             	</div>
-		<div class="panel-body">
-			<table class='table table-striped table-bordered table-hover' id='off_tickets'>
-				<thead>
-					<tr class="tablerow">
-						<th>Ticket</th>
-						<th>Offline ID</th>
-						<th>Device</th>
-						<th>Actions</th>
-					</tr>
-				</thead>
-				<tbody>
-					<?php foreach($offline_transactions as $ticket) {echo $ticket;} ?>
-				</tbody>
-			</table>
+			<div class="panel-body">
+				<table class='table table-striped table-bordered table-hover' id='off_tickets'>
+					<thead>
+						<tr class="tablerow">
+							<th>Ticket</th>
+							<th>Offline ID</th>
+							<th>Device</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach($offline_transactions as $ticket) {echo $ticket;} ?>
+					</tbody>
+				</table>
+			</div>
 		</div>
+	</div>
+	<div class="col-md-8">
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<i class="fas fa-cubes fa-lg"></i> Offline Transactions Lookup
+			</div>
+		<div class="panel-body">
+			<td class='col-md-11'>
+				<form name="offTransLookupForm" method="POST" action="" autocomplete="off">	
+					<div class="input-group custom-search-form">
+						<input type="text" name="offLookupField" id="offLookupField" class="form-control" placeholder="Enter ID #">
+						<span class="input-group-btn">
+						<button class="btn btn-default" type="submit" name="offLookupBtn">
+							<i class="fas fa-search"></i>
+						</button>
+						</span>
+					</div>
+				</form>
+			</td>
 		</div>
 	</div>
 </div>

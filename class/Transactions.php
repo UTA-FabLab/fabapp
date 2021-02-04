@@ -1,7 +1,7 @@
 <?php
 
 /***********************************************************************************************************
-*
+*	
 *	@author Jon Le
 *	Edited by: MPZinke on 06.08.19 to improve commenting an logic/functionality of class.
 *	 Separated physical location (storage_box) from censeptual information (transaction) in
@@ -16,28 +16,30 @@
 *
 *	DESCRIPTION: Transaction (Ticket) instance for device usage.  Associates costs, user,
 *	 devices, materials for creating/logging information in DB `transactions`.  Prints hard copy
-*	 of tickets.  Designed for by-page instance & not transfering accross pages.  If sent
+*	 of tickets.  Designed for by-page instance & not transfering accross pages.  If sent 
 *	 pages, post creation changes (eg Materials) do not update
 *
 ***********************************************************************************************************/
-
+ 
 //Thermal Reciept Dependancies
 require_once ($_SERVER['DOCUMENT_ROOT'].'/api/php_printer/autoload.php');
 require_once ($_SERVER['DOCUMENT_ROOT'].'/connections/tp_connect.php');
 use Mike42\Escpos\Printer;
 use Mike42\Escpos\EscposImage;
 use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
-
+ 
 class Transactions {
 	public $cost;  // costs associated with ticket; device usage + material usage
 	public $duration;  // time a device took to complete task
 	public $est_time;  // estimated time to do transaction task
 	public $filename;  // used filename from `notes` with ⦂ following (eg my_file.gcode⦂ )
 	public $notes;  // note associated with transaction
+	public $off_trans_id; // unique identifier of transaction (offline)
 	public $pickup_time;  // time item was picked up
 	public $t_start;  // start time of transaction task
 	public $t_end;  // end time of transaction task
 	public $trans_id;  // unique identifier of transaction
+	public $status_id; // status id of current transaction
 	//Objects
 	public $acct_charge;  // acount charge object based on trans_id
 	public $device;  // device object based on device_id
@@ -47,13 +49,13 @@ class Transactions {
 	public $staff;  // fablab staff user object based on staff_id
 	public $status;  // status object based on status
 	public $user;  // person who started the print/ticket
-
+	
 	public function __construct($trans_id){
 		global $mysqli;
-
+		
 		if (!preg_match("/^\d+$/", $trans_id))
 			throw new Exception("Invalid Ticket Number : $trans_id");
-
+		
 		if ($result = $mysqli->query("
 			SELECT *
 			FROM transactions
@@ -66,11 +68,14 @@ class Transactions {
 			$this->acct_charge = Acct_charge::byTrans_id($trans_id);
 			$this->device = new Devices($row['d_id']);  //REMOVE WITH UPDATE
 			$this->duration = $row['duration'];
+			$this->status_id = $row['status_id'];
 			// $this->device = new Devices($row['device_id']);  //ADD WITH UPDATE
 			$this->est_time = $row['est_time'];
 			if(substr_count($row['notes'], "⦂")) $this->filename = explode("⦂", $row['notes'])[0];
 			$this->mats_used = Mats_Used::objects_by_trans_id($row['trans_id']);
 			$this->notes = substr_count($row['notes'], "⦂") ? explode("⦂", $row['notes'])[1] : $row['notes'];
+//			error_log("The contents of this -> notes in the Transactions constructor are: " . var_export( $this->notes, true ), 0);			//diagnostic line
+			$this->off_trans_id = OfflineTrans::byTransId($trans_id);
 			$this->purpose = new Purpose($row['p_id']);
 			$this->pickup_time = $row['pickup_time'];
 			$this->pickedup_by = Users::withID($row['pickedup_by']);
@@ -99,7 +104,7 @@ class Transactions {
 		global $sv;
 
 		if(!$this->t_start) return 0;
-		if(!$end = $this->t_end) $end = date("Y-m-d H:i:s", strtotime("now"));
+		if(!$end = $this->t_end) $end = date("Y-m-d H:i:s", strtotime("now"));	
 
 		$duration = (strtotime($this->t_end) - strtotime($this->t_start)) / 3600;
 		return $this->duration < $sv['minTime'] ? $sv['minTime'] : $duration;  // minimum time interval
@@ -162,11 +167,11 @@ class Transactions {
 		$this->t_end = date("Y-m-d H:i:s");
 		return $this->update_transaction();  // return error or null (no error)
 	}
-
+	
 
 	public function end_juicebox(){
 		global $mysqli, $status;
-
+		
 		$total = $this->quote_cost();
 		//Status = Moveable
 		//Intended to block additional Power On Until Learner Pays Balance
@@ -176,31 +181,52 @@ class Transactions {
 		// null for no error, string for error
 		return $this->update_transaction();
 	}
-
+	
 
 	public function end_octopuppet(){
 		global $mysqli, $status;
-
-		$this->t_end = date("Y-m-d H:i:s", strtotime("now"));  // set t_end only for object (!DB)
-		$duration = $this->duration_string();
-		if ($mysqli->query("
+		// Keep offline status id
+		// Currently we have no way to find out the exact time when the job ended on client.
+		// Use est_time as a close guess. TODO: Send exact end times from OctoPuppet.
+		if ($this->status_id == $status["offline"]) {
+			$duration = $this->est_time;
+			if ($mysqli->query("
+			UPDATE `transactions`
+			SET `duration` = '$duration'
+			WHERE `trans_id` = $this->trans_id;
+			")){
+				if ($mysqli->affected_rows == 1) {
+					return true;
+				} else{
+					return false;  // unsuccessful
+				};
+			}
+			
+		} else {
+			$this->t_end = date("Y-m-d H:i:s", strtotime("now"));  // set t_end only for object (!DB)
+			$duration = $this->duration_string();
+			if ($mysqli->query("
 			UPDATE `transactions`
 			SET `duration` = '$duration', `status_id` = '$status[moveable]'
 			WHERE `trans_id` = '$this->trans_id';
-		")){
-			if ($mysqli->affected_rows == 1) return true;
+			")){
+				if ($mysqli->affected_rows == 1) {
+					return true;
+				} else{
+					return false;  // unsuccessful
+				};
+			}
 		}
-		return false;  // unsuccessful
-	}
+}
 
 
 	public function endSheetTicket($trans_id, $sheet_good_status){
 		global $mysqli, $status;
-
+		
 		// 1 for complete, 2 for failed
 		$status_id = $sheet_good_status == 1 ? $status["complete"] : $status["total_fail"];
-
-
+		
+		
 		if ($mysqli->query("
 			UPDATE `transactions`
 			SET `t_end` = CURRENT_TIMESTAMP , `status_id` = '$status_id'
@@ -208,16 +234,16 @@ class Transactions {
 		"))
 			return 1;
 		return 0;
-
+	
 	}
 
 
 	public static function insertSheetTrans($trans_id, $inv_id, $quantity){
 		global $mysqli;
-
+		
 		if ($mysqli->query("
-				INSERT INTO `sheet_good_transactions`
-					(`trans_id`, `inv_id`, `quantity`, `remove_date`)
+				INSERT INTO `sheet_good_transactions` 
+					(`trans_id`, `inv_id`, `quantity`, `remove_date`) 
 				VALUES
 					('$trans_id', '$inv_id', '$quantity', CURRENT_TIMESTAMP);
 		")){
@@ -239,14 +265,14 @@ class Transactions {
 		if(!Purpose::regexID($p_id)) return "Invalid Purpose - $p_id";
 		if($status_id && !Status::regexID($status_id)) return "Invalid Status";
 		$note = $note ? "'".self::regexNotes($note)."'" : "NULL";
-
+		
 		if($error = Wait_queue::transferFromWaitQueue($operator->operator, $device_id)) return $error;
-
+		
 		$t_end = $status_id == $status["sheet_sale"] ? "CURRENT_TIMESTAMP" : "NULL";  // sheet goods
 		// $note is intentionally left without '' so that if it is null, it will be entered as a null value
-		if ($mysqli->query("INSERT INTO transactions
-							(`operator`, `d_id`, `t_start`, `t_end`, `status_id`, `p_id`, `est_time`, `staff_id`, `notes`)
-							-- (`operator`,`device_id`,`t_start`,`status_id`,`p_id`,`est_time`,`staff_id`, `notes`)
+		if ($mysqli->query("INSERT INTO transactions 
+							(`operator`, `d_id`, `t_start`, `t_end`, `status_id`, `p_id`, `est_time`, `staff_id`, `notes`) 
+							-- (`operator`,`device_id`,`t_start`,`status_id`,`p_id`,`est_time`,`staff_id`, `notes`) 
 							VALUES
 							('$operator->operator', '$device_id', CURRENT_TIMESTAMP, $t_end, '$status_id', '$p_id', '$est_time', '$staff->operator', $note);"
 		)){
@@ -257,7 +283,7 @@ class Transactions {
 
 
 	/*
-	Check that the materials associated with transaction are not chargable.
+	Check that the materials associated with transaction are not chargable. 
 	If materials has cost, user must pay for it.
 	*/
 	public function no_associated_materials_have_a_price() {
@@ -278,7 +304,7 @@ class Transactions {
 			echo $e;
 			return $e->getMessage();
 		}
-
+		
 		try {
 			$connector = new NetworkPrintConnector($tphost, $tpport);
 			$printer = new Printer($connector);
@@ -295,13 +321,17 @@ class Transactions {
 			$printer->graphics($img);
 			$printer->feed();
 			$printer->text("Ticket: $ticket->trans_id");
+			if($ticket->off_trans_id) {
+				$printer->feed();
+				$printer->text("Offline ID: $ticket->off_trans_id");
+			}
 			$printer->feed();
 			$printer->text($ticket->t_start);
 
 			//Body
 			$printer->feed(2);
 			$printer->text("Device:   ".$ticket->device->name);
-
+			
 			// estimated amount
 			$est_amount = 0;
 			foreach($ticket->mats_used as $mat_used)
@@ -314,7 +344,20 @@ class Transactions {
 			$printer->text("$ ".number_format($ticket->quote_cost(), 2));
 			$printer->feed();
 			if($ticket->est_time) $printer->text("Est. Duration:   $ticket->est_time");
-
+			
+			//diagnostic block to see what the filename property of current ticket contains
+			//if ticket->filename exists, it dumps it into the error log, otherwise it drops a message indicating filename does not contain anything/exists
+/*			if ($ticket->filename) {
+				error_log("The $ticket->filename in transactions::PrintTicket() contains this: " . $ticket->filename, 0);
+			}
+			else {
+				error_log("The $ticket->filename access in transactions.php::PrintTicket() is empty or doesn't exist", 0);
+			}
+*/			
+		//	error_log("The raw contents of $ ticket - > filename are: " . var_export($ticket->filename, true), 0 );
+		//	error_log("Raw dump of ticket object: " . var_export($ticket, true) , 0);
+			
+			
 			if ($ticket->filename){
 				$printer->feed();
 				$printer->text("File:   $ticket->filename");
@@ -333,27 +376,29 @@ class Transactions {
 			$printer->feed();
 
 			// UPDATE FOR MULTI-MATERIAL OCTOPUPPET CHANGE
-			// if(count($ticket->mats_used) > 1) {
-			// 	$printer->feed();
-			// 	$printer->text("Color Swap");
-			// }
-			// for($x = count($ticket->mats_used); 0 < $x; $x--) {
-			// 	$printer->feed();
-			// 	$printer->text(str_pad((count($ticket->mats_used) - $x +1).":", 5, " ").str_pad($ticket->mats_used[$x-1]->material->m_name, 20, "_"));
-			// }
-			if($ticket->filename && substr_count($ticket->filename, "[[")) {
+//			error_log("Dumping mats_used then count results of them for comparison:  " . var_export($ticket->mats_used, true) . " + " . var_export(count($ticket->mats_used), true) . " END OF LINE.", 0 );	//diagnostic line to see what count is vs actual number of mats_used
+			if(count($ticket->mats_used) > 1) {				
+				$printer->feed();
+				$printer->text("Color Swap");
+			}
+//			error_log("Dumping printer->text variable of transactions::PrintTicket to examine contents: " . var_export($printer->text, true) ,0 );			//diagnostic line 
+			for($x = count($ticket->mats_used); 0 < $x; $x--) {
+				$printer->feed();
+				$printer->text(str_pad((count($ticket->mats_used) - $x +1).":", 5, " ").str_pad($ticket->mats_used[$x-1]->material->m_name, 20, "_"));
+				$printer->feed();	//force-insert a feedline after the 1st material printed and before any following materials in the list
+			}
+			if($ticket->filename && substr_count($ticket->filename, "[[") ) {				
 				$filename_materials = explode("[[", $ticket->filename);
 				for($x = 1; $x < count($filename_materials); $x++) {
 					if(substr_count($filename_materials[$x], ".gcode"))
 						$filename_materials[$x] = substr($filename_materials[$x], 0, strpos($filename_materials[$x], ".gcode"));
 					$material = new Materials($filename_materials[$x]);
 					if(is_object($material)) {
-						$printer->text(str_pad(($x).":", 5, " ").str_pad($material->m_name, 20, "_"));
+						$printer->text(str_pad(( ($x+1) ).":", 5, " ").str_pad($material->m_name, 20, "_"));			//printout of material number list needs to start at 2 or it won't make sense to read 
 						$printer->feed();
 					}
 				}
 			}
-
 
 			$printer->feed(2);
 			$printer->text("NOTES: _________________________");
@@ -365,6 +410,13 @@ class Transactions {
 			$printer->feed(3);
 			$printer->graphics(EscposImage::load($_SERVER['DOCUMENT_ROOT']."/images/sig.png", 0));
 			$printer->feed();
+			if($ticket->off_trans_id) {
+				$printer->feed();
+				$printer->setTextSize(3, 3);
+				$printer->text("$ticket->off_trans_id");
+				$printer->setTextSize(1, 1);
+				$printer->feed(4);
+			}
 			$printer->text($sv['website_url']);  //TODO: change to $sv
 			$printer->feed();
 			$printer->text($sv['phone_number']);  //TODO: change to $sv
@@ -442,14 +494,14 @@ class Transactions {
             	$printer -> text($cart_prices[$i]);
             }
             $printer -> setTextSize(1, 1);
-            $printer -> feed(2);
+            $printer -> feed(2); 
             $printer -> setJustification(Printer::JUSTIFY_RIGHT);
             $printer -> setEmphasis(true);
             $printer -> text("Total: $".$total_price);
             $printer -> setEmphasis(false);
 
-            $printer -> feed(2);
-
+            $printer -> feed(2);  
+            
             // Print Footer
             $printer -> setJustification(Printer::JUSTIFY_CENTER);
             $printer -> text("For information about FabLab's");
@@ -459,7 +511,7 @@ class Transactions {
             $printer -> setEmphasis(true);
             $printer -> text("http://fablab.uta.edu/policy");
             $printer -> feed();
-
+            
         } catch (Exception $print_error) {
             //echo $print_error->getMessage();
             $printer -> text($print_error->getMessage());
@@ -476,7 +528,7 @@ class Transactions {
             echo "Couldn't print to this printer: " . $e -> getMessage() . "\n";
         }
     }
-
+    
 
 
 
@@ -497,8 +549,8 @@ class Transactions {
 
 	// add information about who pickuped a transaction, when and by whom it was facilitated
 	public function record_pickup($reciever, $staff) {
-		return $this->edit_transaction_information(array(	"pickedup_by" => $reciever,
-															"pickup_time" => date("Y-m-d H:i:s"),
+		return $this->edit_transaction_information(array(	"pickedup_by" => $reciever, 
+															"pickup_time" => date("Y-m-d H:i:s"), 
 															"staff" => $staff));
 	}
 
@@ -508,7 +560,7 @@ class Transactions {
 		// current cost - (already been paid) + .001 (prevent negative rounding errors)
 		$balance = $this->quote_cost() - $this->current_transaction_credit() + .001;
 		// allow for .005 rounding error
-		return (-.005 < $balance && $balance < .005) ? 0 : $balance;
+		return (-.005 < $balance && $balance < .005) ? 0 : $balance; 
 	}
 
 
@@ -521,20 +573,16 @@ class Transactions {
 
 		// update transaction info
 		$statement = $mysqli->prepare("UPDATE `transactions`
-											SET `d_id` = ?, `operator` = ?, `t_start` = ?,
-											`t_end` = ?, `status_id` = ?, `staff_id` = ?,
+											SET `d_id` = ?, `operator` = ?, `t_start` = ?, 
+											`t_end` = ?, `status_id` = ?, `staff_id` = ?, 
 											`pickup_time` = ?, `pickedup_by` = ?,  `notes` = ?,
 											`duration` = ?
 											WHERE `trans_id` = ?;");
 
-		$notes = $this->filename_and_notes();
-		$t_end = $this->t_end = date("Y-m-d H:i:s", strtotime("now"));
-		$duration = $this->duration_string();
-
-		$statement->bind_param("dsssdsssssd", $this->device->device_id, $this->user->operator, $this->t_start,
-									$t_end, $this->status->status_id, $this->staff->operator,
-									$this->pickup_time, $pickedup_by, $notes,
-									$duration,
+		$statement->bind_param("dsssdsssssd", $this->device->device_id, $this->user->operator, $this->t_start, 
+									$this->t_end, $this->status->status_id, $this->staff->operator, 
+									$this->pickup_time, $pickedup_by, $this->filename_and_notes(), 
+									$this->duration,
 									$this->trans_id);
 
 
@@ -659,7 +707,7 @@ class Transactions {
 		$time = "$sArray[0]h $sArray[1]m $sArray[2]s";
 		return $time;
 	}
-
+	
 	public function getDuration_raw() {
 		if (strcmp($this->duration,"") == 0)
 				return "";
