@@ -668,6 +668,8 @@ CREATE TABLE `users` (
   `long_close` enum('Y','N') NOT NULL DEFAULT 'N'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+INSERT INTO `users` (`u_id`, `operator`, `r_id`, `exp_date`, `icon`, `adj_date`, `notes`, `long_close`) VALUES 
+(1, '1000000000', '10', NULL, NULL, '202-01-01 00:00:00', '', 'N')
 -- --------------------------------------------------------
 
 --
