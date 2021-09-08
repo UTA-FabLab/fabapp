@@ -342,11 +342,21 @@ class DeviceGroup {
 		global $mysqli;
 
 		$required_materials = array();
-		if($results = $mysqli->query("SELECT `m_id`
+	/*	if($results = $mysqli->query("SELECT `m_id`
 										FROM `device_materials`
 										WHERE `dg_id` = '$this->dg_id'
 										AND `required` = 'N';"
-		)) {
+		)	*/
+		
+		if($results = $mysqli->query("SELECT device_materials.m_id 
+										FROM device_materials 
+										LEFT JOIN materials on materials.m_id = device_materials.m_id 
+										WHERE `dg_id` = '$this->dg_id' 
+										AND `required` = 'N' 
+										AND materials.current = 'Y' ; "
+									)
+		
+		) {
 			while($row = $results->fetch_assoc())
 				$required_materials[] = new Materials($row['m_id']);
 			return $required_materials;
@@ -388,11 +398,20 @@ class DeviceGroup {
 		global $mysqli;
 
 		$required_materials = array();
-		if($results = $mysqli->query("SELECT `m_id`
+	/*	if($results = $mysqli->query("SELECT `m_id`
 										FROM `device_materials`
 										WHERE `dg_id` = '$this->dg_id'
 										AND `required` = 'Y';"
-		)) {
+		)) */
+		if($results = $mysqli->query("SELECT device_materials.m_id 
+										FROM device_materials 
+										LEFT JOIN materials on materials.m_id = device_materials.m_id 
+										WHERE `dg_id` = '$this->dg_id' 
+										AND `required` = 'Y' 
+										AND materials.current = 'Y' ; "
+									)
+			)
+		{
 			while($row = $results->fetch_assoc())
 				$required_materials[] = new Materials($row['m_id']);
 			return $required_materials;
