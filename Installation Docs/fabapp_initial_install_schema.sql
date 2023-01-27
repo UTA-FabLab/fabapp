@@ -669,7 +669,7 @@ CREATE TABLE `users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 INSERT INTO `users` (`u_id`, `operator`, `r_id`, `exp_date`, `icon`, `adj_date`, `notes`, `long_close`) VALUES 
-(1, '1000000000', '10', NULL, NULL, '202-01-01 00:00:00', '', 'N')
+(1, '1000000000', '10', NULL, NULL, '202-01-01 00:00:00', '', 'N');
 -- --------------------------------------------------------
 
 --
