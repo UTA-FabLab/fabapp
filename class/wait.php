@@ -22,11 +22,16 @@ use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
 function wait($str){
     global $tphost, $tpport;
     global $sv;
+	
+	
+	// return "Print method called on wait.php for WQ number " . text($str) . " ";
+
 
     // Set up Printer
     try {
-        $connector = new NetworkPrintConnector($tphost, $tpport);
-        $printer = new Printer($connector);
+ /*       $connector = new NetworkPrintConnector($tphost, $tpport);
+        $printer = new Printer($connector);  
+*/
     } catch (Exception $e) {
         return "Couldn't print to this printer: " . $e -> getMessage() . "\n";
     }
@@ -64,7 +69,7 @@ function wait($str){
         $printer -> setEmphasis(true);
         $printer -> text("1. ");
         $printer -> setEmphasis(false);
-        $printer -> text("Check http://fabapp.uta.edu for the\n");
+        $printer -> text("Check http://BasementApp.uta.edu for the\n");
         $printer -> text("lastest status on who's being called and\n");
         $printer -> text("get an alert.\n");
         $printer -> feed();
@@ -72,7 +77,7 @@ function wait($str){
         $printer -> setEmphasis(true);
         $printer -> text("2. ");
         $printer -> setEmphasis(false);
-        $printer -> text("FabApp only gives estimates & more\n");
+        $printer -> text("BasementApp only gives estimates & more\n");
         $printer -> text("than one machine may become available\n");
         $printer -> text("at a time. Stay in the lab if your\n");
         $printer -> text("number is close.\n");
@@ -114,5 +119,5 @@ function wait($str){
         $printer -> close();
     } catch (Exception $e) {
         echo "Couldn't print to this printer: " . $e -> getMessage() . "\n";
-    }
+    }   
 }

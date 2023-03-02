@@ -248,7 +248,7 @@ function PrintFooter () {
 	global $printer;
 	global $trans_id;
 	
-	$qr = "http://fabapp.uta.edu/look.php?trans_id=".$trans_id;
+	$qr = "http://BasementApp.uta.edu/look.php?trans_id=".$trans_id;
 	
 	try {
 		

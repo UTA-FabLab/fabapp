@@ -42,7 +42,7 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
 							<th>Ticket</th>
 							<th>Location</th>
 							<th>Date</th>
-							<th>Operator</th>
+							<th>ID</th>
 						</thead>
 						<?php 
 

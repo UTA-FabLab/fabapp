@@ -14,9 +14,9 @@ if (!empty($_GET["val"])) {
     if (strpos($value, 'DG') !== false) {
         sscanf($value, "DG_%d-%d", $dg_id, $d_id);
         
-        $polyprinters="2";
+//        $polyprinters="2";
 
-        if ($dg_id !="" && $dg_id != $polyprinters && DeviceGroup::regexDgID($dg_id)) {
+        if ($dg_id !=""  && $dg_id >= 1 && DeviceGroup::regexDgID($dg_id)) {
             // Select all of the MAV IDs that are waiting for this device group
             $result = $mysqli->query ( "               
                 SELECT `Operator`, `Q_id`
@@ -31,7 +31,7 @@ if (!empty($_GET["val"])) {
             }
         
         } 
-        if ($dg_id !="" && $dg_id == $polyprinters && DeviceGroup::regexDgID($dg_id)) {
+        if ($dg_id !="" && $dg_id >= 1 && DeviceGroup::regexDgID($dg_id)) {
             // Select all of the MAV IDs that are waiting for this device group
             $result = $mysqli->query ( "                
                 SELECT `Operator`, `Q_id`

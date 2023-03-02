@@ -296,8 +296,8 @@ class Transactions {
 	// prints the thermal ticket
 	public static function printTicket($trans_id){
 		global $mysqli, $sv, $tphost, $tpport;
-
-		try {
+//Disabling this for the Basement, no ticket printing necessary
+/*		try {
 			$ticket = new self($trans_id);  //Pull Ticket Related Information
 		}
 		catch(Exception $e) {
@@ -357,7 +357,7 @@ class Transactions {
 		//	error_log("The raw contents of $ ticket - > filename are: " . var_export($ticket->filename, true), 0 );
 		//	error_log("Raw dump of ticket object: " . var_export($ticket, true) , 0);
 			
-			
+/*			
 			if ($ticket->filename){
 				$printer->feed();
 				$printer->text("File:   $ticket->filename");
@@ -432,8 +432,8 @@ class Transactions {
 		}
 		catch( Exception $e) {
 			echo "printer was not open";
-		}
-	}
+		}	*/
+	} 
 
     public static function printSheetTicket($trans_id, $cart_inv_ids, $cart_quantities, $cart_prices, $total_price){
         global $mysqli;
@@ -596,7 +596,8 @@ class Transactions {
 	// ———————————————— ATTRIBUTES —————————————————
 
 	public function filename_and_notes() {
-		if($this->filename) return $this->filename."⦂".$this->notes;
+		//if($this->filename) return $this->filename."⦂".$this->notes;		// this is the original statement, keep in case of issues with the seperator character not showing up
+		if($this->filename) return $this->filename . $this->notes;			// this is the revised statement that does NOT manually add a seperator character
 		return $this->notes;
 	}
 

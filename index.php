@@ -109,7 +109,7 @@ function advanceNum($i, $str){
 												<thead>
 													<tr class="tablerow">
 														<th><i class="fa fa-th-list"></i> Queue Number</th>
-														<th><i class="far fa-user"></i> Operator</th>
+														<th><i class="far fa-user"></i> User</th>
 														<?php if ($tab["dg_id"]==2) { ?> <th><i class="far fa-flag"></i> Device Group</th><?php } ?>
 														<?php if ($tab["dg_id"]!=2) { ?> <th><i class="far fa-flag"></i> Device</th><?php } ?>
 														<th><i class="far fa-clock"></i> Time Left</th>
@@ -251,20 +251,24 @@ function advanceNum($i, $str){
 											<select class="form-control" name="devGrp" id="devGrp" onChange="change_group()" >
 												<option value="" selected hidden> Select Device</option>
 												<?php // Load all of the device groups that are being waited for - signified with a 'DG' in front of the value attribute
+													
 													if ($result = $mysqli->query("
 															SELECT DISTINCT D.`device_desc`, D.`dg_id`, D.`d_id`
 															FROM `devices` D 
 															JOIN `wait_queue` WQ on D.`dg_id` = WQ.`Devgr_id`
 															LEFT JOIN (SELECT trans_id, t_start, t_end, d_id, operator, status_id FROM transactions WHERE status_id < $status[total_fail] ORDER BY trans_id DESC) as t
 															ON D.`d_id` = t.`d_id`
-															WHERE WQ.`valid`='Y' AND (WQ.`Devgr_id` = 2 OR D.`d_id` = WQ.`Dev_id`) AND t.`trans_id` IS NULL AND D.`d_id` NOT IN (
+															WHERE WQ.`valid`='Y' AND (WQ.`Devgr_id` = D.`dg_id` OR D.`d_id` = WQ.`Dev_id`) AND t.`trans_id` IS NULL AND D.`d_id` NOT IN (
 																SELECT `d_id`
 																FROM `service_call`
 																WHERE `solved` = 'N' AND `sl_id` >= 7
 															)
 													")) {
+														
+														
 														while ( $rows = mysqli_fetch_array ( $result ) ) {
 															// Create value in the form of DG_dgID-dID
+													//		error_log("The contents of the index.php Selec Device dropdown are: " . print_r($rows, true) );
 															echo "<option value=". "DG_" . $rows ['dg_id'] . "-" . $rows ['d_id'].">" . $rows ['device_desc'] . "</option>";
 														}
 													} else {

@@ -90,7 +90,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <html>
 <head>
-    <title>FabApp - OnBoarding</title>
+    <title>BasementApp - OnBoarding</title>
     <link href="\vendor\iconpicker\css\fontawesome-iconpicker.min.css" rel="stylesheet">
 </head>
 <body>
@@ -99,7 +99,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <!-- Page Title -->
         <div class="row">
             <div class="col-lg-12">
-                <h1 class="page-header">FabApp OnBoarding</h1>
+                <h1 class="page-header">BasementApp OnBoarding</h1>
             </div>
             <!-- /.col-lg-12 -->
         </div>
@@ -210,7 +210,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                                                     WHERE `users`.`r_id` = `role`.`r_id` AND `users`.`r_id` <= '$staff_role'
                                                                     ORDER BY `r_id` DESC;");
                                                                     while($row = $result->fetch_assoc()){
-                                                                        echo "<option value=\"$row[r_id]\">$row[title]</option>";
+                                                                        echo "<option value=\"$row[r_id]\">$row[title]</option>"; 
                                                                     }
                                                                 ?>
                                                             </select>
@@ -290,7 +290,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="col-md-12">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fas fa-user-friends"></i> FabApp Users
+                        <i class="fas fa-user-friends"></i> BasementApp Users
                         <div class="pull-right">
                             <button  class="btn btn-xs" data-toggle="collapse" data-target="#userPanel"><i class="fas fa-bars"></i></i></button> 
                         </div>
@@ -420,7 +420,6 @@ function change_operator(){
             document.getElementById("operators").innerHTML = this.responseText;
         }
     };
-
     xmlhttp.open("GET","/admin/sub/ob_getOperators.php?val="+ document.getElementById("u_r_id").value, true);
     xmlhttp.send();
     inUseCheck();

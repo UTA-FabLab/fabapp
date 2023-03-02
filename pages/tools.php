@@ -29,67 +29,27 @@ $device_mats = Materials::getDeviceMats(2);
 	</div>
 	<!-- /.row -->
 	<div class="row">
-		<div class="col-md-8">
+		<div class="col-lg-12">
 			<div class="panel panel-default">
 				<div class="panel-heading">
-					<i class="far fa-file-alt fa-fw"></i> Color Swap Instructions
+					<i class="far fa-file-alt fa-fw"></i> Controller Barcodes - XBox
 					<div class="pull-right">
-						<button  class="btn btn-xs" data-toggle="collapse" data-target="#swapPanel"><i class="fas fa-bars"></i></button>
+						<button  class="btn btn-xs" data-toggle="collapse" data-target="#swapPanel1"><i class="fas fa-bars"></i></button>
 					</div>
 				</div>
 				<!-- /.panel-heading -->
-				<div class="panel-body collapse in" id="swapPanel">
+				<div class="panel-body collapse" id="swapPanel1">
 					<table class="table table-responsive">
 						<tr>
-							<td class="col-md-7">
-								<img src="../images/colorswap.JPG" alt="" class="img-responsive"/>
+							<td class="col-lg-12">
+								<img src="../images/Controller_barcodes_version1_04_Xbox.png" alt="It's a nice day, and all my XBox controllers are broken." class="img-responsive"/>
 							</td>
 							<td class="col-md-5">
-								<b>*Not intended for sequential printing*</b>
-								<p>After the stl has been sliced and the gcode has been saved, view the “Models and Paths” and 
-									determine which layer you want to pause the printer on. The layer is displayed in KISSlicer as </p>
-								<p>z value = z height in mm</p>
-								<p>Check the values of z as you scroll through the different layers. If you want to change the colors, 
-									for example, between layers z=10.000 and z=10.250, you will want to pause at the end of layer z=10.000.</p>
-								<p>Enter that value in the field as "10.000"</p>
-								<input disabled value="10.000"/>
-								<p>To do multiple color swaps add a new row for each pause that you want to have. The values must be in 
-									sequential order. It requires both a valid Z height and a selected color.</p>
-								<p>Upload the gcode file to the right.</p>
+								<b>It's a nice day, and all my XBox controllers are broken.</b>
 							</td>
 						</tr>
 						<tr>
 							<td>
-								<table class="table table-hover">
-									<tr>
-										<td>gcode Example</td>
-										<td>Explanation</td>
-									</tr>
-									<tr>
-										<td><i>G28 X</i></td>
-										<td><i>Zero X-axis</i></td>
-									</tr>
-									<tr>
-										<td><i>G1 Z20.000</i></td>
-										<td><i>Move Z height to 20.000mm</i></td>
-									</tr>
-									<tr>
-										<td><i>M117</i></td>
-										<td><i>Print coordinates to console</i></td>
-									</tr>
-									<tr>
-										<td><i>M0</i></td>
-										<td><i>Pause Printer</i></td>
-									</tr>
-									<tr>
-										<td><i>G1 Z10.2497</i></td>
-										<td><i>Move Z height to correct height</i></td>
-									</tr>
-									<tr>
-										<td><i>G28 X Y</i></td>
-										<td><i>Zero X & Y axis</i></td>
-									</tr>
-								</table>
 							</td>
 							<td></td>
 						</tr>
@@ -97,14 +57,15 @@ $device_mats = Materials::getDeviceMats(2);
 				</div>
 			</div>
 		</div>
+	</div>
 		<!-- /.col-md-8 -->
-		<div class="col-md-4">
-			<div class="panel panel-default">
+	<!--	<div class="col-md-4">   -->
+	<!--		<div class="panel panel-default">
 				<div class="panel-heading">
 					<i class="fas fa-palette fa-fw"></i> Color Swap 
 				</div>
 				<!-- /.panel-heading -->
-				<div class="panel-body">
+	<!--			<div class="panel-body">
 					<table class="table-striped table-bordered table-responsive" id="cs_table">
 						<thead>
 							<th style="text-align:center">Location</th>
@@ -138,7 +99,75 @@ $device_mats = Materials::getDeviceMats(2);
 						<button class="btn pull-right" onclick="insert_color_swaps()" disabled id="swapBtn">Submit</button>
 					</div>
 				</div>
+			</div>  -->    <!--  disabling for Basement
+		</div>
+	</div>
+	<!-- /.row -->
+
+ 
+<div class="row">
+		<div class="col-lg-12">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<i class="far fa-file-alt fa-fw"></i> Controller Barcodes - Playstation
+					<div class="pull-right">
+						<button  class="btn btn-xs" data-toggle="collapse" data-target="#swapPanel2"><i class="fas fa-bars"></i></button>
+					</div>
+				</div>
+				<!-- /.panel-heading -->
+				<div class="panel-body collapse" id="swapPanel2">
+					<table class="table table-responsive">
+						<tr>
+							<td class="col-lg-12">
+								<img src="../images/Controller_barcodes_version1_04_Playstation.png" alt="What does 'analog' do" class="img-responsive"/>
+							</td>
+							<td class="col-md-5">
+								<b>What does "analog" do</b>
+							</td>
+						</tr>
+						<tr>
+							<td>
+							</td>
+							<td></td>
+						</tr>
+					</table>
+				</div>
 			</div>
+		</div>
+		<!-- /.col-md-8 -->
+	
+		</div>
+	<div class="row">
+		<div class="col-lg-12">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<i class="far fa-file-alt fa-fw"></i> Controller Barcodes - Nintendo
+					<div class="pull-right">
+						<button  class="btn btn-xs" data-toggle="collapse" data-target="#swapPanel3"><i class="fas fa-bars"></i></button>
+					</div>
+				</div>
+				<!-- /.panel-heading -->
+				<div class="panel-body collapse" id="swapPanel3">
+					<table class="table table-responsive">
+						<tr>
+							<td class="col-lg-12">
+								<img src="../images/Controller_barcodes_version1_04_Nintendo.png" alt="Look at me, I'm drifting!" class="img-responsive"/>
+							</td>
+							<td class="col-md-5">
+								<b>Look at me, I'm drifting!</b>
+							</td>
+						</tr>
+						<tr>
+							<td>
+							</td>
+							<td></td>
+						</tr>
+					</table>
+				</div>
+			</div>
+		</div>
+		<!-- /.col-md-8 -->
+	
 		</div>
 	</div>
 	<!-- /.row -->
