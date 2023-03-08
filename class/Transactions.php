@@ -596,7 +596,8 @@ class Transactions {
 	// ———————————————— ATTRIBUTES —————————————————
 
 	public function filename_and_notes() {
-		if($this->filename) return $this->filename."⦂".$this->notes;
+	//	if($this->filename) return $this->filename."⦂".$this->notes;		// this is the original statement, keep in case of issues with the seperator character not showing up
+		if($this->filename) return $this->filename . $this->notes;			// this is the revised statement that does NOT manually add a seperator character																																		
 		return $this->notes;
 	}
 

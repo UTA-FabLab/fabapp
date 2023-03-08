@@ -334,7 +334,7 @@ function offline_ticket_end($off_trans_id){
             LIMIT 1;
     ")){
         $row = $result->fetch_assoc();
-        error_log(print_r($row, true),0);
+//      error_log(print_r($row, true),0);
         $ticket = new Transactions($row['trans_id']);
     }
 
