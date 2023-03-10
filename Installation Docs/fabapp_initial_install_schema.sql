@@ -440,7 +440,7 @@ INSERT INTO `site_variables` (`id`, `name`, `value`, `notes`) VALUES
 (22, 'paySite_name', '', 'Human-readable name for payment system'),
 (23, 'currency', 'fas fa-dollar-sign', 'Icon as Defined by Font Awesome'),
 (24, 'api_key', '', 'API key for JuiceBox/OctoPuppet communications'),
-(25, 'dateFormat', 'M d, Y g:i a', 'format the date using Php\'s date() function.'),
+(25, 'dateFormat', 'Y-m-d H:i:s', 'format the date using Php\'s date() function.'),
 (26, 'timezone', 'America/Chicago', 'Set Local Time Zone'),
 (27, 'timeInterval', '.25', 'Minimum time unit of an hour.'),
 (28, 'LvlOfStaff', '8', 'First role level ID of staff.'),
@@ -481,7 +481,8 @@ INSERT INTO `site_variables` (`id`, `name`, `value`, `notes`) VALUES
 (63, 'wq_ticketComplete', 'Your wait is nearly over.  Your job is next in line to be created.', 'Alert message sent when an operator\'s wait queue ticket has been completed.'),
 (64, 'wq_SecondaryEmail', '', 'Listserv address to notify when a self-cancellation has occurred.  Leave blank to disable the notifications.'),
 (65, 'gk_MaxTabSize', '10', 'Maximum amount of money a learner can owe us before they are cut off from further jobs.'),
-(66, 'gk_MaxTicketTab', '10', 'Maximum amount of tickets a learner may have waiting for action before new ones are denied.');
+(66, 'gk_MaxTicketTab', '10', 'Maximum amount of tickets a learner may have waiting for action before new ones are denied.'),
+(67, 'banlist', "", 'Unique ID of users no longer allowed to use the services. Separate the IDs with , characters');
 
 -- --------------------------------------------------------
 
