@@ -33,7 +33,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <html>
 <head>
-    <title>FabApp - OffBoarding</title>
+    <title>BasementApp - OffBoarding</title>
     <link href="\vendor\iconpicker\css\fontawesome-iconpicker.min.css" rel="stylesheet">
 </head>
 <body>
@@ -42,7 +42,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <!-- Page Title -->
         <div class="row">
             <div class="col-lg-12">
-                <h1 class="page-header">FabApp OffBoarding</h1>
+                <h1 class="page-header">BasementApp OffBoarding</h1>
             </div>
             <!-- /.col-lg-12 -->
         </div>
@@ -65,7 +65,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <form method="POST" action="" id="myForm" autocomplete='off' onsubmit="return validateID()">
                                 <tr>
                                     <td>
-                                        <b data-toggle="tooltip" data-placement="top" title="Select Variant">Operator ID:</b>
+                                        <b data-toggle="tooltip" data-placement="top" title="Select Variant">User ID:</b>
                                     </td>
                                     <td>
                                         <div class="col-md-6">
@@ -133,7 +133,7 @@ function validateID(){
     if (stdRegEx("u_r_id", /^\d{1,2}$/, "Select a Role") === false){
         return false;
     }
-    if (stdRegEx("operators", /<?php echo $sv['regexUser'];?>/, "Invalid Operator ID #") === false){
+    if (stdRegEx("operators", /<?php echo $sv['regexUser'];?>/, "Invalid User ID #") === false){
         return false;
     }
 }

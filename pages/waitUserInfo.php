@@ -96,7 +96,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
                     <div class="panel-body">
                         <table class="table table-bordered table-striped table-hover"><form name="wqform" id="wqform" autocomplete="off" method="POST" action="">
                             <tr>
-                                <td><b data-toggle="tooltip" data-placement="top" title="Operator ID">Operator: </b></td>
+                                <td><b data-toggle="tooltip" data-placement="top" title="Operator ID">User ID: </b></td>
                                 <td><input type="text" name="operator" id="operator" class="form-control" value="<?php echo $old_operator?>" placeholder="1000000000" maxlength="10" size="10"/></td>
                             </tr><tr>
                                 <td><b data-toggle="tooltip" data-placement="top" title="email contact information">Email Address: </b></td>

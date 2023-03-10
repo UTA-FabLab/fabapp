@@ -182,9 +182,9 @@ function exit_with_success($message, $redirect=null) {
 											<a href='/pages/edit.php?trans_id=<?php echo $ticket->trans_id; ?>' class="bg-warning"/>Edit</a>
 										</li>
 									<?php } ?>
-									<li>
+							<!--	<li>
 										<a href="javascript: printBtn();"/>Print</a>
-									</li>
+									</li>   -->  <!-- disabling for Basement -->
 								</ul>
 							</div>
 						</div>
@@ -235,7 +235,7 @@ function exit_with_success($message, $redirect=null) {
 								</tr>
 							<?php } ?>
 							<tr>
-								<td>Operator</td>
+								<td>User</td>
 								<td>
 									<div class="btn-group">
 										<button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
@@ -289,9 +289,11 @@ function exit_with_success($message, $redirect=null) {
 							</div>
 						</div>
 					<?php 
+
 					}			//Added extra logic in this elseIf to accommodate zero-dollar tickets in storage correctly
 					elseif($ticket->status->status_id < $status["charge_to_acct"] && $ticket->remaining_balance() >= 0 && $ticket->status->status_id != $status["complete"] )			
 					{ ?>
+
 						<div class="panel-footer">
 							<div align="right">
 								<?php 
@@ -301,6 +303,7 @@ function exit_with_success($message, $redirect=null) {
 									echo "<a href='/pages/pay.php?trans_id=".$ticket->trans_id."'>";
 								?>
 									<button type="button" class="btn btn-primary">
+									<!-- This is the logic that enables the Pick Up vs Pay button -->																					
 										<?php echo $ticket->device->device_group->is_storable? "Pick Up" : "Pay"; ?>
 									</button>
 								</a>
@@ -358,7 +361,7 @@ function exit_with_success($message, $redirect=null) {
 								</tr>
 							<?php } ?>
 							<tr>
-								<td>Operator</td>
+								<td>User</td>
 								<td>
 									<div class="btn-group">
 										<button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">

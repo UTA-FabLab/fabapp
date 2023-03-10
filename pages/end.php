@@ -104,7 +104,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['end_button'])) {
 	{
 		$ticket->edit_transaction_information(array("status_id" => $status['charge_to_acct'], "notes" => $ticket_notes));
 		$_SESSION['success_msg'] = 	"There is no balance on the ticket. It is finished and ".
-											"learner is good to go.";
+											"gamer is good to go.";
 		header("Location:./lookup.php?trans_id=$trans_id");
 	}
 	// proceed to payment; if balance is negative, this is where they should be refunded
@@ -165,7 +165,7 @@ function exit_if_error($error, $redirect=null) {
 							<td class='col-md-9'><?php echo $ticket->device->name;?></td>
 						</tr>
 						<tr>
-							<td>Operator</td>
+							<td>User</td>
 							<td>
 								<div class="btn-group">
 									<button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
@@ -216,18 +216,17 @@ function exit_if_error($error, $redirect=null) {
 													<?php if(StorageObject::object_is_in_storage($ticket->trans_id)) echo "selected"; ?>>
 														Storage
 													</option>
-													<option value='<?php echo $status['complete']; ?>'>Pick Up</option>
+<!--													<option value='<?php echo $status['complete']; ?>'>Pick Up</option>  -->
 												<?php } 
 												else {?>
-													<option value='<?php echo $status['complete']; ?>'>Complete</option>
+													<option value='<?php echo $status['complete']; ?>'>Completed</option>
 												<?php } ?>
 												<option value='<?php echo $status['cancelled']; ?>'>Cancelled</option>
 												<?php
 												if(!$ticket->device->device_group->is_juiceboxManaged)
 												{
 													?>
-													<option value='<?php echo $status['partial_fail']; ?>'>Partial Fail</option>
-													<option value='<?php echo $status['total_fail']; ?>'>Total Fail</option>
+													<option value='<?php echo $status['total_fail']; ?>'>Hardware Failure</option>
 													<?php
 												}
 												?>

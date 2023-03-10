@@ -24,7 +24,6 @@ class Wait_queue {
 
 
 
-
     public function __construct($q_id){
         global $mysqli;
 
@@ -67,6 +66,7 @@ class Wait_queue {
         global $sv;
         $wq_ticketNum = $sv['wq_ticketNum'];
         $isGranular;
+
         /**
          * TODO: variable validation
          * d_id, dg_id
@@ -79,13 +79,27 @@ class Wait_queue {
         }
         
         if (!self::regexOperator($operator)) {
-            return ("<div class='alert alert-danger'>Bad Operator Number - $operator</div>");
+            return ("<div class='alert alert-danger'>Bad User Number - $operator</div>");
         }
         
         if(!filter_var($email, FILTER_VALIDATE_EMAIL) && !empty($email)) {
             return ("<div class='alert alert-danger'>Bad Email - $email</div>");
         }
+  
+  
+//Attempt to get the granularity value of the device group since it's not automatically passed in during creation      
+
+		if ($result = $mysqli->query(" SELECT * FROM `device_group` WHERE `device_group`.`dg_id` = " . $dg_id ) )
+			{
+				$row = $result->fetch_assoc();
+				$isGranular = $row['granular_wait'];			
+			}
+		else {
+			error_log("Cannot obtain information from device_group table and obtain granularity data");	
+			return ("<div class='alert alert-danger'>".$mysqli->error."</div>");
+		}
         
+
 		
 		//Attempt to get the granularity value of the device group since it's not automatically passed in during creation      
 
@@ -102,6 +116,7 @@ class Wait_queue {
        if(isset($d_id) && isset($dg_id) && $isGranular == 'Y'  ) {				//this is the granular logic
 
             if ($mysqli->query("
+
                 INSERT INTO `wait_queue` 
                   (`operator`,`dev_id`,`Devgr_id`,`start_date`, `Op_email`, `Op_phone`, `carrier`) 
                 VALUES
@@ -109,7 +124,7 @@ class Wait_queue {
 
             ")){
                 $insert_id = $mysqli->insert_id;
-                Notifications::sendNotification($insert_id, "FabApp Notification", $wq_ticketNum .$insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
+                Notifications::sendNotification($insert_id, "BasementApp Notification", $wq_ticketNum .$insert_id . "", 'From: BasementApp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateDeviceWaitTimes();
                 //Commented out for Dev purposes
                 if($error = Wait_queue::printTicket($insert_id))
@@ -120,7 +135,9 @@ class Wait_queue {
                 return ("<div class='alert alert-danger'>".$mysqli->error."</div>");
             }
 
-        } else {					//this is the non-granular logic, and now works for all device groups!
+
+        } else {				//this is the non-granular logic, and now works for all device groups!
+	
             if ($mysqli->query("
                 INSERT INTO wait_queue 
                   (`operator`, `Devgr_id`,`start_date`, `Op_email`, `Op_phone`, `carrier`) 
@@ -128,7 +145,8 @@ class Wait_queue {
                     ('$operator','$dg_id',CURRENT_TIMESTAMP, '$email', '$phone', '$carrier_name');
             ")){
                 $insert_id = $mysqli->insert_id;   
-                Notifications::sendNotification($insert_id, "FabApp Notification", $wq_ticketNum .$insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
+//				error_log("Insert_ID value is:  " . $insert_id . " This should be reached after the insert query finishes.  "); 		//Diagnostic line to help track down logic problems
+                Notifications::sendNotification($insert_id, "BasementApp Notification", $wq_ticketNum .$insert_id."", 'From: BasementApp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateWaitTimes();
                 //Commented out for Dev purposes
 		if($error = Wait_queue::printTicket($insert_id))
@@ -154,7 +172,7 @@ class Wait_queue {
             
             if ($row['Total'] > 0)
             {
-                echo ("This operator is waiting on another ticket, so it's info won't be deleted");
+                echo ("This user is waiting on another ticket, so it's info won't be deleted");
                 return true;
             }
             return false;
@@ -186,7 +204,7 @@ class Wait_queue {
 
 
             // Send a notification that they have canceled their wait queue ticket
-            Notifications::sendNotification($queueItem->q_id, "FabApp Notification", $wq_ticketCancel, 'From: FabApp Notifications' . "\r\n" .'', 0);
+            Notifications::sendNotification($queueItem->q_id, "BasementApp Notification", $wq_ticketCancel, 'From: BasementApp Notifications' . "\r\n" .'', 0);
 			
 			//Evaluate to see if operator issuing cancellation request is the operator listed in the wait queue ticket
 			//If true then perform email address verification
@@ -194,7 +212,7 @@ class Wait_queue {
 			//If filter_var result is anything but FALSE, notice is transmitted - this probably needs better evaluation
 			if ($wq_LoggedInUserOperator == $operator) {
 				if(filter_var($wq_secondNotification, FILTER_VALIDATE_EMAIL) != false ) {
-					Notifications::sendMail($wq_secondNotification, "FabApp Self-Cancellation Notice", 'Learner has cancelled their own wait ticket, #' . $queueItem->q_id . '.  Please update things accordingly.') ;
+					Notifications::sendMail($wq_secondNotification, "BasementApp Self-Cancellation Notice", 'Gamer has cancelled their own wait ticket, #' . $queueItem->q_id . '.  Please update things accordingly.') ;
 				}
 			}
         
@@ -265,7 +283,7 @@ class Wait_queue {
         }
         
 
-        Notifications::sendNotification($q_id, "FabApp Notification", $wq_ticketComplete, 'From: FabApp Notifications' . "\r\n" .'', 0);
+        Notifications::sendNotification($q_id, "BasementApp Notification", $wq_ticketComplete, 'From: BasementApp Notifications' . "\r\n" .'', 0);
         
 
         $msg = Wait_queue::deleteContactInfo($q_id);
@@ -305,7 +323,7 @@ class Wait_queue {
             $status1 = Wait_queue::hasDGWait($new_operator , $devgr_id);
             if($status1){
                 $status = 1;
-                return "Operator is already in this Wait Queue - $new_operator";
+                return "User is already in this Wait Queue - $new_operator";
             }
         }
         if ($old_operator == $new_operator){
@@ -634,7 +652,9 @@ class Wait_queue {
         global $mysqli;
         global $tphost, $tpport;
         $est_cost = 0;
-
+		
+//Disabling this for the Basement, no printer used/necessary.  Uncomment to re-enable wait queue ticket printing.		
+/*
         if($result = $mysqli->query("
             SELECT `wait_queue`.`estTime`, `wait_queue`.`Q_id`, `devices`.`device_desc`
             FROM `wait_queue`
@@ -694,7 +714,7 @@ class Wait_queue {
             $printer -> setEmphasis(true);
             $printer -> text("1. ");
             $printer -> setEmphasis(false);
-            $printer -> text("Check http://fabapp.uta.edu for the\n");
+            $printer -> text("Check http://BasementApp.uta.edu for the\n");
             $printer -> text("lastest status on who's being called and\n");
             $printer -> text("get an alert.\n");
             $printer -> feed();
@@ -702,7 +722,7 @@ class Wait_queue {
             $printer -> setEmphasis(true);
             $printer -> text("2. ");
             $printer -> setEmphasis(false);
-            $printer -> text("FabApp only gives estimates & more\n");
+            $printer -> text("BasementApp only gives estimates & more\n");
             $printer -> text("than one machine may become available\n");
             $printer -> text("at a time. Stay in the lab if your\n");
             $printer -> text("number is close.\n");
@@ -741,10 +761,10 @@ class Wait_queue {
             $printer -> cut();
 
             /* Close printer */
-            $printer -> close();
+    /*      $printer -> close();
         } catch (Exception $e) {
             echo "Couldn't print to this printer: " . $e -> getMessage() . "\n";
-        }
+        }  */
     }
     
     public function setWaitId($q_id) {
@@ -770,7 +790,7 @@ class Wait_queue {
     public function setDevgrId($dg_id) {
         $this->device_group = $dg_id;
     }
-
+	
     public function setOperator($op) {
         $this->operator = $op;
     }
@@ -787,15 +807,15 @@ class Wait_queue {
         $this->last_contacted = $lastContact;
     }
 
-    public function getPhone() {
+	public function getPhone() {
         return $this->phone_num;
     }
 
     public function getEmail() {
         return $this->email;
     }
-
-    public function getLastContacted() {
+	
+	public function getLastContacted() {
         return $this->last_contacted;
     }
 

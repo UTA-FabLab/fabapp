@@ -9,7 +9,7 @@
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="description" content="FabApp, track your equipment">
+	<meta name="description" content="BasementApp, track your equipment">
 	<meta name="author" content="UTA FabLab">
 	<link rel="shortcut icon" href="/images/fa-icon.png" type="image/png">
 	
@@ -148,7 +148,7 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 					<span class="icon-bar"></span>
 					<span class="icon-bar"></span>
 				</button>
-				<a class="navbar-brand" id="navbar-brand" href="http://fablab.uta.edu"><img src="/images/FLlogo_143.png" type="image/png"></a>
+				<a class="navbar-brand" id="navbar-brand" href="https://libraries.uta.edu/locations/basement"><img src="/images/FLlogo_143.png" type="image/png"></a>
 			</div>
 			<!-- /.navbar-header -->
 			<ul class="nav navbar-top-links navbar-right">
@@ -207,11 +207,14 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 				<div class="sidebar-nav navbar-collapse">
 					<ul class="nav" id="side-menu">
 						<li>
-							<a href="/index.php"><i class="fas fa-ticket-alt"></i> FabApp</a>
+							<a href="/index.php"><i class="fas fa-ticket-alt"></i> BasementApp</a>
 						</li>
-						<?php if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfStaff']) { ?>
+						<?php if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfStaff'] ) { ?>				<!-- Shifting the Tools and Objects in Storage to staff-level and higher view -->
 							<li>
-								<a href="/admin/error.php"><i class="fas fa-bolt"></i> Error</a>
+								<a href="/pages/tools.php"><i class="fas fa-toolbox"></i> Tools</a>
+							</li>
+							<li>
+								<a href="/admin/objbox.php"><i class="fas fa-gift"></i> Objects in Storage</a>
 							</li>
 						<?php } 
 						if(isset($staff) && $staff->getRoleID() >= $sv['LvlOfLead']) { ?>
@@ -228,10 +231,10 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 									<li>
 										<a href="/pages/inventory_materials.php"><i class='fa fa-plus-circle'></i> Inventory Materials</a>
 									</li>
-									<?php } ?>
-									<li>
+									<?php } ?> 
+							<!--    <li>
 										<a href="/pages/sheet_goods.php"><i class="fas fa-square"></i> Sheet Goods</a>
-									</li>
+									</li>  -->   <!-- disabling because it doesn't work and was redundant in the first place -->
 								</ul>
 								<!-- /.nav-second-level -->
 							</li>
@@ -244,9 +247,9 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 										<li>
 											<a href="/pages/inventory.php"><i class="fas fa-box"></i> On Hand</a>
 										</li>
-										<li>
+							<!--		<li>
 											<a href="/pages/sheet_goods.php"><i class="fas fa-square"></i> Sheet Goods</a>
-										</li>
+										</li>	-->  <!-- Disabling because it doesn't work and was redundant in the first place -->
 									</ul>
 									<!-- /.nav-second-level -->
 								</li>
@@ -275,7 +278,7 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 								</ul>
 							</li>
 							<li>
-								<a href="#" id="pickLink"><i class="fas fa-gift"></i> Pick Up 3D Print<span class="fas fa-angle-left"></span></a>
+								<a href="#" id="pickLink"><i class="fas fa-gift"></i> Pick Up Stored Item<span class="fas fa-angle-left"></span></a>
 								<ul class="nav nav-second-level">
 								<form name="pickForm" method="POST" action="" autocomplete="off" onsubmit="return validateNum('pickForm')">
 									<li class="sidebar-search">
@@ -290,7 +293,7 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 									</li>
 								</form>
 								</ul>
-							</li>
+							</li> 
 							<?php if ($sv['wait_system'] != "new") { ?>
 								<li>
 									<a href="/admin/now_serving.php"><i class="fas fa-list-ol"></i> Now Serving</a>
@@ -315,14 +318,11 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 								<!-- /.nav-second-level -->
 							</li>
 						<?php } ?>
-							<li>
-								<a href="/pages/tools.php"><i class="fas fa-toolbox"></i> Tools</a>
-							</li>
 						<?php
-						if (isset($staff) && ($staff->getRoleID() >=  $sv['LvlOfLead'])) { ?>
+						if (isset($staff) && ($staff->getRoleID() >=  $sv['LvlOfLead']) And 1 == 0 ) { ?>		// disabling for Basement
 							<li>
 							<?php
-								if (OfflineTrans::haveOfflineTrans()) { ?>
+								if (OfflineTrans::haveOfflineTrans() ) { ?>
 									<a href="/pages/offline_ticket.php" style="color:#FF0000;"><i class="fas fa-history"></i> Offline Transactions</a>
 								<?php }
 								else { ?>
@@ -330,7 +330,7 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 								<?php } ?>
 							</li>
 						<?php }
-						if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfLead']) { ?>
+						if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfLead'] And 1 == 0) { ?>			// disabling for Basement 
 							<li>
 								<a herf="#"><i class="fas fa-book"></i> Training<span class="fas fa-angle-left"></span></a>
 								<ul class="nav nav-third-level">
@@ -363,9 +363,6 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 										<a href="/admin/manage_device.php"><i class="fas fa-edit"></i> Manage Devices</a>
 									</li>
 									<li>
-										<a href="/admin/objbox.php"><i class="fas fa-gift"></i> Objects in Storage</a>
-									</li>
-									<li>
 										<a herf="#"><i class="fas fa-users"></i> Users<span class="fas fa-angle-left"></span></a>
 										<ul class="nav nav-third-level">
 											<li>
@@ -374,9 +371,9 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 											<li>
 												<a href="/admin/offboarding.php"><i class="fas fa-user-times"></i> OffBoarding</a>
 											</li>
-											<li>
+									<!--	<li>
 												<a href="/admin/addrfid.php"><i class="fas fa-wifi"></i> Add RFID</a>
-											</li>
+											</li>   -->     <!-- Disabling for Basement -->
 										</ul>
 									</li>
 								</ul>

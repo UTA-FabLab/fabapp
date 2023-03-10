@@ -187,7 +187,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['restore_training'])
 					<table id="teTable" class="table table-striped">
 						<thead>
 							<tr>
-								<th class='col-md-1' align='center'>Operator</th>
+								<th class='col-md-1' align='center'>User</th>
 								<th class='col-md-1' align='center'>Completed</th>
 								<th class='col-md-2' align='center'>Staff Approval</th>
 								<th class='col-md-3'>Training Module</th>
