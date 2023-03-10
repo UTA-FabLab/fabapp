@@ -169,7 +169,7 @@ function exit_with_success($message, $redirect=null) {
 							<td><?php echo "$ticket->t_start <strong>–</strong> $ticket->t_end"; ?></td>
 						</tr>
 						<tr>
-							<td>User</td>
+							<td>Operator</td>
 							<td>
 								<i class="<?php echo $ticket->user->icon; ?> fa-lg" 
 								title="<?php if($staff->role >= $role["admin"]) echo $ticket->user->operator; ?>"></i>
@@ -224,7 +224,7 @@ function exit_with_success($message, $redirect=null) {
 									<?php if($material->is_measurable) { ?>
 										<tr>
 											<td>
-												Storage Price
+												Price
 											</td>
 											<td>
 												<?php echo "<i class='$sv[currency]'></i>".sprintf("%0.2f", $material->price); ?>
@@ -232,7 +232,7 @@ function exit_with_success($message, $redirect=null) {
 										</tr>
 										<tr>
 											<td>
-												Amount Stored
+												Amount Used
 											</td>
 											<td>
 												<?php echo $mat_used->quantity_used."  $material->unit"; ?>
@@ -271,13 +271,13 @@ function exit_with_success($message, $redirect=null) {
 		<div class="col-md-6">
 			<div class="panel panel-primary">
 				<div class="panel-heading">
-					<i class="fas fa-calculator"></i> Confirm Pickup
+					<i class="fas fa-calculator"></i> Method of Payment
 				</div>
 				<form id='payment_form' name='payment_form' method="post" action="" onsubmit="return confirm_payment()" autocomplete="off">
 					<div class="panel-body">
 						<table class="table table-bordered">
 							<tr>
-								<td>Owner</td>
+								<td>Payer</td>
 								<td>
 									<div class='input-group'>
 										<input type="text" class="form-control danger" placeholder="Enter ID #" style='color:#d9534f;'
@@ -479,7 +479,7 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	function adjust_submit_button_for_payment_type(payment_select) {
 		var button = document.getElementById("pay_button")
 		// pay site
-		if(payment_select.value == 2 && <?php echo $ticket->remaining_balance()  ?>) {
+		if(payment_select.value == 2 && <?php echo $ticket->remaining_balance() ?>) {
 			button.innerHTML = "Launch <?php echo $sv['paySite_name'];?>";
 			button.onclick = launch_pay_site;
 			button.type = "button";

@@ -62,11 +62,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
         
 // Temporarily disabling single wait tickets per queue for flipped service model operation.
 // To re-enable limiting users to 1 wait ticker per machine queue, remove the block comments and the comment marks noted below        
-        if ($wait_status)
+/*        if ($wait_status)
         {
             $wt_msg = $operatorInQueueAlert;
         } else {
-
+*/
             if($ph1 && !isset($_POST['carrier_name'])){
                 $wt_msg = $carrierAlert;
             } elseif (!$ph1 && isset($_POST['carrier_name'])){
@@ -84,9 +84,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                     $wt_msg = $wait_id1;
                 }
             }
-      }   //Un-comment this bracket to re-enable single wait tickets per machine queue
+//      }   //Un-comment this bracket to re-enable single wait tickets per machine queue
     } else {
-        // devices and device group set this line as unreachable.
+        // devices and device group set this line is unreachable.
         $wt_msg = $selectDeviceAlert;
     }
 }
@@ -138,7 +138,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                             </td>
                         </tr>
                         <tr>
-                            <td><a href="#" data-toggle="tooltip" data-placement="top" title="The person's MavID that you will issue a wait ticket for">User </a></td>
+                            <td><a href="#" data-toggle="tooltip" data-placement="top" title="The person's MavID that you will issue a wait ticket for">Operator</a></td>
                             <td><input type="text" name="operator1" id="operator1" class="form-control" placeholder="1000000000" maxlength="10" size="10" value="<?php echo $operator1;?>" tabindex="1" oninput="inUseCheck()"/></td>
                         </tr>
                         <tr>
@@ -176,7 +176,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                         </tr>
                         <tr id="tr_verify" hidden>
                             <td colspan="2">
-                                <label for="warnCB">User has an active Ticket, please inform user of policy.</label>
+                                <label for="warnCB">Opererator has an active Ticket, please inform user of policy.</label>
                                 <input type="checkbox" id="warnCB" onchange="warnedCB()"/>
                             </td>
                         </tr>
@@ -242,7 +242,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                     </td>
                                 </tr>
                                 <tr> <br>
-                                    <td><p><b>User: </b><span type="password" id="processOperator"></span></p></td>
+                                    <td><p><b>Operator: </b><span type="password" id="processOperator"></span></p></td>
                                     <td><input type="text" name="operator_ticket" id="operator_ticket" class="form-control" placeholder="1000000000" maxlength="10" size="10"/></td>
                                 </tr>
                             </div>

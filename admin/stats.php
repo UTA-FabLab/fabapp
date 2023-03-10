@@ -64,7 +64,7 @@ $tables = Database_Table::get_tables();
 					<!-- pie chart -->
 					<div>
 						<canvas id='piechart' width="1000px" height="1500px" hidden>Your browser does not support graphics</canvas>
-						<a id='download' download="BasementApp_PieChart.png" href="" onclick="download_piechart(this);" hidden></a>
+						<a id='download' download="FabApp_PieChart.png" href="" onclick="download_piechart(this);" hidden></a>
 					</div>
 					<!-- Prebuilt inputs -->
 					<table class='table'> 

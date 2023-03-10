@@ -170,7 +170,7 @@ function exit_with_success($message, $redirect=null) {
 								<td class='col-md-9'><?php echo $ticket->device->name;?></td>
 							</tr>
 							<tr>
-								<td>User</td>
+								<td>Operator</td>
 								<td>
 									<div class="btn-group">
 										<button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">

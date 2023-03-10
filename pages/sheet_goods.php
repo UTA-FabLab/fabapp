@@ -78,7 +78,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['checkout_button'])) {
         }
     } else {
         if(strlen($sell_op->operator)!=10){
-            $_SESSION['error_msg'] = "Please enter a correct User ID in the 'Purchaser User ID' field.";
+            $_SESSION['error_msg'] = "Please enter a correct operator ID in the 'Purchaser Operator ID' field.";
             header("Location: /pages/sheet_goods.php");   
         }
         if(empty($status_id)){
@@ -287,7 +287,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['checkout_button'])) {
                             <table class="table table-bordered table-striped">
                                 <tr>
                                     <td>
-                                        <b>Purchaser User ID</b>
+                                        <b>Purchaser Operator ID</b>
                                     </td>
                                     <td>
                                         <input type="text" name="sell_operator" id="sell_operator" class="form-control" placeholder="1000000000" maxlength="10" size="10" onpaste="return false;"/>
