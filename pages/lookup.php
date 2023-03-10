@@ -289,9 +289,11 @@ function exit_with_success($message, $redirect=null) {
 							</div>
 						</div>
 					<?php 
-					}																																							//Added extra logic in elseIf to accommodate zero-dollar tickets in storage correctly				
+
+					}			//Added extra logic in this elseIf to accommodate zero-dollar tickets in storage correctly
 					elseif($ticket->status->status_id < $status["charge_to_acct"] && $ticket->remaining_balance() >= 0 && $ticket->status->status_id != $status["complete"] )			
-					{ ?>																		
+					{ ?>
+
 						<div class="panel-footer">
 							<div align="right">
 								<?php 
