@@ -21,7 +21,9 @@ class Wait_queue {
     private $phone_num;
     private $email;
     private $last_contacted;
-
+	
+	
+    
 
 
     public function __construct($q_id){
@@ -65,8 +67,8 @@ class Wait_queue {
         global $mysqli;
         global $sv;
         $wq_ticketNum = $sv['wq_ticketNum'];
-        $isGranular;
-
+		$isGranular;
+	
         /**
          * TODO: variable validation
          * d_id, dg_id
@@ -99,24 +101,11 @@ class Wait_queue {
 			return ("<div class='alert alert-danger'>".$mysqli->error."</div>");
 		}
         
-
-		
-		//Attempt to get the granularity value of the device group since it's not automatically passed in during creation      
-
-		if ($result = $mysqli->query(" SELECT * FROM `device_group` WHERE `device_group`.`dg_id` = " . $dg_id ) )
-			{
-				$row = $result->fetch_assoc();
-				$isGranular = $row['granular_wait'];			
-			}
-		else {
-			error_log("Cannot obtain information from device_group table and obtain granularity data");	
-			return ("<div class='alert alert-danger'>".$mysqli->error."</div>");
-		}
-        
-       if(isset($d_id) && isset($dg_id) && $isGranular == 'Y'  ) {				//this is the granular logic
-
-            if ($mysqli->query("
-
+        if(isset($d_id) && isset($dg_id) && $isGranular == 'Y'  ) {				//this is the granular logic
+			
+            
+			
+			if ($mysqli->query("		
                 INSERT INTO `wait_queue` 
                   (`operator`,`dev_id`,`Devgr_id`,`start_date`, `Op_email`, `Op_phone`, `carrier`) 
                 VALUES
@@ -135,10 +124,9 @@ class Wait_queue {
                 return ("<div class='alert alert-danger'>".$mysqli->error."</div>");
             }
 
-
         } else {				//this is the non-granular logic, and now works for all device groups!
 	
-            if ($mysqli->query("
+            if ($mysqli->query("		
                 INSERT INTO wait_queue 
                   (`operator`, `Devgr_id`,`start_date`, `Op_email`, `Op_phone`, `carrier`) 
                 VALUES

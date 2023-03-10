@@ -268,7 +268,7 @@ function advanceNum($i, $str){
 														
 														while ( $rows = mysqli_fetch_array ( $result ) ) {
 															// Create value in the form of DG_dgID-dID
-													//		error_log("The contents of the index.php Selec Device dropdown are: " . print_r($rows, true) );
+															error_log("The contents of the index.php Selec Device dropdown are: " . print_r($rows, true) );
 															echo "<option value=". "DG_" . $rows ['dg_id'] . "-" . $rows ['d_id'].">" . $rows ['device_desc'] . "</option>";
 														}
 													} else {
