@@ -115,7 +115,7 @@ class Devices {
 	public static function printDot($staff, $device_id){
 		global $mysqli, $sv;
 
-		$COLORS = array("red" => "#FF0000", "yellow" => "#FFFF00", "green" => "#008000", "blue" => "#0000FF", "purple" => "#CC00FF", "white" => "FFFFFF");
+		$COLORS = array("red" => "#FF0000", "yellow" => "#FFFF00", "green" => "#008000", "blue" => "#0000FF", "purple" => "#CC00FF");
 		
 		//look up current device status
 		$color = "white";
@@ -135,16 +135,14 @@ class Devices {
 					LIMIT 1;";
 		if($result = $mysqli->query($lookup)){
 			$device_status = $result->fetch_assoc();
-			if(isset($device_status) ){								//This is necessary to get PHP 7.4 to not spam php messages and create massive error logs
-				if(7 < $device_status["service_issue"]) {
-					$symbol = "times";
-					$color = "red";
-				}
-				elseif($device_status["service_issue"]) $color = "yellow";
-				elseif($device_status["status"] == "active") $color = "blue";
-				elseif($device_status["status"] == "moveable") $color = "purple";
-				else $color = "green";
-			} 
+			if(7 < $device_status["service_issue"]) {
+				$symbol = "times";
+				$color = "red";
+			}
+			elseif($device_status["service_issue"]) $color = "yellow";
+			elseif($device_status["status"] == "active") $color = "blue";
+			elseif($device_status["status"] == "moveable") $color = "purple";
+			else $color = "green";
 		}
 		
 		if($staff){

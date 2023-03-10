@@ -2,7 +2,6 @@
 /*
  * Jon Le 2016-2018
  * FabApp V 0.91
- * Edited by Eric Olson 3/8/23 for more-correct input filtering and bugfix with intaking device IDs from referrer
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/header.php');
 
@@ -11,16 +10,8 @@ if (!isset($staff) || ($staff->getRoleID() < $sv['LvlOfStaff'] && $staff->getRol
     $_SESSION['error_msg'] = "You must be logged in to report an issue.";
     header ( 'Location: /index.php' );
 }
-
-if (!empty($_GET['device_id'])  && Devices::regexDeviceID($_GET['device_id']) ) {
-	if (filter_var( $_GET['device_id'], FILTER_VALIDATE_INT) )
-	{
-		$device = new Devices($_GET['device_id']) ;
-	}
-	
-} else {
-	error_log("LINE 22 This line has been reached because the if statement for $ _ GET [device_id] came up false for a reason");
-	error_log("LINE 23 The device_id value transmitted transmitted to the page is: " . $_GET['device_id'] );
+if (!empty(filter_input(INPUT_GET, "d_id")) && Devices::regexDeviceID($_GET["d_id"])) {
+    $device = new Devices(filter_input(INPUT_GET, 'd_id'));
 }
 if ($_SERVER["REQUEST_METHOD"] === "POST" && filter_has_var(INPUT_POST, 'btnHistory') ){
     $d_id = explode("-", filter_input(INPUT_POST, 'devices'));
@@ -43,8 +34,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && filter_has_var(INPUT_POST, 'btnHist
     </div>
     <!-- /.row -->
     <div class="row">
-        <?php 
-		if (isset($device)){ ?>
+        <?php if (isset($device)){ ?>
         <div class="col-lg-8">
             <div class="panel panel-default">
                 <div class="panel-heading">
@@ -56,8 +46,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && filter_has_var(INPUT_POST, 'btnHist
                     <table id="historyTable" class="table table-striped table-bordered">
                         <thead>
                             <tr>
-                                <th>Opened On</th>
-								<th>Opened By</th>
+                                <th>Opened By</th>
                                 <th>Reply Count</th>
                                 <th>Solved</th>
                                 <th>Service Notes</th>
@@ -69,16 +58,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && filter_has_var(INPUT_POST, 'btnHist
                             <tr>
                                 <td>
                                     <div class="btn-group">
-                                        
-                                            <?php echo date($sv['dateFormat'], strtotime($row["sc_time"])); ?>
-                                        
+                                        <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                                            <i class='far fa-calendar-alt' title="<?php echo date($sv['dateFormat'], strtotime($row["sc_time"])); ?>"></i>
+                                        </button>
                                         <ul class="dropdown-menu" role="menu">
                                             <li style="padding-left: 5px;"><?php echo date($sv['dateFormat'], strtotime($row["sc_time"])); ?></li>
                                         </ul>
                                     </div>
-                                </td>
-								<td> 
-									<?php $staff = Staff::withID($row['staff_id']); ?>
+                                    <?php $staff = Staff::withID($row['staff_id']); ?>
                                     <div class="btn-group">
                                         <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
                                             <i class="<?php echo $staff->getIcon();?> fa-lg" title="<?php echo $staff->getOperator();?>"></i>
@@ -87,7 +74,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && filter_has_var(INPUT_POST, 'btnHist
                                             <li style="padding-left: 5px;"><?php echo $staff->getOperator();?></li>
                                         </ul>
                                     </div>
-								</td>
+                                </td>
                                 <td><?php 
                                     $sr = Service_reply::bySc_id($row['sc_id']);
                                     echo("<a href = '/pages/sr_log.php?sc_id=$row[sc_id]'>".count($sr)."</a>"); 
