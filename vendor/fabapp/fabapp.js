@@ -58,7 +58,6 @@ function loadingModal(){
 function newTicket(){
     var device_id = document.getElementById("devGrp").value;
     var o_id = document.getElementById("operator_ticket").value;
-	console.log("o_id value is : " + o_id );
 	var o_id1 = document.getElementById('processOperator').innerHTML;
 
     if (device_id){
@@ -75,17 +74,17 @@ function newTicket(){
 
             device = "d_id=" + device_id + "&operator=" + o_id;
             var dest = "";
-           if (device  != "" && o_id.length==10){
+            if (device  != "" && o_id.length==10){
                 if (device_id.substring(0,1) == "2"){
                     dest = "http://polyprinter-"+device_id.substring(1)+".uta.edu";
                     window.open(dest,"_self")
-                } 
-                else { 
+                }
+                else {
                     var dest = "/pages/create.php?";
                     dest = dest.concat(device);
                     console.log(dest);
                     window.location.href = dest;
-              } 
+                } 
             } 
             else {
                 if (o_id.length!=10){

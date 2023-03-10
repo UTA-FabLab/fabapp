@@ -5,7 +5,6 @@
  */
 include_once ($_SERVER['DOCUMENT_ROOT'].'/class/Users.php');
 
-
 ///////////////////////////////////////////////////////////////
 //
 //   Gatekeeper
@@ -102,8 +101,6 @@ function gatekeeper ($operator, $d_id) {
 	} else {
 		return array ("status_id" => 0, "ERROR" => "gk".$mysqli->error, "authorized" => "N");
 	}
-	
-	
 	////////////////////////////////////////////////////////
 	//
 	//  Deny if user is on banlist 
@@ -113,7 +110,6 @@ function gatekeeper ($operator, $d_id) {
 	{																			//double entry or missing delimiter from giving a false result
 		return array ("status_id" => 1, "ERROR" => "ID is no longer allowed to use The Basement's resources", "authorized" => "N");
 	}
-		
 	
 	////////////////////////////////////////////////////////
 	//

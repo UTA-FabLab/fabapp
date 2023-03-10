@@ -216,7 +216,7 @@ function exit_if_error($error, $redirect=null) {
 													<?php if(StorageObject::object_is_in_storage($ticket->trans_id)) echo "selected"; ?>>
 														Storage
 													</option>
-<!--													<option value='<?php echo $status['complete']; ?>'>Pick Up</option>  -->
+<!--													<option value='<?php echo $status['complete']; ?>'>Pick Up</option>  
 												<?php } 
 												else {?>
 													<option value='<?php echo $status['complete']; ?>'>Completed</option>

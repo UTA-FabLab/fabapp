@@ -293,7 +293,7 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 									</li>
 								</form>
 								</ul>
-							</li> 
+							</li>
 							<?php if ($sv['wait_system'] != "new") { ?>
 								<li>
 									<a href="/admin/now_serving.php"><i class="fas fa-list-ol"></i> Now Serving</a>
