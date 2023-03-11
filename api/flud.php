@@ -58,7 +58,7 @@ if ($sv['api_key'] == "") {
         ErrorExit(1);
     }
 } else {
-	error_log("Received headers are: " . print_r($headers,1) );
+//	error_log("Received headers are: " . print_r($headers,1) );
     $json_out["ERROR"] = "Header Are Not Set";
     ErrorExit(1);
 }
@@ -67,7 +67,7 @@ if ($sv['api_key'] == "") {
 // Input posted with "Content-Type: application/json" header
 $input_data = json_decode(file_get_contents('php://input'), true);
 if (! ($input_data)) {
-	error_log("Contents of input_data are: " . print_r($input_data,1) );
+//	error_log("Contents of input_data are: " . print_r($input_data,1) );
     $json_out["ERROR"] = "Unable to decode JSON message - check syntax";
     ErrorExit(1);
 }

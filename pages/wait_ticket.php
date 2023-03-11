@@ -176,7 +176,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                         </tr>
                         <tr id="tr_verify" hidden>
                             <td colspan="2">
-                                <label for="warnCB">Opererator has an active Ticket, please inform user of policy.</label>
+                                <label for="warnCB">Operator has an active Ticket, please inform user of policy.</label>
                                 <input type="checkbox" id="warnCB" onchange="warnedCB()"/>
                             </td>
                         </tr>

@@ -65,7 +65,7 @@ class Wait_queue {
         global $mysqli;
         global $sv;
         $wq_ticketNum = $sv['wq_ticketNum'];
-        $isGranular;
+		$isGranular;
 
         /**
          * TODO: variable validation
@@ -87,8 +87,7 @@ class Wait_queue {
         }
   
   
-//Attempt to get the granularity value of the device group since it's not automatically passed in during creation      
-
+//Attempt to get the granularity value of the device group since it's not automatically passed in during creation
 		if ($result = $mysqli->query(" SELECT * FROM `device_group` WHERE `device_group`.`dg_id` = " . $dg_id ) )
 			{
 				$row = $result->fetch_assoc();
@@ -97,22 +96,7 @@ class Wait_queue {
 		else {
 			error_log("Cannot obtain information from device_group table and obtain granularity data");	
 			return ("<div class='alert alert-danger'>".$mysqli->error."</div>");
-		}
-        
-
-		
-		//Attempt to get the granularity value of the device group since it's not automatically passed in during creation      
-
-		if ($result = $mysqli->query(" SELECT * FROM `device_group` WHERE `device_group`.`dg_id` = " . $dg_id ) )
-			{
-				$row = $result->fetch_assoc();
-				$isGranular = $row['granular_wait'];			
-			}
-		else {
-			error_log("Cannot obtain information from device_group table and obtain granularity data");	
-			return ("<div class='alert alert-danger'>".$mysqli->error."</div>");
-		}
-        
+		}        
        if(isset($d_id) && isset($dg_id) && $isGranular == 'Y'  ) {				//this is the granular logic
 
             if ($mysqli->query("
