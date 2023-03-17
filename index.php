@@ -549,7 +549,6 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 				document.getElementById("processOperator").innerHTML = this.responseText;
 			}
 		};
-		
 		xmlhttp.open("GET","/pages/sub/getWaitQueueID.php?val="+ document.getElementById("devGrp").value, true);
 		xmlhttp.send();
 	}
