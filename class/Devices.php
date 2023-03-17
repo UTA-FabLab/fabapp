@@ -119,7 +119,7 @@ class Devices {
 		
 		//look up current device status
 		$color = "white";
-		$symbol = "circle";
+		$symbol = "circle";			
 		$lookup = 	"SELECT  `status`.`variable` AS status, 
 								(SELECT `sl_id`
 								 FROM `service_call`
@@ -132,7 +132,7 @@ class Devices {
 					ON `status`.`status_id` = `transactions`.`status_id`
 					WHERE `d_id` = '$device_id'
 					ORDER BY `transactions`.`t_start` DESC
-					LIMIT 1;";
+					LIMIT 1;";							//this query depends on there being at least 1 transaction for a device to show up, devices will have white dots until they have had one
 		if($result = $mysqli->query($lookup)){
 			$device_status = $result->fetch_assoc();
 			if(isset($device_status) ){								//This is necessary to get PHP 7.4 to not spam php messages and create massive error logs
