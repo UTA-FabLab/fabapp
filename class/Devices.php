@@ -135,7 +135,7 @@ class Devices {
 					LIMIT 1;";							//this query depends on there being at least 1 transaction for a device to show up, devices will have white dots until they have had one
 		if($result = $mysqli->query($lookup)){
 			$device_status = $result->fetch_assoc();
-			if(isset($device_status) ){								//This is necessary to get PHP 7.4 to not spam php messages and create massive error logs
+			if(isset($device_status) ){								//This is necessary to get PHP 7.4 to not spam php messages and create massive error logs.  Can be rearranged to re-enable automatic green dots again using a placeholder variable.
 				if(7 < $device_status["service_issue"]) {
 					$symbol = "times";
 					$color = "red";
