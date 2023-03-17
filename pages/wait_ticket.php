@@ -225,7 +225,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                                         JOIN `wait_queue` WQ on D.`dg_id` = WQ.`Devgr_id`
                                                         LEFT JOIN (SELECT trans_id, t_start, t_end, d_id, operator, status_id FROM transactions WHERE status_id < $status[total_fail]  ORDER BY trans_id DESC) as t
                                                         ON D.`d_id` = t.`d_id`
-                                                        WHERE WQ.`valid`='Y' AND (WQ.`Devgr_id` = 2 OR D.`d_id` = WQ.`Dev_id`) AND t.`trans_id` IS NULL AND D.`d_id` NOT IN (
+                                                        WHERE WQ.`valid`='Y' AND (WQ.`Devgr_id` = D.`dg_id` OR D.`d_id` = WQ.`Dev_id`) AND t.`trans_id` IS NULL AND D.`d_id` NOT IN (
                                                             SELECT `d_id`
                                                             FROM `service_call`
                                                             WHERE `solved` = 'N' AND `sl_id` >= 7
