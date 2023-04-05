@@ -108,7 +108,7 @@ class Wait_queue {
 
             ")){
                 $insert_id = $mysqli->insert_id;
-                Notifications::sendNotification($insert_id, "BasementApp Notification", $wq_ticketNum .$insert_id . "", 'From: BasementApp Notifications' . "\r\n" .'', 0);
+                Notifications::sendNotification($insert_id, "FabApp Notification", $wq_ticketNum .$insert_id . "", 'From: FabApp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateDeviceWaitTimes();
                 //Commented out for Dev purposes
                 if($error = Wait_queue::printTicket($insert_id))
@@ -130,7 +130,7 @@ class Wait_queue {
             ")){
                 $insert_id = $mysqli->insert_id;   
 //				error_log("Insert_ID value is:  " . $insert_id . " This should be reached after the insert query finishes.  "); 		//Diagnostic line to help track down logic problems
-                Notifications::sendNotification($insert_id, "BasementApp Notification", $wq_ticketNum .$insert_id."", 'From: BasementApp Notifications' . "\r\n" .'', 0);
+                Notifications::sendNotification($insert_id, "FabApp Notification", $wq_ticketNum .$insert_id."", 'From: FabApp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateWaitTimes();
                 //Commented out for Dev purposes
 		if($error = Wait_queue::printTicket($insert_id))
@@ -188,7 +188,7 @@ class Wait_queue {
 
 
             // Send a notification that they have canceled their wait queue ticket
-            Notifications::sendNotification($queueItem->q_id, "BasementApp Notification", $wq_ticketCancel, 'From: BasementApp Notifications' . "\r\n" .'', 0);
+            Notifications::sendNotification($queueItem->q_id, "FabApp Notification", $wq_ticketCancel, 'From: FabApp Notifications' . "\r\n" .'', 0);
 			
 			//Evaluate to see if operator issuing cancellation request is the operator listed in the wait queue ticket
 			//If true then perform email address verification
@@ -196,7 +196,7 @@ class Wait_queue {
 			//If filter_var result is anything but FALSE, notice is transmitted - this probably needs better evaluation
 			if ($wq_LoggedInUserOperator == $operator) {
 				if(filter_var($wq_secondNotification, FILTER_VALIDATE_EMAIL) != false ) {
-					Notifications::sendMail($wq_secondNotification, "BasementApp Self-Cancellation Notice", 'Gamer has cancelled their own wait ticket, #' . $queueItem->q_id . '.  Please update things accordingly.') ;
+					Notifications::sendMail($wq_secondNotification, "FabApp Self-Cancellation Notice", 'Learner has cancelled their own wait ticket, #' . $queueItem->q_id . '.  Please update things accordingly.') ;
 				}
 			}
         
@@ -267,7 +267,7 @@ class Wait_queue {
         }
         
 
-        Notifications::sendNotification($q_id, "BasementApp Notification", $wq_ticketComplete, 'From: BasementApp Notifications' . "\r\n" .'', 0);
+        Notifications::sendNotification($q_id, "FabApp Notification", $wq_ticketComplete, 'From: FabApp Notifications' . "\r\n" .'', 0);
         
 
         $msg = Wait_queue::deleteContactInfo($q_id);
@@ -637,8 +637,7 @@ class Wait_queue {
         global $tphost, $tpport;
         $est_cost = 0;
 		
-//Disabling this for the Basement, no printer used/necessary.  Uncomment to re-enable wait queue ticket printing.		
-/*
+
         if($result = $mysqli->query("
             SELECT `wait_queue`.`estTime`, `wait_queue`.`Q_id`, `devices`.`device_desc`
             FROM `wait_queue`
@@ -698,7 +697,7 @@ class Wait_queue {
             $printer -> setEmphasis(true);
             $printer -> text("1. ");
             $printer -> setEmphasis(false);
-            $printer -> text("Check http://BasementApp.uta.edu for the\n");
+            $printer -> text("Check http://FabApp.uta.edu for the\n");
             $printer -> text("lastest status on who's being called and\n");
             $printer -> text("get an alert.\n");
             $printer -> feed();
@@ -706,7 +705,7 @@ class Wait_queue {
             $printer -> setEmphasis(true);
             $printer -> text("2. ");
             $printer -> setEmphasis(false);
-            $printer -> text("BasementApp only gives estimates & more\n");
+            $printer -> text("FabApp only gives estimates & more\n");
             $printer -> text("than one machine may become available\n");
             $printer -> text("at a time. Stay in the lab if your\n");
             $printer -> text("number is close.\n");
@@ -745,10 +744,10 @@ class Wait_queue {
             $printer -> cut();
 
             /* Close printer */
-    /*      $printer -> close();
+          $printer -> close();
         } catch (Exception $e) {
             echo "Couldn't print to this printer: " . $e -> getMessage() . "\n";
-        }  */
+        }  
     }
     
     public function setWaitId($q_id) {

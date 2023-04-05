@@ -296,8 +296,8 @@ class Transactions {
 	// prints the thermal ticket
 	public static function printTicket($trans_id){
 		global $mysqli, $sv, $tphost, $tpport;
-//Disabling this for the Basement, no ticket printing necessary
-/*		try {
+
+		try {
 			$ticket = new self($trans_id);  //Pull Ticket Related Information
 		}
 		catch(Exception $e) {
@@ -347,17 +347,17 @@ class Transactions {
 			
 			//diagnostic block to see what the filename property of current ticket contains
 			//if ticket->filename exists, it dumps it into the error log, otherwise it drops a message indicating filename does not contain anything/exists
-/*			if ($ticket->filename) {
+			if ($ticket->filename) {
 				error_log("The $ticket->filename in transactions::PrintTicket() contains this: " . $ticket->filename, 0);
 			}
 			else {
 				error_log("The $ticket->filename access in transactions.php::PrintTicket() is empty or doesn't exist", 0);
 			}
-*/			
+			
 		//	error_log("The raw contents of $ ticket - > filename are: " . var_export($ticket->filename, true), 0 );
 		//	error_log("Raw dump of ticket object: " . var_export($ticket, true) , 0);
 			
-/*			
+			
 			if ($ticket->filename){
 				$printer->feed();
 				$printer->text("File:   $ticket->filename");
@@ -432,7 +432,7 @@ class Transactions {
 		}
 		catch( Exception $e) {
 			echo "printer was not open";
-		}	*/
+		}	
 	} 
 
     public static function printSheetTicket($trans_id, $cart_inv_ids, $cart_quantities, $cart_prices, $total_price){
