@@ -19,8 +19,8 @@ if (!empty($_GET['device_id'])  && Devices::regexDeviceID($_GET['device_id']) ) 
 	}
 	
 } else {
-	error_log("LINE 22 This line has been reached because the if statement for $ _ GET [device_id] came up false for a reason");
-	error_log("LINE 23 The device_id value transmitted transmitted to the page is: " . $_GET['device_id'] );
+	error_log("sr_history LINE 22 This line has been reached because the if statement for $ _ GET [device_id] came up false for a reason");
+	error_log("sr_history LINE 23 The device_id value transmitted transmitted to the page is: " . $_GET['device_id'] );
 }
 if ($_SERVER["REQUEST_METHOD"] === "POST" && filter_has_var(INPUT_POST, 'btnHistory') ){
     $d_id = explode("-", filter_input(INPUT_POST, 'devices'));

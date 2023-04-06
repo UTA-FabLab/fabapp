@@ -117,12 +117,12 @@ function pay_first_ticket($operator, $device, $p_id, $staff) {
 	// contains valid quanities & IDs
 	foreach($materials as $material) 
 		if(($material["amount"] && !Mats_Used::regexQuantity($material["amount"])) || !Materials::regexID($material["m_id"]))
-			exit_if_errro("Invalid material quantity–$material[amount]");
+			exit_if_error("Invalid material quantity–$material[amount]");
 
 	// create new transaction
 	$trans_id = Transactions::insert_new_transaction($operator, $device->device_id, null, $p_id, $status['active'], $staff);
 	if(!is_int($trans_id))
-		exit_if_error("Can not create a new ticket–$trans_id");
+		exit_if_error("Line 125 Can not create a new ticket–$trans_id");
 
 	// create new mats_used instance for material
 	foreach($materials as $material)
@@ -138,7 +138,7 @@ function ticket_without_materials($operator, $device, $p_id, $staff) {
 	global $status;
 
 	if(!is_int($trans_id = Transactions::insert_new_transaction($operator, $device->device_id, null, $p_id, $status['active'], $staff)))
-		exit_if_error("Can not create a new ticket–$trans_id");
+		exit_if_error("Line 141 Can not create a new ticket–$trans_id");
 	header("Location:lookup.php?trans_id=$trans_id");  // trans_id is not error message; proceed to next part
 }
 
@@ -160,8 +160,15 @@ function select_materials_first_ticket($operator, $device, $p_id, $staff) {
 			exit_if_error("Problem reading material id–$material[m_id]");
 
 	// create new transaction
+	error_log("Evaluating transaction insert info - ");
+	error_log("operator = " . $operator->operator);
+	error_log("device = " . $device->device_id);
+	error_log("time per null = " . null);
+	error_log("time per time_limit = " . $lime_limit);
+	error_log("purpose = " . $p_id);
+	
 	if(!is_int($trans_id = Transactions::insert_new_transaction($operator, $device->device_id, null, $p_id, $status['active'], $staff)))
-		exit_if_error("Can not create a new ticket–$trans_id");
+		exit_if_error("Line 164 Can not create a new ticket–$trans_id");
 
 	// create new mats_used instance for material
 	foreach($materials as $material)

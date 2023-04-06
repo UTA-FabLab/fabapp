@@ -270,11 +270,23 @@ class Transactions {
 		
 		$t_end = $status_id == $status["sheet_sale"] ? "CURRENT_TIMESTAMP" : "NULL";  // sheet goods
 		// $note is intentionally left without '' so that if it is null, it will be entered as a null value
+		error_log("TRANSACTIONS.PHP variable values dump before transaction is inserted:");
+		error_log("operator =" . $operator->operator);
+		error_log("deviceID = " . $device_id);
+		error_log("current timestamp is an SQL function");
+		error_log("t_end = " . $t_end);
+		error_log("status id = " . $status_id);
+		error_log("p_id = " . $p_id);
+		error_log("est_time = " . $est_time);
+		error_log("staff operator = " . $staff->operator);
+		error_log("notes = " . $note);
+		
+		//had to remove the '' marks from $est_time to make PHP happy again and allow transaction insertion, only tested on lasers so far.  Need to test on printers.
 		if ($mysqli->query("INSERT INTO transactions 
 							(`operator`, `d_id`, `t_start`, `t_end`, `status_id`, `p_id`, `est_time`, `staff_id`, `notes`) 
 							-- (`operator`,`device_id`,`t_start`,`status_id`,`p_id`,`est_time`,`staff_id`, `notes`) 
 							VALUES
-							('$operator->operator', '$device_id', CURRENT_TIMESTAMP, $t_end, '$status_id', '$p_id', '$est_time', '$staff->operator', $note);"
+							('$operator->operator', '$device_id', CURRENT_TIMESTAMP, $t_end, '$status_id', '$p_id', $est_time, '$staff->operator', $note);"
 		)){
 			return $mysqli->insert_id;
 		}
@@ -347,12 +359,12 @@ class Transactions {
 			
 			//diagnostic block to see what the filename property of current ticket contains
 			//if ticket->filename exists, it dumps it into the error log, otherwise it drops a message indicating filename does not contain anything/exists
-			if ($ticket->filename) {
+/*			if ($ticket->filename) {
 				error_log("The $ticket->filename in transactions::PrintTicket() contains this: " . $ticket->filename, 0);
 			}
 			else {
 				error_log("The $ticket->filename access in transactions.php::PrintTicket() is empty or doesn't exist", 0);
-			}
+			}	*/
 			
 		//	error_log("The raw contents of $ ticket - > filename are: " . var_export($ticket->filename, true), 0 );
 		//	error_log("Raw dump of ticket object: " . var_export($ticket, true) , 0);
