@@ -69,16 +69,20 @@ if($device->time_limit) {
 	$lime_limit = $timeArry[0] + $timeArry[1] / 60;
 }
 
+error_log("CREATE.PHP LINE 72 _GET contents prior to evaluation to create operator variable are: " . print_r($_GET,true) );
 
-
-if (array_key_exists("operator", $_GET) && Users::regexUser($_GET["operator"]))
+if (array_key_exists("operator", $_GET) && Users::regexUser($_GET["operator"])){
+	error_log("CREATE.PHP LINE 75 _GET array operator contents are: " . $_GET['operator']);
 	$operator = Users::withID($_GET['operator']);
-
+	
+	
+	error_log("CREATE.PHP LINE 76 operator variable just set to: " . print_r($operator,true) );
+}
 // create ticket creation
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['ticketBtn'])) {
 	//set status id to "Powered On"
 	$status_id = 0;
-	
+	error_log("CREATE.PHP LINE 81 _POST operator field contents are: . " . $_POST["operator"]);
 	//Call Gatekeeper to regex UTAID and validate if User is authorized
 	foreach (gatekeeper($_POST["operator"], $device->device_id) as $key => $value) $gk_msg[$key] =  $value;
 	
@@ -161,13 +165,13 @@ function select_materials_first_ticket($operator, $device, $p_id, $staff) {
 
 	// create new transaction
 	error_log("Evaluating transaction insert info - ");
-	error_log("operator = " . $operator->operator);
+	error_log("operator object contents = " . print_r($operator, TRUE) );
 	error_log("device = " . $device->device_id);
 	error_log("time per null = " . null);
-	error_log("time per time_limit = " . $lime_limit);
+	error_log("time per time_limit = " . $time_limit);
 	error_log("purpose = " . $p_id);
 	
-	if(!is_int($trans_id = Transactions::insert_new_transaction($operator, $device->device_id, null, $p_id, $status['active'], $staff)))
+	if(!is_int($trans_id = Transactions::insert_new_transaction($operator, $device->device_id, NULL, $p_id, $status['active'], $staff)))
 		exit_if_error("Line 164 Can not create a new ticket–$trans_id");
 
 	// create new mats_used instance for material

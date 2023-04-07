@@ -271,7 +271,7 @@ class Transactions {
 		$t_end = $status_id == $status["sheet_sale"] ? "CURRENT_TIMESTAMP" : "NULL";  // sheet goods
 		// $note is intentionally left without '' so that if it is null, it will be entered as a null value
 		error_log("TRANSACTIONS.PHP variable values dump before transaction is inserted:");
-		error_log("operator =" . $operator->operator);
+		error_log("operator object contents =" . print_r($operator, true) );
 		error_log("deviceID = " . $device_id);
 		error_log("current timestamp is an SQL function");
 		error_log("t_end = " . $t_end);
