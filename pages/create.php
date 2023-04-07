@@ -69,13 +69,11 @@ if($device->time_limit) {
 	$lime_limit = $timeArry[0] + $timeArry[1] / 60;
 }
 
-error_log("CREATE.PHP LINE 72 _GET contents prior to evaluation to create operator variable are: " . print_r($_GET,true) );
+
 
 if (array_key_exists("operator", $_GET) && Users::regexUser($_GET["operator"])){
 	error_log("CREATE.PHP LINE 75 _GET array operator contents are: " . $_GET['operator']);
 	$operator = Users::withID($_GET['operator']);
-	
-	
 	error_log("CREATE.PHP LINE 76 operator variable just set to: " . print_r($operator,true) );
 }
 // create ticket creation
@@ -91,6 +89,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['ticketBtn'])) {
 	else {
 		$status_id = $gk_msg['status_id'];
 		$operator = Users::withID(filter_input(INPUT_POST, 'operator'));
+		error_log("CREATE.PHP Line 92 operator object status post-gatekeeper examination:" . print_r($operator, true) );
 	}
 
 	
@@ -165,7 +164,7 @@ function select_materials_first_ticket($operator, $device, $p_id, $staff) {
 
 	// create new transaction
 	error_log("Evaluating transaction insert info - ");
-	error_log("operator object contents = " . print_r($operator, TRUE) );
+	error_log("operator field of object contents = " . $operator->operator );
 	error_log("device = " . $device->device_id);
 	error_log("time per null = " . null);
 	error_log("time per time_limit = " . $time_limit);

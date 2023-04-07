@@ -282,9 +282,10 @@ class Transactions {
 		error_log("notes = " . $note);
 		
 		//had to remove the '' marks from $est_time to make PHP happy again and allow transaction insertion, only tested on lasers so far.  Need to test on printers.
+		//removed the following from SQL query to see what happens:  -- (`operator`,`device_id`,`t_start`,`status_id`,`p_id`,`est_time`,`staff_id`, `notes`) 
 		if ($mysqli->query("INSERT INTO transactions 
 							(`operator`, `d_id`, `t_start`, `t_end`, `status_id`, `p_id`, `est_time`, `staff_id`, `notes`) 
-							-- (`operator`,`device_id`,`t_start`,`status_id`,`p_id`,`est_time`,`staff_id`, `notes`) 
+							
 							VALUES
 							('$operator->operator', '$device_id', CURRENT_TIMESTAMP, $t_end, '$status_id', '$p_id', $est_time, '$staff->operator', $note);"
 		)){
