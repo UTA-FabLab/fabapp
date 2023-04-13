@@ -102,12 +102,24 @@ class Users {
 			}
 			//set the rest of the user object's properties?  Might need to move this around again
 			$this->setAccounts($operator);
-			$this->setAdj_date($row['adj_date']);
-			$this->setExp_date($row['exp_date']);
-			$this->icon = $row['icon'] ? $row['icon'] : "fas fa-user";
-			$this->setLong_close ($row['long_close']);
-			$this->setNotes ($row['notes']);
-			$this->setRfid_no($row['rfid_no']);
+			if(isset($row['adj_date']) )	{
+				$this->setAdj_date($row['adj_date']);
+			}
+			if(isset($row['exp_date']) ){
+				$this->setExp_date($row['exp_date']);
+			}
+			if(isset($row['icon']) ){
+				$this->icon = $row['icon'] ? $row['icon'] : "fas fa-user";
+			}
+			if(isset($row['long_close']) ) {
+				$this->setLong_close ($row['long_close']);
+			}
+			if(isset($row['notes']) ){
+				$this->setNotes ($row['notes']);
+			}
+			if(isset($row['rfid_no']) ){
+				$this->setRfid_no($row['rfid_no']);
+			}
 		
 		}	else{
 				echo $mysqli->error;		//this block should only be reached if the query to SQL itself does not execute and returns errors, NOT if it returns a zero-row result

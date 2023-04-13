@@ -66,7 +66,9 @@ $device = new Devices($device_id);
 // convert the time limit of a device to decimal form
 if($device->time_limit) {
 	$timeArry = explode(':', $device->time_limit);
+	error_log("CREATE.PHP Contents of timeArry are: " . print_r($timeArry) );
 	$lime_limit = $timeArry[0] + $timeArry[1] / 60;
+	error_log("Contents of lime_limit after being processed from timeArry are: " . $lime_limit);
 }
 
 
@@ -154,7 +156,7 @@ function select_materials_first_ticket($operator, $device, $p_id, $staff) {
 	if(count($required) != count($device->device_group->required_materials))
 		exit_if_error("Problem retrieving material quantities for DB storing");
 
-	$optional = get_tags(array("optional"));
+	$optional = get_tags(array("optional"));							
 	$materials = combine_arrays_and_consolidate_keys($required, $optional);
 
 	// contains valid m_id's
@@ -167,7 +169,7 @@ function select_materials_first_ticket($operator, $device, $p_id, $staff) {
 	error_log("operator field of object contents = " . $operator->operator );
 	error_log("device = " . $device->device_id);
 	error_log("time per null = " . null);
-	error_log("time per time_limit = " . $time_limit);
+	error_log("time per lime_limit = " . $lime_limit);
 	error_log("purpose = " . $p_id);
 	
 	if(!is_int($trans_id = Transactions::insert_new_transaction($operator, $device->device_id, NULL, $p_id, $status['active'], $staff)))

@@ -274,12 +274,20 @@ class Transactions {
 		error_log("operator object contents =" . print_r($operator, true) );
 		error_log("deviceID = " . $device_id);
 		error_log("current timestamp is an SQL function");
-		error_log("t_end = " . $t_end);
+		error_log("t_end = " . var_dump($t_end) );
 		error_log("status id = " . $status_id);
 		error_log("p_id = " . $p_id);
+		
+		if($est_time == null){
+			$est_time = 1;
+			
+		}
+		
 		error_log("est_time = " . $est_time);
 		error_log("staff operator = " . $staff->operator);
 		error_log("notes = " . $note);
+		
+		
 		
 		//had to remove the '' marks from $est_time to make PHP happy again and allow transaction insertion, only tested on lasers so far.  Need to test on printers.
 		//removed the following from SQL query to see what happens:  -- (`operator`,`device_id`,`t_start`,`status_id`,`p_id`,`est_time`,`staff_id`, `notes`) 
@@ -287,7 +295,7 @@ class Transactions {
 							(`operator`, `d_id`, `t_start`, `t_end`, `status_id`, `p_id`, `est_time`, `staff_id`, `notes`) 
 							
 							VALUES
-							('$operator->operator', '$device_id', CURRENT_TIMESTAMP, $t_end, '$status_id', '$p_id', $est_time, '$staff->operator', $note);"
+							('$operator->operator', '$device_id', CURRENT_TIMESTAMP, $t_end, '$status_id', '$p_id', '$est_time', '$staff->operator', $note);"
 		)){
 			return $mysqli->insert_id;
 		}
@@ -664,6 +672,7 @@ class Transactions {
 	}
 
 	public static function regexTime($duration) {
+		error_log("TRANSACTIONS.PHP Duration value passed to regexTime is: " . $duration);
 		if(preg_match("/^\d{1,3}:\d{2}:\d{2}$/", $duration) == 1) return true;
 		return false;
 	}
