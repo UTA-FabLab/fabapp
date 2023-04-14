@@ -88,14 +88,14 @@ class Users {
 						$this->setRoleID($row['r_id']);
 				}
 				else {
-						error_log("USERS.PHP Line 98 If you see this then the strcomp() call on row did NOT work, the passed value for operator is currently: " . $operator . " Something is up with the SQL query. Defaulting to transmitted operator value and roleID of 2.");
+//						error_log("USERS.PHP Line 98 If you see this then the strcomp() call on row did NOT work, the passed value for operator is currently: " . $operator . " Something is up with the SQL query. Defaulting to transmitted operator value and roleID of 2.");
 						$this->setOperator($operator);
 						$this->setRoleID(2);
 				}				
 					
 			}
 			else {
-				error_log("USERS.PHP Line 106 If you can see this then the isset comparison failed because user does not exist in SQL and returned a zero-row result, using transmitted operator value instead of SQL-gained");
+//				error_log("USERS.PHP Line 106 If you can see this then the isset comparison failed because user does not exist in SQL and returned a zero-row result, using transmitted operator value instead of SQL-gained");
 				$this->setOperator($operator);
 				$this->setRoleID(2);
 				

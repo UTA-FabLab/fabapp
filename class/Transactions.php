@@ -270,6 +270,8 @@ class Transactions {
 		
 		$t_end = $status_id == $status["sheet_sale"] ? "CURRENT_TIMESTAMP" : "NULL";  // sheet goods
 		// $note is intentionally left without '' so that if it is null, it will be entered as a null value
+		// diagnostic block below, uncomment to view input variables post-regex processing
+		/*
 		error_log("TRANSACTIONS.PHP variable values dump before transaction is inserted:");
 		error_log("operator object contents =" . print_r($operator, true) );
 		error_log("deviceID = " . $device_id);
@@ -277,17 +279,16 @@ class Transactions {
 		error_log("t_end = " . var_dump($t_end) );
 		error_log("status id = " . $status_id);
 		error_log("p_id = " . $p_id);
-		
-		if($est_time == null){
-			$est_time = 1;
-			
-		}
-		
 		error_log("est_time = " . $est_time);
 		error_log("staff operator = " . $staff->operator);
 		error_log("notes = " . $note);
+		*/
 		
-		
+		// band-aiding est_time variable, will need more time to fix the problem where est_time is transformed from what's transmitted on the create page to an empty string 
+		if($est_time == ""){
+//			error_log("est_time came in as an empty string, setting to 1");		//comment out for production, uncomment for dev/testing
+			$est_time = 1;
+		}	
 		
 		//had to remove the '' marks from $est_time to make PHP happy again and allow transaction insertion, only tested on lasers so far.  Need to test on printers.
 		//removed the following from SQL query to see what happens:  -- (`operator`,`device_id`,`t_start`,`status_id`,`p_id`,`est_time`,`staff_id`, `notes`) 
@@ -672,7 +673,6 @@ class Transactions {
 	}
 
 	public static function regexTime($duration) {
-		error_log("TRANSACTIONS.PHP Duration value passed to regexTime is: " . $duration);
 		if(preg_match("/^\d{1,3}:\d{2}:\d{2}$/", $duration) == 1) return true;
 		return false;
 	}

@@ -66,23 +66,20 @@ $device = new Devices($device_id);
 // convert the time limit of a device to decimal form
 if($device->time_limit) {
 	$timeArry = explode(':', $device->time_limit);
-	error_log("CREATE.PHP Contents of timeArry are: " . print_r($timeArry) );
 	$lime_limit = $timeArry[0] + $timeArry[1] / 60;
-	error_log("Contents of lime_limit after being processed from timeArry are: " . $lime_limit);
+	//lime_limit is being calculated correctly, issues lie with transmission from create page to the transactions create-ticket method
 }
 
 
 
 if (array_key_exists("operator", $_GET) && Users::regexUser($_GET["operator"])){
-	error_log("CREATE.PHP LINE 75 _GET array operator contents are: " . $_GET['operator']);
 	$operator = Users::withID($_GET['operator']);
-	error_log("CREATE.PHP LINE 76 operator variable just set to: " . print_r($operator,true) );
 }
 // create ticket creation
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['ticketBtn'])) {
 	//set status id to "Powered On"
 	$status_id = 0;
-	error_log("CREATE.PHP LINE 81 _POST operator field contents are: . " . $_POST["operator"]);
+	
 	//Call Gatekeeper to regex UTAID and validate if User is authorized
 	foreach (gatekeeper($_POST["operator"], $device->device_id) as $key => $value) $gk_msg[$key] =  $value;
 	
@@ -91,7 +88,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['ticketBtn'])) {
 	else {
 		$status_id = $gk_msg['status_id'];
 		$operator = Users::withID(filter_input(INPUT_POST, 'operator'));
-		error_log("CREATE.PHP Line 92 operator object status post-gatekeeper examination:" . print_r($operator, true) );
 	}
 
 	
@@ -165,12 +161,15 @@ function select_materials_first_ticket($operator, $device, $p_id, $staff) {
 			exit_if_error("Problem reading material id–$material[m_id]");
 
 	// create new transaction
+	//diagnostic block below
+	/*
 	error_log("Evaluating transaction insert info - ");
 	error_log("operator field of object contents = " . $operator->operator );
 	error_log("device = " . $device->device_id);
 	error_log("time per null = " . null);
 	error_log("time per lime_limit = " . $lime_limit);
 	error_log("purpose = " . $p_id);
+	*/
 	
 	if(!is_int($trans_id = Transactions::insert_new_transaction($operator, $device->device_id, NULL, $p_id, $status['active'], $staff)))
 		exit_if_error("Line 164 Can not create a new ticket–$trans_id");
