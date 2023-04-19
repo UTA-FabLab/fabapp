@@ -38,7 +38,7 @@ function gatekeeper ($operator, $d_id) {
 		FROM `transactions`
 		LEFT JOIN devices
 		ON devices.d_id = transactions.d_id
-		WHERE devices.d_id = $d_id AND status_id < $status[total_fail]
+		WHERE devices.d_id = $d_id AND status_id != $status[offline] AND status_id < $status[total_fail]
 		LIMIT 1;
 	")){
 		if( $result->num_rows > 0){
@@ -101,6 +101,18 @@ function gatekeeper ($operator, $d_id) {
 	} else {
 		return array ("status_id" => 0, "ERROR" => "gk".$mysqli->error, "authorized" => "N");
 	}
+	////////////////////////////////////////////////////////
+	//
+	//  Deny if user is on banlist 
+	//
+	
+	//using substr_count instead of parsing the banlist into an array of strings should prevent a double entry or missing delimiter from giving a false result, it's better to let somebody banned start a ticket by accident than deny somebody who isn't banned the ticket
+	
+	if( substr_count( $sv['banlist'], $user->operator )  >= 1 )																		
+	{																																
+		return array ("status_id" => 1, "ERROR" => "ID is no longer allowed to use The FabLab's resources", "authorized" => "N");	 
+	}	
+	
 	////////////////////////////////////////////////////////
 	//
 	//  Deny if membership < strtotime("now")

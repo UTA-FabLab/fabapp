@@ -256,7 +256,7 @@ class Transactions {
 
 	// create a new transaction in DB and return trans_id to associate with
 	public static function insert_new_transaction($operator, $device_id, $est_time, $p_id, $status_id, $staff, $note=null) {
-		global $mysqli, $status;
+		global $mysqli, $status, $sv;
 
 		//Validate input variables
 		if(!Devices::regexDeviceID($device_id))return "Bad Device";
@@ -270,9 +270,32 @@ class Transactions {
 		
 		$t_end = $status_id == $status["sheet_sale"] ? "CURRENT_TIMESTAMP" : "NULL";  // sheet goods
 		// $note is intentionally left without '' so that if it is null, it will be entered as a null value
+		// diagnostic block below, uncomment to view input variables post-regex processing
+		/*
+		error_log("TRANSACTIONS.PHP variable values dump before transaction is inserted:");
+		error_log("operator object contents =" . print_r($operator, true) );
+		error_log("deviceID = " . $device_id);
+		error_log("current timestamp is an SQL function");
+		error_log("t_end = " . var_dump($t_end) );
+		error_log("status id = " . $status_id);
+		error_log("p_id = " . $p_id);
+		error_log("est_time = " . $est_time);
+		error_log("staff operator = " . $staff->operator);
+		error_log("notes = " . $note);
+		*/
+		
+		
+		// band-aid in case of the est_time variable arriving empty/null again after PHP updates break stuff
+		if($est_time == "" || $est_time == null){
+			error_log("TRANSACTIONS.PHP LINE 290 est_time came in as an empty string, setting to site variable's default value " . $sv["default_time"]);	//breadcrumbs to let you know time limit variables aren't set or aren't transmitting again
+			$est_time = $sv['default_time'];
+		}		
+		
+		
+		//removed the following from SQL query to see what happens:  -- (`operator`,`device_id`,`t_start`,`status_id`,`p_id`,`est_time`,`staff_id`, `notes`) -- nothing appears to have happened
 		if ($mysqli->query("INSERT INTO transactions 
 							(`operator`, `d_id`, `t_start`, `t_end`, `status_id`, `p_id`, `est_time`, `staff_id`, `notes`) 
-							-- (`operator`,`device_id`,`t_start`,`status_id`,`p_id`,`est_time`,`staff_id`, `notes`) 
+							
 							VALUES
 							('$operator->operator', '$device_id', CURRENT_TIMESTAMP, $t_end, '$status_id', '$p_id', '$est_time', '$staff->operator', $note);"
 		)){
@@ -352,8 +375,8 @@ class Transactions {
 			}
 			else {
 				error_log("The $ticket->filename access in transactions.php::PrintTicket() is empty or doesn't exist", 0);
-			}
-*/			
+			}	*/
+			
 		//	error_log("The raw contents of $ ticket - > filename are: " . var_export($ticket->filename, true), 0 );
 		//	error_log("Raw dump of ticket object: " . var_export($ticket, true) , 0);
 			
@@ -432,8 +455,8 @@ class Transactions {
 		}
 		catch( Exception $e) {
 			echo "printer was not open";
-		}
-	}
+		}	
+	} 
 
     public static function printSheetTicket($trans_id, $cart_inv_ids, $cart_quantities, $cart_prices, $total_price){
         global $mysqli;
@@ -596,8 +619,12 @@ class Transactions {
 	// ———————————————— ATTRIBUTES —————————————————
 
 	public function filename_and_notes() {
-		// if($this->filename) return $this->filename."⦂".$this->notes;		// this is the original statement, keep in case of issues with the seperator character not showing up
-		if($this->filename) return $this->filename . $this->notes;			// this is the revised statement that does NOT manually add a seperator character
+
+	//	if($this->filename) return $this->filename."⦂".$this->notes;		// this is the original statement, keep in case of issues with the seperator character not showing up
+		if($this->filename) return $this->filename . $this->notes;			// this is the revised statement that does NOT manually add a seperator character																																		
+
+
+
 		return $this->notes;
 	}
 

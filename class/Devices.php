@@ -115,7 +115,7 @@ class Devices {
 	public static function printDot($staff, $device_id){
 		global $mysqli, $sv;
 
-		$COLORS = array("red" => "#FF0000", "yellow" => "#FFFF00", "green" => "#008000", "blue" => "#0000FF", "purple" => "#CC00FF");
+		$COLORS = array("red" => "#FF0000", "yellow" => "#FFFF00", "green" => "#008000", "blue" => "#0000FF", "purple" => "#CC00FF", "white" => "FFFFFF");
 		
 		//look up current device status
 		$color = "white";
@@ -135,14 +135,16 @@ class Devices {
 					LIMIT 1;";
 		if($result = $mysqli->query($lookup)){
 			$device_status = $result->fetch_assoc();
-			if(7 < $device_status["service_issue"]) {
-				$symbol = "times";
-				$color = "red";
-			}
-			elseif($device_status["service_issue"]) $color = "yellow";
-			elseif($device_status["status"] == "active") $color = "blue";
-			elseif($device_status["status"] == "moveable") $color = "purple";
-			else $color = "green";
+			if(isset($device_status) ){								//This is necessary to get PHP 7.4 to not spam php messages and create massive error logs
+				if(7 < $device_status["service_issue"]) {
+					$symbol = "times";
+					$color = "red";
+				}
+				elseif($device_status["service_issue"]) $color = "yellow";
+				elseif($device_status["status"] == "active") $color = "blue";
+				elseif($device_status["status"] == "moveable") $color = "purple";
+				else $color = "green";
+			} 
 		}
 		
 		if($staff){
@@ -342,12 +344,17 @@ class DeviceGroup {
 		global $mysqli;
 
 		$required_materials = array();
+
+	// Leaving old query in place as comment block in case we need to swap back quickly
+
 	/*	if($results = $mysqli->query("SELECT `m_id`
 										FROM `device_materials`
 										WHERE `dg_id` = '$this->dg_id'
 										AND `required` = 'N';"
 		)	*/
-		
+
+	//Original query returned all materials linked to a device/device group, amended to only return materials that are marked Y in the current column
+
 		if($results = $mysqli->query("SELECT device_materials.m_id 
 										FROM device_materials 
 										LEFT JOIN materials on materials.m_id = device_materials.m_id 
@@ -398,11 +405,17 @@ class DeviceGroup {
 		global $mysqli;
 
 		$required_materials = array();
+
+	// Leaving old query in place as comment block in case we need to swap back quickly
+
 	/*	if($results = $mysqli->query("SELECT `m_id`
 										FROM `device_materials`
 										WHERE `dg_id` = '$this->dg_id'
 										AND `required` = 'Y';"
 		)) */
+
+	//Original query returned all materials linked to a device/device group, amended to only return materials that are marked Y in the current column
+
 		if($results = $mysqli->query("SELECT device_materials.m_id 
 										FROM device_materials 
 										LEFT JOIN materials on materials.m_id = device_materials.m_id 
