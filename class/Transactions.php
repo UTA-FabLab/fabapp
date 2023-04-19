@@ -624,6 +624,7 @@ class Transactions {
 		if($this->filename) return $this->filename . $this->notes;			// this is the revised statement that does NOT manually add a seperator character																																		
 
 
+
 		return $this->notes;
 	}
 

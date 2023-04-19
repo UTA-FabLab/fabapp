@@ -344,13 +344,17 @@ class DeviceGroup {
 		global $mysqli;
 
 		$required_materials = array();
+
 	// Leaving old query in place as comment block in case we need to swap back quickly
+
 	/*	if($results = $mysqli->query("SELECT `m_id`
 										FROM `device_materials`
 										WHERE `dg_id` = '$this->dg_id'
 										AND `required` = 'N';"
 		)	*/
+
 	//Original query returned all materials linked to a device/device group, amended to only return materials that are marked Y in the current column
+
 		if($results = $mysqli->query("SELECT device_materials.m_id 
 										FROM device_materials 
 										LEFT JOIN materials on materials.m_id = device_materials.m_id 
@@ -401,13 +405,17 @@ class DeviceGroup {
 		global $mysqli;
 
 		$required_materials = array();
+
 	// Leaving old query in place as comment block in case we need to swap back quickly
+
 	/*	if($results = $mysqli->query("SELECT `m_id`
 										FROM `device_materials`
 										WHERE `dg_id` = '$this->dg_id'
 										AND `required` = 'Y';"
 		)) */
+
 	//Original query returned all materials linked to a device/device group, amended to only return materials that are marked Y in the current column
+
 		if($results = $mysqli->query("SELECT device_materials.m_id 
 										FROM device_materials 
 										LEFT JOIN materials on materials.m_id = device_materials.m_id 
