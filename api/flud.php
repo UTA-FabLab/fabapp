@@ -86,8 +86,10 @@ if (strtolower($type) == "print") {
     $operator  = $input_data["uta_id"];
     $device_id = $input_data["device_id"];
 	
-	if($input_data["m_id"] <= 0 ){										//this is checking to make sure the m_id is valid, and that no 0s or negative numbers gets through and crashes everything.  Again.
-		$json_out["ERROR"] = "Material ID transmitted is invalid - is a negative or zero";
+	if($input_data["m_id"] <= 0 || $input_data["p_id"] < 1 ){										//this is checking to make sure the m_id is valid, and that no 0s or negative numbers gets through and crashes everything.  Again.
+		error_log("FLUD line 90:  Contents of m_id or p_id are illegal, values are: " . $input_data["m_id"] . ", " . $input_data["p_id"] );
+		error_log("Device ID transmitting illegal m_id or p_id: " . $input_data["device_id"]);
+		$json_out["ERROR"] = "Material or Purpose ID transmitted is invalid - is a negative or zero.  Check error logs for values.";
 		ErrorExit(1);
 	} else {
 		PrintTransaction ($operator, $device_id);

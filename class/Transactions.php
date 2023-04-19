@@ -256,7 +256,7 @@ class Transactions {
 
 	// create a new transaction in DB and return trans_id to associate with
 	public static function insert_new_transaction($operator, $device_id, $est_time, $p_id, $status_id, $staff, $note=null) {
-		global $mysqli, $status;
+		global $mysqli, $status, $sv;
 
 		//Validate input variables
 		if(!Devices::regexDeviceID($device_id))return "Bad Device";
@@ -284,14 +284,15 @@ class Transactions {
 		error_log("notes = " . $note);
 		*/
 		
-		// band-aiding est_time variable, will need more time to fix the problem where est_time is transformed from what's transmitted on the create page to an empty string 
-		if($est_time == ""){
-//			error_log("est_time came in as an empty string, setting to 1");		//comment out for production, uncomment for dev/testing
-			$est_time = 1;
-		}	
 		
-		//had to remove the '' marks from $est_time to make PHP happy again and allow transaction insertion, only tested on lasers so far.  Need to test on printers.
-		//removed the following from SQL query to see what happens:  -- (`operator`,`device_id`,`t_start`,`status_id`,`p_id`,`est_time`,`staff_id`, `notes`) 
+		// band-aid in case of the est_time variable arriving empty/null again after PHP updates break stuff
+		if($est_time == "" || $est_time == null){
+			error_log("TRANSACTIONS.PHP LINE 290 est_time came in as an empty string, setting to site variable's default value " . $sv["default_time"]);	//breadcrumbs to let you know time limit variables aren't set or aren't transmitting again
+			$est_time = $sv['default_time'];
+		}		
+		
+		
+		//removed the following from SQL query to see what happens:  -- (`operator`,`device_id`,`t_start`,`status_id`,`p_id`,`est_time`,`staff_id`, `notes`) -- nothing appears to have happened
 		if ($mysqli->query("INSERT INTO transactions 
 							(`operator`, `d_id`, `t_start`, `t_end`, `status_id`, `p_id`, `est_time`, `staff_id`, `notes`) 
 							
