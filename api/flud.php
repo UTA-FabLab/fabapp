@@ -11,6 +11,7 @@
  *  FabLab @ University of Texas at Arlington
  *  version: 0.91
  *
+ *	Edited by Eric Olson 3/8/2023 - added in sanity checking for m_id received to ensure it is actually an integer, and not a negative/zero value 
 */
 
 // Requests/replies via JSON data exchange
@@ -57,6 +58,7 @@ if ($sv['api_key'] == "") {
         ErrorExit(1);
     }
 } else {
+//	error_log("Received headers are: " . print_r($headers,1) );
     $json_out["ERROR"] = "Header Are Not Set";
     ErrorExit(1);
 }
@@ -65,7 +67,14 @@ if ($sv['api_key'] == "") {
 // Input posted with "Content-Type: application/json" header
 $input_data = json_decode(file_get_contents('php://input'), true);
 if (! ($input_data)) {
+//	error_log("Contents of input_data are: " . print_r($input_data,1) );
     $json_out["ERROR"] = "Unable to decode JSON message - check syntax";
+    ErrorExit(1);
+}
+
+// Checks to make sure incoming m_id value is actually an integer and not something else 
+if ( filter_var($input_data["m_id"], FILTER_VALIDATE_INT) == false){
+	$json_out["ERROR"] = "Transmitted m_id does not apppear to be an integer, check referring page or device";
     ErrorExit(1);
 }
 
@@ -76,7 +85,15 @@ $type = $input_data["type"];
 if (strtolower($type) == "print") {
     $operator  = $input_data["uta_id"];
     $device_id = $input_data["device_id"];
-    PrintTransaction ($operator, $device_id);
+	
+	if($input_data["m_id"] <= 0 || $input_data["p_id"] < 1 ){										//this is checking to make sure the m_id is valid, and that no 0s or negative numbers gets through and crashes everything.  Again.
+		error_log("FLUD line 90:  Contents of m_id or p_id are illegal, values are: " . $input_data["m_id"] . ", " . $input_data["p_id"] );
+		error_log("Device ID transmitting illegal m_id or p_id: " . $input_data["device_id"]);
+		$json_out["ERROR"] = "Material or Purpose ID transmitted is invalid - is a negative or zero.  Check error logs for values.";
+		ErrorExit(1);
+	} else {
+		PrintTransaction ($operator, $device_id);
+	}
 
 } elseif (strtolower($type) == "update_end_time") {
     $device_id = $input_data["device_id"];
@@ -334,7 +351,7 @@ function offline_ticket_end($off_trans_id){
             LIMIT 1;
     ")){
         $row = $result->fetch_assoc();
-        error_log(print_r($row, true),0);
+//      error_log(print_r($row, true),0);
         $ticket = new Transactions($row['trans_id']);
     }
 

@@ -160,10 +160,16 @@ function exit_with_success($message, $redirect=null) {
 			<?php if($staff->roleID >= $role["staff"]) { ?>
 				<div class="panel panel-default">
 					<div class="panel-heading clearfix">
-						<?php if ($offTrans = OfflineTrans::byTransId($ticket->trans_id)) { ?>
-                        	<i class="fas fa-ticket-alt fa-lg"></i> Ticket # <b><?php echo $ticket->getTrans_id(); ?> | <?php echo $offTrans; ?></b>
-                    	<?php } else { ?>
-                        	<i class="fas fa-ticket-alt fa-lg"></i> Ticket # <b><?php echo $ticket->getTrans_id(); ?></b>
+						<?php 
+						$offTrans = OfflineTrans::byTransId($ticket->trans_id);		//this used to be inside an if statement, moved it out for clarity
+	
+						if ($offTrans != null && $offTrans != "" ) {	 //making sure we're trying to echo a null/empty value by accident
+						?>			  
+							<i class="fas fa-ticket-alt fa-lg"></i> Ticket # <b><?php echo $ticket->getTrans_id() ?> | <?php echo $offTrans ?>OffTrans is supposed to go here</b>
+                    	<?php } else {	?>
+                        	<i class="fas fa-ticket-alt fa-lg"></i> Ticket # <b><?php echo $ticket->getTrans_id(); 	//echo just the value of the regular ticket
+							?></b>
+						
                     	<?php } ?>
 						<div class="pull-right">
 							<div class="btn-group">
@@ -289,8 +295,9 @@ function exit_with_success($message, $redirect=null) {
 							</div>
 						</div>
 					<?php 
-					}
-					elseif($ticket->status->status_id < $status["charge_to_acct"] && $ticket->remaining_balance()) { ?>
+					}			//Added extra logic in this elseIf to accommodate zero-dollar tickets in storage correctly
+					elseif($ticket->status->status_id < $status["charge_to_acct"] && $ticket->remaining_balance() >= 0 && $ticket->status->status_id != $status["complete"] )			
+					{ ?>
 						<div class="panel-footer">
 							<div align="right">
 								<?php 
@@ -584,6 +591,7 @@ function exit_with_success($message, $redirect=null) {
 			}
 			// information about when picked up
 			elseif($ticket->pickup_time) { ?>
+			<?php error_log("Contents of ticket variable are: " . print_r($ticket, true) );?>
 				<div class="panel panel-default">
 					<div class="panel-heading">
 						<i class="fas fa-gift fa-lg"></i> Storage

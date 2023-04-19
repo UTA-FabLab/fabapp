@@ -1,7 +1,34 @@
 # fabapp
-Operational Software for any fablab or makerspace
+Operational Software for any FabLab or makerspace
 
-FabApp was designed as a scaleable system to address the specific needs of the UTA FabLab, built as an open source project to address the needs of our FabLab and makerspaces around the world. This system is the underlying software that supports OctoPuppet(3D printing management) and JuiceBox(an access control device for anything). [Together](https://drive.google.com/open?id=0BzhfhIHqhlx1ekFxRVc0VTBLRHc) this allows an organization to monitor all equipment, mediate equipment access through training requirements, manage inventory, and track/store completed objects for its users.
+FabApp was designed as a scalable, open-source system to both address the needs of the UTA FabLab and the needs of both our FabLab and for any makerspace around the world. 
 
-This is a project in progress and will continue to have additional functionality added over time. Currently, we are under development and on V1.0.  Please stay tuned and in touch as this project reaches maturity!  For additional information please visit [Google Drive](https://drive.google.com/open?id=0BzhfhIHqhlx1WldacWF0d3lkYWs) concerning additional information for both end-users and developers.
+FabApp supports 3D printing management (via OctoPuppet), training requirements, and physical control for any device(via JuiceBox). Used in concert with the many tools native to it, FabApp allows an organization to:
+
+-Monitor and control all equipment
+
+-Create/manage wait queues for machines
+
+-Track storage of completed objects for its users
+
+-Track how much users owe the organization
+
+-Track how much money has been charged through various means
+
+-Mediate equipment access through the ability to set training requirements
+
+-Manage inventory
+
+-Submit trouble tickets
+
+-Differentiate between many levels of user privilege 
+
+-Set access to FabApp tools based on privilege levels
+
+We have reached a stable version, but this is always project in progress and will continue to have additional functionality added over time. Currently, our production version is V1.0.  Please stay tuned and in touch as this project matures further!  
+
+
+
+
+
 If you have any questions, please contact fablab@uta.edu.

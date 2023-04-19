@@ -34,6 +34,7 @@ class Users {
 	public function __construct() {}
 
 	public static function withID($operator){
+		
 		$instance = new self();
 		if (!self::regexUser($operator)){
 			return "Invalid ID Number - $operator";
@@ -68,7 +69,8 @@ class Users {
 
 	public function createWithID($operator){
 		global $mysqli;
-
+		
+		
 		if ($result = $mysqli->query("
 			SELECT users.operator, users.r_id, exp_date, icon, rfid_no, adj_date, notes, long_close
 			FROM `users`
@@ -78,26 +80,65 @@ class Users {
 			Limit 1;
 		")){
 			$row = $result->fetch_assoc();
-			if (strcmp($row['operator'], "") != 0){
-				$this->setOperator($row['operator']);
-				$this->setRoleID($row['r_id']);
-			} else {
+						
+			if(isset($row) ) {						//This is necessary to get PHP 7.4 to not spam php messages and create massive error logs	
+				
+				if (strcmp($row['operator'], "") != 0){
+						$this->setOperator($row['operator']);
+						$this->setRoleID($row['r_id']);
+				}
+				else {
+//						error_log("USERS.PHP Line 98 If you see this then the strcomp() call on row did NOT work, the passed value for operator is currently: " . $operator . " Something is up with the SQL query. Defaulting to transmitted operator value and roleID of 2.");
+						$this->setOperator($operator);
+						$this->setRoleID(2);
+				}				
+					
+			}
+			else {
+//				error_log("USERS.PHP Line 106 If you can see this then the isset comparison failed because user does not exist in SQL and returned a zero-row result, using transmitted operator value instead of SQL-gained");
 				$this->setOperator($operator);
 				$this->setRoleID(2);
+				
+			}
+			//set the rest of the user object's properties?  Might need to move this around again
+			$this->setAccounts($operator);
+			if(isset($row['adj_date']) )	{
+				$this->setAdj_date($row['adj_date']);
+			}
+			if(isset($row['exp_date']) ){
+				$this->setExp_date($row['exp_date']);
 			}
 			
-			$this->setAccounts($operator);
-			$this->setAdj_date($row['adj_date']);
-			$this->setExp_date($row['exp_date']);
-			$this->icon = $row['icon'] ? $row['icon'] : "fas fa-user";
-			$this->setLong_close ($row['long_close']);
-			$this->setNotes ($row['notes']);
-			$this->setRfid_no($row['rfid_no']);
-		} else {
-			echo $mysqli->error;
-			return false;
-		}
-	}
+			if (isset($row['icon']) ) {
+				
+				if(is_null($row['icon']) || $row['icon'] == ""){
+					error_log("USERS.PHP Line 112 Testing revised icon assignment, no icon found for userID given");
+					$this->icon = "fas fa-user";
+				} else {
+					$this->icon = $row['icon'];
+				}
+			} else {
+				$this->icon = "fas fa-user";
+			}
+			
+			
+			if(isset($row['long_close']) ) {
+				$this->setLong_close ($row['long_close']);
+			}
+			if(isset($row['notes']) ){
+				$this->setNotes ($row['notes']);
+			}
+			if(isset($row['rfid_no']) ){
+				$this->setRfid_no($row['rfid_no']);
+			}
+		
+		}	else{
+				echo $mysqli->error;		//this block should only be reached if the query to SQL itself does not execute and returns errors, NOT if it returns a zero-row result
+				return false;
+			}
+		
+		
+	}		
 	
 	public function createWithRF($rfid_no){
 		global $mysqli;

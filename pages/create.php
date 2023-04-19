@@ -67,13 +67,12 @@ $device = new Devices($device_id);
 if($device->time_limit) {
 	$timeArry = explode(':', $device->time_limit);
 	$lime_limit = $timeArry[0] + $timeArry[1] / 60;
+	//lime_limit is being calculated correctly, issues lie with transmission from create page to the transactions create-ticket method
 }
 
-
-
-if (array_key_exists("operator", $_GET) && Users::regexUser($_GET["operator"]))
+if (array_key_exists("operator", $_GET) && Users::regexUser($_GET["operator"])){
 	$operator = Users::withID($_GET['operator']);
-
+}
 // create ticket creation
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['ticketBtn'])) {
 	//set status id to "Powered On"
@@ -117,12 +116,12 @@ function pay_first_ticket($operator, $device, $p_id, $staff) {
 	// contains valid quanities & IDs
 	foreach($materials as $material) 
 		if(($material["amount"] && !Mats_Used::regexQuantity($material["amount"])) || !Materials::regexID($material["m_id"]))
-			exit_if_errro("Invalid material quantity–$material[amount]");
+			exit_if_error("Invalid material quantity–$material[amount]");
 
 	// create new transaction
 	$trans_id = Transactions::insert_new_transaction($operator, $device->device_id, null, $p_id, $status['active'], $staff);
 	if(!is_int($trans_id))
-		exit_if_error("Can not create a new ticket–$trans_id");
+		exit_if_error("Line 125 Can not create a new ticket–$trans_id");
 
 	// create new mats_used instance for material
 	foreach($materials as $material)
@@ -138,7 +137,7 @@ function ticket_without_materials($operator, $device, $p_id, $staff) {
 	global $status;
 
 	if(!is_int($trans_id = Transactions::insert_new_transaction($operator, $device->device_id, null, $p_id, $status['active'], $staff)))
-		exit_if_error("Can not create a new ticket–$trans_id");
+		exit_if_error("Line 141 Can not create a new ticket–$trans_id");
 	header("Location:lookup.php?trans_id=$trans_id");  // trans_id is not error message; proceed to next part
 }
 
@@ -151,7 +150,7 @@ function select_materials_first_ticket($operator, $device, $p_id, $staff) {
 	if(count($required) != count($device->device_group->required_materials))
 		exit_if_error("Problem retrieving material quantities for DB storing");
 
-	$optional = get_tags(array("optional"));
+	$optional = get_tags(array("optional"));							
 	$materials = combine_arrays_and_consolidate_keys($required, $optional);
 
 	// contains valid m_id's
@@ -159,9 +158,26 @@ function select_materials_first_ticket($operator, $device, $p_id, $staff) {
 		if(!Materials::regexID($material['m_id']))
 			exit_if_error("Problem reading material id–$material[m_id]");
 
-	// create new transaction
-	if(!is_int($trans_id = Transactions::insert_new_transaction($operator, $device->device_id, null, $p_id, $status['active'], $staff)))
-		exit_if_error("Can not create a new ticket–$trans_id");
+	// create new transaction starts here
+	//diagnostic block for troubleshooting after PHP updates
+	/*
+	error_log("Evaluating transaction insert info - ");
+	error_log("operator field of object contents = " . $operator->operator );
+	error_log("device = " . $device->device_id);
+	error_log("time per null = " . null);
+	error_log("time per lime_limit = " . $lime_limit);
+	error_log("purpose = " . $p_id);
+	*/
+	//check to see if device has a time limit value and load it if it exists, otherwise default to null and let the transactions class handle things
+	if($device->time_limit){
+		$timed_device = $device->time_limit;
+	} else {
+		$timed_device = null;
+	}
+	
+	
+	if(!is_int($trans_id = Transactions::insert_new_transaction($operator, $device->device_id, $timed_device, $p_id, $status['active'], $staff)))
+		exit_if_error("Line 164 Can not create a new ticket–$trans_id");
 
 	// create new mats_used instance for material
 	foreach($materials as $material)
@@ -253,7 +269,7 @@ function exit_if_error($error, $redirect=null) {
 											Purpose of Visit
 										</td>
 										<td>
-											<select id='purpose' name="p_id" class='form-control' tabindex="8">
+											<select id='purpose' name="p_id" class='form-control' tabindex="2">
 												<option disabled hidden selected value="">Select</option>
 												<?php 
 												foreach($pArray as $key => $value)
@@ -334,7 +350,7 @@ function exit_if_error($error, $redirect=null) {
 									<tr class="tablerow">
 										<td align="Center">Optional Materials</td>
 										<td>
-											<select id="material_select" class='form-control' onchange='add_tag(this);' tabindex="2">
+											<select id="material_select" class='form-control' onchange='add_tag(this);' tabindex="3">
 												<option disabled hidden selected value="">—Select—</option>
 												<?php
 												foreach($device->device_group->optional_materials as $material)
@@ -354,7 +370,7 @@ function exit_if_error($error, $redirect=null) {
 									<tr class="tablerow">
 										<td align="Center">Material</td>
 										<td><b>Indicate the material used when closing this ticket.</b>
-											<select name="m_id" id="m_id" tabindex="2" disabled="true" hidden>
+											<select name="m_id" id="m_id" tabindex="1" disabled="true" hidden>
 												<option selected value="none">None</option>
 											</select>
 										</td>
@@ -372,7 +388,7 @@ function exit_if_error($error, $redirect=null) {
 								<?php } ?>
 								<tr class="tablerow">
 									<td align="center"><input type="button" class='btn btn-default' onclick="resetForm()" value="Reset form"></td>
-									<td align="right"><input type="submit" name="ticketBtn" value="Submit" class='btn btn-default' tabindex="9"></td>
+									<td align="right"><input type="submit" name="ticketBtn" value="Submit" class='btn btn-default' tabindex="4"></td>
 								</tr>
 							</table>
 						</form>
