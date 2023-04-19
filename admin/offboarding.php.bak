@@ -133,7 +133,7 @@ function validateID(){
     if (stdRegEx("u_r_id", /^\d{1,2}$/, "Select a Role") === false){
         return false;
     }
-    if (stdRegEx("operators", /<?php echo $sv['regexUser'];?>/, "Invalid User ID #") === false){
+    if (stdRegEx("operators", /<?php echo $sv['regexUser'];?>/, "Invalid Operator ID #") === false){
         return false;
     }
 }

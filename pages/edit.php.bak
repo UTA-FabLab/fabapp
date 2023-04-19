@@ -65,7 +65,9 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["save_data"])) {
 	// ticket
 	$ticket_status = filter_input(INPUT_POST, "status_id");
 	$filename = filter_input(INPUT_POST, "filename") ? htmlspecialchars(filter_input(INPUT_POST, "filename")).'⦂' : "";
+
 	$notes = htmlspecialchars(filter_input(INPUT_POST, "ticket_notes"));
+
 	// input formats should regex, but prevent SQL injection just in case
 	$start_time = htmlspecialchars(filter_input(INPUT_POST, "t_start"));
 	$end_time = htmlspecialchars(filter_input(INPUT_POST, "t_end"));

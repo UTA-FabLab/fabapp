@@ -592,6 +592,7 @@ function exit_with_success($message, $redirect=null) {
 			}
 			// information about when picked up
 			elseif($ticket->pickup_time) { ?>
+			<?php error_log("Contents of ticket variable are: " . print_r($ticket, true) );?>
 				<div class="panel panel-default">
 					<div class="panel-heading">
 						<i class="fas fa-gift fa-lg"></i> Storage

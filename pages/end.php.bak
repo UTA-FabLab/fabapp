@@ -216,7 +216,7 @@ function exit_if_error($error, $redirect=null) {
 													<?php if(StorageObject::object_is_in_storage($ticket->trans_id)) echo "selected"; ?>>
 														Storage
 													</option>
-													<option value='<?php echo $status['complete']; ?>'>Pick Up</option>
+<!--													<option value='<?php echo $status['complete']; ?>'>Pick Up</option>
 												<?php } 
 												else {?>
 													<option value='<?php echo $status['complete']; ?>'>Completed</option>
@@ -226,7 +226,8 @@ function exit_if_error($error, $redirect=null) {
 												if(!$ticket->device->device_group->is_juiceboxManaged)
 												{
 													?>
-													<option value='<?php echo $status['total_fail']; ?>'>Hardware Failure</option>
+													<option value='<?php echo $status['partial_fail']; ?>'>Partial Fail</option>
+													<option value='<?php echo $status['total_fail']; ?>'>Total Fail</option>
 													<?php
 												}
 												?>

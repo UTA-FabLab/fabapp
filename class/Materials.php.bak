@@ -630,9 +630,9 @@ class Mats_Used {
 								<select id='$this->mu_id-select' class='form-control mat_used_select $measurability' 
 								onchange='adjust_ticket_status(this); adjust_input_for_status(this);'>
 									<option selected hidden>SELECT</option>
-									<option value='$status[used]'>Played</option>
-									<option $default_selection value='$status[unused]'>Not Played</option>
-									<option value='$status[failed_mat]'>Hardware Failure</option>
+									<option value='$status[used]'>Used</option>
+									<option $default_selection value='$status[unused]'>Not Used</option>
+									<option value='$status[failed_mat]'>Failed Material</option>
 								</select>
 							</td>
 						</tr>

@@ -420,7 +420,7 @@ function change_operator(){
             document.getElementById("operators").innerHTML = this.responseText;
         }
     };
-    xmlhttp.open("GET","/admin/sub/ob_getOperators.php?val="+ document.getElementById("u_r_id").value, true);
+        xmlhttp.open("GET","/admin/sub/ob_getOperators.php?val="+ document.getElementById("u_r_id").value, true);
     xmlhttp.send();
     inUseCheck();
 }

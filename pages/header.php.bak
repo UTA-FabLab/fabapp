@@ -373,7 +373,7 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 											</li>
 									<!--	<li>
 												<a href="/admin/addrfid.php"><i class="fas fa-wifi"></i> Add RFID</a>
-											</li>   -->     <!-- Disabling for Basement -->
+											</li>
 										</ul>
 									</li>
 								</ul>

@@ -277,7 +277,7 @@ function exit_with_success($message, $redirect=null) {
 					<div class="panel-body">
 						<table class="table table-bordered">
 							<tr>
-								<td>Owner</td>
+								<td>Payer</td>
 								<td>
 									<div class='input-group'>
 										<input type="text" class="form-control danger" placeholder="Enter ID #" style='color:#d9534f;'

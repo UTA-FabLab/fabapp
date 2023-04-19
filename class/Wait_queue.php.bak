@@ -110,7 +110,7 @@ class Wait_queue {
 
             ")){
                 $insert_id = $mysqli->insert_id;
-                Notifications::sendNotification($insert_id, "BasementApp Notification", $wq_ticketNum .$insert_id . "", 'From: BasementApp Notifications' . "\r\n" .'', 0);
+                Notifications::sendNotification($insert_id, "BasementApp Notification", $wq_ticketNum .$insert_id . "", 'From: FabApp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateDeviceWaitTimes();
                 //Commented out for Dev purposes
                 if($error = Wait_queue::printTicket($insert_id))
