@@ -225,8 +225,8 @@ function exit_with_success($message, $redirect=null) {
 													else {?>
 														<option value='<?php echo $status['complete']; ?>'>Complete</option>
 													<?php } ?>
-													<option value='<?php echo $status['partial_fail']; ?>'>Partial Fail</option>
-													<option value='<?php echo $status['total_fail']; ?>'>Total Fail</option>
+											<!--		<option value='<?php echo $status['partial_fail']; ?>'>Partial Fail</option>	-->
+														<option value='<?php echo $status['total_fail']; ?>'>Not Found</option>		
 												</select>
 											</td>
 											<!-- current or selected storage information -->
