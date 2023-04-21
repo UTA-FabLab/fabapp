@@ -17,37 +17,38 @@ if (!empty($_GET["val"])) {
         
 
 	if ($result = $mysqli->query(" SELECT * FROM `device_group` WHERE `device_group`.`dg_id` = " . $dg_id ) ) {	//obtain granularity of device group and store it
-			
+				error_log("GETWAITQUEUEID.php line 20 dg_id obtained for queue device is: " . $dg_id);
 				$row = $result->fetch_assoc();
 				$isGranular = $row['granular_wait'];			
+				error_log("GETWAITQUEUEID.php line 23 granularity value obtained is: " . $isGranular);
 			}
 			
 
         if ($dg_id !="" && $d_id >= 1 && DeviceGroup::regexDgID($dg_id)) {		//check up on validity of dg_id and d_id variable contents before doing anything else
             // Select all of the MAV IDs that are waiting for this device 
-			if ($isGranular == 'Y') {							//if device group is granular, poll by device id
-				$result = $mysqli->query ( "               
-					SELECT `Operator`, `Q_id`
+			
+			if ($isGranular == 'Y' || $isGranular == 'y' ) {							//if device group is found to be granular, poll by device id
+				$queryContent = "SELECT `Operator`, `Q_id`
 					FROM `wait_queue`
 					WHERE `Dev_id` = $d_id AND `Valid` = 'Y'
 					ORDER BY `Q_id` ASC
-					LIMIT 1
-				" );
+					LIMIT 1";
+				$result = $mysqli->query ( $queryContent);
+
 				while($row = mysqli_fetch_array($result)) {
 					$op_id = substr($row["Operator"], -4);
 					echo "******".$op_id;
 				}
 			}
 			else {									//this should only be reached by non-granular-queue devices
-				$result = $mysqli->query ( "                	//if device group is non-granular, poll by device group 
-                SELECT `Operator`, `Q_id`
-                FROM `wait_queue`
-                WHERE `Devgr_id` = $dg_id AND `Valid` = 'Y'
+				$queryContent = "SELECT `Operator`, `Q_id`
+				FROM `wait_queue`
+                WHERE `Devgr_id` = '$dg_id' AND `Valid` = 'Y'
                 ORDER BY `Q_id` ASC
-                LIMIT 1
-				" );
-    
-				while($row = mysqli_fetch_array($result)) {
+                LIMIT 1";
+				$result = $mysqli->query($queryContent );                	//if device group is non-granular, poll by device group 
+				
+				while($row = mysqli_fetch_array($result) ) {
 					$op_id = substr($row["Operator"], -4);
 					echo "******".$op_id;
 				}
