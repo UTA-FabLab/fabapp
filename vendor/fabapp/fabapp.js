@@ -76,7 +76,7 @@ function newTicket(){
             var dest = "";
             if (device  != "" && o_id.length==10){
                 if (device_id.substring(0,1) == "2"){
-                    dest = "http://polyprinter-"+device_id.substring(1)+".uta.edu";
+                    dest = "/pages/create.php?";			//quick and dirty fix to remove the polyprinter hardcoding found.  Could use a true refactor on the logic.
                     window.open(dest,"_self")
                 }
                 else {
