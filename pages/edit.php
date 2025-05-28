@@ -31,7 +31,8 @@ else {
 	$trans_id = $_GET["trans_id"];
 	$ticket = new Transactions($trans_id);
 	$storage = StorageObject::object_is_in_storage($trans_id) ? new StorageObject($trans_id) : null;
-	$account_ids = array_map(create_function('$obj', 'return $obj->a_id;'), Accounts::listAccts($ticket->user, $staff));
+//	$account_ids = array_map(create_function('$obj', 'return $obj->a_id;'), Accounts::listAccts($ticket->user, $staff));	//create_function is deprecated, no longer works
+	$account_ids = array_map(function($obj){return $obj->a_id;}, Accounts::listAccts($ticket->user, $staff));	//replacement line
 }
 
 if($staff->operator == $ticket->user->operator && $staff->roleID < $role["admin"])
