@@ -282,12 +282,14 @@ class Transactions {
 		error_log("est_time = " . $est_time);
 		error_log("staff operator = " . $staff->operator);
 		error_log("notes = " . $note);
-		*/
 		
+		error_log("Service variables contents are as follows: " . var_dump('$sv') . " END OF DUMP ");
+		
+	*/	
 		
 		// band-aid in case of the est_time variable arriving empty/null again after PHP updates break stuff
 		if($est_time == "" || $est_time == null){
-			error_log("TRANSACTIONS.PHP LINE 290 est_time came in as an empty string, setting to site variable's default value " . $sv["default_time"]);	//breadcrumbs to let you know time limit variables aren't set or aren't transmitting again
+			error_log("TRANSACTIONS.PHP LINE 290 est_time came in as an empty string, setting to site variable's default value of " . $sv["default_time"] . " minutes");	//breadcrumbs to let you know time limit variables aren't set or aren't transmitting again
 			$est_time = $sv['default_time'];
 		}		
 		

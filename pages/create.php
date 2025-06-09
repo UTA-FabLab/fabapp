@@ -412,8 +412,8 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	// the minimum amout of time to be charge for a device
 	var minimum_charge_time = parseFloat(<?php echo $sv["minTime"]; ?>);
 	// devices time limit
-	var time_limit = parseFloat(<?php echo $time_limit; ?>);
-
+	var time_limit = parseFloat (<?php echo $time_limit; ?>);
+	
 	// dictionary of m_id, color_hex, m_name, unit for all optional materials associated with a device
 	var device_mat_attrs = {
 		<?php  // echo materials as a dictionary
