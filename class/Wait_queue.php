@@ -111,8 +111,8 @@ class Wait_queue {
                 Notifications::sendNotification($insert_id, "FabApp Notification", $wq_ticketNum .$insert_id . "", 'From: FabApp Notifications' . "\r\n" .'', 0);
                 Wait_queue::calculateDeviceWaitTimes();
                 //Commented out for Dev purposes
-                if($error = Wait_queue::printTicket($insert_id))
-					error_log("Wait_queue::insertWaitQueue ".__LINE__.": $error");
+            //    if($error = Wait_queue::printTicket($insert_id))
+			//		error_log("Wait_queue::insertWaitQueue ".__LINE__.": $error");
                 return $insert_id;
                 
             } else {
