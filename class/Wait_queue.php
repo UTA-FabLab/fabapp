@@ -637,6 +637,7 @@ class Wait_queue {
         global $tphost, $tpport;
         $est_cost = 0;
 		
+		error_log("The printTicket function inside of Wait_Queue.php has been called, this may or may not be a good thing. Look into it.");
 
         if($result = $mysqli->query("
             SELECT `wait_queue`.`estTime`, `wait_queue`.`Q_id`, `devices`.`device_desc`

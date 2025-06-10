@@ -321,7 +321,8 @@ class Transactions {
 	// prints the thermal ticket
 	public static function printTicket($trans_id){
 		global $mysqli, $sv, $tphost, $tpport;
-
+		
+		error_log ("printTicket function inside of Transactions.php has been called, this should no longer be happening.  Look and see why.");
 		try {
 			$ticket = new self($trans_id);  //Pull Ticket Related Information
 		}
