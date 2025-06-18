@@ -68,7 +68,9 @@ class Materials {
 			VALUES
 				(?, ?);
 		")) {
-			$statement->bind_param("dd", intval($dg_id), intval($m_id));
+			$intVal_dgID = intval($dg_id);
+			$intVal_mID = intval($m_id);
+			$statement->bind_param("dd", $intVal_dgID, $intVal_mID);
 			if ($statement->execute() === true){
 				$row = $statement->affected_rows;
 				// Success, only one row was updated
@@ -92,7 +94,9 @@ class Materials {
 				(?, ?, ?, ?, ?, ?, ?);"
 		))
 		{
-			$statement->bind_param("sidssss", $name, $parent, floatval($price), $product_number, $unit, $color, 
+			$priceConvert = floatval($price);
+//			$statement->bind_param("sidssss", $name, $parent, floatval($price), $product_number, $unit, $color, //original line for posterity
+			$statement->bind_param("sidssss", $name, $parent, $priceConvert, $product_number, $unit, $color, 
 			$measurability);
 			if(!$statement) return false;
 			if(!$statement->execute()) return false;
