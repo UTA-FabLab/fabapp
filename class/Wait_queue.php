@@ -636,7 +636,7 @@ class Wait_queue {
         global $mysqli;
         global $tphost, $tpport;
         $est_cost = 0;
-		
+	/*	
 		error_log("The printTicket function inside of Wait_Queue.php has been called, this may or may not be a good thing. Look into it.");
 
         if($result = $mysqli->query("
@@ -744,11 +744,11 @@ class Wait_queue {
             $printer -> feed();
             $printer -> cut();
 
-            /* Close printer */
+            /* // Close printer 
           $printer -> close();
         } catch (Exception $e) {
             echo "Couldn't print to this printer: " . $e -> getMessage() . "\n";
-        }  
+        }  	*/ 				//Disabling the entire printTicket function inside wait queue
     }
     
     public function setWaitId($q_id) {
