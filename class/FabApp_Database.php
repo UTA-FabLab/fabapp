@@ -53,8 +53,9 @@ class Database_Table {
 		$formatted_words = array();
 		foreach($word_array as $word)
 			$formatted_words[] = ucfirst($word);
-
-		return implode($formatted_words, ' ');
+			
+		$implodedArray = implode(' ', $formatted_words);
+		return $implodedArray;
 	}
 
 

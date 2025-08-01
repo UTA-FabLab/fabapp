@@ -13,4 +13,5 @@ for ($i = 2; $i < count($files); $i++) {
 }
 // Tell PHP what time zone before doing any date function foo
 date_default_timezone_set($sv['timezone']);
+//error_log("The value of the timezone service variable in allclasses.php is " . $sv['timezone']);			//diagnostic line, comment out later
 ?>
