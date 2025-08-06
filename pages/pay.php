@@ -509,7 +509,7 @@ function adjust_submit_button_for_payment_type(payment_select) {
 			button.type = "button";
 		}
 		else {
-	            button.classList.toggle("btn-danger");
+	        button.classList.toggle("btn-danger");
 			button.type = "submit";
 			button.innerHTML = "Submit";
 			button.onclick = "";
