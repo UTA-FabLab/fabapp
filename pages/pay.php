@@ -496,14 +496,7 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 
 function adjust_submit_button_for_payment_type(payment_select) {
 		var button = document.getElementById("pay_button")
-		// pay site
-		console.log("Value of title property: ");
-		
-//		let textExtract = payment_select.options[payment_select.selectedIndex];		//testing
-		
-//		console.log(textExtract.text);
-		console.log(payment_select.options[payment_select.selectedIndex].text);		//testing
-		
+				
 		if(payment_select.value == 2 && <?php echo $ticket->remaining_balance() ?>) {
 			button.innerHTML = "Launch <?php echo $sv['paySite_name'];?>";
 			button.onclick = launch_pay_site;
