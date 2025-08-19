@@ -9,11 +9,17 @@
 //local function for testing & bypass
 function AuthenticateUser($netid, $password) {
     global $sv;
-    
-    $attribute = 'utaEmplID';
-    $ldap_server = 'ldaps://ldap.cedar.uta.edu';
-    $ldap_baseDN = 'cn=accounts,dc=uta,dc=edu';
-    $ldap_bindDN = "uid=$netid,cn=accounts,dc=uta,dc=edu";
+ 
+	$attribute = ;
+    $ldap_server = ;
+	$ldap_baseDN = ;
+	$ldap_bindDN = ;
+
+//		legacy LDAP info, do not delete yet
+//    $attribute = 'utaEmplID';
+//    $ldap_server = 'ldaps://ldap.cedar.uta.edu';
+//    $ldap_baseDN = 'cn=accounts,dc=uta,dc=edu';
+//    $ldap_bindDN = "uid=$netid,cn=accounts,dc=uta,dc=edu";
     
     //switch case to return roles
     switch ($netid){
@@ -41,7 +47,7 @@ function AuthenticateUser($netid, $password) {
                     throw new Exception(@ldap_error($connection), @ldap_errno($connection));
                 }
                 // Search
-                $result = @ldap_search($connection, $ldap_baseDN, "uid=" . $netid);
+                $result = @ldap_search($connection, $ldap_baseDN, "cn=" . $netid);
                 if (!$result) {
                     throw new Exception(@ldap_error($connection), @ldap_errno($connection));
                 }
