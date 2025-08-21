@@ -108,7 +108,6 @@ class Users {
 			if (isset($row['icon']) ) {
 				
 				if(is_null($row['icon']) || $row['icon'] == ""){
-					error_log("USERS.PHP Line 112 Testing revised icon assignment, no icon found for userID given");
 					$this->icon = "fas fa-user";
 				} else {
 					$this->icon = $row['icon'];
