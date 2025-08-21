@@ -201,7 +201,7 @@ function advanceNum($i, $str){
 																			if ( $row['device_desc'] == ""){
 																				//datetime is added within the AJAX file endWaitList
 																			//	$msg = "A $row[dg_desc] is now available. Please make your way to the FabLab. You have until ";
-																				$msg = "A $row[dg_desc] " . $device_desc .date($sv['dateFormat'], strtotime("now")+$sv["wait_period"]);
+																				$msg = "$row[dg_desc] Queue" . $device_desc .date($sv['dateFormat'], strtotime("now")+$sv["wait_period"]);		//modified to be more grammatically correct
 																			} else {
 																				//datetime is added within the AJAX file endWaitList
 																			//	$msg = "$row[device_desc] is now available. Please make your way to the FabLab. You have until ";

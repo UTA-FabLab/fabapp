@@ -40,8 +40,7 @@ class Notifications {
             $phone = $row['Phone'];
             $email = $row['Email'];
             $provider = $row['Provider'];
-
-        
+			     
             if (!empty($phone)) {
                 if ($result = $mysqli->query("
                     SELECT `email`
@@ -50,7 +49,7 @@ class Notifications {
                 ")) {
                     while ($row = $result->fetch_assoc()) {
                         list($a, $b) = explode('number', $row['email']);
-
+				
                         $hasbeenContacted = self::SendMail("".$phone."".$b."", $subject, $message);
                         if ($markContact == 1) {
                             $setLastContacted = true;

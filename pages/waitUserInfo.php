@@ -117,9 +117,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
                                                         FROM `carrier` 
                                                         WHERE 1;
                                                 ")) {
+	
                                                     while ( $rows = mysqli_fetch_array ( $result ) ) {
-                                                        // Create value in the form of DG_dgID-dID
-                                                        echo "<option value=". $rows ['provider'] .">" . $rows ['provider'] . "</option>";
+													echo "<option value=". "\"" . $rows ['provider'] . "\"" .">" . $rows ['provider'] . "</option>";		//explicit escape characters are needed to encase the value tag contents now, 
+																																							//or else it ends the string at the first space character 
+														
                                                     }
                                                 } else {
                                                     die ("There was an error loading the phone carriers.");
