@@ -78,21 +78,21 @@ class Users {
 			Limit 1;
 		")){
 			$row = $result->fetch_assoc();
-			if (strcmp($row['operator'], "") != 0){
+			if (strcmp(@$row['operator'], "") != 0){
 				$this->setOperator($row['operator']);
 				$this->setRoleID($row['r_id']);
 			} else {
 				$this->setOperator($operator);
 				$this->setRoleID(2);
 			}
-			
+
 			$this->setAccounts($operator);
-			$this->setAdj_date($row['adj_date']);
-			$this->setExp_date($row['exp_date']);
-			$this->icon = $row['icon'] ? $row['icon'] : "fas fa-user";
-			$this->setLong_close ($row['long_close']);
-			$this->setNotes ($row['notes']);
-			$this->setRfid_no($row['rfid_no']);
+			$this->setAdj_date(@$row['adj_date']);
+			$this->setExp_date(@$row['exp_date']);
+			$this->icon = $row['icon'] ?? "fas fa-user";
+			$this->setLong_close (@$row['long_close']);
+			$this->setNotes (@$row['notes']);
+			$this->setRfid_no(@$row['rfid_no']);
 		} else {
 			echo $mysqli->error;
 			return false;

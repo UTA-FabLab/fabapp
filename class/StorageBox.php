@@ -263,9 +263,14 @@ class StorageUnit {
 		$rowspan = $this->span[0] + 1;
 		$width = 50 * $colspan;
 
-		$td_values["id"] = str_replace("__unit__", $this->unit_indicator, $td_values["id"]);
-		$td_values["label"] = $td_values["label"] ? str_replace("__unit__", $this->unit_indicator, $td_values["label"]) : $this->unit_indicator;
-		$td_values["onclick"] = str_replace("__unit__", $this->unit_indicator, $td_values["onclick"]);
+		$td_values["id"] = str_replace("__unit__", $this->unit_indicator, $td_values["id"] ?? "");
+		$td_values["label"] = str_replace("__unit__", $this->unit_indicator, $td_values["label"] ?? $this->unit_indicator);
+		$td_values["onclick"] = str_replace("__unit__", $this->unit_indicator, $td_values["onclick"] ?? "");
+		$td_values["class"] ??= "";
+		$td_values["style"] ??= "";
+		$td_values["onclick"] ??= "";
+		$td_values["onmouseover"] ??= "";
+		$td_values["onmouseout"] ??= "";
 
 		return "<td id='$td_values[id]' class='$td_values[class]' colspan='$colspan' rowspan='$rowspan' style='width:${width}px;$td_values[style]'
 				onclick='$td_values[onclick]' onmouseover='$td_values[onmouseover]' onmouseout='$td_values[onmouseout]' align='center'>$td_values[label]</td>";

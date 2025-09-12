@@ -35,7 +35,7 @@ class OfflineTrans {
             LIMIT 1;
         "))
             $row = $result->fetch_assoc();
-            $off_trans_id = $row['off_trans_id'];
+            $off_trans_id = @$row['off_trans_id'];
             return $off_trans_id;
     }
 }
