@@ -236,7 +236,7 @@ function advanceNum($i, $str){
 				<div class="col-md-4">
 					<div class="panel panel-default">
 						<div class="panel-heading">
-							<i class="fa fa-print fa-fw"></i>Process Ticket
+							<i class="fa fa-print fa-fw" aria-hidden="true" ></i>Process Ticket
 							<div class="pull-right">
 								<button  class="btn btn-xs" data-toggle="collapse" data-target="#processPanel"><i class="fas fa-bars"></i></button>
 							</div>
