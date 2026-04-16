@@ -156,7 +156,7 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 				<!--php class Staff if not logged in-->
 				<?php if(!isset($staff)){ ?>
 					<li class="dropdown">
-						<a class="dropdown-toggle" data-toggle="dropdown" href="#" id="loginlink" aria-label="Log in/out drop down"> 
+						<a class="dropdown-toggle" data-toggle="dropdown" href="#" id="loginlink" aria-label="Log in/out drop down" style="color: #fff;""> 
 							<i class="fas fa-sign-in-alt fa-lg" ></i> <i class="fas fa-caret-down"></i>
 						</a>
 						<ul class="dropdown-menu dropdown-alerts">
