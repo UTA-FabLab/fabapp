@@ -191,7 +191,7 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 				else {?>
 					<li class="dropdown">
 						<a class="dropdown-toggle" data-toggle="dropdown" href="#">
-							<i class="<?php echo $staff->getIcon();?> fa-2x" aria-hidden="true"></i> <i class="fas fa-caret-down"></i>
+							<i class="<?php echo $staff->getIcon();?> fa-2x" aria-hidden="true" style="color: #fff"></i> <i class="fas fa-caret-down"></i>
 						</a>
 						<ul class="dropdown-menu dropdown-user">
 							<li><a href="/pages/info.php" onclick="loadingModal()"><i class="fas fa-info" aria-hidden="true"></i> Information</a></li>
