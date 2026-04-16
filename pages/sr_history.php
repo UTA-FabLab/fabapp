@@ -48,7 +48,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && filter_has_var(INPUT_POST, 'btnHist
         <div class="col-lg-8">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fas fa-history fa-fw"></i>Service History : 
+                    <i class="fas fa-history fa-fw" aria-hidden="true"></i>Service History : 
                         <?php Devices::printDot($staff, $device->getD_id()); 
                         echo $device->getDevice_desc();?>
                 </div>
@@ -124,7 +124,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && filter_has_var(INPUT_POST, 'btnHist
         <div class="col-lg-8">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fas fa-history fa-fw"></i>Service History
+                    <i class="fas fa-history fa-fw" aria-hidden="true"></i>Service History
                 </div>
                 <div class="panel-body">
                     No Device Selected
@@ -137,7 +137,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && filter_has_var(INPUT_POST, 'btnHist
         <div class="col-lg-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fas fa-search fa-fw"></i>Select a device to see the service history
+                    <i class="fas fa-search fa-fw" aria-hidden="true"></i>Select a device to see the service history
                 </div>
                 <div class="panel-body">
             <form method="post" action="">
@@ -170,7 +170,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && filter_has_var(INPUT_POST, 'btnHist
                             <td>
                                 <div class="input-group">
                                     <span class="input-group-addon" id="dot_span">
-                                        <i class='fas fa-circle fa-lg' style='color:gainsboro'></i>
+                                        <i class='fas fa-circle fa-lg' style='color:gainsboro' aria-hidden="true"></i>
                                     </span>
                                     <select class="form-control" name="devices" id="devices" tabindex="2" onchange="change_dot()">
                                         <option value =""> Select Group First</option>

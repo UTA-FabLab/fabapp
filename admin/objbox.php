@@ -34,7 +34,7 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
 		<div class="col-md-8">
 			<div class="panel panel-default">
 				<div class="panel-heading">
-					<i class="fas fa-gift fa-fw"></i>
+					<i class="fas fa-gift fa-fw" aria-hidden="true"></i>
 				</div>
 				<div class="panel-body">
 					<table class="table table-striped table-striped" id="objTable">
@@ -92,7 +92,7 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
 		<div class="col-md-4">
 			<div class="panel panel-default">
 				<div class="panel-heading">
-					<i class="far fa-file-excel fa-fw"></i> Generate File
+					<i class="far fa-file-excel fa-fw" aria-hidden="true"></i> Generate File
 				</div>
 				<div class="panel-body">
 					<button class="btn btn-primary" disabled="true">Download CSV</button>
@@ -102,7 +102,7 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
 			<!-- /.panel -->
 			<div class="panel panel-default">
 				<div class="panel-heading">
-					<i class="fas fa-gift"></i> ObjectBox Stats
+					<i class="fas fa-gift" aria-hidden="true"></i> ObjectBox Stats
 				</div>
 				<div class="panel-body">
 					<table class="table table-bordered table-hover">

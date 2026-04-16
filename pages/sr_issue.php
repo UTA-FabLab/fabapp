@@ -52,7 +52,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn'])){
 				<?php } ?>
 				<div class="panel panel-default">
 					<div class="panel-heading">
-						<i class="fas fa-fire fa-fw"></i> Report New Issue
+						<i class="fas fa-fire fa-fw" aria-hidden="true"></i> Report New Issue
 					</div>
 					<div class="panel-body">
 						<form name="scform" method= "POST"  action="" onsubmit="return validateForm();">
@@ -83,7 +83,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn'])){
 												<?php if (is_object($device)){
 													Devices::printDot($staff, $device->device_id);
 												} else { ?>
-													<i class='fas fa-circle fa-lg' style='color:gainsboro'></i>
+													<i class='fas fa-circle fa-lg' style='color:gainsboro' aria-hidden="true"></i>
 												<?php } ?>
 											</span>
 											<select class="form-control" name="devices" id="devices" tabindex="2" onchange="change_dot()">
@@ -104,11 +104,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn'])){
 												<?php if ($sl_id != "") {
 													Service_lvl::getDot($sl_id);
 												} else { ?>
-													<i class='fas fa-circle fa-lg' style='color:gainsboro' id="sl_dot"></i>
+													<i class='fas fa-circle fa-lg' style='color:gainsboro' id="sl_dot" aria-hidden="true"></i>
 												<?php } ?>
 											</span>
 											<select class="form-control" name="sl_id" id="sl_id" onchange="change_sldot()">
-												<option value = "" hidden> <i class="fas fa-fire"/>Select</option>
+												<option value = "" hidden> <i class="fas fa-fire" aria-hidden="true"/>Select</option>
 												<?php //List available Service Levels
 												$slArray = Service_lvl::getList();
 												foreach ($slArray as $sl){

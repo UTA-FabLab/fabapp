@@ -107,7 +107,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["delete_unit_button"
 				<table width='100%'>
 					<tr width="100%">
 						<td>
-							<i class="fas fa-inbox"></i> Drawer Selection
+							<i class="fas fa-inbox" aria-hidden="true"></i> Drawer Selection
 						</td>
 						<td align=RIGHT>
 							<button type="button" data-toggle='collapse'aria-expanded='false' 
@@ -154,7 +154,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["delete_unit_button"
 				<table width='100%'>
 					<tr>
 						<td>
-							<i class="fas fa-plus"></i> New Drawer
+							<i class="fas fa-plus" aria-hidden="true"></i> New Drawer
 						</td>
 						<td align=RIGHT>
 							<button type="button" data-toggle='collapse' aria-expanded='false' 
@@ -259,7 +259,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["delete_unit_button"
 				<table width='100%'>
 					<tr width="100%">
 						<td>
-							<i class="fas fa-th"></i> Divisions
+							<i class="fas fa-th" aria-hidden="true"></i> Divisions
 						</td>
 						<td align=RIGHT>
 							<button type="button" data-toggle='collapse' aria-expanded='false' 

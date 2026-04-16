@@ -115,13 +115,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="col-md-12">
                 <div class="panel panel-default">
                     <div class="panel-heading" style="background-color: #B5E6E6;">
-                        <i class="fas fa-users-cog"></i> User Management
+                        <i class="fas fa-users-cog" aria-hidden="true"></i> User Management
                     </div>
                     <div class="panel-body">
                         <div class="table">
                             <ul class="nav nav-tabs">
-						          <li class="active"><a data-toggle="tab" aria-expanded="false" href="#2020202020202">Add User <i class="fas fa-user-plus"></i></a></li>
-						          <li><a data-toggle="tab" aria-expanded="false" href="#3030303030303">Modify User <i class="fas fa-user-edit"></i></a></li>
+						          <li class="active"><a data-toggle="tab" aria-expanded="false" href="#2020202020202">Add User <i class="fas fa-user-plus" aria-hidden="true"></i></a></li>
+						          <li><a data-toggle="tab" aria-expanded="false" href="#3030303030303">Modify User <i class="fas fa-user-edit" aria-hidden="true"></i></a></li>
                             </ul>
                             <div class="tab-content">
                                 <div id="2020202020202" class="tab-pane fade in active">
@@ -290,7 +290,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="col-md-12">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fas fa-user-friends"></i> FabApp Users
+                        <i class="fas fa-user-friends" aria-hidden="true"></i> FabApp Users
                         <div class="pull-right">
                             <button  class="btn btn-xs" data-toggle="collapse" data-target="#userPanel"><i class="fas fa-bars"></i></i></button> 
                         </div>
@@ -327,8 +327,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                             <table class="table table-striped table-bordered table-hover" <?php echo("id=\"userTable_$number_of_user_tables\"") ?>>
                                                 <thead>
                                                     <tr class="tablerow">
-                                                        <th><i class="far fa-user"></i> Operator</th>
-                                                        <th><i class="fas fa-bullseye"></i> Icon</th>
+                                                        <th><i class="far fa-user" aria-hidden="true"></i> Operator</th>
+                                                        <th><i class="fas fa-bullseye" aria-hidden="true"></i> Icon</th>
                                                         <!--<th><i class="far fa-flag"></i> Date Added</th> -->
                                                     </tr>
                                                 </thead>

@@ -24,7 +24,7 @@ if (!$staff || $staff->getRoleID() < $sv['LvlOfStaff']){
         <div class="col-lg-10">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fas fa-bolt fa-lg"></i> Error Log
+                    <i class="fas fa-bolt fa-lg" aria-hidden="true"></i> Error Log
                 </div>
                 <div class="panel-body">
                     <table id="errorTable" class="table table-bordered table-striped">

@@ -58,7 +58,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="col-md-12">
                 <div class="panel panel-default">
                     <div class="panel-heading" style="background-color: #B5E6E6;">
-                        <i class="fas fa-user-times"></i> OffBoarding
+                        <i class="fas fa-user-times" aria-hidden="true"></i> OffBoarding
                     </div>
                     <div class="panel-body">
                         <table class="table table-bordered table-striped table-hover">

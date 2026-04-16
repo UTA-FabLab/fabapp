@@ -168,13 +168,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <div class="col-md-9">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            <i class="fas fa-search fa-lg"></i>
+                            <i class="fas fa-search fa-lg" aria-hidden="true"></i>
                             <?php if( preg_match('(input_add)', $_SESSION['type']) ){
                                 echo "Add Training Module to $device";
                             } else {
                                 echo "Edit Training Module for $device";
                             }?>
-                                <div class="pull-right"> <a href='/admin/manage_trainings.php'><i class="fas fa-reply fa-lg"></i>Go Back</a> </div>
+                                <div class="pull-right"> <a href='/admin/manage_trainings.php'><i class="fas fa-reply fa-lg" aria-hidden="true"></i>Go Back</a> </div>
                         </div>
                         <div class="panel-body">
                             <table class="table table-striped table-bordered"><form method="post" action="" autocomplete='off' id="tmForm">
@@ -339,7 +339,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <!-- /.panel -->
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            <i class="fas fa-edit fa-lg"></i> Training Modules
+                            <i class="fas fa-edit fa-lg" aria-hidden="true"></i> Training Modules
                             <div class="pull-right">
                                 <?php if($staff->getRoleID() >= $sv['minRoleTrainer']){ ?>
                                     <button type="button" id="addBtn" onclick="addTM()">Add</button>
@@ -366,7 +366,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <div class="col-md-3">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            <i class="fas fa-table fa-lg"></i> Total Stats
+                            <i class="fas fa-table fa-lg" aria-hidden="true"></i> Total Stats
                         </div>
                         <div class="panel-body">
                             <table class="table table-condensed">
@@ -377,12 +377,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 ")){
                                     $row = $result->fetch_assoc()?>
                                     <tr>
-                                        <td><i class="far fa-file fa-lg"></i> Training Modules</td>
+                                        <td><i class="far fa-file fa-lg" aria-hidden="true"></i> Training Modules</td>
                                         <td><?php echo $row['count'];?></td>
                                     </tr>
                                 <?php } else { ?>
                                     <tr>
-                                        <td><i class="far fa-file fa-lg"></i> Training Modules</td><td>-</td></tr>
+                                        <td><i class="far fa-file fa-lg" aria-hidden="true"></i> Training Modules</td><td>-</td></tr>
                                 <?php } 
                                 if($result = $mysqli->query("
                                         SELECT count(*) as count
@@ -391,7 +391,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 ")){
                                     $row = $result->fetch_assoc()?>
                                     <tr>
-                                        <td><i class="far fa-check-circle fa-lg"></i> Certificates Issued</td>
+                                        <td><i class="far fa-check-circle fa-lg" aria-hidden="true"></i> Certificates Issued</td>
                                         <td><?php echo $row['count'];?></td>
                                     </tr>
                                 <?php } else { ?>

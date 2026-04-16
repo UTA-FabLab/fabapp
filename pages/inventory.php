@@ -45,7 +45,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && $staff->getRoleID() >= $sv['LvlOfLead
 		<div class="col-md-12">
 			<div class="panel panel-default">
 				<div class="panel-heading">
-					<i class="fas fa-warehouse fa-fw"></i> Inventory
+					<i class="fas fa-warehouse fa-fw" aria-hidden="true"></i> Inventory
 					<?php if($staff && $staff->getRoleID() >= $sv['LvlOfLead']) { ?>
 						<div class="pull-right">
 							<div class="btn-group">
@@ -66,7 +66,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && $staff->getRoleID() >= $sv['LvlOfLead
 						<thead>
 							<tr>
 								<th class='col-md-5'>Material</th>
-								<th><i class="fas fa-paint-brush fa-fw col-md-1"></i></th>
+								<th><i class="fas fa-paint-brush fa-fw col-md-1" aria-label="Color Value"></i></th>
 								<th class='col-md-2'>Qty on Hand</th>
 								<th class='col-md-4'>Product Number</th>
 							</tr>

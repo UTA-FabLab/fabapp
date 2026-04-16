@@ -76,7 +76,7 @@ function submitTM($tm_id, $operator, $staff){
 			<?php if ($staff && $staff->getRoleID() >= $sv['LvlOfLead']) {?>
 				<div class="panel panel-default">
 					<div class="panel-heading">
-						<i class="far fa-check-circle fa-lg"></i> Certify Completion of Training
+						<i class="far fa-check-circle fa-lg" aria-hidden="true"></i> Certify Completion of Training
 					</div>
 					<div class="panel-body">
 						<table class="table table-bordered table-striped table-hover"><form name="tcForm" id="tcForm" autocomplete="off" method="POST" action="">
@@ -170,7 +170,7 @@ function submitTM($tm_id, $operator, $staff){
 			<?php } elseif($staff) { ?>
 				<div class="panel panel-default">
 					<div class="panel-heading">
-						<i class="fas fa-sign-in-alt fa-lg"></i>  Certify Completion of Training
+						<i class="fas fa-sign-in-alt fa-lg" aria-hidden="true"></i>  Certify Completion of Training
 					</div>
 					<div class="panel-body">
 						<?php
@@ -183,7 +183,7 @@ function submitTM($tm_id, $operator, $staff){
 			<?php } else { ?>
 				<div class="panel panel-default">
 					<div class="panel-heading">
-						<i class="fas fa-sign-in-alt fa-lg"></i> Please Log In
+						<i class="fas fa-sign-in-alt fa-lg" aria-hidden="true"></i> Please Log In
 					</div>
 					<div class="panel-body">
 					</div>
@@ -196,7 +196,7 @@ function submitTM($tm_id, $operator, $staff){
 		<div class="col-md-4">
 			<div class="panel panel-default">
 				<div class="panel-heading">
-					<i class="fas fa-table fa-lg"></i> Stats
+					<i class="fas fa-table fa-lg" aria-hidden="true"></i> Stats
 				</div>
 				<div class="panel-body">
 					<table class="table table-condensed">
@@ -207,7 +207,7 @@ function submitTM($tm_id, $operator, $staff){
 						")){
 							$row = $result->fetch_assoc()?>
 							<tr>
-								<td><i class="far fa-file fa-lg"></i> Training Modules</td>
+								<td><i class="far fa-file fa-lg" aria-hidden="true"></i> Training Modules</td>
 								<td><?php echo $row['count'];?></td>
 							</tr>
 						<?php } else { ?>
@@ -222,7 +222,7 @@ function submitTM($tm_id, $operator, $staff){
 						")){
 							$row = $result->fetch_assoc()?>
 							<tr>
-								<td><i class="far fa-check-circle fa-lg"></i> Certificates Issued</td>
+								<td><i class="far fa-check-circle fa-lg" aria-hidden="true"></i> Certificates Issued</td>
 								<td><?php echo $row['count'];?></td>
 							</tr>
 						<?php } else { ?>
