@@ -31,7 +31,8 @@ else {
 	$trans_id = $_GET["trans_id"];
 	$ticket = new Transactions($trans_id);
 	$storage = StorageObject::object_is_in_storage($trans_id) ? new StorageObject($trans_id) : null;
-	$account_ids = array_map(create_function('$obj', 'return $obj->a_id;'), Accounts::listAccts($ticket->user, $staff));
+//	$account_ids = array_map(create_function('$obj', 'return $obj->a_id;'), Accounts::listAccts($ticket->user, $staff));	//create_function is deprecated, no longer works
+	$account_ids = array_map(function($obj){return $obj->a_id;}, Accounts::listAccts($ticket->user, $staff));	//replacement line
 }
 
 if($staff->operator == $ticket->user->operator && $staff->roleID < $role["admin"])
@@ -65,7 +66,9 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["save_data"])) {
 	// ticket
 	$ticket_status = filter_input(INPUT_POST, "status_id");
 	$filename = filter_input(INPUT_POST, "filename") ? htmlspecialchars(filter_input(INPUT_POST, "filename")).'⦂' : "";
+
 	$notes = htmlspecialchars(filter_input(INPUT_POST, "ticket_notes"));
+
 	// input formats should regex, but prevent SQL injection just in case
 	$start_time = htmlspecialchars(filter_input(INPUT_POST, "t_start"));
 	$end_time = htmlspecialchars(filter_input(INPUT_POST, "t_end"));

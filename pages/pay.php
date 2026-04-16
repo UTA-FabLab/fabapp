@@ -476,7 +476,7 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 	}
 
 
-	function adjust_submit_button_for_payment_type(payment_select) {
+/*	function adjust_submit_button_for_payment_type(payment_select) {
 		var button = document.getElementById("pay_button")
 		// pay site
 		if(payment_select.value == 2 && <?php echo $ticket->remaining_balance() ?>) {
@@ -486,6 +486,30 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
 		}
 		else {
 	            button.classList.toggle("btn-danger");
+			button.type = "submit";
+			button.innerHTML = "Submit";
+			button.onclick = "";
+		}
+	}
+	//old function preserved for now, just in case
+*/
+
+function adjust_submit_button_for_payment_type(payment_select) {
+		var button = document.getElementById("pay_button")
+				
+		if(payment_select.value == 2 && <?php echo $ticket->remaining_balance() ?>) {
+			button.innerHTML = "Launch <?php echo $sv['paySite_name'];?>";
+			button.onclick = launch_pay_site;
+			button.type = "button";
+		}
+		else if( payment_select.options[payment_select.selectedIndex].text == "IDT" && <?php echo $ticket->remaining_balance() ?>)		//this pulls the options of payment_select object 
+		{																																//and turns them into an array, then looks at the 
+			button.innerHTML = "Launch <?php echo $sv['IDTSite_name'];?>";																//array with index value corresponding to the drop-down's index value,
+			button.onclick = launch_IDT_site;																							//then extracts the text value of it for evaluation
+			button.type = "button";
+		}
+		else {
+	        button.classList.toggle("btn-danger");
 			button.type = "submit";
 			button.innerHTML = "Submit";
 			button.onclick = "";
@@ -503,14 +527,31 @@ include_once($_SERVER['DOCUMENT_ROOT'].'/pages/footer.php');
             button.innerHTML = "Confirm Payment";
             button.onclick = null;
 	}
+	
+
+	// open window for temporary IDT site 
+	function launch_IDT_site() {
+            var button = document.getElementById("pay_button");
+
+            pay_window = window.open("<?php echo $sv['IDTSite'];?>", "pay_window", "top=100,width=750,height=500");
+            button.type = "submit";
+            button.classList.add("btn-danger");
+            button.innerHTML = "Confirm IDT Payment";
+            button.onclick = null;
+	}
 
 
 	function confirm_payment() {
 		if(document.getElementById("pay_button").disabled) return false;
-		if(!document.getElementById("account_select") || document.getElementById("account_select").value != 2) return true;
+		if(!document.getElementById("account_select") || document.getElementById("account_select").value != 2 && document.getElementById("account_select").options[account_select.selectedIndex].text != "IDT" ) return true;
 
             var message = 	"Did you take payment from CSGold?\n"+
             					"Did you logout of <?php echo $sv['paySite_name'];?>?";
+								
+			if (document.getElementById("account_select").options[account_select.selectedIndex].text == "IDT"){		//handler to modify message variable in case of IDT
+				message = "Did you complete all fields in the IDT form?\n"+
+							"Did you log out of the IDT form?";
+			}
 		if(confirm(message)) {
 			pay_window.close();
 			return true;

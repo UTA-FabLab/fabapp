@@ -11,6 +11,7 @@
  *  FabLab @ University of Texas at Arlington
  *  version: 0.91
  *
+ *	Edited by Eric Olson 3/8/2023 - added in sanity checking for m_id received to ensure it is actually an integer, and not a negative/zero value 
 */
 
 // Requests/replies via JSON data exchange
@@ -57,6 +58,7 @@ if ($sv['api_key'] == "") {
         ErrorExit(1);
     }
 } else {
+//	error_log("Received headers are: " . print_r($headers,1) );
     $json_out["ERROR"] = "Header Are Not Set";
     ErrorExit(1);
 }
@@ -64,8 +66,16 @@ if ($sv['api_key'] == "") {
 
 // Input posted with "Content-Type: application/json" header
 $input_data = json_decode(file_get_contents('php://input'), true);
+//error_log("Contents of input_data are: " . print_r($input_data,1) );	//diagnostic line, comment out afterwards
 if (! ($input_data)) {
+//	error_log("Contents of input_data are: " . print_r($input_data,1) );		//diagnostic line, commend out afterwards
     $json_out["ERROR"] = "Unable to decode JSON message - check syntax";
+    ErrorExit(1);
+}
+
+// Checks to make sure incoming m_id value is actually an integer and not something else 
+if ( filter_var($input_data["m_id"], FILTER_VALIDATE_INT) == false){
+	$json_out["ERROR"] = "Transmitted m_id does not apppear to be an integer, check referring page or device";
     ErrorExit(1);
 }
 
@@ -76,7 +86,16 @@ $type = $input_data["type"];
 if (strtolower($type) == "print") {
     $operator  = $input_data["uta_id"];
     $device_id = $input_data["device_id"];
-    PrintTransaction ($operator, $device_id);
+	
+	if($input_data["m_id"] <= 0 || $input_data["p_id"] < 1 ){										//this is checking to make sure the m_id is valid, and that no 0s or negative numbers gets through and crashes everything.  Again.
+		error_log("FLUD line 90:  Contents of m_id or p_id are illegal, values are: " . $input_data["m_id"] . ", " . $input_data["p_id"] );
+		error_log("Device ID transmitting illegal m_id or p_id: " . $input_data["device_id"]);
+		$json_out["ERROR"] = "Material or Purpose ID transmitted is invalid - is a negative or zero.  Check error logs for values.";
+		ErrorExit(1);
+	} else {
+		
+		PrintTransaction ($operator, $device_id);
+	}
 
 } elseif (strtolower($type) == "update_end_time") {
     $device_id = $input_data["device_id"];
@@ -147,8 +166,10 @@ function get_printer_status($device_id) {
 function PrintTransaction ($operator, $device_id) {
     global $json_out, $mysqli, $input_data, $status;
     $json_out["authorized"] = "N";
-        
+    
     if ($input_data["fa_status"] == "offline"){
+		
+//		error_log("input_data variable contents in PrintTransaction is:  " . $input_data["fa_status"]);	//diagnostic line, comment out later
         $t_start = date("Y-m-d H:i:s", substr($input_data["off_trans_id"], 3));
         $off_trans_id = $input_data["off_trans_id"];
         $json_out["authorized"] = "Y";
@@ -175,6 +196,7 @@ function PrintTransaction ($operator, $device_id) {
         ErrorExit(0);
     }
     $auth_status = $json_out["status_id"];
+	
 
     if ($device_name_result = mysqli_query($mysqli, "
         SELECT  `device_desc`, `d_id`
@@ -207,11 +229,9 @@ function PrintTransaction ($operator, $device_id) {
         }
         $material_name_result->close();
     }
-
     if ($input_data["est_build_time"]){
         $est_build_time = $input_data["est_build_time"];
     }
-
     if ($input_data["filename"]){
 	//	error_log("The filename property of input_data as received in flud::PrintTransaction is: " . var_export($input_data["filename"], true) , 0);			//diagnostic line 
         $filename = "$input_data[filename]⦂";
@@ -220,7 +240,6 @@ function PrintTransaction ($operator, $device_id) {
     if ($input_data["p_id"]){
         $p_id = $input_data["p_id"];
     }
-	
     //Deny if they are not the next person in line to use this device
     $msg = Wait_queue::transferFromWaitQueue($operator, $d_id);
     if (is_string($msg)){
@@ -263,29 +282,38 @@ function PrintTransaction ($operator, $device_id) {
             $bind_param = $stmt->bind_param("iidi", $trans_id, $m_id, $input_data["est_filament_used"], $auth_status);
             $stmt->execute();
             $stmt->close();
+			
         } else {
             $json_out["ERROR"] = $mysqli->error;
             $json_out["authorized"] = "N";
             if ($input_data["fa_status"] == "offline"){
                 $json_out["off_status"] = 0;
             }
+		
             return;
         }
+		
     } else {
         $json_out["ERROR"] = $mysqli->error;
         $json_out["authorized"] = "N";
+		
         if ($input_data["fa_status"] == "offline"){
             $json_out["off_status"] = 0;
         }
+		
         return;
     }
+	
     //TODO: Print offline ticket with more metadata for storage.
 	if ($input_data["fa_status"] != "offline"){
-        $msg = Transactions::printTicket($trans_id);
+	
+      //  $msg = Transactions::printTicket($trans_id);		//this line should not be reenabled, causes timeouts that force Octoprint into offline mode numbering
+		$msg = null;	//hardwiring this to never attempt to print a ticket due to printers no longer working with network
         if (is_string($msg)){
             $json_out["ERROR"] = $msg;
         }
     }
+
 }
 
 
@@ -334,7 +362,7 @@ function offline_ticket_end($off_trans_id){
             LIMIT 1;
     ")){
         $row = $result->fetch_assoc();
-        error_log(print_r($row, true),0);
+//      error_log(print_r($row, true),0);
         $ticket = new Transactions($row['trans_id']);
     }
 

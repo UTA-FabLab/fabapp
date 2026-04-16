@@ -90,10 +90,14 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['end_button'])) {
 	// store object
 	elseif($ticket_status == $status['stored'])
 	{
+		
 		//look in here for where to deposit the unpaid charge into acct_charge 
 		if(!$location = filter_input(INPUT_POST, "storage_location_input_modal"))
 			exit_if_error("End: Could not retrieve storage location from page");
-		$error = StorageObject::add_object_to_location_from_possible_previous($location, $staff, $trans_id);
+//		$error = StorageObject::add_object_to_location_from_possible_previous($location, $staff, $trans_id);		//previous style, is now not allowed
+
+		$error = new StorageObject($location, $staff, $trans_id);									//New style required by php 8, first you have to explicitly construct the object
+		$error->add_object_to_location_from_possible_previous($location, $staff, $trans_id);		//New style required by php 8, then you can call functions in it
 		exit_if_error($error, "./lookup.php?trans_id=$trans_id");
 		// nothing more to do for ticket; print message and go to home
 		$_SESSION['success_msg'] = "Successfully ended and stored ticket #$trans_id";

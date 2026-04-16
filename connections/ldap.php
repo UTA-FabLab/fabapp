@@ -10,11 +10,17 @@
 function AuthenticateUser($netid, $password) {
     global $sv;
     
-    $attribute = 'utaEmplID';
-    $ldap_server = 'ldaps://ldap.cedar.uta.edu';
-    $ldap_baseDN = 'cn=accounts,dc=uta,dc=edu';
-    $ldap_bindDN = "uid=$netid,cn=accounts,dc=uta,dc=edu";
-    
+	$attribute = 'utaEmplID';
+    $ldap_server = 'ldaps://cloudldaps.uta.edu';
+	$ldap_baseDN = "ou=Users,o=cloud";
+	$ldap_bindDN = "cn=$netid,ou=Users,o=cloud";
+
+//		legacy LDAP info, do not delete yet
+//    $attribute = 'utaEmplID';
+//    $ldap_server = 'ldaps://ldap.cedar.uta.edu';
+//    $ldap_baseDN = 'cn=accounts,dc=uta,dc=edu';
+//    $ldap_bindDN = "uid=$netid,cn=accounts,dc=uta,dc=edu";
+
     //switch case to return roles
     switch ($netid){
         case "fablab_leads":

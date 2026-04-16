@@ -34,6 +34,7 @@ include_once ($_SERVER['DOCUMENT_ROOT'].'/connections/db_connect8.php');
 include_once ($_SERVER['DOCUMENT_ROOT'].'/connections/ldap.php');
 include_once ($_SERVER['DOCUMENT_ROOT'].'/class/all_classes.php');
 date_default_timezone_set($sv['timezone']);
+//error_log("The value of the timezone service variable in header.php is " . $sv['timezone']);			//diagnostic line, comment out later
 if(!$mysqli->query("SET NAMES 'utf8';")) throw new Exception("Could not set MySqli encoding to UTF-8");
 
 if( isset($_SESSION['staff']) ){

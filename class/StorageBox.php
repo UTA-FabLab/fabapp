@@ -43,8 +43,14 @@ class StorageObject {
 										FROM `storage_box`
 										WHERE `trans_id` = '$trans_id';"
 		)) {
+//			error_log("results in StorageBox contains: " . var_export($results) );		//diagnostic line, comment out when not using
 			//FUTURE: not yet designed to handle more than 1 transaction
-			if(!$results->num_rows) throw new Exception("$trans_id has no objects in storage");
+//			if(!$results->num_rows) throw new Exception("$trans_id has no objects in storage");		//original line for posterity, PHP 8 requires us to have a functioning constructor 
+			if(!$results->num_rows) {																// that can handle the ticket not having an existing location
+				$this->box_id = null;
+				$this->staff = null;
+				$this->storage_start = null;
+			}
 			else {
 				$row = $results->fetch_assoc();
 				$this->box_id = $row['drawer'].$row['unit'];
