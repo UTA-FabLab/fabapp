@@ -72,7 +72,7 @@ if (isset($errorMsg)){
             <?php if ($staff->getRoleID() >= $sv['editRfid']) { ?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fas fa-wifi fa-lg"></i> Assign an RFID to a Learner
+                        <i class="fas fa-wifi fa-lg" aria-hidden="true"></i> Assign an RFID to a Learner
                     </div>
                     <div class="panel-body">
                         <form onsubmit="return validateForm()" id="rfForm" method="post" autocomplete="off" action="">
@@ -127,7 +127,7 @@ if (isset($errorMsg)){
         <div class="col-md-5">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <a href="#" data-toggle="tooltip" data-placement="top" title="Below is the most recenly used RFID tag used on a power tail"><i class="fas fa-wifi fa-lg"> Recently Used RFID</i></a>
+                    <a href="#" data-toggle="tooltip" data-placement="top" title="Below is the most recenly used RFID tag used on a power tail"><i class="fas fa-wifi fa-lg" aria-hidden="true"> Recently Used RFID</i></a>
                 </div>
                 <div class="panel-body">
                     <?php echo $sv['lastRfid'];?>
@@ -137,7 +137,7 @@ if (isset($errorMsg)){
             <!-- /.panel -->
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <a href="#" data-toggle="tooltip" data-placement="top" title="Verify that a learner's RFID belongs to them, enter 2 of the 3 values."><i class="fas fa-street-view fa-lg"> Read Match</i></a>
+                    <a href="#" data-toggle="tooltip" data-placement="top" title="Verify that a learner's RFID belongs to them, enter 2 of the 3 values."><i class="fas fa-street-view fa-lg" aria-hidden="true"> Read Match</i></a>
                 </div>
                 <div class="panel-body">
                     <form id="readForm" method="post" autocomplete="off" action=""><table class="table table-bordered table-striped">

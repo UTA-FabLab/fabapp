@@ -149,15 +149,15 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 					<span class="icon-bar"></span>
 					<span class="icon-bar"></span>
 				</button>
-				<a class="navbar-brand" id="navbar-brand" href="http://fablab.uta.edu"><img src="/images/FLlogo_143.png" type="image/png"></a>
+				<a class="navbar-brand" id="navbar-brand" href="http://fablab.uta.edu"><img src="/images/FLlogo_143.png" type="image/png" aria-label="FabLab Website Link"></a>
 			</div>
 			<!-- /.navbar-header -->
 			<ul class="nav navbar-top-links navbar-right">
 				<!--php class Staff if not logged in-->
 				<?php if(!isset($staff)){ ?>
 					<li class="dropdown">
-						<a class="dropdown-toggle" data-toggle="dropdown" href="#" id="loginlink"> 
-							<i class="fas fa-sign-in-alt fa-lg"></i> <i class="fas fa-caret-down"></i>
+						<a class="dropdown-toggle" data-toggle="dropdown" href="#" id="loginlink" aria-label="Log in/out drop down"> 
+							<i class="fas fa-sign-in-alt fa-lg" ></i> <i class="fas fa-caret-down"></i>
 						</a>
 						<ul class="dropdown-menu dropdown-alerts">
 							<form role="form" class="form-horizontal" method="POST" action="" autocomplete="off">
@@ -191,12 +191,12 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 				else {?>
 					<li class="dropdown">
 						<a class="dropdown-toggle" data-toggle="dropdown" href="#">
-							<i class="<?php echo $staff->getIcon();?> fa-2x"></i> <i class="fas fa-caret-down"></i>
+							<i class="<?php echo $staff->getIcon();?> fa-2x" aria-hidden="true"></i> <i class="fas fa-caret-down"></i>
 						</a>
 						<ul class="dropdown-menu dropdown-user">
-							<li><a href="/pages/info.php" onclick="loadingModal()"><i class="fas fa-info"></i> Information</a></li>
+							<li><a href="/pages/info.php" onclick="loadingModal()"><i class="fas fa-info" aria-hidden="true"></i> Information</a></li>
 							<li class="divider"></li>
-							<li><a href="/logout.php?n=n" onclick="loadingModal()"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+							<li><a href="/logout.php?n=n" onclick="loadingModal()"><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Logout</a></li>
 						</ul>
 						<!-- /.dropdown-user -->
 					</li>
@@ -208,30 +208,30 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 				<div class="sidebar-nav navbar-collapse">
 					<ul class="nav" id="side-menu">
 						<li>
-							<a href="/index.php"><i class="fas fa-ticket-alt"></i> FabApp</a>
+							<a href="/index.php"><i class="fas fa-ticket-alt" aria-hidden="true"></i> FabApp</a>
 						</li>
 						<?php if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfStaff']) { ?>
 							<li>
-								<a href="/admin/error.php"><i class="fas fa-bolt"></i> Error</a>
+								<a href="/admin/error.php"><i class="fas fa-bolt" aria-hidden="true"></i> Error</a>
 							</li>
 						<?php } 
 						if(isset($staff) && $staff->getRoleID() >= $sv['LvlOfLead']) { ?>
 							<li>
-								<a href="#"><i class="fas fa-warehouse"></i> Inventory<span class="fas fa-angle-left"></span></a>
+								<a href="#"><i class="fas fa-warehouse" aria-hidden="true"></i> Inventory<span class="fas fa-angle-left" aria-hidden="true"></span></a>
 								<ul class="nav nav-second-level">
 									<li>
-										<a href="/pages/inventory.php"><i class="fa fa-inbox"></i> On Hand</a>
+										<a href="/pages/inventory.php"><i class="fa fa-inbox" aria-hidden="true"></i> On Hand</a>
 									</li>
 									<li>
 										<a href="/pages/inventory_quantity.php">&#x270E; Change Inventory</a>
 									</li>
 									<?php if(isset($staff) && $staff->getRoleID() >= $sv['minRoleTrainer']) { ?>
 									<li>
-										<a href="/pages/inventory_materials.php"><i class='fa fa-plus-circle'></i> Inventory Materials</a>
+										<a href="/pages/inventory_materials.php"><i class='fa fa-plus-circle'  aria-hidden="true"></i> Inventory Materials</a>
 									</li>
 									<?php } ?>
 									<li>
-										<a href="/pages/sheet_goods.php"><i class="fas fa-square"></i> Sheet Goods</a>
+										<a href="/pages/sheet_goods.php"><i class="fas fa-square" aria-hidden="true"></i> Sheet Goods</a>
 									</li>
 								</ul>
 								<!-- /.nav-second-level -->
@@ -240,13 +240,13 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 						else {
 							if(isset($staff) && $staff->getRoleID() >= $sv['LvlOfStaff']) { ?>
 								<li>
-									<a href="#"><i class="fas fa-warehouse"></i> Inventory<span class="fas fa-angle-left"></span></a>
+									<a href="#"><i class="fas fa-warehouse" aria-hidden="true"></i> Inventory<span class="fas fa-angle-left" aria-hidden="true"></span></a>
 									<ul class="nav nav-second-level">
 										<li>
-											<a href="/pages/inventory.php"><i class="fas fa-box"></i> On Hand</a>
+											<a href="/pages/inventory.php"><i class="fas fa-box" aria-hidden="true"></i> On Hand</a>
 										</li>
 										<li>
-											<a href="/pages/sheet_goods.php"><i class="fas fa-square"></i> Sheet Goods</a>
+											<a href="/pages/sheet_goods.php"><i class="fas fa-square" aria-hidden="true"></i> Sheet Goods</a>
 										</li>
 									</ul>
 									<!-- /.nav-second-level -->
@@ -255,7 +255,7 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 						<?php } }
 						if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfStaff']) { ?>
 							<li>
-								<a href="#" id="searchLink"><i class="fas fa-search"></i> Look-Up By<span class="fas fa-angle-left"></span></a>
+								<a href="#" id="searchLink"><i class="fas fa-search" aria-hidden="true"></i> Look-Up By<span class="fas fa-angle-left" aria-hidden="true"></span></a>
 								<ul class="nav nav-second-level">
 								<form name="searchForm" method="POST" action="" autocomplete="off"  onsubmit="return validateNum('searchForm')"> 
 									<li class="sidebar-radio">
@@ -267,7 +267,7 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 											<input type="number" name="searchField" id="searchField" class="form-control" placeholder="Search..." name="searchField" onclick="searchF()">
 											<span class="input-group-btn">
 											<button class="btn btn-default" type="submit" name="searchBtn">
-												<i class="fas fa-search"></i>
+												<i class="fas fa-search" aria-label="Search button"></i>
 											</button>
 											</span>
 										</div>
@@ -276,7 +276,7 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 								</ul>
 							</li>
 							<li>
-								<a href="#" id="pickLink"><i class="fas fa-gift"></i> Pick Up 3D Print<span class="fas fa-angle-left"></span></a>
+								<a href="#" id="pickLink"><i class="fas fa-gift"></i> Pick Up 3D Print<span class="fas fa-angle-left" aria-hidden="true"></span></a>
 								<ul class="nav nav-second-level">
 								<form name="pickForm" method="POST" action="" autocomplete="off" onsubmit="return validateNum('pickForm')">
 									<li class="sidebar-search">
@@ -284,7 +284,7 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 											<input type="text" name="pickField" id="pickField" class="form-control" placeholder="Enter ID #" maxlength="10" size="10">
 											<span class="input-group-btn">
 											<button class="btn btn-default" type="submit" name="pickBtn">
-												<i class="fas fa-search"></i>
+												<i class="fas fa-search" aria-label="Search button"></i>
 											</button>
 											</span>
 										</div>
@@ -301,82 +301,82 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 						}
 						if (isset($staff) && ($staff->getRoleID() >=  $sv['LvlOfStaff'] || $staff->getRoleID() ==  $sv['serviceTechnican'])) { ?>
 							<li>
-								<a href="#"><i class="fa fa-wrench"></i> Service<span class="fa arrow"></span></a>
+								<a href="#"><i class="fa fa-wrench" aria-hidden="true"></i> Service<span class="fa arrow" aria-hidden="true"></span></a>
 								<ul class="nav nav-second-level">
 									<li>
-										<a href="/pages/sr_history.php"><i class="fas fa-history"></i> Device History</a>
+										<a href="/pages/sr_history.php"><i class="fas fa-history" aria-hidden="true"></i> Device History</a>
 									</li>
 									<li>
-										<a href='/pages/open_sr.php'><i class='far fa-comment'></i> Open Service Issues</a>
+										<a href='/pages/open_sr.php'><i class='far fa-comment' aria-hidden="true"></i> Open Service Issues</a>
 									</li>
 									<li>
-										<a href="/pages/sr_issue.php"><i class="fas fa-fire"></i> Report Issue</a>
+										<a href="/pages/sr_issue.php"><i class="fas fa-fire" aria-hidden="true"></i> Report Issue</a>
 									</li>
 								</ul>
 								<!-- /.nav-second-level -->
 							</li>
 						<?php } ?>
 							<li>
-								<a href="/pages/tools.php"><i class="fas fa-toolbox"></i> Tools</a>
+								<a href="/pages/tools.php"><i class="fas fa-toolbox" aria-hidden="true"></i> Tools</a>
 							</li>
 						<?php
 						if (isset($staff) && ($staff->getRoleID() >=  $sv['LvlOfLead'])) { ?>
 							<li>
 							<?php
 								if (OfflineTrans::haveOfflineTrans()) { ?>
-									<a href="/pages/offline_ticket.php" style="color:#FF0000;"><i class="fas fa-history"></i> Offline Transactions</a>
+									<a href="/pages/offline_ticket.php" style="color:#FF0000;"><i class="fas fa-history" aria-hidden="true"></i> Offline Transactions</a>
 								<?php }
 								else { ?>
-									<a href="/pages/offline_ticket.php"><i class="fas fa-history"></i> Offline Transactions</a>
+									<a href="/pages/offline_ticket.php"><i class="fas fa-history" aria-hidden="true"></i> Offline Transactions</a>
 								<?php } ?>
 							</li>
 						<?php }
 						if (isset($staff) && $staff->getRoleID() >=  $sv['LvlOfLead']) { ?>
 							<li>
-								<a herf="#"><i class="fas fa-book"></i> Training<span class="fas fa-angle-left"></span></a>
+								<a herf="#"><i class="fas fa-book" aria-hidden="true"></i> Training<span class="fas fa-angle-left" aria-hidden="true"></span></a>
 								<ul class="nav nav-third-level">
 									<li>
-										<a href="/admin/training_certificate.php"><i class="far fa-check-circle"></i> Issue Certificate</a>
+										<a href="/admin/training_certificate.php"><i class="far fa-check-circle" aria-hidden="true"></i> Issue Certificate</a>
 									</li>
 									<li>
-										<a href="/admin/training_revoke.php"><i class="fas fa-search"></i> Issued Trainings</a>
+										<a href="/admin/training_revoke.php"><i class="fas fa-search" aria-hidden="true"></i> Issued Trainings</a>
 									</li>
 									<li>
-										<a href="/admin/manage_trainings.php"><i class="fas fa-edit"></i> Manage Trainings</a>
+										<a href="/admin/manage_trainings.php"><i class="fas fa-edit" aria-hidden="true"></i> Manage Trainings</a>
 									</li>
 								</ul>
 							</li>
 						<?php }
 						if(isset($staff) && $staff->getRoleID() >=  $sv['LvlOfStaff'] && $sv['wait_system'] == "new"){ ?>
 							<li>
-								<a href="/pages/wait_ticket.php"><i class="fas fa-list-ol"></i> Wait Queue Ticket</a>
+								<a href="/pages/wait_ticket.php"><i class="fas fa-list-ol" aria-hidden="true"></i> Wait Queue Ticket</a>
 							</li>
 						<?php } 
 						if(isset($staff) && $staff->getRoleID() >= 10) {
 						?>
 							<li>
-								<a href="#"><i class="fas fa-sitemap"></i> Admin<span class="fas fa-angle-left"></span></a>
+								<a href="#"><i class="fas fa-sitemap" aria-hidden="true"></i> Admin<span class="fas fa-angle-left" aria-hidden="true"></span></a>
 								<ul class="nav nav-second-level">
 									<li>
-										<a href="/admin/stats.php"><i class="fas fa-chart-line"></i> Data Reports</a>
+										<a href="/admin/stats.php"><i class="fas fa-chart-line" aria-hidden="true"></i> Data Reports</a>
 									</li>
 									<li>
-										<a href="/admin/manage_device.php"><i class="fas fa-edit"></i> Manage Devices</a>
+										<a href="/admin/manage_device.php"><i class="fas fa-edit" aria-hidden="true"></i> Manage Devices</a>
 									</li>
 									<li>
-										<a href="/admin/objbox.php"><i class="fas fa-gift"></i> Objects in Storage</a>
+										<a href="/admin/objbox.php"><i class="fas fa-gift" aria-hidden="true"></i> Objects in Storage</a>
 									</li>
 									<li>
-										<a herf="#"><i class="fas fa-users"></i> Users<span class="fas fa-angle-left"></span></a>
+										<a herf="#"><i class="fas fa-users" aria-hidden="true"></i> Users<span class="fas fa-angle-left" aria-hidden="true"></span></a>
 										<ul class="nav nav-third-level">
 											<li>
-												<a href="/admin/onboarding.php"><i class="fas fa-user-plus"></i> OnBoarding</a>
+												<a href="/admin/onboarding.php"><i class="fas fa-user-plus" aria-hidden="true"></i> OnBoarding</a>
 											</li>
 											<li>
-												<a href="/admin/offboarding.php"><i class="fas fa-user-times"></i> OffBoarding</a>
+												<a href="/admin/offboarding.php"><i class="fas fa-user-times" aria-hidden="true"></i> OffBoarding</a>
 											</li>
 											<li>
-												<a href="/admin/addrfid.php"><i class="fas fa-wifi"></i> Add RFID</a>
+												<a href="/admin/addrfid.php"><i class="fas fa-wifi" aria-hidden="true"></i> Add RFID</a>
 											</li>
 										</ul>
 									</li>
@@ -387,13 +387,13 @@ elseif (isset($_SESSION['error_msg']) && $_SESSION['error_msg']!= ""){
 						<?php }
 						if(isset($staff) && $staff->getRoleID() >= 11) {
 						?>
-							<a href="#"><i class="fas fa-user-cog"></i> Site Tools<span class="fas fa-angle-left"></span></a>
+							<a href="#"><i class="fas fa-user-cog" aria-hidden="true"></i> Site Tools<span class="fas fa-angle-left" aria-hidden="true"></span></a>
 							<ul class="nav nav-second-level">
 								<li>
-									<a href="/admin/sv.php"><i class="fas fa-sliders-h"></i> Site Variables</a>
+									<a href="/admin/sv.php"><i class="fas fa-sliders-h" aria-hidden="true"></i> Site Variables</a>
 								</li>
 								<li>
-									<a href="/admin/storage_unit_creator.php"><i class="fas fa-inbox"></i> Storage Box</a>
+									<a href="/admin/storage_unit_creator.php"><i class="fas fa-inbox" aria-hidden="true"></i> Storage Box</a>
 								</li>
 							</ul>
 						</li>

@@ -264,7 +264,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
                             <tr>
                                 <td>
                                     <b data-toggle="tooltip" data-placement="top">Device Name</b>
-                                    <button type="button" style="background-color:white" class="btn fas fa-info" onclick="d_name_Info()"></button>
+                                    <button type="button" style="background-color:white" class="btn fas fa-info" onclick="d_name_Info()" aria-label="Device Name Tooltip"></button>
                                 </td>
                                 <td><input type="text" name="device_name" id="device_name" class="form-control" placeholder="Device Name" value="<?php echo $device_name1;?>" tabindex="1"/></td>
                             </tr>
@@ -278,7 +278,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
                             <tr>
                                 <td>
                                     <b data-toggle="tooltip" data-placement="top">Device Duration</b>
-                                    <button type="button" style="background-color:white" class="btn fas fa-info" onclick="durationInfo()"></button>
+                                    <button type="button" style="background-color:white" class="btn fas fa-info" onclick="durationInfo()" aria-label="Device Duration Tooltip"></button>
                                 </td>
                                 <td>
                                     <input type="number" name="hours" id="hours" tabindex="6" min="0" max="100" 
@@ -408,14 +408,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
                         <tr>
                             <td>
                                 <b data-toggle="tooltip" data-placement="top">Device Group Name</b>
-                                <button type="button" style="background-color:white" class="btn fas fa-info" onclick="dg_name_Info()"></button>
+                                <button type="button" style="background-color:white" class="btn fas fa-info" onclick="dg_name_Info()" aria-label="Device Group Name Tooltip"></button>
                             </td>
                             <td><input type="text" name="device_group_name" id="device_group_name" class="form-control" placeholder="Device Group Name" value="<?php echo $device_group_name1;?>" tabindex="1"/></td>
                         </tr>
                         <tr>
                             <td>
                                 <b data-toggle="tooltip" data-placement="top">Device Group Name Abreviation</b>
-                                <button type="button" style="background-color:#D3D3D3" class="btn fas fa-info" onclick="dg_abv_Info()"></button>
+                                <button type="button" style="background-color:#D3D3D3" class="btn fas fa-info" onclick="dg_abv_Info()" aria-label="Device Group Name Tooltip"></button>
                             </td>
                             <td><input type="text" name="device_group_abv" id="device_group_abv" class="form-control" placeholder="Device Group Abreviation" value="<?php echo $device_group_abv1;?>" tabindex="1"/></td>
                         </tr>

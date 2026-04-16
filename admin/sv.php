@@ -46,7 +46,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['Save'])) {
         <div class="col-md-10">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fas fa-sliders-h fa-lg"></i>
+                    <i class="fas fa-sliders-h fa-lg" aria-hidden="true"></i>
                     <div class="pull-right">
                         <div class="btn-group">
                             <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">

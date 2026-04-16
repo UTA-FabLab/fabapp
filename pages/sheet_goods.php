@@ -133,7 +133,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['checkout_button'])) {
             <div class="col-md-7">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fas fa-warehouse"></i> Sheet Goods Inventory
+                        <i class="fas fa-warehouse" aria-hidden="true"></i> Sheet Goods Inventory
                     </div>
                     <!-- /.panel-heading -->
                     <form name="viewForm" method="post" action="" autocomplete="off">
@@ -165,10 +165,10 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['checkout_button'])) {
                                                 <table class="table table-striped table-bordered table-hover" <?php echo("id=\"sheetsTable_$number_of_sheet_tables\"") ?>>
                                                     <thead>
                                                         <tr class="tablerow">
-                                                            <th><i class="fas fa-square"></i> Sheet Material</th>
-                                                            <th><i class="fas fa-ruler-combined"></i> Size (Inches)</th>
-                                                            <th><i class="fas fa-money-bill-wave-alt"></i> Cost</th>
-                                                            <th><i class="fas fa-boxes"></i> On Hand</th>
+                                                            <th><i class="fas fa-square" aria-hidden="true"></i> Sheet Material</th>
+                                                            <th><i class="fas fa-ruler-combined" aria-hidden="true"></i> Size (Inches)</th>
+                                                            <th><i class="fas fa-money-bill-wave-alt" aria-hidden="true"></i> Cost</th>
+                                                            <th><i class="fas fa-boxes" aria-hidden="true"></i> On Hand</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -191,7 +191,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['checkout_button'])) {
                                                                     <td align="center"><?php echo("$".number_format((float)(($row['width']*$row['height']) * $row['price']), 2, '.', '')) ?></td>
 
                                                                     <!-- Quanity -->
-                                                                    <td align="center"><?php echo($row['quantity']); ?><div class="pull-right"><!--<button class="btn btn-s btn-success" onclick="goToPay(<?php //echo($row['inv_ID'].",".$row['m_id'].",".$row['width'].",".$row['height']);?>)" data-toggle="tooltip" data-placement="top" title="Sell this Sheet Good">Sell</button>--><span class="pull-right"><a href="sub/add_cart.php?id=<?php echo ("".$row['inv_ID']."&h=".$row['height']."&w=".$row['width']."&p=".$row['price']); ?>" class="btn btn-success btn-sm"><i class="fas fa-cart-plus"></i></a></span></div></td>
+                                                                    <td align="center"><?php echo($row['quantity']); ?><div class="pull-right"><!--<button class="btn btn-s btn-success" onclick="goToPay(<?php //echo($row['inv_ID'].",".$row['m_id'].",".$row['width'].",".$row['height']);?>)" data-toggle="tooltip" data-placement="top" title="Sell this Sheet Good">Sell</button>--><span class="pull-right"><a href="sub/add_cart.php?id=<?php echo ("".$row['inv_ID']."&h=".$row['height']."&w=".$row['width']."&p=".$row['price']); ?>" class="btn btn-success btn-sm"><i class="fas fa-cart-plus" aria-label="Check out"></i></a></span></div></td>
 
                                                                 </tr>
                                                             <?php }
@@ -215,11 +215,11 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['checkout_button'])) {
                 <?php if (!empty($_SESSION['cart_array'])){ ?>
                 <div class="panel panel-default">
                     <div class="panel-heading" style="background-color: #B5E6E6;">
-                        <i class="fas fa-shopping-cart"></i> Cart Items: <b><span type="text" id="total_quantity"><?php $cart_quan = 0; for ($i = 0; $i < sizeof($_SESSION['cart_array']); $i++) {
+                        <i class="fas fa-shopping-cart" aria-hidden="true"></i> Cart Items: <b><span type="text" id="total_quantity"><?php $cart_quan = 0; for ($i = 0; $i < sizeof($_SESSION['cart_array']); $i++) {
                                                                                         $cart_quan = $cart_quan + $_SESSION['co_quantity'][$i];
                                                                                     } echo ($cart_quan); ?></span></b>
                         <div class="pull-right">
-                            <button  class="btn btn-xs" data-toggle="collapse" data-target="#cartPanel1 , #cartPanel2"><i class="fas fa-bars"></i></button> 
+                            <button  class="btn btn-xs" data-toggle="collapse" data-target="#cartPanel1 , #cartPanel2"><i class="fas fa-bars" aria-label="Open/close menu"></i></button> 
                         </div>
                     </div>
                     <!-- /.panel-heading -->
@@ -265,7 +265,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['checkout_button'])) {
                                                     $<span type="text" id="price<?php echo ($ii); ?>"><?php echo (number_format((float)((($row["width"]*$row["height"]) * $row["price"])* $_SESSION['co_quantity'][$ii]), 2, '.', '')); ?></span>
                                                 </div>
                                                 <div class="pull-right">
-                                                    <a href="sub/delete_cart.php?id=<?php echo ("".$_SESSION['cart_array'][$ii]."&h=".$row['height']."&w=".$row['width']."&p=".$row['price']); ?>" class="btn btn-warning btn-xs" style="background-color: #FF7171;"><i class="fas fa-trash-alt"></i></a>
+                                                    <a href="sub/delete_cart.php?id=<?php echo ("".$_SESSION['cart_array'][$ii]."&h=".$row['height']."&w=".$row['width']."&p=".$row['price']); ?>" class="btn btn-warning btn-xs" style="background-color: #FF7171;"><i class="fas fa-trash-alt" aria-hidden="true"></i></a>
                                                 </div>
 
                                             </td>

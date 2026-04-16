@@ -305,7 +305,7 @@ function __NEWINV__get_populate_values($name)
 														<td class='col-md-9'>
 															<input id='<?php echo "__EDITINV__${var}_input"; ?>' 
 															name='<?php echo "__EDITINV__${var}_input"; ?>' type='checkbox'
-															class='form-control'>
+															class='form-control' aria-label="Checkbox">
 														</td>
 													</tr>
 													<?php
@@ -358,7 +358,7 @@ function __NEWINV__get_populate_values($name)
 										<tr>
 											<td>Measurable</td>
 											<td>
-												<select id='__NEWINV__measurable_select' class='form-control'>
+												<select id='__NEWINV__measurable_select' class='form-control' aria-label="Checkbox">
 													<option value='Y'>Y</option>
 													<option value='N'>N</option>
 												</select>

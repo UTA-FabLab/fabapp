@@ -86,7 +86,7 @@ function exit_with_success($success_message)
 	<div class="col-md-12">
 		<div class="panel panel-default">
 			<div class="panel-heading" style="background-color: #B5E6E6;">
-				<i class="fas fa-warehouse"></i> Update Inventory Quantity
+				<i class="fas fa-warehouse" aria-hidden="true"></i> Update Inventory Quantity
 			</div>
 			<!-- /.panel-heading -->
 			<div class="panel-body">

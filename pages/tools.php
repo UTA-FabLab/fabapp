@@ -32,9 +32,9 @@ $device_mats = Materials::getDeviceMats(2);
 		<div class="col-md-8">
 			<div class="panel panel-default">
 				<div class="panel-heading">
-					<i class="far fa-file-alt fa-fw"></i> Color Swap Instructions
+					<i class="far fa-file-alt fa-fw" aria-hidden="true"></i> Color Swap Instructions
 					<div class="pull-right">
-						<button  class="btn btn-xs" data-toggle="collapse" data-target="#swapPanel"><i class="fas fa-bars"></i></button>
+						<button  class="btn btn-xs" data-toggle="collapse" data-target="#swapPanel"><i class="fas fa-bars" aria-label="Open/Close button"></i></button>
 					</div>
 				</div>
 				<!-- /.panel-heading -->
@@ -101,7 +101,7 @@ $device_mats = Materials::getDeviceMats(2);
 		<div class="col-md-4">
 			<div class="panel panel-default">
 				<div class="panel-heading">
-					<i class="fas fa-palette fa-fw"></i> Color Swap 
+					<i class="fas fa-palette fa-fw" aria-hidden="true"></i> Color Swap 
 				</div>
 				<!-- /.panel-heading -->
 				<div class="panel-body">

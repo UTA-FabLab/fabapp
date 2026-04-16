@@ -148,7 +148,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                         <tr>
                             <td>
                                 <a href="#" data-toggle="tooltip" data-placement="top" title="The phone number of person that you will issue a wait ticket for">(Optional) Phone</a>
-                                <button type="button" class="btn fas fa-broadcast-tower" onclick="listCarriers()"></button>
+                                <button type="button" class="btn fas fa-broadcast-tower" onclick="listCarriers()" aria-label="List Carriers"></button>
                             </td>
                             <td>
                                 <div class="col-md-6">
@@ -194,7 +194,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
         <div class="col-md-4">
             <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="far fa-clock fa-fw"></i>Secondary Timer Length of Wait
+                        <i class="far fa-clock fa-fw" aria-hidden="true"></i>Secondary Timer Length of Wait
                     </div>
                     <!-- /.panel-heading -->
                     <div class="panel-body">
@@ -207,7 +207,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
             <?php if (Wait_queue::hasWait()) {?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-print fa-fw"></i>Process Ticket
+                        <i class="fa fa-print fa-fw" aria-hidden="true"></i>Process Ticket
                     </div>
                     <!-- /.panel-heading -->
                     <div class="panel-body">
@@ -429,7 +429,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
             <div class="col-md-4">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-trash fa-fw"></i>Remove All Wait-Queue Users
+                        <i class="fa fa-trash fa-fw" aria-hidden="true"></i>Remove All Wait-Queue Users
                     </div>
                     <!-- /.panel-heading -->
                     <div class="panel-body">

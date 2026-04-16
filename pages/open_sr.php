@@ -33,7 +33,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['btnHistory'])){
 		<div class="col-lg-8">
 			<div class="panel panel-default">
 				<div class="panel-heading">
-					<i class="fas fa-history fa-fw"></i> Unresolved Issues
+					<i class="fas fa-history fa-fw" aria-hidden="true"></i> Unresolved Issues
 				</div>
 				<table id="historyTable" class="table table-striped table-bordered">
 					<thead>
@@ -97,7 +97,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['btnHistory'])){
 		<div class="col-lg-4">
 			<div class="panel panel-default">
 				<div class="panel-heading">
-					<i class="far fa-comment fa-fw"></i> Report New Issue
+					<i class="far fa-comment fa-fw" aria-hidden="true"></i> Report New Issue
 				</div>
 				<div class="panel-body">
 					<form method="post" action="" onsubmit="return validateBtn()">

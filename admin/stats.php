@@ -52,7 +52,7 @@ $tables = Database_Table::get_tables();
 	<div class='col-md-12'>
 		<div class="panel panel-default">
 			<div class="panel-heading">
-				<i class="fas fa-database"></i> Pre-Built Queries
+				<i class="fas fa-database" aria-hidden="true"></i> Pre-Built Queries
 			</div>
 		</div>
 		<div class='collapse in query_collapse'>

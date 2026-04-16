@@ -89,7 +89,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['restore_training'])
 	<!-- search box -->
 	<div class="panel panel-default">
 		<div class="panel-heading">
-			<i class="fas fa-book fa-lg"></i> Look Up Completed Trainings
+			<i class="fas fa-book fa-lg" aria-hidden="true"></i> Look Up Completed Trainings
 		</div>
 		<div class="panel-body">
 			<table class='table'> <tr>
@@ -100,7 +100,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['restore_training'])
 							<input type="text" name="get_trainee_ID" id="get_trainee_ID" class="form-control" placeholder="Enter ID #" maxlength="10" size="10"
 								   value="<?php if (isset($trainee_ID)) echo $trainee_ID; ?>">
 							<span class="input-group-btn">
-							<button class="btn btn-default" type="submit" name="search_button">
+							<button class="btn btn-default" type="submit" name="search_button" aria-label="Search Button">
 								<i class="fas fa-search"></i>
 							</button>
 							</span>
@@ -237,7 +237,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['restore_training'])
 									<?php echo $row['title']; ?>
 									<div class="btn-group">
 										<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
-												<span class="fas fa-info-circle" title="Desc"></span>
+												<span class="fas fa-info-circle" title="Name of Training"></span>
 										</button>
 										<ul class="dropdown-menu pull-right" role="menu">
 												<li style="padding-left: 5px;"><?php echo $row['tm_desc'];?></li>

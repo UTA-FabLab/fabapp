@@ -66,9 +66,9 @@ function advanceNum($i, $str){
 			<div class="col-md-8">
 				<div class="panel panel-default">
 					<div class="panel-heading">
-						<i class="fas fa-list-ol"></i>  Wait Queue
+						<i class="fas fa-list-ol" aria-hidden="true"></i>  Wait Queue
 						<div class="pull-right">
-							<button  class="btn btn-xs" data-toggle="collapse" data-target="#waitPanel"><i class="fas fa-bars"></i></button>
+							<button  class="btn btn-xs" data-toggle="collapse" data-target="#waitPanel"><i class="fas fa-bars" label="Click to open/close"></i></button>
 						</div>
 					</div>
 					<!-- /.panel-heading -->
@@ -108,13 +108,13 @@ function advanceNum($i, $str){
 											<table class="table table-striped table-bordered table-hover" <?php echo("id=\"waitTable_$number_of_queue_tables\"") ?>>
 												<thead>
 													<tr class="tablerow">
-														<th><i class="fa fa-th-list"></i> Queue Number</th>
-														<th><i class="far fa-user"></i> Operator</th>
-														<?php if ($tab["dg_id"]==2) { ?> <th><i class="far fa-flag"></i> Device Group</th><?php } ?>
-														<?php if ($tab["dg_id"]!=2) { ?> <th><i class="far fa-flag"></i> Device</th><?php } ?>
-														<th><i class="far fa-clock"></i> Time Left</th>
+														<th><i class="fa fa-th-list" aria-hidden="true"></i> Queue Number</th>
+														<th><i class="far fa-user" aria-hidden="true"></i> Operator</th>
+														<?php if ($tab["dg_id"]==2) { ?> <th><i class="far fa-flag" aria-hidden="true"></i> Device Group</th><?php } ?>
+														<?php if ($tab["dg_id"]!=2) { ?> <th><i class="far fa-flag" aria-hidden="true"></i> Device</th><?php } ?>
+														<th><i class="far fa-clock" aria-hidden="true"></i> Time Left</th>
 														<?php if ($staff && ($staff->getRoleID() >= $sv['LvlOfStaff'])) { ?> 
-															<th><i class="far fa-flag"></i> Alerts</th>
+															<th><i class="far fa-flag" aria-hidden="true"></i> Alerts</th>
 														<?php } ?>
 													</tr>
 												</thead>
@@ -294,7 +294,7 @@ function advanceNum($i, $str){
 		<div class="col-md-8">
 			<div class="panel panel-default">
 				<div class="panel-heading">
-					<i class="fas fa-cubes fa-lg"></i> Device Status
+					<i class="fas fa-cubes fa-lg" aria-hidden="true"></i> Device Status
 				</div>
 				<div class="panel-body">
 					<table class="table table-striped table-bordered table-hover" id="indexTable">
@@ -390,7 +390,7 @@ function advanceNum($i, $str){
 			<?php if ($sv['next'] >= 1 || $sv['eNext'] >= 1 || $sv['bNext'] >= 1 || $sv['mNext'] >= 1){ ?>
 				<div class="panel panel-default">
 					<div class="panel-heading">
-						<i class="fas fa-list-ol fa-lg"></i> Now Serving
+						<i class="fas fa-list-ol fa-lg" aria-hidden="true"></i> Now Serving
 					</div>
 					<div class="panel-body" id="now_serving_panel">
 						<div align="center" ><a href='http://fablab.uta.edu/policy/' style='color:blue'>UTA FabLab's Wait Policy</a></div>
@@ -405,25 +405,25 @@ function advanceNum($i, $str){
 									<td>PolyPrinter</td>
 									<td align="center"><h4 id="serving"><?php echo $sv['serving']; ?></h4></td>
 									<td align="center"><button class="btn btn-basic" title="Click to issue the next Wait-Tab"
-											name='print_s' onclick="loadingModal()"><?php echo $sv['next']+1; ?> <i class="fas fa-print"> </button></td>
+											name='print_s' onclick="loadingModal()"><?php echo $sv['next']+1; ?> <i class="fas fa-print aria-hidden="true""> </button></td>
 								</tr><?php } ?>
 								<?php if ($sv['eNext'] != 0){ ?><tr id="next">
 									<td>Epilog Laser</td>
 									<td align="center"><h4 id="eServing">E<?php echo $sv['eServing']; ?></h4></td>
 									<td align="center"><button class="btn btn-basic" title="Click to issue the next Wait-Tab"
-											name='print_e' onclick="loadingModal()">E<?php echo $sv['eNext']+1; ?> <i class="fas fa-print"> </button></td>
+											name='print_e' onclick="loadingModal()">E<?php echo $sv['eNext']+1; ?> <i class="fas fa-print aria-hidden="true""> </button></td>
 								</tr><?php } ?>
 								<?php if ($sv['bNext'] != 0){ ?><tr id="next">
 									<td>Boss Laser</td>
 									<td align="center"><h4 id="bServing">B<?php echo $sv['bServing']; ?></h4></td>
 									<td align="center"><button class="btn btn-basic" title="Click to issue the next Wait-Tab"
-											name='print_b' onclick="loadingModal()">B<?php echo $sv['bNext']+1; ?> <i class="fas fa-print"> </button></td>
+											name='print_b' onclick="loadingModal()">B<?php echo $sv['bNext']+1; ?> <i class="fas fa-print aria-hidden="true""> </button></td>
 								</tr><?php } ?>
 								<?php if ($sv['mNext'] != 0){ ?><tr id="next">
 									<td><?php echo $sv['misc'];?></td>
 									<td align="center"><h4 id="mServing">M<?php echo $sv['mServing']; ?></h4></td>
 									<td align="center"><button class="btn btn-basic" title="Click to issue the next Wait-Tab"
-											name='print_m' onclick="loadingModal()">M<?php echo $sv['mNext']+1; ?> <i class="fas fa-print"> </button></td>
+											name='print_m' onclick="loadingModal()">M<?php echo $sv['mNext']+1; ?> <i class="fas fa-print aria-hidden="true""> </button></td>
 								</tr><?php } ?>
 							</form><?php } else { ?>
 								<tr>

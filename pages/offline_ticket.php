@@ -94,7 +94,7 @@ if (isset($_GET['printForm'])){
 		<div class="col-md-8">
             <div class="panel panel-default">
 				<div class="panel-heading">
-                	<i class="fas fa-cubes fa-lg"></i> Current Offline Transactions
+                	<i class="fas fa-cubes fa-lg" aria-hidden="true"></i> Current Offline Transactions
             	</div>
 			<div class="panel-body">
 				<table class='table table-striped table-bordered table-hover' id='off_tickets'>
@@ -116,7 +116,7 @@ if (isset($_GET['printForm'])){
 	<div class="col-md-8">
 		<div class="panel panel-default">
 			<div class="panel-heading">
-				<i class="fas fa-cubes fa-lg"></i> Offline Transactions Lookup
+				<i class="fas fa-cubes fa-lg" aria-hidden="true"></i> Offline Transactions Lookup
 			</div>
 		<div class="panel-body">
 			<td class='col-md-11'>
@@ -124,7 +124,7 @@ if (isset($_GET['printForm'])){
 					<div class="input-group custom-search-form">
 						<input type="text" name="offLookupField" id="offLookupField" class="form-control" placeholder="Enter ID #">
 						<span class="input-group-btn">
-						<button class="btn btn-default" type="submit" name="offLookupBtn">
+						<button class="btn btn-default" type="submit" name="offLookupBtn" aria-label="Search button">
 							<i class="fas fa-search"></i>
 						</button>
 						</span>
