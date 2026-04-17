@@ -68,7 +68,7 @@ function advanceNum($i, $str){
 					<div class="panel-heading">
 						<i class="fas fa-list-ol" aria-hidden="true"></i>  Wait Queue
 						<div class="pull-right">
-							<button  class="btn btn-xs" data-toggle="collapse" data-target="#waitPanel"><i class="fas fa-bars" label="Click to open/close"></i></button>
+							<button  class="btn btn-xs" data-toggle="collapse" data-target="#waitPanel"><i class="fas fa-bars" label="Click to open/close" aria-label="Toggle Wait Queue visibility"></i></button>
 						</div>
 					</div>
 					<!-- /.panel-heading -->
@@ -169,7 +169,7 @@ function advanceNum($i, $str){
 																	if (isset($row['last_contact'])){
 																		$time_seconds = $sv["wait_period"] - (time() - strtotime($row['last_contact']) );
 																		if ($time_seconds <= 0 ){
-																			echo("<span style=\"color:red\" align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
+																			echo("<span class='time-left' align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
 																		} else {
 																			echo("<span style=\"color:orange\" align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
 																		}
