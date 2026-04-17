@@ -52,7 +52,7 @@ $device_mats = Materials::getDeviceMats(2);
 								<p>Check the values of z as you scroll through the different layers. If you want to change the colors, 
 									for example, between layers z=10.000 and z=10.250, you will want to pause at the end of layer z=10.000.</p>
 								<p>Enter that value in the field as "10.000"</p>
-								<input disabled value="10.000"/>
+								<input disabled value="10.000" aria-label="Example Z height value for color swap"/>
 								<p>To do multiple color swaps add a new row for each pause that you want to have. The values must be in 
 									sequential order. It requires both a valid Z height and a selected color.</p>
 								<p>Upload the gcode file to the right.</p>
@@ -114,11 +114,11 @@ $device_mats = Materials::getDeviceMats(2);
 							<td>
 								<div class ="input-group">
 									<span class="input-group-addon">Z = </span>
-									<input type="number" min="0" step=".25" class="form-control swap" placeholder="ex. 10.000"/>
+									<input type="number" min="0" step=".25" class="form-control swap" placeholder="ex. 10.000" aria-label="Z height for color swap (mm)"/>
 								</div>
 							</td>
 							<td id="td_select">
-								<select class="form-control dm_select">
+								<select class="form-control dm_select" aria-label="Color selection">
 									<option hidden disabled selected value="">Select Color</option>
 									<?php foreach($device_mats as $dm){
 										echo ("<option value='".$dm->m_id."'>".$dm->m_name."</option>");
