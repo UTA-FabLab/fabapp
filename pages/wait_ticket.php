@@ -121,7 +121,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                         <tr>
                             <td><a href="#" data-toggle="tooltip" data-placement="top" title="Which device does this wait ticket belong to?">Select Device Group</a></td>
                             <td>
-                                <select name="dg_id" id="dg_id" onchange="change_dg()" tabindex="1">
+                                <select name="dg_id" id="dg_id" onchange="change_dg()" tabindex="1" aria-label="Create wait queue device">
                                     <option disabled hidden selected value="">Device Group</option>
                                     <?php if($dgs = DeviceGroup::popDG_WQ()){
                                         foreach($dgs as $dg_id => $dg_desc){
@@ -132,7 +132,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                     }?>
                                 </select>
                                 &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;
-                                <select name="devices" id="devices" tabindex="1">
+                                <select name="devices" id="devices" tabindex="1" aria-label="Create wait queue item selection">
                                     <option value =""> Select Group First</option>
                                 </select>   
                             </td>
@@ -155,7 +155,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                     <input type="text" name="op-phone" id="op-phone" class="form-control" placeholder="phone number" maxlength="10" size="10" value="<?php echo $ph1;?>" tabindex="1"/>
                                 </div>
                                 <div class="col-md-6">
-                                    <select class="form-control" name="carrier_name" id="carrier_name" tabindex="1">
+                                    <select class="form-control" name="carrier_name" id="carrier_name" tabindex="1" aria-label="Phone carrier">
                                         <option value="" disabled selected>Select Phone Carrier</option>
                                         <?php // Load all of the device groups that are being waited for - signified with a 'DG' in front of the value attribute
                                             if ($result = $mysqli->query("
@@ -216,7 +216,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['removeBtn']) && $staff
                                 <tr>
                                     <td><b>Device:</b></td>
                                     <td>
-                                        <select class="form-control" name="devGrp" id="devGrp" onChange="change_group()" >
+                                        <select class="form-control" name="devGrp" id="devGrp" onChange="change_group()" aria-label="Process ticket device">
                                             <option value="" selected hidden> Select Device</option>
                                             <?php // Load all of the device groups that are being waited for - signified with a 'DG' in front of the value attribute
                                                 if ($result = $mysqli->query("

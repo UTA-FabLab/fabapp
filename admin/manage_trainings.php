@@ -305,7 +305,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         </div>
                         <div class="panel-body">
                             <div align="center">
-                                <select name="d_id" id="d_id" onchange="selectDevice(this)" tabindex="1">
+                                <select name="d_id" id="d_id" onchange="selectDevice(this)" tabindex="1" aria-label="Device">
                                     <option disabled hidden selected value="">Device</option>
                                     <?php if($result = $mysqli->query("
                                         SELECT d_id, device_desc
@@ -318,7 +318,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     } else {
                                         echo ("Device list Error - SQL ERROR");
                                     }?>
-                                </select> or <select name="dg_id" id="dg_id" onchange="selectDevice(this)" tabindex="2">
+                                </select> or <select name="dg_id" id="dg_id" onchange="selectDevice(this)" tabindex="2" aria-label="Device group">
                                         <option disabled hidden selected value="">Device Group</option>
                                         <?php if($result = $mysqli->query("
                                             SELECT dg_id, dg_desc

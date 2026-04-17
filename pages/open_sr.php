@@ -105,7 +105,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['btnHistory'])){
 						<tr>
 							<td><span title="Which device does this wait ticket belong to?">Select Device Group</span></td>
 							<td>
-								<select name="dg_id" id="dg_id" onchange="change_dg()" tabindex="2">
+								<select name="dg_id" id="dg_id" onchange="change_dg()" tabindex="2" aria-label="Select device group">
 									<option disabled hidden selected value="">Device Group</option>
 									<?php if($result = $mysqli->query("
 										SELECT DISTINCT `device_group`.`dg_id`, `device_group`.`dg_desc`
@@ -128,7 +128,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['btnHistory'])){
 								Select Device
 							</td>
 							<td>
-								<select name="devices" id="devices" tabindex="2">
+								<select name="devices" id="devices" tabindex="2" aria-label="Select device">
 									<option value =""> Select Group First</option>
 								</select>
 							</td>

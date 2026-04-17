@@ -169,7 +169,7 @@ function advanceNum($i, $str){
 																	if (isset($row['last_contact'])){
 																		$time_seconds = $sv["wait_period"] - (time() - strtotime($row['last_contact']) );
 																		if ($time_seconds <= 0 ){
-																			echo("<span style=\"color:#ff0000\" align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
+																			echo("<span style=\"color:#DB0000;\" align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
 																		} else {
 																			echo("<span style=\"color:orange\" align=\"center\" id=\"q$row[Q_id]\">"."  $row[estTime]  </span>" );
 																		}

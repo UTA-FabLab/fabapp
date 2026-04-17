@@ -91,7 +91,7 @@ function submitTM($tm_id, $operator, $staff){
 							<tr>
 								<td><a href="#" data-toggle="tooltip" data-placement="top" title="Which device does this training belong to?">Select Device or Group</a></td>
 								<td>
-									<select name="d_id" id="d_id" onchange="selectDevice(this)" tabindex="1">
+									<select name="d_id" id="d_id" onchange="selectDevice(this)" tabindex="1" aria-label="Device">
 										<option disabled hidden selected value="">Device</option>
 										<?php if($result = $mysqli->query("
 											SELECT DISTINCT `devices`.`d_id`, `devices`.`device_desc`
@@ -106,7 +106,7 @@ function submitTM($tm_id, $operator, $staff){
 										} else {
 											echo ("Device list Error - SQL ERROR");
 										}?>
-									</select> or <select name="dg_id" id="dg_id" onchange="selectDevice(this)" tabindex="2">
+									</select> or <select name="dg_id" id="dg_id" onchange="selectDevice(this)" tabindex="2" aria-label="Device group">
 										<option disabled hidden selected value="">Device Group</option>
 										<?php if($result = $mysqli->query("
 											SELECT DISTINCT `device_group`.`dg_id`, `device_group`.`dg_desc`
@@ -128,7 +128,7 @@ function submitTM($tm_id, $operator, $staff){
 								<td><a href="#" data-toogle="tooltop" data-placement="top" title="Please select the relevant training that was conducted">Training</a></td>
 								<td>
 							<?php if (isset($tm)){ ?>
-										<select name="tm_id" id="tm_id" onchange="getDesc(this)">
+										<select name="tm_id" id="tm_id" onchange="getDesc(this)" aria-label="Training">
 											<option value="<?php echo $tm->getTm_id()?>" ><?php echo $tm->getTitle()?></option>
 										</select>
 									</td>

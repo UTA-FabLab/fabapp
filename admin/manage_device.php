@@ -240,7 +240,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
                             <tr>
                                 <td><b href="#" data-toggle="tooltip" data-placement="top">Select Device Group</b></td>
                                 <td>
-                                    <select class="form-control" name="device_group_id" id="device_group_id" tabindex="1">
+                                    <select class="form-control" name="device_group_id" id="device_group_id" tabindex="1" aria-label="Add to device group">
                                         <option value="" disabled selected>Select Your Option</option>
                                         <?php if($dgs = DeviceGroup::all_device_groups()){
                                             foreach($dgs as $dg_id => $dg_desc){
@@ -254,7 +254,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
                             </tr>
                             <tr>
                                 <td><b data-toggle="tooltip" data-placement="top">Public View</b></td>
-                                <td><select class="form-control" name="device_public_view" id="device_public_view" tabindex="1">
+                                <td><select class="form-control" name="device_public_view" id="device_public_view" tabindex="1" aria-label="Add public view">
                                       <option value="" disabled selected>Select Your Option</option>
                                       <option value="Y">Yes</option>
                                       <option value="N">No</option>
@@ -273,7 +273,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
                                     <b data-toggle="tooltip" data-placement="top">Base Price</b>
                                     <b class="pull-right" data-placement="bottom" title="$">$</b>
                                 </td>
-                                <td><input type="number" name="device_base_price" id="device_base_price" class="form-control" max="99.99" min="0.00" value="0.00" step="0.01" tabindex="1"/></td>
+                                <td><input type="number" name="device_base_price" id="device_base_price" class="form-control" max="99.99" min="0.00" value="0.00" step="0.01" tabindex="1" aria-label="Base price"/></td>
                             </tr>
                             <tr>
                                 <td>
@@ -281,9 +281,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
                                     <button type="button" style="background-color:white" class="btn fas fa-info" onclick="durationInfo()" aria-label="Device Duration Tooltip"></button>
                                 </td>
                                 <td>
-                                    <input type="number" name="hours" id="hours" tabindex="6" min="0" max="100" 
+                                    <input type="number" name="hours" id="hours" tabindex="6" min="0" max="100" aria-label="Add duration hours"
                                         step="1" placeholder="hh" max="99" pattern="[0-9]" value ="<?php if (isset($device_hour1)){ echo $device_hour1; } else{ echo (0);}?>"/>Hours
-                                    <select name="minutes" id="minutes" tabindex="7">
+                                    <select name="minutes" id="minutes" tabindex="7" aria-label="Add duration minutes">
                                         <option value="00">00</option>
                                         <option value="05">05</option>
                                         <option value="10">10</option>
@@ -365,7 +365,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
                             <tr>
                                 <td><b data-toggle="tooltip" data-placement="top">Select Device Group</b></td>
                                 <td>
-                                    <select class="form-control" name="dg1_id" id="dg1_id" onchange="change_dg1()" tabindex="1">
+                                    <select class="form-control" name="dg1_id" id="dg1_id" onchange="change_dg1()" tabindex="1" aria-label="Edit device group">
                                         <option disabled hidden selected value="">Device Group</option>
                                         <?php if($dgs = DeviceGroup::all_device_groups()){
                                             foreach($dgs as $dg_id => $dg_desc){
@@ -380,7 +380,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
                             <tr>
                                 <td><b data-toggle="tooltip" data-placement="top">Select Device</b></td>
                                 <td>
-                                    <select class="form-control" name="devices1" id="devices1" tabindex="1">
+                                    <select class="form-control" name="devices1" id="devices1" tabindex="1" aria-label="Select device to edit">
                                         <option value =""> Select Group First</option>
                                     </select>   
                                 </td>
@@ -422,7 +422,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
                         <tr>
                             <td><b href="#" data-toggle="tooltip" data-placement="top">Device Group Parent</b></td>
                             <td>
-                                <select  class="form-control" name="device_group_parent" id="device_group_parent" tabindex="1">
+                                <select  class="form-control" name="device_group_parent" id="device_group_parent" tabindex="1" aria-label="Select parent for device group">
                                     <option value="" disabled selected>Select Your Option</option>
                                     <option value="NULL">No Parent</option>                                 
                                     <?php if($dgs = DeviceGroup::all_device_groups()){
@@ -437,7 +437,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
                         </tr>
                         <tr>
                             <td><b data-toggle="tooltip" data-placement="top">Pay First</b></td>
-                            <td><select class="form-control" name="dg_pay" id="dg_pay" tabindex="1">
+                            <td><select class="form-control" name="dg_pay" id="dg_pay" tabindex="1" aria-label="Pay first for device group">
                                   <option value="" disabled selected>Select Your Option</option>
                                   <option value="Y">Yes</option>
                                   <option value="N">No</option>
@@ -446,7 +446,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
                         </tr>
                         <tr>
                             <td><b data-toggle="tooltip" data-placement="top">Select Materials First</b></td>
-                            <td><select class="form-control" name="dg_mats" id="dg_mats" tabindex="1">
+                            <td><select class="form-control" name="dg_mats" id="dg_mats" tabindex="1" aria-label="Select materials first for device group">
                                   <option value="" disabled selected>Select Your Option</option>
                                   <option value="Y">Yes</option>
                                   <option value="N">No</option>
@@ -455,7 +455,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
                         </tr>
                         <tr>
                             <td><b data-toggle="tooltip" data-placement="top">Storable</b></td>
-                            <td><select class="form-control" name="dg_store" id="dg_store" tabindex="1">
+                            <td><select class="form-control" name="dg_store" id="dg_store" tabindex="1" aria-selected="Device group storable status">
                                   <option value="" disabled selected>Select Your Option</option>
                                   <option value="Y">Yes</option>
                                   <option value="N">No</option>
@@ -464,7 +464,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
                         </tr>
                         <tr>
                             <td><b data-toggle="tooltip" data-placement="top">JuiceBox Managed</b></td>
-                            <td><select class="form-control" name="dg_juicebox" id="dg_juicebox" tabindex="1">
+                            <td><select class="form-control" name="dg_juicebox" id="dg_juicebox" tabindex="1" aria-label="JuiceBox managed for device group">
                                   <option value="" disabled selected>Select Your Option</option>
                                   <option value="Y">Yes</option>
                                   <option value="N">No</option>
@@ -473,7 +473,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
                         </tr>
                         <tr>
                             <td><b data-toggle="tooltip" data-placement="top">Thermal Printer Number</b></td>
-                            <td><select class="form-control" name="dg_thermal" id="dg_thermal" tabindex="1">
+                            <td><select class="form-control" name="dg_thermal" id="dg_thermal" tabindex="1" aria-label="Thermal printer number for device group">
                                   <option value=0>0</option>
                                   <option value=1>1</option>
                                 </select>
@@ -481,7 +481,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn3'])) {
                         </tr>
                         <tr>
                             <td><b data-toggle="tooltip" data-placement="top">Granular Wait</b></td>
-                            <td><select class="form-control" name="dg_granular" id="dg_granular" tabindex="1">
+                            <td><select class="form-control" name="dg_granular" id="dg_granular" tabindex="1" aria-label="Granular wait for device group">
                                   <option value="" disabled selected>Select Your Option</option>
                                   <option value="Y">Yes</option>
                                   <option value="N">No</option>

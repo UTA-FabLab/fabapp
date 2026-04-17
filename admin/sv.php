@@ -49,7 +49,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['Save'])) {
                     <i class="fas fa-sliders-h fa-lg" aria-hidden="true"></i>
                     <div class="pull-right">
                         <div class="btn-group">
-                            <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                            <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false" aria-label="More information">
                                 <span class="fas fa-info"></span>
                             </button>
                             <ul class="dropdown-menu pull-right" role="menu">

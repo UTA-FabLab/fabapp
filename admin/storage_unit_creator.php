@@ -127,7 +127,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["delete_unit_button"
 								Drawer <?php echo ($sv['strg_drwr_indicator'] == "numer" ? "Number" : "Letter") ?> 
 							</td>
 							<td class='col-md-6'>
-								<select name='drawer_number' class='form-control'>
+								<select name='drawer_number' class='form-control' aria-label="Drawer number">
 								<?php
 									foreach(StorageDrawer::get_unique_drawers() as $drawer_instance) {
 										echo "<option value='$drawer_instance'>$drawer_instance</option>";

@@ -145,7 +145,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && filter_has_var(INPUT_POST, 'btnHist
                         <tr>
                             <td><span title="Which device does this wait ticket belong to?">Select Device Group</span></td>
                             <td>
-                                <select class="form-control" name="dg_id" id="dg_id" onchange="change_dg()" tabindex="2">
+                                <select class="form-control" name="dg_id" id="dg_id" onchange="change_dg()" tabindex="2" aria-label="Select device group">
                                     <option disabled hidden selected value="">Device Group</option>
                                     <?php if($result = $mysqli->query("
                                         SELECT DISTINCT `device_group`.`dg_id`, `device_group`.`dg_desc`
@@ -172,7 +172,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && filter_has_var(INPUT_POST, 'btnHist
                                     <span class="input-group-addon" id="dot_span">
                                         <i class='fas fa-circle fa-lg' style='color:gainsboro' aria-hidden="true"></i>
                                     </span>
-                                    <select class="form-control" name="devices" id="devices" tabindex="2" onchange="change_dot()">
+                                    <select class="form-control" name="devices" id="devices" tabindex="2" onchange="change_dot()" aria-label="Select device">
                                         <option value =""> Select Group First</option>
                                     </select>
                                 </div>

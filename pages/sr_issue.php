@@ -60,7 +60,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn'])){
 								<tr>
 									<td class="col-sm-2">Device Group</td>
 									<td class="col-sm-10">
-										<select class="form-control" name="devGrp" id="devGrp" onChange="change_group()" >
+										<select class="form-control" name="devGrp" id="devGrp" onChange="change_group()" aria-label="Device group">
 											<option value="" hidden> Select Group</option>
 											<?php
 											$device_groups = DeviceGroup::all_device_groups();
@@ -86,7 +86,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn'])){
 													<i class='fas fa-circle fa-lg' style='color:gainsboro' aria-hidden="true"></i>
 												<?php } ?>
 											</span>
-											<select class="form-control" name="devices" id="devices" tabindex="2" onchange="change_dot()">
+											<select class="form-control" name="devices" id="devices" tabindex="2" onchange="change_dot()" aria-label="Device">
 												<?php if (is_object($device)){
 													echo ("<option value='".$device->device_id."'>".$device->name."</option>");
 												} else { ?>
@@ -107,7 +107,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn'])){
 													<i class='fas fa-circle fa-lg' style='color:gainsboro' id="sl_dot" aria-hidden="true"></i>
 												<?php } ?>
 											</span>
-											<select class="form-control" name="sl_id" id="sl_id" onchange="change_sldot()">
+											<select class="form-control" name="sl_id" id="sl_id" onchange="change_sldot()" aria-label="Service level">
 												<option value = "" hidden> <i class="fas fa-fire" aria-hidden="true"/>Select</option>
 												<?php //List available Service Levels
 												$slArray = Service_lvl::getList();
@@ -127,7 +127,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['srBtn'])){
 									<td>Notes:</td>
 									<td>
 										<textarea class="form-control" id="notes" rows="5" name="notes"
-											style="resize: none"><?php echo $notes; ?></textarea>
+											style="resize: none" aria-label="Notes"><?php echo $notes; ?></textarea>
 									</td>
 								</tr>
 							</table>
