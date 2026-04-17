@@ -3286,7 +3286,7 @@ fieldset[disabled] .btn-info.focus {
 }
 .btn-warning {
   color: #000000;
-  background-color: #f0ad4e;
+  background-color: #dd4600;
   border-color: #eea236;
 }
 .btn-warning:focus,
@@ -3448,7 +3448,7 @@ fieldset[disabled] .btn-link:focus {
 .btn-xs,
 .btn-group-xs > .btn {
   padding: 1px 5px;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.5;
   border-radius: 3px;
 }
